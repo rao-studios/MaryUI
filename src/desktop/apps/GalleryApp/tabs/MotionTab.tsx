@@ -60,6 +60,8 @@ export function MotionTab() {
     { label: 'Brush frequency x', min: 0.002, max: 0.08, step: 0.002, get: () => brush.freqX, set: (v) => applyBrush({ ...brush, freqX: v }), path: 'brush.freq-x' },
     { label: 'Brush frequency y', min: 0.05, max: 1.2, step: 0.05, get: () => brush.freqY, set: (v) => applyBrush({ ...brush, freqY: v }), path: 'brush.freq-y' },
     { label: 'Brush octaves', min: 1, max: 5, step: 1, get: () => brush.octaves, set: (v) => applyBrush({ ...brush, octaves: v }), path: 'brush.octaves' },
+    { label: 'Brush contrast', min: 0.1, max: 1, step: 0.02, get: () => brush.contrast, set: (v) => applyBrush({ ...brush, contrast: v }), path: 'brush.contrast' },
+    { label: 'Brush angle rise (run 2)', min: 0, max: 3, step: 1, get: () => brush.rise, set: (v) => applyBrush({ ...brush, rise: v }), path: 'brush.angle.rise' },
   ]
 
   const patch = () => {

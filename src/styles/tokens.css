@@ -66,12 +66,15 @@
   --lp-sheen-alpha-inactive: 0.18;
   --lp-sheen-angle: 105deg;
   --lp-sheen-light-x: 0.35;
-  --lp-brush-opacity: 0.26;
+  --lp-brush-opacity: 0.34;
+  --lp-brush-contrast: 0.66;
   --lp-brush-freq-x: 0.02;
   --lp-brush-freq-y: 0.6;
   --lp-brush-octaves: 2;
   --lp-brush-seed: 7;
-  --lp-brush-tile: 256px;
+  --lp-brush-tile: 512px;
+  --lp-brush-angle-rise: 1;
+  --lp-brush-angle-run: 2;
   --lp-edge-light: rgba(255, 255, 255, 0.78);
   --lp-edge-dark: rgba(0, 0, 0, 0.2);
   --lp-edge-hairline: rgba(0, 0, 0, 0.32);

@@ -9,15 +9,9 @@
  */
 
 import { tokens } from '@/tokens/tokens'
+import { brushedTextureSvg, type BrushParams } from './brushSvg'
 
-export interface BrushParams {
-  freqX: number
-  freqY: number
-  octaves: number
-  seed: number
-  /** Tile edge in px. */
-  tile: number
-}
+export type { BrushParams }
 
 export function defaultBrushParams(): BrushParams {
   return {
@@ -26,26 +20,13 @@ export function defaultBrushParams(): BrushParams {
     octaves: tokens.brush.octaves,
     seed: tokens.brush.seed,
     tile: parseFloat(tokens.brush.tile),
+    rise: tokens.brush.angle.rise,
+    run: tokens.brush.angle.run,
+    contrast: tokens.brush.contrast,
   }
 }
 
-export function brushedTextureSvg(p: BrushParams = defaultBrushParams()): string {
-  return (
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${p.tile}" height="${p.tile}">` +
-    `<filter id="b" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">` +
-    `<feTurbulence type="fractalNoise" baseFrequency="${p.freqX} ${p.freqY}" numOctaves="${p.octaves}" seed="${p.seed}" stitchTiles="stitch"/>` +
-    `<feColorMatrix type="saturate" values="0"/>` +
-    `<feComponentTransfer>` +
-    `<feFuncR type="linear" slope="0.55" intercept="0.22"/>` +
-    `<feFuncG type="linear" slope="0.55" intercept="0.22"/>` +
-    `<feFuncB type="linear" slope="0.55" intercept="0.22"/>` +
-    `<feFuncA type="linear" slope="0" intercept="1"/>` +
-    `</feComponentTransfer>` +
-    `</filter>` +
-    `<rect width="100%" height="100%" filter="url(#b)"/>` +
-    `</svg>`
-  )
-}
+export { brushedTextureSvg }
 
 export function brushedTextureDataUri(p: BrushParams = defaultBrushParams()): string {
   return `data:image/svg+xml;utf8,${encodeURIComponent(brushedTextureSvg(p))}`

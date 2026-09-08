@@ -12,6 +12,7 @@ npm run dev        # http://127.0.0.1:8140 — hot reloads code, CSS, and tokens
 npm test           # physics, geometry, window manager, token pipeline
 npm run typecheck
 npm run build
+npm run sketch     # design/liquid-platinum.sketch (needs Chrome for the textures; falls back otherwise)
 ```
 
 ## What you are looking at
@@ -33,6 +34,7 @@ npm run build
 tokens/tokens.json           SOURCE OF TRUTH (W3C Design Tokens). Edit this.
 tokens/export/               liquid-platinum.sketchpalette + palette-index.txt (generated)
 scripts/build-tokens.mjs     tokens.json → tokens.css, tokens.ts, .sketchpalette
+scripts/build-sketch.mjs     tokens + component anatomy → design/liquid-platinum.sketch
 src/styles/tokens.css        generated CSS custom properties (--lp-*)
 src/tokens/tokens.ts         generated typed constants (the engine reads motion numbers here)
 src/lib/                     framework-free: spring, slosh, velocity, geometry, motionEngine, textures
@@ -45,7 +47,7 @@ src/desktop/                 Desktop, Wallpaper, WindowLayer, settings, menus, w
 
 | Effect | Mechanism | Where |
 | --- | --- | --- |
-| Brushed grain | One 256px `feTurbulence` tile baked to a data URI at startup, painted with `mix-blend-mode: overlay` | `src/lib/textures.ts`, `Surface.module.css` |
+| Brushed grain | One seamless 512px `feTurbulence` tile with diagonal strokes (lattice angle `brush.angle`, tan θ = rise/run) baked to a data URI at startup, painted with `mix-blend-mode: overlay` | `src/lib/textures.ts`, `Surface.module.css` |
 | Sliding sheen | A highlight band positioned by `--lp-sheen-x`; the light is fixed to the *room* (`sheen.light-x`), so moving a window slides the highlight across it, spring-lagged | `motionEngine.ts`, `Surface.module.css` |
 | Jelly | Velocity → springs → `skewX` / `scale` on the window chrome, origin at the grab point | `motionEngine.ts` |
 | Slosh | A damped pendulum driven by the window's acceleration writes `--lp-slosh` / `--lp-slosh-y`; bubbles rotate their liquid with it in pure CSS | `src/lib/slosh.ts`, `LiquidBubble.module.css` |
@@ -78,7 +80,7 @@ engine and the designer read the same numbers. The Blue/Graphite accent mapping 
 
 ## Taking it elsewhere
 
-- **Sketch**: import `tokens/export/liquid-platinum.sketchpalette`; each component README lists its layers (anatomy), tokens, and states/overrides. Export the brush tile from `brushedTextureSvg()` as an image fill with Overlay blending.
+- **Sketch**: `npm run sketch` writes `design/liquid-platinum.sketch` — Color Variables for every token, a symbol per component variant, Components/Tokens/Desktop artboards, brushed overlay at max (`--brush=` to change). See `design/README.md`. The palette-only route is `tokens/export/liquid-platinum.sketchpalette`.
 - **Swift / other codebases**: `tokens.json` is the contract; add an emitter to `scripts/tokens-lib.mjs` (a `Color(red:green:blue:opacity:)` writer is ~20 lines). The physics in `src/lib/spring.ts` and `src/lib/slosh.ts` are a dozen lines each and port directly.
 - **Wallpaper**: drop `public/wallpaper/platinum.jpg` and choose View › Raster Wallpaper.
 

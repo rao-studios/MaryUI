@@ -11,6 +11,7 @@
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit",
     "tokens": "node scripts/build-tokens.mjs",
+    "sketch": "node --disable-warning=ExperimentalWarning scripts/build-sketch.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },
