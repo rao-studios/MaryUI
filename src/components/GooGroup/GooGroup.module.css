@@ -1,0 +1,70 @@
+.group {
+  position: relative;
+  display: inline-grid;
+}
+
+.gooLayer,
+.content {
+  grid-area: 1 / 1;
+  display: flex;
+  align-items: center;
+  gap: var(--lp-goo-gap);
+}
+
+.gooLayer {
+  pointer-events: none;
+}
+
+.content {
+  position: relative;
+}
+
+.fill .gooLayer,
+.fill .content {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  height: 100%;
+}
+
+/* MARK: - Blobs: the metal that flows */
+
+.blob {
+  display: block;
+  background: linear-gradient(180deg, var(--lp-surface-raised-top), var(--lp-platinum-5));
+  box-shadow: var(--lp-shadow-emboss-raised);
+  transform: translateX(calc(var(--lp-vx) * var(--lp-goo-smear) * var(--lp-goo-i))) scale(1);
+  transition: transform var(--lp-motion-normal) var(--lp-motion-ease-spring);
+}
+
+.circle {
+  width: var(--lp-goo-size);
+  height: var(--lp-goo-size);
+  border-radius: 50%;
+}
+
+.pill {
+  height: var(--lp-goo-size);
+  flex: 1 1 auto;
+  border-radius: var(--lp-radius-pill);
+}
+
+.fill .blob {
+  width: auto;
+  height: 100%;
+  border-radius: var(--lp-radius-sm);
+}
+
+.blob[data-hot] {
+  transform: translateX(calc(var(--lp-vx) * var(--lp-goo-smear) * var(--lp-goo-i))) scale(1.22);
+}
+
+.blob[data-near] {
+  transform: translateX(calc(var(--lp-vx) * var(--lp-goo-smear) * var(--lp-goo-i))) scale(1.08);
+}
+
+/* With goo disabled the blobs simply sit in a shared row; nothing looks broken. */
+:root[data-goo='off'] .blob[data-hot],
+:root[data-goo='off'] .blob[data-near] {
+  transform: none;
+}

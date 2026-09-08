@@ -1,0 +1,94 @@
+.finder {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.search {
+  width: 180px;
+}
+
+.split {
+  flex: 1 1 auto;
+  display: flex;
+  min-height: 0;
+}
+
+.content {
+  flex: 1 1 auto;
+  background: var(--lp-surface-body);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: var(--lp-space-2);
+  padding: var(--lp-space-3);
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--lp-space-1);
+  padding: var(--lp-space-2) var(--lp-space-1);
+  border-radius: var(--lp-radius-sm);
+  color: var(--lp-ink-primary);
+}
+
+.tile:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.tile[data-selected] {
+  background: var(--lp-accent-soft);
+  box-shadow: inset 0 0 0 1px var(--lp-accent-light);
+}
+
+.tileIcon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--lp-radius-md);
+  background: linear-gradient(180deg, var(--lp-platinum-0), var(--lp-platinum-3));
+  box-shadow:
+    var(--lp-shadow-emboss-raised),
+    0 0 0 1px var(--lp-edge-hairline),
+    0 2px 4px rgba(0, 0, 0, 0.15);
+  color: var(--lp-ink-secondary);
+}
+
+.tileIcon[data-kind='folder'] {
+  color: var(--lp-accent-base);
+  background: linear-gradient(180deg, var(--lp-accent-soft), var(--lp-platinum-2));
+}
+
+.tileName {
+  max-width: 100%;
+  font-size: var(--lp-text-sm);
+  line-height: var(--lp-text-leading-tight);
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.empty {
+  margin: var(--lp-space-6);
+  text-align: center;
+  color: var(--lp-ink-tertiary);
+}
+
+.status {
+  flex: none;
+  height: 22px;
+  padding: 0 var(--lp-space-3);
+  line-height: 22px;
+  font-size: var(--lp-text-xs);
+  color: var(--lp-ink-secondary);
+  text-align: center;
+  background: linear-gradient(180deg, var(--lp-platinum-2), var(--lp-platinum-3));
+  box-shadow: inset 0 1px 0 var(--lp-edge-light), 0 -1px 0 var(--lp-edge-divider);
+}

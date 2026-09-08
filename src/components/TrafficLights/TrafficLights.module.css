@@ -1,0 +1,26 @@
+.lights {
+  flex: none;
+}
+
+.light {
+  display: grid;
+  place-items: center;
+  width: calc(var(--lp-size-traffic) + 2px);
+  height: calc(var(--lp-size-traffic) + 2px);
+  border-radius: 50%;
+}
+
+.light:focus-visible {
+  box-shadow: 0 0 0 2px var(--lp-accent-focus-ring);
+}
+
+.lights:hover [data-lp-glyph] {
+  opacity: 1;
+}
+
+/* Inactive windows: the liquid drains to platinum until hovered. */
+.lights[data-active='false']:not(:hover) [data-lp-bubble] {
+  --lp-b-base: var(--lp-traffic-inactive);
+  --lp-b-deep: var(--lp-traffic-inactive-deep);
+  --lp-b-light: var(--lp-platinum-1);
+}

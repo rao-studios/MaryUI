@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en" data-accent="blue" data-goo="on" data-wallpaper="procedural">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Liquid Platinum</title>
+    <meta name="description" content="Rao's Liquid Platinum design system, shown as a simulated desktop." />
+    <meta name="color-scheme" content="light" />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <script>
+      // Restore desktop preferences before first paint so nothing flashes.
+      try {
+        var prefs = JSON.parse(localStorage.getItem('lp-settings') || '{}')
+        var html = document.documentElement
+        if (prefs.accent) html.dataset.accent = prefs.accent
+        if (prefs.goo === false) html.dataset.goo = 'off'
+        if (prefs.wallpaper) html.dataset.wallpaper = prefs.wallpaper
+        if (prefs.reducedMotion) html.dataset.reducedMotion = 'on'
+      } catch (_) {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

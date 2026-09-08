@@ -1,0 +1,43 @@
+.toggle {
+  position: relative;
+  display: inline-block;
+  width: 38px;
+  height: 22px;
+  border-radius: var(--lp-radius-pill);
+  background: linear-gradient(180deg, var(--lp-platinum-5), var(--lp-platinum-4));
+  box-shadow: var(--lp-shadow-emboss-well);
+  transition: background var(--lp-motion-normal) ease-out;
+}
+
+.toggle[data-on] {
+  background: linear-gradient(180deg, var(--lp-accent-deep), var(--lp-accent-base));
+}
+
+.toggle:disabled {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  transform: translateX(0);
+  transition: transform var(--lp-motion-normal) var(--lp-motion-ease-spring);
+}
+
+.toggle[data-on] .knob {
+  transform: translateX(16px);
+}
+
+.toggle:focus-visible {
+  box-shadow:
+    var(--lp-shadow-emboss-well),
+    0 0 0 3px var(--lp-accent-focus-ring);
+}

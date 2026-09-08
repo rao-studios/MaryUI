@@ -1,0 +1,32 @@
+.scroll {
+  position: relative;
+  min-height: 0;
+  min-width: 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--lp-platinum-5) transparent;
+}
+
+.y { overflow-x: hidden; overflow-y: auto; }
+.x { overflow-x: auto; overflow-y: hidden; }
+.both { overflow: auto; }
+
+.scroll::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.scroll::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: var(--lp-radius-pill);
+  background: linear-gradient(180deg, var(--lp-platinum-4), var(--lp-platinum-6));
+  background-clip: padding-box;
+}
+
+.scroll::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--lp-platinum-5), var(--lp-platinum-7));
+  background-clip: padding-box;
+}
+
+.scroll::-webkit-scrollbar-track {
+  background: transparent;
+}

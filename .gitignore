@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.DS_Store
+*.tsbuildinfo
+public/wallpaper/*.jpg
+public/wallpaper/*.jpeg
+public/wallpaper/*.png
+public/wallpaper/*.webp

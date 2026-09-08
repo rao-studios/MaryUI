@@ -1,0 +1,57 @@
+.checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--lp-space-2);
+  font-size: var(--lp-text-md);
+  color: var(--lp-ink-primary);
+}
+
+.checkbox[data-disabled] {
+  color: var(--lp-ink-disabled);
+}
+
+.input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.box {
+  display: grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  border-radius: var(--lp-radius-xs);
+  background: linear-gradient(180deg, var(--lp-surface-raised-top), var(--lp-surface-raised-bottom));
+  box-shadow:
+    var(--lp-shadow-emboss-raised),
+    0 0 0 1px var(--lp-edge-hairline);
+  transition: background var(--lp-motion-fast) ease-out;
+}
+
+.input:checked + .box {
+  background: linear-gradient(180deg, var(--lp-accent-light), var(--lp-accent-base));
+}
+
+.mark {
+  color: var(--lp-ink-on-accent);
+  opacity: 0;
+  transform: scale(0.6);
+  transition:
+    opacity var(--lp-motion-fast) ease-out,
+    transform var(--lp-motion-normal) var(--lp-motion-ease-spring);
+}
+
+.input:checked + .box .mark {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.input:focus-visible + .box {
+  box-shadow:
+    var(--lp-shadow-emboss-raised),
+    0 0 0 1px var(--lp-edge-hairline),
+    0 0 0 3px var(--lp-accent-focus-ring);
+}

@@ -1,0 +1,25 @@
+.menu {
+  position: fixed;
+  z-index: var(--lp-z-menus);
+  padding: var(--lp-space-1);
+  border-radius: var(--lp-radius-md);
+  background: var(--lp-surface-menu);
+  backdrop-filter: blur(14px) saturate(1.1);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  box-shadow:
+    var(--lp-shadow-menu),
+    var(--lp-shadow-emboss-raised);
+  animation: lp-menu-in var(--lp-motion-fast) var(--lp-motion-ease-out);
+  transform-origin: top left;
+}
+
+@keyframes lp-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scaleY(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

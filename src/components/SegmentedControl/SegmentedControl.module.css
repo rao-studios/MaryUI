@@ -1,0 +1,95 @@
+.track {
+  position: relative;
+  display: inline-grid;
+  height: var(--lp-size-control-height);
+  padding: 2px;
+  border-radius: var(--lp-radius-pill);
+  background: var(--lp-platinum-3);
+  box-shadow: var(--lp-shadow-emboss-well);
+}
+
+.sm {
+  height: var(--lp-size-control-height-sm);
+}
+
+.gooLayer,
+.segments {
+  grid-area: 1 / 1;
+  position: relative;
+}
+
+.gooLayer {
+  pointer-events: none;
+}
+
+.thumb,
+.hotBlob {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: calc(100% / var(--lp-seg-count));
+  border-radius: var(--lp-radius-pill);
+}
+
+.thumb {
+  left: 0;
+  background: linear-gradient(180deg, var(--lp-surface-raised-top), var(--lp-surface-raised-bottom));
+  box-shadow:
+    var(--lp-shadow-emboss-raised),
+    0 1px 2px rgba(0, 0, 0, 0.25);
+  transform: translateX(calc(var(--lp-seg-index) * 100%));
+  transition: transform var(--lp-motion-normal) var(--lp-motion-ease-spring);
+}
+
+.hotBlob {
+  left: calc(var(--lp-seg-i) * 100% / var(--lp-seg-count));
+  background: var(--lp-platinum-1);
+  opacity: 0;
+  transform: scale(0.6);
+  transition:
+    opacity var(--lp-motion-fast) ease-out,
+    transform var(--lp-motion-normal) var(--lp-motion-ease-spring);
+}
+
+.hotBlob[data-hot] {
+  opacity: 0.85;
+  transform: scale(1.02, 1.1);
+}
+
+.segments {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+}
+
+.segment {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--lp-space-1);
+  padding: 0 var(--lp-space-3);
+  border-radius: var(--lp-radius-pill);
+  font-size: var(--lp-text-sm);
+  font-weight: var(--lp-text-weight-medium);
+  color: var(--lp-ink-secondary);
+  white-space: nowrap;
+  transition: color var(--lp-motion-fast) ease-out;
+}
+
+.sm .segment {
+  padding: 0 var(--lp-space-2);
+  font-size: var(--lp-text-xs);
+}
+
+.segment[data-selected] {
+  color: var(--lp-ink-primary);
+  text-shadow: 0 1px 0 var(--lp-ink-emboss);
+}
+
+.segment:focus-visible {
+  box-shadow: 0 0 0 2px var(--lp-accent-focus-ring);
+}
+
+.icon {
+  display: inline-flex;
+}

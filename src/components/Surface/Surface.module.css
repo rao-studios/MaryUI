@@ -1,0 +1,87 @@
+/*
+ * Brushed platinum. Every variant is the same three layers with different
+ * top/bottom colors; --lp-s-top / --lp-s-bottom are the only knobs a variant
+ * turns. The window chrome overrides them again for inactive windows.
+ */
+
+.surface {
+  --lp-s-top: var(--lp-surface-window-top);
+  --lp-s-bottom: var(--lp-surface-window-bottom);
+  --lp-s-brush: var(--lp-brush-opacity);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--lp-s-top), var(--lp-s-bottom));
+  box-shadow: var(--lp-shadow-emboss-raised);
+}
+
+/* Brush grain: mid-gray noise under overlay only adds directional texture. */
+.surface::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: var(--lp-brush-url);
+  background-size: var(--lp-brush-tile, 256px) var(--lp-brush-tile, 256px);
+  mix-blend-mode: overlay;
+  opacity: var(--lp-s-brush);
+  border-radius: inherit;
+}
+
+/* The room light, reflected. The engine slides --lp-sheen-x across 0..1. */
+.sheen {
+  position: absolute;
+  top: -30%;
+  bottom: -30%;
+  left: -50%;
+  width: 200%;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    var(--lp-sheen-angle),
+    transparent 36%,
+    var(--lp-sheen-color) 50%,
+    transparent 64%
+  );
+  mix-blend-mode: screen;
+  opacity: var(--lp-sheen-alpha);
+  transform: translateX(calc((var(--lp-sheen-x) - 0.5) * 50%)) rotate(calc(var(--lp-tilt) * 1deg));
+  will-change: transform;
+}
+
+/* MARK: - Variants */
+
+.raised {
+  --lp-s-top: var(--lp-surface-raised-top);
+  --lp-s-bottom: var(--lp-surface-raised-bottom);
+}
+
+.flat {
+  --lp-s-top: var(--lp-surface-window-top);
+  --lp-s-bottom: var(--lp-surface-window-bottom);
+}
+
+.titlebar {
+  --lp-s-top: var(--lp-surface-titlebar-top);
+  --lp-s-bottom: var(--lp-surface-titlebar-bottom);
+}
+
+.bar {
+  --lp-s-top: var(--lp-surface-menubar-top);
+  --lp-s-bottom: var(--lp-surface-menubar-bottom);
+}
+
+.well {
+  --lp-s-top: var(--lp-surface-well);
+  --lp-s-bottom: var(--lp-surface-well);
+  --lp-s-brush: calc(var(--lp-brush-opacity) * 0.35);
+  box-shadow: var(--lp-shadow-emboss-well);
+}
+
+.body {
+  --lp-s-top: var(--lp-surface-body);
+  --lp-s-bottom: var(--lp-surface-body);
+  --lp-s-brush: calc(var(--lp-brush-opacity) * 0.25);
+  box-shadow: none;
+}

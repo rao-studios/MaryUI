@@ -1,0 +1,109 @@
+.frame {
+  position: absolute;
+  contain: layout;
+}
+
+.frame[data-anim='shade'] {
+  transition: height var(--lp-motion-slow) var(--lp-motion-ease-out);
+}
+
+.frame[data-resizing] {
+  transition: none;
+}
+
+/* Engine-owned: only `transform` changes per frame. */
+.chrome {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--lp-radius-window);
+  box-shadow:
+    var(--lp-shadow-window),
+    var(--lp-shadow-emboss-raised);
+  backface-visibility: hidden;
+}
+
+.frame[data-focused='true'] .chrome {
+  box-shadow:
+    var(--lp-shadow-window-focused),
+    var(--lp-shadow-emboss-raised);
+}
+
+.frame[data-state='zoomed'] .chrome {
+  border-radius: 0;
+}
+
+.titleBar {
+  border-radius: var(--lp-radius-window) var(--lp-radius-window) 0 0;
+}
+
+.frame[data-state='shaded'] .titleBar {
+  border-radius: var(--lp-radius-window);
+  box-shadow: var(--lp-shadow-emboss-raised);
+}
+
+.body {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.frame[data-state='shaded']:not([data-anim]) .body {
+  visibility: hidden;
+}
+
+.frame[data-closing] .chrome {
+  animation: lp-window-close var(--lp-motion-fast) ease-in forwards;
+}
+
+@keyframes lp-window-close {
+  to {
+    transform: scale(0.96);
+    opacity: 0;
+  }
+}
+
+/* MARK: - Resize handles */
+
+.handle {
+  position: absolute;
+  z-index: 2;
+  touch-action: none;
+}
+
+.h_n,
+.h_s {
+  left: var(--lp-size-resize-corner);
+  right: var(--lp-size-resize-corner);
+  height: var(--lp-size-resize-grip);
+  cursor: ns-resize;
+}
+
+.h_e,
+.h_w {
+  top: var(--lp-size-resize-corner);
+  bottom: var(--lp-size-resize-corner);
+  width: var(--lp-size-resize-grip);
+  cursor: ew-resize;
+}
+
+.h_n { top: calc(var(--lp-size-resize-grip) * -0.5); }
+.h_s { bottom: calc(var(--lp-size-resize-grip) * -0.5); }
+.h_w { left: calc(var(--lp-size-resize-grip) * -0.5); }
+.h_e { right: calc(var(--lp-size-resize-grip) * -0.5); }
+
+.h_ne,
+.h_nw,
+.h_se,
+.h_sw {
+  width: var(--lp-size-resize-corner);
+  height: var(--lp-size-resize-corner);
+}
+
+.h_nw { top: -3px; left: -3px; cursor: nwse-resize; }
+.h_se { bottom: -3px; right: -3px; cursor: nwse-resize; }
+.h_ne { top: -3px; right: -3px; cursor: nesw-resize; }
+.h_sw { bottom: -3px; left: -3px; cursor: nesw-resize; }

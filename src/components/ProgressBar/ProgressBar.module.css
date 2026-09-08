@@ -1,0 +1,63 @@
+.rail {
+  position: relative;
+  width: 100%;
+  height: 8px;
+  border-radius: var(--lp-radius-pill);
+  background: var(--lp-platinum-4);
+  box-shadow: var(--lp-shadow-emboss-well);
+  overflow: hidden;
+}
+
+.fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--lp-progress);
+  border-radius: inherit;
+  background: linear-gradient(180deg, var(--lp-accent-light), var(--lp-accent-base) 55%, var(--lp-accent-deep));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transition: width var(--lp-motion-normal) var(--lp-motion-ease-out);
+}
+
+/* A thin moving glint keeps a static value looking liquid. */
+.fill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.35) 50%, transparent 100%);
+  background-size: 40% 100%;
+  background-repeat: no-repeat;
+  animation: lp-glint 2.8s ease-in-out infinite;
+}
+
+.indeterminate .fill {
+  width: 100%;
+  background: repeating-linear-gradient(
+    -55deg,
+    var(--lp-platinum-1) 0 8px,
+    var(--lp-platinum-4) 8px 16px
+  );
+  background-size: 200% 100%;
+  animation: lp-barber 1.1s linear infinite;
+}
+
+.indeterminate .fill::after {
+  display: none;
+}
+
+@keyframes lp-glint {
+  from {
+    background-position: -40% 0;
+  }
+  to {
+    background-position: 140% 0;
+  }
+}
+
+@keyframes lp-barber {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 22.6px 0;
+  }
+}

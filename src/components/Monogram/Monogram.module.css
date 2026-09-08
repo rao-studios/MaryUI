@@ -1,0 +1,12 @@
+.mark {
+  display: inline-block;
+  flex: none;
+}
+
+.flat {
+  fill: currentColor;
+}
+
+.platinum {
+  isolation: isolate;
+}

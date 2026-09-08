@@ -1,0 +1,126 @@
+/*
+ * Global base for the Liquid Platinum desktop: token import, reset, typography,
+ * the accent mapping (Blue / Graphite), and the data-attribute feature flags
+ * that let the View menu switch goo, wallpaper, and motion at runtime.
+ */
+
+@import './tokens.css';
+
+/* MARK: - Accent appearance */
+
+:root,
+:root[data-accent='blue'] {
+  --lp-accent-base: var(--lp-accent-blue-base);
+  --lp-accent-deep: var(--lp-accent-blue-deep);
+  --lp-accent-light: var(--lp-accent-blue-light);
+  --lp-accent-soft: var(--lp-accent-blue-soft);
+  --lp-accent-focus-ring: var(--lp-accent-blue-focus-ring);
+}
+
+:root[data-accent='graphite'] {
+  --lp-accent-base: var(--lp-accent-graphite-base);
+  --lp-accent-deep: var(--lp-accent-graphite-deep);
+  --lp-accent-light: var(--lp-accent-graphite-light);
+  --lp-accent-soft: var(--lp-accent-graphite-soft);
+  --lp-accent-focus-ring: var(--lp-accent-graphite-focus-ring);
+}
+
+/* MARK: - Motion defaults (the engine overrides these per window) */
+
+:root {
+  --lp-sheen-x: 0.5;
+  --lp-tilt: 0;
+  --lp-vx: 0;
+  --lp-slosh: 0deg;
+  --lp-slosh-y: 0px;
+  --lp-bubble-phase: 0s;
+  --lp-brush-url: none; /* set by src/lib/textures.ts at startup */
+  color-scheme: light;
+}
+
+/* MARK: - Reset */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+  background: var(--lp-platinum-6);
+  color: var(--lp-ink-primary);
+  font-family: var(--lp-font-ui);
+  font-size: var(--lp-text-md);
+  line-height: var(--lp-text-leading-normal);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: default;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+img,
+svg {
+  display: block;
+}
+
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  box-shadow: 0 0 0 3px var(--lp-accent-focus-ring);
+}
+
+/* MARK: - Feature flags */
+
+:root[data-goo='off'] [data-lp-goo-layer] {
+  filter: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --lp-reduced-motion: 1;
+  }
+}
+
+:root[data-reduced-motion='on'] {
+  --lp-reduced-motion: 1;
+}
+
+:root[data-reduced-motion='on'] *,
+:root[data-reduced-motion='on'] *::before,
+:root[data-reduced-motion='on'] *::after {
+  animation-play-state: paused !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-play-state: paused !important;
+  }
+}

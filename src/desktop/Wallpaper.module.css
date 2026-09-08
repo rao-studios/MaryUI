@@ -1,0 +1,51 @@
+.wallpaper {
+  position: absolute;
+  inset: 0;
+  z-index: var(--lp-z-wallpaper);
+  overflow: hidden;
+  background: linear-gradient(160deg, var(--lp-platinum-3), var(--lp-platinum-6) 55%, var(--lp-platinum-8));
+}
+
+.canvas,
+.raster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.canvas {
+  opacity: 0;
+  transition: opacity var(--lp-motion-slow) ease-out;
+}
+
+.canvas[data-ready='true'] {
+  opacity: 1;
+}
+
+/* A slow, soft-light highlight wandering across the metal. Never touches the filter. */
+.drift {
+  position: absolute;
+  inset: -50%;
+  background: radial-gradient(ellipse 40% 30% at 50% 50%, rgba(255, 255, 255, 0.55), transparent 70%);
+  mix-blend-mode: soft-light;
+  animation: lp-drift var(--lp-motion-drift-period) ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+.vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 40%, transparent 55%, rgba(20, 22, 28, 0.35));
+  pointer-events: none;
+}
+
+@keyframes lp-drift {
+  from {
+    transform: translate(-12%, -8%) rotate(-6deg);
+  }
+  to {
+    transform: translate(12%, 10%) rotate(8deg);
+  }
+}
