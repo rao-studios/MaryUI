@@ -1,6 +1,6 @@
 # TextField
 
-An inset well with an optional leading icon. `round` makes the toolbar search capsule.
+An inset well with an optional leading icon. `round` makes the toolbar search capsule; `large` (with `round`) is Spotlight's 44px bar in `--lp-text-lg`.
 
 ## States
 focus-within (accent ring `--lp-accent-focus-ring`) · disabled.

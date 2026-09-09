@@ -146,11 +146,14 @@ export const tokens = {
     resizeCorner: "14px",
     windowMinW: "240px",
     windowMinH: "160px",
+    spotlightWidth: "560px",
+    spotlightBarHeight: "44px",
+    spotlightTile: "56px",
   },
   font: {
-    ui: ["-apple-system","BlinkMacSystemFont","SF Pro Text","Helvetica Neue","Helvetica","Arial","sans-serif"],
-    display: ["Iowan Old Style","Palatino Linotype","Palatino","Georgia","serif"],
-    mono: ["SFMono-Regular","ui-monospace","Menlo","Consolas","monospace"],
+    ui: ["-apple-system","BlinkMacSystemFont","SF Pro Text","Helvetica Neue","Helvetica","Arial","Inter","sans-serif"],
+    display: ["Iowan Old Style","Palatino Linotype","Palatino","Georgia","P052","serif"],
+    mono: ["SFMono-Regular","ui-monospace","Menlo","Consolas","JetBrains Mono","monospace"],
   },
   text: {
     xs: "11px",
@@ -205,6 +208,7 @@ export const tokens = {
     windows: 100,
     menubar: 600,
     menus: 700,
+    spotlight: 800,
   },
 } as const
 
@@ -317,6 +321,9 @@ export const tokenNames = [
   "size-resize-corner",
   "size-window-min-w",
   "size-window-min-h",
+  "size-spotlight-width",
+  "size-spotlight-bar-height",
+  "size-spotlight-tile",
   "font-ui",
   "font-display",
   "font-mono",
@@ -360,6 +367,7 @@ export const tokenNames = [
   "z-windows",
   "z-menubar",
   "z-menus",
+  "z-spotlight",
 ] as const
 
 export type TokenName = (typeof tokenNames)[number]

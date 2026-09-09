@@ -1,15 +1,17 @@
 /**
  * Desktop — the simulated machine. Owns the window-manager store, keeps its
  * bounds in step with the viewport, mounts the shared SVG defs, the wallpaper,
- * the windows, and the menu bar, and opens the starting apps once.
+ * the windows, the menu bar and Spotlight, and opens the starting apps once.
  */
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
 import { MenuBar } from '@/components/MenuBar'
 import { SvgDefs } from '@/components/SvgDefs'
 import { useDesktopKeys } from '@/hooks/useDesktopKeys'
 import { tokens } from '@/tokens/tokens'
 import { openApp } from './apps/registry'
+import { initialSpotlight, spotlightReducer } from './spotlight'
+import { SpotlightHost } from './SpotlightHost'
 import { Wallpaper } from './Wallpaper'
 import { WindowLayer } from './WindowLayer'
 import { initialState, reducer } from './wm/reducer'
@@ -45,7 +47,10 @@ export function Desktop() {
     openApp(store, 'gallery')
   }, [store])
 
-  useDesktopKeys(store)
+  const [spotlight, dispatchSpotlight] = useReducer(spotlightReducer, initialSpotlight)
+  const onEscape = useCallback(() => dispatchSpotlight({ type: 'CLOSE' }), [])
+  const onToggleSpotlight = useCallback(() => dispatchSpotlight({ type: 'TOGGLE' }), [])
+  useDesktopKeys(store, { onEscape, onToggleSpotlight, suspended: spotlight.open })
 
   return (
     <WMContext.Provider value={store}>
@@ -58,6 +63,7 @@ export function Desktop() {
         <div className={styles.menubarSlot}>
           <MenuBar />
         </div>
+        <SpotlightHost state={spotlight} dispatch={dispatchSpotlight} />
       </div>
     </WMContext.Provider>
   )

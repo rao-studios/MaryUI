@@ -2,8 +2,9 @@
 
 import { describe, expect, it } from 'vitest'
 // @ts-expect-error — plain ESM module without a declaration file.
-import { buildAll, cssName, flatten, parseColor, resolveAliases, toCss, toCssValue } from './tokens-lib.mjs'
+import { buildAll, cDimension, cDurationMs, cFloat, cIconName, cName, cssName, flatten, parseColor, resolveAliases, toCss, toCssValue, toIconsC } from './tokens-lib.mjs'
 import tree from '../tokens/tokens.json'
+import icons from '../src/components/Icon/icons.json'
 
 describe('flatten', () => {
   it('inherits $type from groups and keeps source order', () => {
@@ -69,8 +70,60 @@ describe('parseColor', () => {
   })
 })
 
+describe('c', () => {
+  it('names macros with the LP prefix and underscores', () => {
+    expect(cName(['accent', 'blue', 'focus-ring'])).toBe('LP_ACCENT_BLUE_FOCUS_RING')
+    expect(cName(['platinum', '0'])).toBe('LP_PLATINUM_0')
+    expect(cIconName('chevronLeft')).toBe('LP_ICON_CHEVRON_LEFT')
+  })
+
+  it('formats numbers and units the way C wants them', () => {
+    expect(cFloat(12)).toBe('12.0f')
+    expect(cFloat(0.00005)).toBe('0.00005f')
+    expect(cDimension('12px')).toEqual({ unit: 'px', number: 12 })
+    expect(cDimension('105deg')).toEqual({ unit: 'deg', number: 105 })
+    expect(cDurationMs('120ms')).toBe(120)
+    expect(cDurationMs('7s')).toBe(7000)
+  })
+
+  it('emits the icon table in JSON order', () => {
+    const header = toIconsC({ folder: ['M1 1'], chevronLeft: ['M2 2', 'M3 3'] })
+    expect(header).toContain('LP_ICON_FOLDER,\n    LP_ICON_CHEVRON_LEFT,\n    LP_ICON_COUNT,')
+    expect(header).toContain('#define LP_ICON_PATH_MAX 2')
+    expect(header).toContain('{ "M2 2", "M3 3", NULL }')
+  })
+})
+
 describe('the real tokens.json', () => {
-  const out = buildAll(tree)
+  const out = buildAll(tree, icons, { sourceHash: 'abc', iconsHash: 'def' })
+
+  it('emits the C header with every token type', () => {
+    expect(out.c).toContain('#define LP_PLATINUM_0 ((lp_color){ 0.9686f, 0.9686f, 0.9765f, 1.0f })')
+    expect(out.c).toContain('#define LP_SURFACE_WINDOW_TOP ((lp_color){ 0.9333f, 0.9373f, 0.949f, 1.0f })')
+    expect(out.c).toContain('#define LP_RADIUS_WINDOW 12.0f')
+    expect(out.c).toContain('#define LP_SHEEN_ANGLE_DEG 105.0f')
+    expect(out.c).toContain('#define LP_MOTION_FAST_MS 120.0f')
+    expect(out.c).toContain('#define LP_MOTION_SWIRL_PERIOD_MS 7000.0f')
+    expect(out.c).toContain('#define LP_MOTION_SLOSH_GAIN 0.00005f')
+    expect(out.c).toContain('#define LP_Z_WINDOWS 100')
+    expect(out.c).toContain('#define LP_TEXT_WEIGHT_SEMIBOLD 600')
+    expect(out.c).toContain('#define LP_MOTION_SPRING_JELLY ((lp_spring_params){ 2.2f, 0.55f })')
+    expect(out.c).toContain('#define LP_MOTION_EASE_SPRING ((lp_cubic_bezier){ 0.34f, 1.56f, 0.64f, 1.0f })')
+    expect(out.c).toContain('#define LP_SHADOW_WINDOW_COUNT 2')
+    expect(out.c).toContain('{ 1, 0.0f, 1.0f, 0.0f, 0.0f, ((lp_color){ 1.0f, 1.0f, 1.0f, 0.78f }) }')
+    expect(out.c).toContain('"P052"')
+    expect(out.c).toContain('#define LP_FONT_UI_PANGO "-apple-system, BlinkMacSystemFont, SF Pro Text, Helvetica Neue, Helvetica, Arial, Inter, sans-serif"')
+    expect(out.c).toContain('#define LP_TOKENS_SOURCE_SHA "abc"')
+    const count = Number(/#define LP_TOKEN_COUNT (\d+)/.exec(out.c)?.[1])
+    expect(count).toBe(out.tokens.length)
+    expect(out.c).not.toMatch(/\{[a-z]+\.[a-z]/)
+  })
+
+  it('emits every icon into the C header', () => {
+    expect(out.iconsC).toContain(`#define LP_ICON_PATH_MAX ${Math.max(...Object.values(icons).map((p) => p.length))}`)
+    expect(out.iconsC?.split("\n").filter((l: string) => l.startsWith('    LP_ICON_') && !l.includes('COUNT')).length).toBe(Object.keys(icons).length)
+    expect(out.iconsC).toContain('LP_ICON_FOLDER,')
+  })
 
   it('builds without unresolved aliases', () => {
     expect(out.css).not.toMatch(/\{[a-z]/)

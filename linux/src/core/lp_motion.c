@@ -1,0 +1,271 @@
+#include <math.h>
+#include <string.h>
+
+#include "maryui/lp_geometry.h"
+#include "maryui/lp_motion.h"
+#include "maryui/lp_tokens.h"
+
+/* MARK: - Parameters */
+
+lp_motion_params lp_motion_params_from_tokens(void) {
+    return (lp_motion_params){
+        .sheen = LP_MOTION_SPRING_SHEEN, .tilt = LP_MOTION_SPRING_TILT, .jelly = LP_MOTION_SPRING_JELLY, .fly = LP_MOTION_SPRING_FLY,
+        .slosh = { LP_MOTION_SLOSH_FREQUENCY, LP_MOTION_SLOSH_DAMPING, LP_MOTION_SLOSH_GAIN, LP_MOTION_SLOSH_MAX, LP_MOTION_SLOSH_MAX_ACCEL },
+        .jelly_max_scale = LP_MOTION_JELLY_MAX_SCALE, .jelly_max_skew = LP_MOTION_JELLY_MAX_SKEW, .tilt_max = LP_MOTION_TILT_MAX,
+        .velocity_ref = LP_MOTION_VELOCITY_REF, .light_x = LP_SHEEN_LIGHT_X,
+    };
+}
+
+lp_motion_params lp_motion_live = {
+    .sheen = LP_MOTION_SPRING_SHEEN, .tilt = LP_MOTION_SPRING_TILT, .jelly = LP_MOTION_SPRING_JELLY, .fly = LP_MOTION_SPRING_FLY,
+    .slosh = { LP_MOTION_SLOSH_FREQUENCY, LP_MOTION_SLOSH_DAMPING, LP_MOTION_SLOSH_GAIN, LP_MOTION_SLOSH_MAX, LP_MOTION_SLOSH_MAX_ACCEL },
+    .jelly_max_scale = LP_MOTION_JELLY_MAX_SCALE, .jelly_max_skew = LP_MOTION_JELLY_MAX_SKEW, .tilt_max = LP_MOTION_TILT_MAX,
+    .velocity_ref = LP_MOTION_VELOCITY_REF, .light_x = LP_SHEEN_LIGHT_X,
+};
+
+void lp_motion_reset_params(void) { lp_motion_live = lp_motion_params_from_tokens(); }
+
+/* MARK: - Easing */
+
+static float bezier_axis(float p1, float p2, float t) {
+    float u = 1.0f - t;
+    return 3.0f * u * u * t * p1 + 3.0f * u * t * t * p2 + t * t * t;
+}
+
+static float bezier_axis_slope(float p1, float p2, float t) {
+    float u = 1.0f - t;
+    return 3.0f * u * u * p1 + 6.0f * u * t * (p2 - p1) + 3.0f * t * t * (1.0f - p2);
+}
+
+float lp_cubic_bezier_eval(lp_cubic_bezier b, float x) {
+    if (x <= 0.0f) return 0.0f;
+    if (x >= 1.0f) return 1.0f;
+    /* Solve x(t) = x: Newton from t = x, bisection when the slope is flat. */
+    float t = x;
+    for (int i = 0; i < 8; i++) {
+        float err = bezier_axis(b.x1, b.x2, t) - x;
+        if (fabsf(err) < 1e-6f) break;
+        float slope = bezier_axis_slope(b.x1, b.x2, t);
+        if (fabsf(slope) < 1e-6f) break;
+        t -= err / slope;
+        if (t < 0.0f) t = 0.0f;
+        if (t > 1.0f) t = 1.0f;
+    }
+    if (fabsf(bezier_axis(b.x1, b.x2, t) - x) > 1e-4f) {
+        float lo = 0.0f, hi = 1.0f;
+        for (int i = 0; i < 24; i++) {
+            t = 0.5f * (lo + hi);
+            if (bezier_axis(b.x1, b.x2, t) < x) lo = t; else hi = t;
+        }
+    }
+    return bezier_axis(b.y1, b.y2, t);
+}
+
+/* MARK: - Engine */
+
+void lp_motion_engine_init(lp_motion_engine *e, void (*wake)(void *user), void *user) {
+    memset(e, 0, sizeof *e);
+    e->wake = wake;
+    e->user = user;
+}
+
+void lp_motion_engine_add(lp_motion_engine *e, lp_motion_target *target) {
+    if (target->attached) return;
+    target->attached = 1;
+    target->next = e->targets;
+    e->targets = target;
+}
+
+void lp_motion_engine_remove(lp_motion_engine *e, lp_motion_target *target) {
+    if (!target->attached) return;
+    for (lp_motion_target **p = &e->targets; *p; p = &(*p)->next) {
+        if (*p == target) { *p = target->next; break; }
+    }
+    target->next = NULL;
+    target->attached = 0;
+}
+
+void lp_motion_engine_wake(lp_motion_engine *e, double now_ms) {
+    if (e->running) return;
+    e->running = 1;
+    e->last_ms = now_ms;
+    e->wakes++;
+    if (e->wake) e->wake(e->user);
+}
+
+int lp_motion_engine_tick(lp_motion_engine *e, double now_ms) {
+    if (!e->running) return 0;
+    double elapsed = (now_ms - e->last_ms) / 1000.0;
+    float dt = elapsed < 0 ? 0.0f : elapsed > LP_MOTION_MAX_DT ? LP_MOTION_MAX_DT : (float)elapsed;
+    e->last_ms = now_ms;
+    e->frames++;
+    int active = 0;
+    /* A target may remove itself while stepping: read `next` first. */
+    for (lp_motion_target *t = e->targets, *next; t; t = next) {
+        next = t->next;
+        active = t->step(t, dt, now_ms) || active;
+    }
+    e->running = active;
+    if (!active) e->idles++;
+    return active;
+}
+
+/* MARK: - Window motion */
+
+static float clampf(float v, float lo, float hi) { return v < lo ? lo : v > hi ? hi : v; }
+
+void lp_window_motion_init(lp_window_motion *m) {
+    memset(m, 0, sizeof *m);
+    m->sheen = lp_spring_make(0.5f, 0.5f);
+    m->tilt = lp_spring_make(0, 0);
+    m->skew = lp_spring_make(0, 0);
+    m->sx = lp_spring_make(1, 1);
+    m->sy = lp_spring_make(1, 1);
+    m->fly_x = lp_spring_make(0, 0);
+    m->fly_y = lp_spring_make(0, 0);
+    m->fly_sx = lp_spring_make(1, 1);
+    m->fly_sy = lp_spring_make(1, 1);
+    m->slosh = lp_slosh_make();
+    m->slosh_y = lp_slosh_make();
+    m->out = (lp_window_motion_out){ .sx = 1, .sy = 1, .jelly_sx = 1, .jelly_sy = 1, .fly_sx = 1, .fly_sy = 1, .sheen_x = 0.5f, .identity = 1 };
+}
+
+static void write_transform(lp_window_motion *m) {
+    lp_window_motion_out *o = &m->out;
+    o->tx = m->drag_dx + m->fly_x.value;
+    o->ty = m->drag_dy + m->fly_y.value;
+    o->jelly_sx = m->sx.value;
+    o->jelly_sy = m->sy.value;
+    o->fly_sx = m->fly_sx.value;
+    o->fly_sy = m->fly_sy.value;
+    o->sx = o->jelly_sx * o->fly_sx;
+    o->sy = o->jelly_sy * o->fly_sy;
+    o->skew_deg = m->skew.value;
+    o->origin_x = m->origin_x;
+    o->origin_y = m->origin_y;
+    o->identity = 0;
+}
+
+static void write_identity(lp_window_motion *m) {
+    lp_window_motion_out *o = &m->out;
+    o->tx = o->ty = 0;
+    o->sx = o->sy = o->jelly_sx = o->jelly_sy = o->fly_sx = o->fly_sy = 1;
+    o->skew_deg = 0;
+    o->identity = 1;
+}
+
+void lp_window_motion_begin_drag(lp_window_motion *m, float grab_x, float grab_y) {
+    m->dragging = 1;
+    m->drag_dx = m->drag_dy = 0;
+    lp_pointer_tracker_reset(&m->tracker);
+    m->origin_x = grab_x;
+    m->origin_y = grab_y;
+}
+
+void lp_window_motion_move_drag(lp_window_motion *m, float dx, float dy, double t_ms, float x, float y) {
+    m->drag_dx = dx;
+    m->drag_dy = dy;
+    lp_pointer_tracker_push(&m->tracker, t_ms, x, y);
+}
+
+void lp_window_motion_end_drag(lp_window_motion *m) {
+    m->dragging = 0;
+    m->drag_dx = m->drag_dy = 0;
+    lp_pointer_tracker_reset(&m->tracker);
+    write_transform(m);
+}
+
+void lp_window_motion_begin_resize(lp_window_motion *m) { m->resizing = 1; }
+void lp_window_motion_end_resize(lp_window_motion *m) { m->resizing = 0; }
+
+void lp_window_motion_fly_from(lp_window_motion *m, lp_rect from, lp_rect to, int reduced_motion) {
+    lp_flip t = lp_flip_transform(from, to);
+    if (reduced_motion) return;
+    m->fly_x.value = t.tx;
+    m->fly_y.value = t.ty;
+    m->fly_sx.value = t.sx;
+    m->fly_sy.value = t.sy;
+    m->fly_x.velocity = m->fly_y.velocity = m->fly_sx.velocity = m->fly_sy.velocity = 0;
+    m->flying = 1;
+    m->origin_x = m->origin_y = 0;
+    write_transform(m);
+}
+
+int lp_window_motion_step(lp_window_motion *m, float dt, double now_ms, lp_rect rect, float viewport_w,
+                          const lp_motion_params *p, int reduced) {
+    lp_motion_sample s = m->dragging ? lp_pointer_tracker_sample(&m->tracker, now_ms) : (lp_motion_sample){ 0, 0, 0, 0 };
+    float vw = viewport_w > 0 ? viewport_w : 1;
+
+    m->sheen.target = clampf((p->light_x * vw - (rect.x + m->drag_dx)) / fmaxf(rect.w, 1), -0.3f, 1.3f);
+    float n = clampf(s.vx / p->velocity_ref, -1, 1);
+    float mag = clampf(hypotf(s.vx, s.vy) / p->velocity_ref, 0, 1);
+    int deform = m->dragging && !m->resizing && !reduced;
+    m->tilt.target = deform ? n * p->tilt_max : 0;
+    m->skew.target = deform ? n * p->jelly_max_skew : 0;
+    m->sx.target = deform ? 1 + mag * p->jelly_max_scale : 1;
+    m->sy.target = deform ? 1 - 0.6f * mag * p->jelly_max_scale : 1;
+
+    if (reduced) {
+        lp_spring_snap(&m->sheen);
+        lp_spring_snap(&m->tilt);
+        lp_spring_snap(&m->skew);
+        lp_spring_snap(&m->sx);
+        lp_spring_snap(&m->sy);
+        lp_spring_snap(&m->fly_x);
+        lp_spring_snap(&m->fly_y);
+        lp_spring_snap(&m->fly_sx);
+        lp_spring_snap(&m->fly_sy);
+        m->slosh = lp_slosh_make();
+        m->slosh_y = lp_slosh_make();
+        m->flying = 0;
+    } else {
+        lp_spring_step(&m->sheen, dt, p->sheen);
+        lp_spring_step(&m->tilt, dt, p->tilt);
+        lp_spring_step(&m->skew, dt, p->jelly);
+        lp_spring_step(&m->sx, dt, p->jelly);
+        lp_spring_step(&m->sy, dt, p->jelly);
+        lp_spring_step(&m->fly_x, dt, p->fly);
+        lp_spring_step(&m->fly_y, dt, p->fly);
+        lp_spring_step(&m->fly_sx, dt, p->fly);
+        lp_spring_step(&m->fly_sy, dt, p->fly);
+        m->slosh = lp_slosh_step(m->slosh, s.ax, dt, p->slosh);
+        m->slosh_y = lp_slosh_step(m->slosh_y, s.ay, dt, p->slosh);
+    }
+
+    m->out.sheen_x = m->sheen.value;
+    m->out.tilt_deg = m->tilt.value;
+    m->out.vx = n;
+    m->out.slosh_deg = -m->slosh.theta * 180.0f / (float)M_PI;
+    m->out.slosh_y_px = m->slosh_y.theta * 6.0f;
+    m->last_vx = n;
+
+    int flight_settled = lp_spring_settled(&m->fly_x, 0.05f, 0.5f) && lp_spring_settled(&m->fly_y, 0.05f, 0.5f) &&
+                         lp_spring_settled(&m->fly_sx, 0.0005f, 0.005f) && lp_spring_settled(&m->fly_sy, 0.0005f, 0.005f);
+    if (m->flying && flight_settled) {
+        m->flying = 0;
+        lp_spring_snap(&m->fly_x);
+        lp_spring_snap(&m->fly_y);
+        lp_spring_snap(&m->fly_sx);
+        lp_spring_snap(&m->fly_sy);
+    }
+
+    int deform_settled = lp_spring_settled(&m->skew, 0.005f, 0.05f) && lp_spring_settled(&m->sx, 0.0005f, 0.005f) &&
+                         lp_spring_settled(&m->sy, 0.0005f, 0.005f);
+    int settled = !m->dragging && !m->flying && !m->resizing && deform_settled &&
+                  lp_spring_settled(&m->tilt, 0.005f, 0.05f) && lp_spring_settled(&m->sheen, 0.0005f, 0.005f) &&
+                  lp_slosh_settled(m->slosh, LP_SLOSH_TOLERANCE, LP_SLOSH_VELOCITY_TOLERANCE) &&
+                  lp_slosh_settled(m->slosh_y, LP_SLOSH_TOLERANCE, LP_SLOSH_VELOCITY_TOLERANCE);
+
+    if (settled) {
+        if (!m->wrote_identity) {
+            write_identity(m);
+            m->wrote_identity = 1;
+        }
+        return 0;
+    }
+    m->wrote_identity = 0;
+    write_transform(m);
+    return 1;
+}
+
+float lp_window_motion_velocity_x(const lp_window_motion *m) { return m->last_vx; }

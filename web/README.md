@@ -27,6 +27,12 @@ npm run sketch     # design/liquid-platinum.sketch (needs Chrome for the texture
   swatches, and a **Motion** tab whose sliders retune the physics live. *Copy JSON patch* gives you the
   values to paste back into `tokens/tokens.json`.
 - **About** — the platinum monogram.
+- **Spotlight** — `Ctrl+Space` (or `⌘Space` where the browser lets it through). The pill-shaped search bar is
+  also the dock: a blank query shows every app as a tile (running ones carry a dot); typing filters apps,
+  commands and open windows; `↑/↓` move, `Enter` launches, `Esc` or a click outside closes.
+- **TextEdit** — the first application, reachable only from Spotlight: a name field, Save, a TextArea, a
+  status bar with words, characters and `Ln, Col`; `⌘/Ctrl+S` keeps the document in `localStorage`
+  (the C desktop writes `~/Documents/<name>.txt`).
 
 ## Layout
 
@@ -41,6 +47,7 @@ src/lib/                     framework-free: spring, slosh, velocity, geometry, 
 src/hooks/                   useDrag, useResize, useMotionTarget, useOutsideClick, useDesktopKeys, useClock
 src/components/<Name>/       <Name>.tsx · <Name>.module.css · index.ts · README.md
 src/desktop/                 Desktop, Wallpaper, WindowLayer, settings, menus, wm/ (store + reducer), apps/
+../linux/                    the same system in C: libmaryui + maryui-desktop (wlroots); see ../linux/README.md
 ```
 
 ## How the metal works
@@ -81,7 +88,8 @@ engine and the designer read the same numbers. The Blue/Graphite accent mapping 
 ## Taking it elsewhere
 
 - **Sketch**: `npm run sketch` writes `design/liquid-platinum.sketch` — Color Variables for every token, a symbol per component variant, Components/Tokens/Desktop artboards, brushed overlay at max (`--brush=` to change). See `design/README.md`. The palette-only route is `tokens/export/liquid-platinum.sketchpalette`.
-- **Swift / other codebases**: `tokens.json` is the contract; add an emitter to `scripts/tokens-lib.mjs` (a `Color(red:green:blue:opacity:)` writer is ~20 lines). The physics in `src/lib/spring.ts` and `src/lib/slosh.ts` are a dozen lines each and port directly.
+- **Linux**: `../linux` is the design system as a C library plus a Wayland compositor — the whole desktop, drawn by Cairo from the same tokens. `npm run tokens` also writes `../linux/include/maryui/lp_tokens.h` and `lp_icons.h` (the `toC` and `toIconsC` emitters in `scripts/tokens-lib.mjs`); `../linux/PARITY.md` lists every file here and its C twin. MaryOS boots it.
+- **Swift / other codebases**: `tokens.json` is the contract; add an emitter to `scripts/tokens-lib.mjs` (a `Color(red:green:blue:opacity:)` writer is ~20 lines; the C one is the model). The physics in `src/lib/spring.ts` and `src/lib/slosh.ts` are a dozen lines each and port directly.
 - **Wallpaper**: drop `public/wallpaper/platinum.jpg` and choose View › Raster Wallpaper.
 
 Apache-2.0.

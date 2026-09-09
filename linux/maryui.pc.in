@@ -1,0 +1,10 @@
+prefix=@PREFIX@
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: maryui
+Description: Liquid Platinum design system for Linux (Cairo/Pango components, physics, window manager)
+Version: @VERSION@
+Libs: -L${libdir} -lmaryui @LIBS@
+Cflags: -I${includedir}

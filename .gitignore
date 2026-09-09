@@ -1,8 +1,11 @@
-node_modules/
-dist/
+web/node_modules/
+web/dist/
 .DS_Store
 *.tsbuildinfo
-public/wallpaper/*.jpg
-public/wallpaper/*.jpeg
-public/wallpaper/*.png
-public/wallpaper/*.webp
+web/public/wallpaper/*.jpg
+web/public/wallpaper/*.jpeg
+web/public/wallpaper/*.png
+web/public/wallpaper/*.webp
+
+# MaryUI for Linux (make O=build)
+linux/build/

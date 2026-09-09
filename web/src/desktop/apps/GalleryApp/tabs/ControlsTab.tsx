@@ -8,11 +8,22 @@ import { ListHeader, ListRow } from '@/components/ListRow'
 import { ProgressBar } from '@/components/ProgressBar'
 import { SegmentedControl } from '@/components/SegmentedControl'
 import { Slider } from '@/components/Slider'
+import { SpotlightPanel } from '@/components/Spotlight'
+import { TextArea } from '@/components/TextArea'
 import { TextField } from '@/components/TextField'
 import { Toggle } from '@/components/Toggle'
+import type { SpotlightItem } from '@/desktop/spotlight'
 import styles from '../GalleryApp.module.css'
 
 type Range = 'day' | 'week' | 'month'
+
+const dock: SpotlightItem[] = [
+  { kind: 'app', id: 'finder', title: 'Finder', subtitle: 'Application', icon: 'folder', running: true },
+  { kind: 'app', id: 'gallery', title: 'Gallery', subtitle: 'Application', icon: 'drop', running: true },
+  { kind: 'app', id: 'about', title: 'About', subtitle: 'Application', icon: 'info', running: false },
+  { kind: 'app', id: 'textedit', title: 'TextEdit', subtitle: 'Application', icon: 'pencil', running: false },
+  { kind: 'command', id: 'terminal', title: 'Terminal', subtitle: 'Command', icon: 'terminal', running: false },
+]
 
 export function ControlsTab() {
   const [segment, setSegment] = useState<Range>('week')
@@ -22,6 +33,8 @@ export function ControlsTab() {
   const [slider, setSlider] = useState(42)
   const [text, setText] = useState('')
   const [row, setRow] = useState('Liquid Platinum.sketch')
+  const [note, setNote] = useState('Brushed platinum that moves like liquid.\nEvery surface is a token, every window a physics target.')
+  const [tile, setTile] = useState(3)
 
   return (
     <>
@@ -130,6 +143,20 @@ export function ControlsTab() {
             />
           ))}
         </div>
+      </section>
+
+      <section className={styles.section}>
+        <h2 className={styles.heading}>Text area</h2>
+        <p className={styles.note}>Click to place the caret, drag to select, ↑/↓ by visual line, ⌘A/C/X/V.</p>
+        <div className={styles.stack}>
+          <TextArea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Type something…" />
+        </div>
+      </section>
+
+      <section className={styles.section}>
+        <h2 className={styles.heading}>Spotlight</h2>
+        <p className={styles.note}>Ctrl+Space opens it on the desktop: the search bar is the dock; typing filters apps and windows.</p>
+        <SpotlightPanel query="" items={dock} selection={tile} onHover={setTile} onActivate={setTile} onMove={(d) => setTile((t) => (t + d + dock.length) % dock.length)} />
       </section>
     </>
   )

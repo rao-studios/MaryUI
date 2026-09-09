@@ -11,14 +11,16 @@ export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   icon?: ReactNode
   /** Round capsule, as in a toolbar search field. */
   round?: boolean
+  /** Spotlight's bar: 44px tall, `--lp-text-lg`. */
+  large?: boolean
 }
 
 export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function TextField(
-  { icon, round = false, className, ...rest },
+  { icon, round = false, large = false, className, ...rest },
   ref,
 ) {
   return (
-    <label className={cx(styles.field, round && styles.round, className)}>
+    <label className={cx(styles.field, round && styles.round, large && styles.large, className)}>
       {icon ? <span className={styles.icon}>{icon}</span> : null}
       <input ref={ref} className={styles.input} {...rest} />
     </label>

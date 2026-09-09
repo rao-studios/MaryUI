@@ -109,9 +109,12 @@
   --lp-size-resize-corner: 14px;
   --lp-size-window-min-w: 240px;
   --lp-size-window-min-h: 160px;
-  --lp-font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --lp-font-display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
-  --lp-font-mono: SFMono-Regular, ui-monospace, Menlo, Consolas, monospace;
+  --lp-size-spotlight-width: 560px;
+  --lp-size-spotlight-bar-height: 44px;
+  --lp-size-spotlight-tile: 56px;
+  --lp-font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, Inter, sans-serif;
+  --lp-font-display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, P052, serif;
+  --lp-font-mono: SFMono-Regular, ui-monospace, Menlo, Consolas, "JetBrains Mono", monospace;
   --lp-text-xs: 11px;
   --lp-text-sm: 12px;
   --lp-text-md: 13px;
@@ -152,4 +155,5 @@
   --lp-z-windows: 100;
   --lp-z-menubar: 600;
   --lp-z-menus: 700;
+  --lp-z-spotlight: 800;
 }

@@ -17,6 +17,15 @@
   padding: 0 var(--lp-space-3);
 }
 
+.large {
+  height: var(--lp-size-spotlight-bar-height);
+  gap: var(--lp-space-2);
+}
+
+.large .input {
+  font-size: var(--lp-text-lg);
+}
+
 .field:focus-within {
   box-shadow:
     var(--lp-shadow-emboss-well),

@@ -1,0 +1,141 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--lp-z-spotlight);
+  pointer-events: none;
+}
+
+/* The bar's centre sits at 38% of the desktop's height (SPOTLIGHT_Y_FRACTION). */
+.place {
+  position: absolute;
+  left: calc(50% - var(--lp-size-spotlight-width) / 2);
+  top: calc(38% - var(--lp-size-spotlight-bar-height) / 2 - var(--lp-space-2));
+  width: var(--lp-size-spotlight-width);
+  pointer-events: auto;
+  animation: lp-spotlight-in var(--lp-motion-fast) var(--lp-motion-ease-out);
+  transform-origin: 50% 50%;
+}
+
+@keyframes lp-spotlight-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.shell {
+  width: var(--lp-size-spotlight-width);
+  max-width: 100%;
+  border-radius: var(--lp-radius-lg);
+  box-shadow: var(--lp-shadow-menu);
+  backdrop-filter: blur(14px) saturate(1.1);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+}
+
+.panel {
+  border-radius: var(--lp-radius-lg);
+  padding: var(--lp-space-2);
+}
+
+.bar {
+  width: 100%;
+  height: var(--lp-size-spotlight-bar-height);
+  box-shadow:
+    var(--lp-shadow-emboss-well),
+    0 0 0 3px var(--lp-accent-focus-ring);
+}
+
+.divider {
+  height: 1px;
+  margin-top: var(--lp-space-2);
+  background: var(--lp-edge-divider);
+}
+
+.dock {
+  display: flex;
+  justify-content: center;
+  padding: var(--lp-space-2) 0;
+}
+
+.cell {
+  width: 88px;
+  height: 84px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--lp-space-1);
+  padding: 6px 0 0;
+  border: 0;
+  border-radius: var(--lp-radius-sm);
+  background: transparent;
+  color: var(--lp-ink-primary);
+  font: inherit;
+}
+
+.cell:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.cell[data-selected] {
+  background: var(--lp-accent-soft);
+  box-shadow: inset 0 0 0 1px var(--lp-accent-light);
+}
+
+.plate {
+  display: grid;
+  place-items: center;
+  width: var(--lp-size-spotlight-tile);
+  height: var(--lp-size-spotlight-tile);
+  border-radius: var(--lp-radius-md);
+  background: linear-gradient(180deg, var(--lp-platinum-0), var(--lp-platinum-3));
+  box-shadow:
+    var(--lp-shadow-emboss-raised),
+    0 0 0 1px rgba(0, 0, 0, 0.32),
+    0 2px 4px rgba(0, 0, 0, 0.15);
+  color: var(--lp-ink-secondary);
+}
+
+.label {
+  max-width: 84px;
+  font-size: var(--lp-text-xs);
+  line-height: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 2px;
+  background: transparent;
+}
+
+.running {
+  background: var(--lp-accent-base);
+}
+
+.results {
+  margin: var(--lp-space-1) 0;
+  border-radius: var(--lp-radius-sm);
+  overflow: hidden;
+  background: var(--lp-surface-well);
+  box-shadow: var(--lp-shadow-emboss-well);
+}
+
+.empty {
+  display: grid;
+  place-items: center;
+  height: 40px;
+  margin: 0;
+  font-size: var(--lp-text-sm);
+  color: var(--lp-ink-tertiary);
+}
+
+:root[data-reduced-motion='on'] .place {
+  animation: none;
+}

@@ -3,7 +3,8 @@
  *
  * Mirrors the house shape (relative base, `@` alias, vitest in node) and adds
  * `tokensWatcher`, which re-runs the token build whenever `tokens/tokens.json`
- * changes so token edits hot-reload exactly like a CSS edit would.
+ * or `icons.json` changes so token edits hot-reload exactly like a CSS edit
+ * would (and the C headers in ../linux stay current).
  */
 
 import { defineConfig, type Plugin } from 'vitest/config'
@@ -13,18 +14,19 @@ import { execFile } from 'node:child_process'
 
 const root = fileURLToPath(new URL('.', import.meta.url))
 const tokensSource = fileURLToPath(new URL('./tokens/tokens.json', import.meta.url))
+const iconsSource = fileURLToPath(new URL('./src/components/Icon/icons.json', import.meta.url))
 const tokensScript = fileURLToPath(new URL('./scripts/build-tokens.mjs', import.meta.url))
 
 function tokensWatcher(): Plugin {
   return {
     name: 'lp-tokens-watcher',
     configureServer(server) {
-      server.watcher.add(tokensSource)
+      server.watcher.add([tokensSource, iconsSource])
       server.watcher.on('change', (file) => {
-        if (file !== tokensSource) return
+        if (file !== tokensSource && file !== iconsSource) return
         execFile(process.execPath, [tokensScript], (error, _stdout, stderr) => {
           if (error) server.config.logger.error(`[tokens] ${stderr || error.message}`)
-          else server.config.logger.info('[tokens] rebuilt from tokens.json', { timestamp: true })
+          else server.config.logger.info('[tokens] rebuilt from tokens.json and icons.json (web + C headers)', { timestamp: true })
         })
       })
     },

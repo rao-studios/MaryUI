@@ -140,11 +140,13 @@ export function buildMenus(store: WMStore, state: WMState, settings: Settings): 
         },
         { id: 'cycle', label: 'Cycle Through Windows', shortcut: '⌃`', disabled: state.order.length < 2, onSelect: () => dispatch({ type: 'FOCUS_NEXT' }) },
         SEP,
-        ...Object.values(apps).map((app) => ({
+        ...Object.values(apps)
+          .filter((app) => !app.hidden)
+          .map((app) => ({
           id: `open-${app.id}`,
-          label: `Open ${app.title}`,
-          onSelect: () => openApp(store, app.id),
-        })),
+            label: `Open ${app.title}`,
+            onSelect: () => openApp(store, app.id),
+          })),
         ...(windowEntries.length ? [SEP, ...windowEntries] : []),
       ],
     },
