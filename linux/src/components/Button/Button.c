@@ -62,7 +62,7 @@ int lp_button(lp_ctx *ctx, lp_id id, lp_rect r, const char *label, lp_button_opt
         else if (!active) lp_draw_outer_shadows(cr, box, radius, outer, 2);
         else lp_draw_outer_shadows(cr, box, radius, outer, 1);
         lp_fill_vgradient(cr, box, top, bottom, radius);
-        if (o.variant != LP_BUTTON_QUIET) lp_draw_brush(cr, box, radius, LP_BRUSH_OPACITY * 0.8f, ctx->grain_x, ctx->grain_y);
+        if (o.variant != LP_BUTTON_QUIET) lp_draw_brush(cr, box, radius, LP_BRUSH_OPACITY * 0.8f, ctx->world_x, ctx->world_y);
         if (active) lp_draw_inset_shadows(cr, box, radius, LP_SHADOW_EMBOSS_PRESSED, LP_SHADOW_EMBOSS_PRESSED_COUNT);
         else lp_draw_inset_shadows(cr, box, radius, LP_SHADOW_EMBOSS_RAISED, LP_SHADOW_EMBOSS_RAISED_COUNT);
     }

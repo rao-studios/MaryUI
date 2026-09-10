@@ -30,7 +30,7 @@ README, or when a file under `web/src/lib` or `web/src/desktop` is missing from 
 | `lib/geometry.ts` | `lp_geometry.h`, `src/core/lp_geometry.c`, `tests/test_geometry.c` | ✓ 10/10 cases |
 | `lib/motionEngine.ts` | `lp_motion.h`, `src/core/lp_motion.c` (`lp_motion_engine`, `lp_window_motion`), `tests/test_motion.c`; applied in `src/compositor/window.c` | ≈ **D1 D2 D3 D4** |
 | `lib/textures.ts` (feTurbulence, brush) | `src/draw/lp_noise.c` (SVG 1.1 §15.17 reference, browser stitch comparison), `src/draw/lp_texture.c` | ✓ `tests/test_noise.c` |
-| `lib/brushSvg.ts` | `src/draw/lp_texture.c` (`lp_brush_tile`) | ✓ period 512/√5, rotate −atan2(1, 2), desaturate, linear transfer over #808080 |
+| `lib/brushSvg.ts` | `src/draw/lp_texture.c` (`lp_brush_tile`) | ✓ period 512/√5, rotate −atan2(1, 2), desaturate, linear transfer over #808080; `tests/test_brush.c` pins the desktop anchoring, which the web does with a background-position and cannot test in vitest |
 | `lib/wallpaperSvg.ts` | `src/draw/lp_wallpaper.c` (`lp_wallpaper_render`, `lp_wallpaper_cached`, vignette) | ≈ **D5** |
 | `lib/dom.ts` (`prefersReducedMotion`, `setVars`) | `lp_settings.reduced_motion` (View menu, `settings.conf`); variables are `lp_ctx` fields | ✓ no media query on Linux: the setting is the switch |
 | `lib/textStats.ts` | `lp_text_doc_word_count`, `lp_text_doc_char_count`, `lp_text_doc_line_col` in `src/components/TextArea/TextArea.c`, `tests/test_text_area.c` | ✓ words by whitespace, code points, 1-based line/column |
@@ -113,7 +113,7 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
 | — | `tests/test_motion.c` (engine, window motion, easing), `test_ui.c`, `test_layout.c`, `test_noise.c`, `test_smoke.c` |
 | — | `tests/test_files.c` (the filesystem model), `tests/test_finder.c` (the Finder driven headlessly: navigation, selection, rename, trash, clipboard, the popup, drag and drop), `tests/test_desktop.c` (opening paths, app commands and menus, the popup, change broadcasts, TextEdit's documents) |
 
-124 C cases in all.
+127 C cases in all.
 
 ## Deviations
 

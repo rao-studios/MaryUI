@@ -29,9 +29,6 @@ typedef struct lp_motion_params {
     float radius_detune;   /* how far apart the four corner springs are tuned */
     float corner_impulse;  /* px/s kicked into each corner spring on grab and drop */
     float slosh_velocity_ref;  /* speed (px/s) that counts as fully sheared, for the liquid */
-    float grain_lag;           /* px of travel at full speed */
-    float grain_velocity_ref;  /* speed (px/s) that spends all of it */
-    float grain_settle_ms;     /* the longest it may take to cross that travel */
 } lp_motion_params;
 
 lp_motion_params lp_motion_params_from_tokens(void);
@@ -87,7 +84,6 @@ typedef struct lp_window_motion_out {
     float vx_lag;                 /* the slow follower of vx; vx - vx_lag is the shear */
     float speed;                  /* normalized speed of the window as seen, 0..1 */
     float slosh_x_px;             /* the liquid's lateral bank: the strongest cue at 18px */
-    float grain_x, grain_y;       /* how far the brushed skin lags the frame */
     lp_corners corners;           /* the four live radii */
     float radius_k;               /* how far the corners are from rest, 0..1 */
     int identity;                 /* the transform is exactly the identity (settled) */
@@ -97,7 +93,6 @@ typedef struct lp_window_motion {
     lp_pointer_tracker tracker;
     lp_spring sheen, tilt, skew, sx, sy, fly_x, fly_y, fly_sx, fly_sy;
     lp_spring corners[LP_CORNER_COUNT], vx_lag, vy_lag;
-    float grain_x, grain_y;  /* the grain's own offset; moved at a constant rate, never sprung */
     lp_slosh_state slosh, slosh_y;
     int dragging, resizing, flying;
     float drag_dx, drag_dy;

@@ -182,6 +182,9 @@ export function Window({ id, children }: WindowProps) {
     <div
       ref={frameRef}
       className={styles.frame}
+      /* Surfaces inside find this to work out where they sit in the frame, so
+       * the brushed sheet can be anchored to the page. See Surface.tsx. */
+      data-lp-frame=""
       style={frameStyle}
       data-focused={focused}
       data-state={record.state}

@@ -71,7 +71,10 @@ typedef struct lp_ctx {
     float vx_lag;             /* vx - vx_lag is the shear the goo smears with */
     float speed;              /* normalized speed, 0..1: the grain's glint rides it */
     float slosh_x;            /* the liquid's lateral bank */
-    float grain_x, grain_y;   /* how far the brushed skin lags the frame */
+    /* Where this chrome's local origin sits on the desktop. The brushed grain is
+      * sampled at desktop coordinates, so the metal is one continuous sheet the
+      * windows are cut out of rather than something each window carries. */
+    float world_x, world_y;
     lp_corners corners;       /* the window's four live radii */
     float radius_k;           /* how far they are from rest, 0..1 */
     int active_window;        /* the window is focused (inactive chrome drains its colours) */

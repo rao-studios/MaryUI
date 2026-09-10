@@ -76,9 +76,6 @@ export function MotionTab() {
     { label: 'Corner frequency (Hz)', min: 0.5, max: 6, step: 0.1, get: () => p.radius.frequency, set: (v) => (p.radius.frequency = v), path: 'motion.spring-radius.frequency' },
     { label: 'Corner damping', min: 0.1, max: 1.2, step: 0.02, get: () => p.radius.damping, set: (v) => (p.radius.damping = v), path: 'motion.spring-radius.damping' },
     { label: 'Corner detune', min: 0, max: 0.3, step: 0.01, get: () => p.radiusDetune, set: (v) => (p.radiusDetune = v), path: 'motion.radius-detune' },
-    { label: 'Grain lag (px)', min: 0, max: 40, step: 1, get: () => p.grainLag, set: (v) => (p.grainLag = v), path: 'brush.lag' },
-    { label: 'Grain speed ref (px/s)', min: 200, max: 2500, step: 50, get: () => p.grainVelocityRef, set: (v) => (p.grainVelocityRef = v), path: 'brush.velocity-ref' },
-    { label: 'Grain settle (ms)', min: 0, max: 400, step: 10, get: () => p.grainSettle, set: (v) => (p.grainSettle = v), path: 'brush.settle' },
     { label: 'Smear lag frequency (Hz)', min: 0.2, max: 4, step: 0.1, get: () => p.vxLag.frequency, set: (v) => (p.vxLag.frequency = v), path: 'motion.spring-vx-lag.frequency' },
   ]
 

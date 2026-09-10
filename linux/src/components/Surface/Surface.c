@@ -19,7 +19,7 @@ void lp_surface_stops(enum lp_surface_variant v, int inactive, lp_color *top, lp
 }
 
 lp_surface_motion lp_surface_motion_of(const lp_ctx *ctx) {
-    return (lp_surface_motion){ ctx->sheen_x, ctx->tilt, ctx->grain_x, ctx->grain_y, ctx->speed };
+    return (lp_surface_motion){ ctx->sheen_x, ctx->tilt, ctx->world_x, ctx->world_y, ctx->speed };
 }
 
 void lp_surface_paint(cairo_t *cr, lp_rect r, lp_surface_opts o, lp_surface_motion m) {
@@ -28,7 +28,10 @@ void lp_surface_paint(cairo_t *cr, lp_rect r, lp_surface_opts o, lp_surface_moti
     lp_surface_stops(o.variant, o.inactive, &top, &bottom, &brush);
     lp_fill_vgradient(cr, r, top, bottom, o.radius);
     /* Speed catches the grain: up to brush.glint more of it at full tilt. */
-    lp_draw_brush(cr, r, o.radius, brush * (1 + m.speed * LP_BRUSH_GLINT), m.grain_x, m.grain_y);
+    /* The chrome's world origin, not the surface's: cairo's user space is already
+     * chrome-local, so `r` is in it. Adding r here would restart the sheet at
+     * every surface and break the grain across a title bar and the body below it. */
+    lp_draw_brush(cr, r, o.radius, brush * (1 + m.speed * LP_BRUSH_GLINT), m.world_x, m.world_y);
     if (o.sheen) {
         float alpha = o.sheen_alpha >= 0 ? o.sheen_alpha : (o.inactive ? LP_SHEEN_ALPHA_INACTIVE : LP_SHEEN_ALPHA);
         lp_draw_sheen(cr, r, o.radius, m.sheen_x, m.tilt_deg, alpha);

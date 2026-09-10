@@ -91,9 +91,6 @@
   --lp-molten-faithful-gain: 1;
   --lp-molten-faithful-saturation: -0.4;
   --lp-brush-opacity: 0.34;
-  --lp-brush-lag: 14;
-  --lp-brush-velocity-ref: 900;
-  --lp-brush-settle: 120ms;
   --lp-brush-glint: 0.55;
   --lp-brush-contrast: 0.66;
   --lp-brush-freq-x: 0.02;

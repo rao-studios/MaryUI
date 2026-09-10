@@ -16,23 +16,38 @@
 }
 
 /*
- * Brush grain: mid-gray noise under overlay only adds directional texture. It is
- * oversized and translated rather than repainted, so the scratches can lag
- * behind a moving frame for free. `--lp-brush-lag` caps the travel well inside
- * the overhang, and the tile is seamless, so no seam ever enters the surface.
+ * Brush grain: mid-gray noise under overlay only adds directional texture.
+ *
+ * The metal is one continuous sheet the whole page is cut out of. The engine
+ * writes the frame's own page position into `--lp-grain-x/y` (reduced modulo the
+ * tile, which is seamless), and it is applied as a background-position, so the
+ * sheet stays put while a window slides over it and uncovers a different part of
+ * it. The scratches therefore line up across a window's own surfaces and across
+ * neighbouring windows alike, and they visibly travel whenever a window moves.
+ *
+ * It shifts the background rather than translating the element because the offset
+ * is unbounded: translating would need an overhang of a whole tile on every
+ * surface, which costs far more area than repainting this one does.
+ *
+ * `--lp-grain-x/y` is written on the frame by the motion engine and is the same
+ * for every surface in a window; `--lp-s-x/y` is each surface's own offset inside
+ * that frame, measured in Surface.tsx. Without the second term the sheet would
+ * restart at every surface and the grain would break across the seam between a
+ * title bar and the body below it.
  */
 .grain {
   position: absolute;
-  inset: calc(var(--lp-brush-lag) * -1px);
+  inset: 0;
   z-index: -1;
   pointer-events: none;
   background-image: var(--lp-brush-url);
-  background-size: var(--lp-brush-tile, 256px) var(--lp-brush-tile, 256px);
+  background-size: var(--lp-brush-tile, 512px) var(--lp-brush-tile, 512px);
+  /* The frame's page position, less where this surface sits inside it: the two
+   * together put the tile's origin at the page origin, for every surface. */
+  background-position: calc(var(--lp-grain-x, 0px) - var(--lp-s-x, 0px)) calc(var(--lp-grain-y, 0px) - var(--lp-s-y, 0px));
   mix-blend-mode: overlay;
   /* Hairlines catch the light while the surface is moving, then dim again. */
   opacity: calc(var(--lp-s-brush) * (1 + var(--lp-speed) * var(--lp-brush-glint)));
-  transform: translate3d(var(--lp-grain-x), var(--lp-grain-y), 0);
-  will-change: transform;
 }
 
 /* The room light, reflected. The engine slides --lp-sheen-x across 0..1. */

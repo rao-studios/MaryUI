@@ -170,7 +170,7 @@ void lp_draw_box_shadow(cairo_t *cr, lp_rect r, float radius, const lp_shadow_la
     lp_draw_inset_shadows(cr, r, radius, layers, n);
 }
 
-void lp_draw_brush(cairo_t *cr, lp_rect r, float radius, float opacity, float dx, float dy) {
+void lp_draw_brush(cairo_t *cr, lp_rect r, float radius, float opacity, float world_x, float world_y) {
     if (opacity <= 0) return;
     cairo_surface_t *tile = lp_brush_tile();
     cairo_save(cr);
@@ -178,15 +178,17 @@ void lp_draw_brush(cairo_t *cr, lp_rect r, float radius, float opacity, float dx
     cairo_clip(cr);
     cairo_pattern_t *p = cairo_pattern_create_for_surface(tile);
     cairo_pattern_set_extend(p, CAIRO_EXTEND_REPEAT);
-    /* Whole pixels: a fractional translate takes pixman off its tiled-repeat
-     * fast path onto the general transformed fetcher, and the grain is noise —
-     * a half-pixel of it is not visible, the cost is. */
-    float ox = roundf(dx), oy = roundf(dy);
+    /* Sample the tile at desktop coordinates: the pattern matrix maps user space
+     * (surface-local) to pattern space, so translating it by the surface's world
+     * origin anchors the grain to the desktop. Reduced modulo the tile, which is
+     * seamless, so the result is identical and the numbers stay small. Whole
+     * pixels, because a fractional translate takes pixman off its tiled-repeat
+     * fast path and half a pixel of noise is not visible. */
+    float period = LP_BRUSH_TILE > 1 ? LP_BRUSH_TILE : 1;
+    float ox = fmodf(roundf(world_x), period), oy = fmodf(roundf(world_y), period);
     if (ox != 0 || oy != 0) {
-        /* The pattern matrix maps user space to pattern space, so the shift is
-         * inverted: a positive dx slides the grain right. */
         cairo_matrix_t m;
-        cairo_matrix_init_translate(&m, -ox, -oy);
+        cairo_matrix_init_translate(&m, ox, oy);
         cairo_pattern_set_matrix(p, &m);
     }
     cairo_set_source(cr, p);

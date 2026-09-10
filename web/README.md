@@ -59,7 +59,7 @@ src/desktop/                 Desktop, Wallpaper, WindowLayer, settings, menus, w
 | Effect | Mechanism | Where |
 | --- | --- | --- |
 | Brushed grain | One seamless 512px `feTurbulence` tile with diagonal strokes (lattice angle `brush.angle`, tan θ = rise/run) baked to a data URI at startup, painted with `mix-blend-mode: overlay` | `src/lib/textures.ts`, `Surface.module.css` |
-| Moving scratches | The grain is an oversized element, not a pseudo-element, so it can be translated: its offset is a straight proportion of speed (`-clamp(v / brush.velocity-ref) * brush.lag`), rate-limited by `brush.settle` and never sprung or eased, while `brush.glint` lifts its opacity with speed | `motionEngine.ts`, `Surface.module.css` |
+| Moving scratches | The brushed metal is one sheet the page is cut out of: the grain's `background-position` is the frame's page position less the surface's offset within it, so a window uncovers a different part of the sheet as it moves rather than carrying its grain along, and the scratches run unbroken across surfaces. `brush.glint` lifts the opacity with speed | `motionEngine.ts`, `Surface.tsx`, `Surface.module.css` |
 | Liquid corners | Velocity projected onto each corner's outward normal — leading corners flatten, trailing ones round — driving four springs detuned against each other so they never settle in step | `src/lib/radius.ts`, `Window.module.css` |
 | Sliding sheen | A highlight band positioned by `--lp-sheen-x`; the light is fixed to the *room* (`sheen.light-x`), so moving a window slides the highlight across it, spring-lagged | `motionEngine.ts`, `Surface.module.css` |
 | Jelly | Velocity → springs → `skewX` / `scale` on the window chrome, origin at the grab point | `motionEngine.ts` |

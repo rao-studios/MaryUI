@@ -224,7 +224,7 @@ static void surfaces_tab(struct gallery *g, lp_ctx *ctx, lp_rect *c) {
     lp_surface(ctx, t2, (lp_surface_opts){ .variant = LP_VARIANT_WELL, .radius = LP_RADIUS_MD }); tile_label(ctx, t2, "well");
     if (ctx->pass == LP_PASS_DRAW && ctx->cr) {
         lp_fill_vgradient(ctx->cr, t3, LP_SURFACE_RAISED_TOP, LP_SURFACE_RAISED_BOTTOM, LP_RADIUS_MD);
-        lp_draw_brush(ctx->cr, t3, LP_RADIUS_MD, LP_BRUSH_OPACITY, ctx->grain_x, ctx->grain_y);
+        lp_draw_brush(ctx->cr, t3, LP_RADIUS_MD, LP_BRUSH_OPACITY, ctx->world_x, ctx->world_y);
         lp_draw_inset_shadows(ctx->cr, t3, LP_RADIUS_MD, LP_SHADOW_EMBOSS_PRESSED, LP_SHADOW_EMBOSS_PRESSED_COUNT);
     }
     tile_label(ctx, t3, "pressed");

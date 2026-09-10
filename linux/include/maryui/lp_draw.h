@@ -50,9 +50,14 @@ double lp_specular_at(const float *alpha, int w, int h, int x, int y, double sur
                       double exponent, lp_distant_light light);
 
 /* The brush tile (lp_texture.h) under mix-blend-mode: overlay at `opacity`.
- * (dx, dy) slides the grain against the frame: the skin is a real thing being
- * dragged, not a pattern painted onto a moving box. */
-void lp_draw_brush(cairo_t *cr, lp_rect r, float radius, float opacity, float dx, float dy);
+ *
+ * (world_x, world_y) is where this surface's local origin sits on the desktop,
+ * and the tile is sampled at desktop coordinates rather than surface ones. The
+ * metal is therefore one continuous sheet the whole desktop is cut out of: a
+ * window does not carry its grain with it, it uncovers a different part of the
+ * sheet as it moves, and the scratches line up across a window's own surfaces
+ * and across neighbouring windows alike. */
+void lp_draw_brush(cairo_t *cr, lp_rect r, float radius, float opacity, float world_x, float world_y);
 
 /* Surface.module.css .sheen: a 200%-wide band at sheen.angle, screen-blended,
  * slid by sheen_x (0..1, 0.5 = centred) and rotated by tilt degrees. */

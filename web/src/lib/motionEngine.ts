@@ -33,10 +33,6 @@ export interface MotionParams {
   fly: SpringParams
   /** One spring for all four corners; each corner detunes its frequency off this. */
   radius: SpringParams
-  /** Speed (px/s) at which the grain reaches its full travel. */
-  grainVelocityRef: number
-  /** The longest (ms) the grain may take to cross that travel. */
-  grainSettle: number
   /** A slow follower of vx; the difference is what smears the goo. */
   vxLag: SpringParams
   slosh: SloshParams
@@ -54,8 +50,6 @@ export interface MotionParams {
   cornerImpulse: number
   /** Speed (px/s) that counts as fully sheared, for the liquid. */
   sloshVelocityRef: number
-  /** Max px the grain slides behind the frame. */
-  grainLag: number
 }
 
 export function motionParamsFromTokens(): MotionParams {
@@ -66,8 +60,6 @@ export function motionParamsFromTokens(): MotionParams {
     jelly: { ...m.springJelly },
     fly: { ...m.springFly },
     radius: { ...m.springRadius },
-    grainVelocityRef: tokens.brush.velocityRef,
-    grainSettle: parseFloat(tokens.brush.settle),
     vxLag: { ...m.springVxLag },
     slosh: {
       frequencyHz: m.sloshFrequency,
@@ -94,7 +86,6 @@ export function motionParamsFromTokens(): MotionParams {
     radiusDetune: m.radiusDetune,
     cornerImpulse: tokens.radiusFlex.impulse,
     sloshVelocityRef: m.sloshVelocityRef,
-    grainLag: tokens.brush.lag,
   }
 }
 
@@ -174,9 +165,6 @@ export class WindowMotion implements MotionTarget {
   private sloshY: SloshState = createSlosh()
   /** One spring per corner, in CORNER_KEYS order, each detuned off `params.radius`. */
   private corners = CORNER_KEYS.map(() => createSpring(parseFloat(tokens.radius.window)))
-  /** The grain's own offset. Moved at a constant rate; never sprung or eased. */
-  private grainX = 0
-  private grainY = 0
   private vxLag = createSpring(0)
   private vyLag = createSpring(0)
   private wroteCorners: Corners | null = null
@@ -336,8 +324,6 @@ export class WindowMotion implements MotionTarget {
       this.slosh = createSlosh()
       this.sloshY = createSlosh()
       for (const c of this.corners) snapSpring(c)
-      this.grainX = 0
-      this.grainY = 0
       snapSpring(this.vxLag)
       snapSpring(this.vyLag)
       this.flying = false
@@ -360,21 +346,17 @@ export class WindowMotion implements MotionTarget {
       this.corners.forEach((c, i) => {
         stepSpring(c, dt, { frequency: detunedFrequency(p.radius.frequency, i, p.radiusDetune), damping: p.radius.damping })
       })
-      // The grain's offset is a straight proportion of how fast the window is
-      // moving — no spring, no easing, so it tracks the gesture rather than
-      // reacting to it. The only smoothing is a speed limit, which keeps the
-      // offset from jumping when a drag ends.
-      const wantX = -clamp(vx / Math.max(p.grainVelocityRef, 1), -1, 1) * p.grainLag
-      const wantY = -clamp(vy / Math.max(p.grainVelocityRef, 1), -1, 1) * p.grainLag
-      const grainStep = (p.grainLag / Math.max(p.grainSettle / 1000, 1e-4)) * dt
-      this.grainX += clamp(wantX - this.grainX, -grainStep, grainStep)
-      this.grainY += clamp(wantY - this.grainY, -grainStep, grainStep)
       stepSpring(this.vxLag, dt, p.vxLag)
       stepSpring(this.vyLag, dt, p.vxLag)
     }
 
-    const gx = this.grainX
-    const gy = this.grainY
+    // The brushed metal is one sheet the whole desktop is cut out of, so the tile
+    // is anchored to the page rather than to any surface: a window uncovers a
+    // different part of it as it moves instead of carrying its grain along. This
+    // is the frame's own page position, negated; each surface then subtracts
+    // where it sits inside the frame. See `.grain` in Surface.module.css.
+    const gx = -(rect.x + this.dragDx + this.flyX.value)
+    const gy = -(rect.y + this.dragDy + this.flyY.value)
 
     setVars(el.frame, {
       '--lp-sheen-x': this.sheen.value.toFixed(4),
@@ -414,8 +396,6 @@ export class WindowMotion implements MotionTarget {
       isSettled(this.tilt, 0.005, 0.05) &&
       isSettled(this.sheen, 0.0005, 0.005) &&
       this.corners.every((c) => isSettled(c, 0.02, 0.2)) &&
-      Math.abs(this.grainX) < 0.05 &&
-      Math.abs(this.grainY) < 0.05 &&
       isSettled(this.vxLag, 0.002, 0.02) &&
       isSettled(this.vyLag, 0.002, 0.02) &&
       isSloshSettled(this.slosh) &&

@@ -182,6 +182,12 @@ static void apply_transform(struct mui_window *win, float tx, float ty, float sx
 void mui_window_apply_motion(struct mui_window *win) {
     lp_window_motion_out *o = &win->motion.out;
     lp_ctx *ctx = &win->chrome.ctx;
+    /* Where the chrome's own (0, 0) currently sits on the desktop, drag included.
+     * The brushed grain is sampled against this, so the metal stays put while a
+     * window slides over it. It changes every frame of a drag, which is what
+     * makes the scratches travel. */
+    float world_x = win->rect.x - win->margin_l + o->tx;
+    float world_y = win->rect.y - win->margin_t + o->ty;
     /* The corners live at both ends of the frame, so they damage more than the
      * title strip. lp_window_motion only republishes them once one has actually
      * moved a quarter-pixel, which is what keeps this from firing every frame. */
@@ -190,8 +196,8 @@ void mui_window_apply_motion(struct mui_window *win) {
     if (corners_moved || fabsf(ctx->sheen_x - o->sheen_x) > 0.0005f || fabsf(ctx->tilt - o->tilt_deg) > 0.005f ||
         fabsf(ctx->vx - o->vx) > 0.005f || fabsf(ctx->vx_lag - o->vx_lag) > 0.005f || fabsf(ctx->speed - o->speed) > 0.005f ||
         fabsf(ctx->slosh_deg - o->slosh_deg) > 0.01f || fabsf(ctx->slosh_y - o->slosh_y_px) > 0.01f ||
-        fabsf(ctx->slosh_x - o->slosh_x_px) > 0.01f || fabsf(ctx->grain_x - o->grain_x) > 0.05f ||
-        fabsf(ctx->grain_y - o->grain_y) > 0.05f) {
+        fabsf(ctx->slosh_x - o->slosh_x_px) > 0.01f || fabsf(ctx->world_x - world_x) > 0.5f ||
+        fabsf(ctx->world_y - world_y) > 0.5f) {
         ctx->sheen_x = o->sheen_x;
         ctx->tilt = o->tilt_deg;
         ctx->vx = o->vx;
@@ -200,8 +206,8 @@ void mui_window_apply_motion(struct mui_window *win) {
         ctx->slosh_deg = o->slosh_deg;
         ctx->slosh_y = o->slosh_y_px;
         ctx->slosh_x = o->slosh_x_px;
-        ctx->grain_x = o->grain_x;
-        ctx->grain_y = o->grain_y;
+        ctx->world_x = world_x;
+        ctx->world_y = world_y;
         ctx->corners = o->corners;
         ctx->radius_k = o->radius_k;
         /* The title bar carries the sheen band and the lights; body surfaces keep a static sheen (PARITY.md). */

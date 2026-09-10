@@ -32,7 +32,7 @@ typedef struct lp_surface_opts {
 typedef struct lp_surface_motion {
     float sheen_x;        /* where the room light falls across the surface */
     float tilt_deg;
-    float grain_x, grain_y;  /* how far the brushed skin lags the frame */
+    float world_x, world_y;  /* the surface's local origin, in desktop coordinates */
     float speed;          /* 0..1; the grain glints as the window picks up speed */
 } lp_surface_motion;
 
