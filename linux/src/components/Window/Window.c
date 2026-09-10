@@ -42,7 +42,7 @@ lp_rect lp_window_chrome(lp_ctx *ctx, const lp_window_view *v, lp_title_bar_resu
             cairo_save(cr);
             lp_path_rrect4(cr, frame, radii.tl, radii.tr, radii.br, radii.bl);
             cairo_clip(cr);
-            lp_surface_paint(cr, frame, (lp_surface_opts){ .variant = LP_VARIANT_FLAT, .radius = 0, .sheen = 0 }, ctx->sheen_x, ctx->tilt);
+            lp_surface_paint(cr, frame, (lp_surface_opts){ .variant = LP_VARIANT_FLAT, .radius = 0, .sheen = 0 }, lp_surface_motion_of(ctx));
             cairo_restore(cr);
         }
     }

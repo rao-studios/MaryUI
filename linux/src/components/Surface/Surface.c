@@ -18,16 +18,20 @@ void lp_surface_stops(enum lp_surface_variant v, int inactive, lp_color *top, lp
     }
 }
 
-void lp_surface_paint(cairo_t *cr, lp_rect r, lp_surface_opts o, float sheen_x, float tilt_deg) {
+lp_surface_motion lp_surface_motion_of(const lp_ctx *ctx) {
+    return (lp_surface_motion){ ctx->sheen_x, ctx->tilt, ctx->grain_x, ctx->grain_y, ctx->speed };
+}
+
+void lp_surface_paint(cairo_t *cr, lp_rect r, lp_surface_opts o, lp_surface_motion m) {
     lp_color top, bottom;
     float brush;
     lp_surface_stops(o.variant, o.inactive, &top, &bottom, &brush);
     lp_fill_vgradient(cr, r, top, bottom, o.radius);
     /* Speed catches the grain: up to brush.glint more of it at full tilt. */
-    lp_draw_brush(cr, r, o.radius, brush * (1 + o.speed * LP_BRUSH_GLINT), o.grain_x, o.grain_y);
+    lp_draw_brush(cr, r, o.radius, brush * (1 + m.speed * LP_BRUSH_GLINT), m.grain_x, m.grain_y);
     if (o.sheen) {
         float alpha = o.sheen_alpha >= 0 ? o.sheen_alpha : (o.inactive ? LP_SHEEN_ALPHA_INACTIVE : LP_SHEEN_ALPHA);
-        lp_draw_sheen(cr, r, o.radius, sheen_x, tilt_deg, alpha);
+        lp_draw_sheen(cr, r, o.radius, m.sheen_x, m.tilt_deg, alpha);
     }
     if (o.variant == LP_VARIANT_WELL) lp_draw_inset_shadows(cr, r, o.radius, LP_SHADOW_EMBOSS_WELL, LP_SHADOW_EMBOSS_WELL_COUNT);
     else if (o.variant != LP_VARIANT_BODY) lp_draw_inset_shadows(cr, r, o.radius, LP_SHADOW_EMBOSS_RAISED, LP_SHADOW_EMBOSS_RAISED_COUNT);
@@ -36,8 +40,5 @@ void lp_surface_paint(cairo_t *cr, lp_rect r, lp_surface_opts o, float sheen_x, 
 void lp_surface(lp_ctx *ctx, lp_rect r, lp_surface_opts opts) {
     if (ctx->pass != LP_PASS_DRAW || !ctx->cr) return;
     if (!ctx->active_window && opts.variant == LP_VARIANT_TITLEBAR) opts.inactive = 1;
-    opts.grain_x = ctx->grain_x;
-    opts.grain_y = ctx->grain_y;
-    opts.speed = ctx->speed;
-    lp_surface_paint(ctx->cr, r, opts, ctx->sheen_x, ctx->tilt);
+    lp_surface_paint(ctx->cr, r, opts, lp_surface_motion_of(ctx));
 }

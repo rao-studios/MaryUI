@@ -49,7 +49,9 @@ void lp_menu_bar(lp_ctx *ctx, lp_rect r, const lp_menu_bar_model *model, lp_menu
 
     /* Surface bar with the sheen pinned at 0.35 (the room light), then the shadows below it. */
     lp_draw_outer_shadows(cr, r, 0, BAR_OUTER, 2);
-    lp_surface_paint(cr, r, (lp_surface_opts){ .variant = LP_VARIANT_BAR, .radius = 0, .sheen = 1, .sheen_alpha = -1 }, LP_SHEEN_LIGHT_X, 0);
+    /* The menu bar spans the desktop and never moves: no grain travel. */
+    lp_surface_paint(cr, r, (lp_surface_opts){ .variant = LP_VARIANT_BAR, .radius = 0, .sheen = 1, .sheen_alpha = -1 },
+        (lp_surface_motion){ .sheen_x = LP_SHEEN_LIGHT_X });
 
     for (int i = 0; i < model->count; i++) {
         lp_rect t = res.triggers[i];

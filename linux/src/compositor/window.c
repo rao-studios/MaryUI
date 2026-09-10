@@ -65,7 +65,7 @@ static void paint_window(lp_ctx *ctx, struct mui_chrome *chrome, void *data) {
                 cairo_rectangle(ctx->cr, body.x, body.y, body.w, body.h);
                 cairo_clip(ctx->cr);
                 /* Surface body underneath every app. */
-                lp_surface_paint(ctx->cr, body, (lp_surface_opts){ .variant = LP_VARIANT_BODY, .radius = 0 }, ctx->sheen_x, ctx->tilt);
+                lp_surface_paint(ctx->cr, body, (lp_surface_opts){ .variant = LP_VARIANT_BODY, .radius = 0 }, lp_surface_motion_of(ctx));
             }
             win->instance->app->paint(win->instance->state, ctx, body, &win->server->desktop);
             if (draw) cairo_restore(ctx->cr);
@@ -220,6 +220,18 @@ void mui_window_apply_motion(struct mui_window *win) {
             if (ms > s->paint_max_ms) s->paint_max_ms = ms;
         }
     }
+    /* Only the title strip repaints while a window moves (PARITY.md D4), so the
+     * body keeps whatever grain offset it last painted with. Once the motion
+     * settles, repaint the whole chrome so the brushed skin lines up again
+     * across the seam between the title bar and the body. */
+    if (!o->identity) {
+        win->was_moving = 1;
+    } else if (win->was_moving) {
+        win->was_moving = 0;
+        mui_chrome_damage_all(&win->chrome);
+        mui_chrome_repaint(&win->chrome, mui_now_ms());
+    }
+
     if (win->closing) return; /* mui_windows_animate owns the transform */
     float sx = o->sx, sy = o->sy;
     if (win->kind == MUI_WINDOW_XDG) { sx = o->fly_sx; sy = o->fly_sy; } /* clients keep their pixels: no jelly (PARITY.md) */

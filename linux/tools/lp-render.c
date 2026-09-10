@@ -121,7 +121,7 @@ static void paint_window_preview(lp_ctx *ctx, lp_desktop *d, lp_rect rect, const
     cairo_save(ctx->cr);
     cairo_rectangle(ctx->cr, body.x, body.y, body.w, body.h);
     cairo_clip(ctx->cr);
-    lp_surface_paint(ctx->cr, body, (lp_surface_opts){ .variant = LP_VARIANT_BODY, .radius = 0 }, 0.5f, 0);
+    lp_surface_paint(ctx->cr, body, (lp_surface_opts){ .variant = LP_VARIANT_BODY, .radius = 0 }, (lp_surface_motion){ .sheen_x = 0.5f });
     if (app && app->paint) app->paint(NULL, ctx, body, d);
     cairo_restore(ctx->cr);
 }
@@ -180,7 +180,7 @@ static int render_app(const lp_app *app, int tab, const char *path) {
     cairo_save(cr);
     cairo_rectangle(cr, body.x, body.y, body.w, body.h);
     cairo_clip(cr);
-    lp_surface_paint(cr, body, (lp_surface_opts){ .variant = LP_VARIANT_BODY, .radius = 0 }, 0.5f, 0);
+    lp_surface_paint(cr, body, (lp_surface_opts){ .variant = LP_VARIANT_BODY, .radius = 0 }, (lp_surface_motion){ .sheen_x = 0.5f });
     app->paint(state, &ctx, body, &d);
     cairo_restore(cr);
     lp_ctx_end(&ctx);

@@ -75,7 +75,8 @@ void lp_spotlight_panel(lp_ctx *ctx, float x, float y, const lp_spotlight_view *
     if (draw) {
         float shell_radius = lp_radius_flex(ctx, LP_RADIUS_LG);
         lp_draw_shadow_9slice(cr, panel, shell_radius, LP_SHADOW_MENU, LP_SHADOW_MENU_COUNT);
-        lp_surface_paint(cr, panel, (lp_surface_opts){ .variant = LP_VARIANT_FLAT, .radius = shell_radius, .sheen = 1, .sheen_alpha = -1 }, 0.5f, 0);
+        lp_surface_paint(cr, panel, (lp_surface_opts){ .variant = LP_VARIANT_FLAT, .radius = shell_radius, .sheen = 1, .sheen_alpha = -1 },
+            (lp_surface_motion){ .sheen_x = 0.5f });
     }
 
     /* The bar */

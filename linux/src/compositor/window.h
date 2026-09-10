@@ -33,6 +33,7 @@ struct mui_window {
     /* Motion (web/src/lib/motionEngine.ts WindowMotion) and the keyframe animations of Window.tsx. */
     lp_window_motion motion;          /* motion.out is what the scene shows */
     lp_motion_target target;
+    int was_moving;              /* to repaint the body once when the motion settles */
     struct mui_tween close_anim;      /* lp-window-close: scale .96 + fade over motion.fast, CLOSE after CLOSE_MS */
     int closing;
     struct mui_tween shade_anim;      /* the height transition: the chrome is cropped from shade_from_h to shade_to_h */

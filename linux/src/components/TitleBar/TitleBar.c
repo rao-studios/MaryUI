@@ -23,7 +23,7 @@ void lp_title_bar(lp_ctx *ctx, lp_rect r, const lp_title_bar_model *m, lp_title_
         cairo_save(ctx->cr);
         lp_path_rrect4(ctx->cr, r, m->radii.tl, m->radii.tr, m->radii.br, m->radii.bl);
         cairo_clip(ctx->cr);
-        lp_surface_paint(ctx->cr, r, o, ctx->sheen_x, ctx->tilt);
+        lp_surface_paint(ctx->cr, r, o, lp_surface_motion_of(ctx));
         lp_draw_inset_shadows(ctx->cr, r, 0, LP_SHADOW_EMBOSS_RAISED, LP_SHADOW_EMBOSS_RAISED_COUNT);
         cairo_restore(ctx->cr);
         /* the hairline below the bar */

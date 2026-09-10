@@ -178,11 +178,15 @@ void lp_draw_brush(cairo_t *cr, lp_rect r, float radius, float opacity, float dx
     cairo_clip(cr);
     cairo_pattern_t *p = cairo_pattern_create_for_surface(tile);
     cairo_pattern_set_extend(p, CAIRO_EXTEND_REPEAT);
-    if (dx != 0 || dy != 0) {
+    /* Whole pixels: a fractional translate takes pixman off its tiled-repeat
+     * fast path onto the general transformed fetcher, and the grain is noise —
+     * a half-pixel of it is not visible, the cost is. */
+    float ox = roundf(dx), oy = roundf(dy);
+    if (ox != 0 || oy != 0) {
         /* The pattern matrix maps user space to pattern space, so the shift is
          * inverted: a positive dx slides the grain right. */
         cairo_matrix_t m;
-        cairo_matrix_init_translate(&m, -dx, -dy);
+        cairo_matrix_init_translate(&m, -ox, -oy);
         cairo_pattern_set_matrix(p, &m);
     }
     cairo_set_source(cr, p);
