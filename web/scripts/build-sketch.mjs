@@ -642,9 +642,10 @@ defineSymbol('Surface/Well', 200, 96, [well('well', f(0, 0, 200, 96), { radius: 
 
 /**
  * The same window mid-fling, so the motion is legible in a still file: the
- * corners it leads with flattened to radius.window-min, the ones it trails with
- * rounded to radius.window-max, the grain slid back against the travel, and the
- * lights merged into a ribbon.
+ * corners it leads with flattened to radius.window-min and the ones it trails
+ * with rounded to radius.window-max. The grain is not drawn moving: it is
+ * anchored to the desktop, not the window, and Sketch tiles a pattern fill from
+ * each layer's own origin, so a still file cannot show the sheet being uncovered.
  */
 {
   const lead = num('radius.window-min')
@@ -666,7 +667,7 @@ defineSymbol('Surface/Well', 200, 96, [well('well', f(0, 0, 200, 96), { radius: 
     inst('Traffic Lights/Active', num('space.3'), (TITLE_H - TRAFFIC) / 2, { layerName: 'traffic lights' }),
     label('title', f(TITLE_INSET, (TITLE_H - 20) / 2, WIN_W - 2 * TITLE_INSET, 20), 'Window Title', { size: num('text.lg') }),
     S.rectangle('body', f(0, TITLE_H, WIN_W, WIN_H - TITLE_H), S.style({ fills: [S.fillColor(col('surface.body')), brushFill(BRUSH * 0.25)] }), { radius: [0, 0, lead, trail] }),
-    label('note', f(0, TITLE_H + 40, WIN_W, 20), `leading corners ${lead}px · trailing ${trail}px · grain lagging ${num('brush.lag')}px`, { size: 12, color: 'ink.tertiary', emboss: false }),
+    label('note', f(0, TITLE_H + 40, WIN_W, 20), `leading corners ${lead}px · trailing ${trail}px · grain anchored to the desktop, not the window`, { size: 12, color: 'ink.tertiary', emboss: false }),
   ]
   defineSymbol('Window/In Motion', WIN_W, WIN_H, layers)
 }
