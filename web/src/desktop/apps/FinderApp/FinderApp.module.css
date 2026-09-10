@@ -46,23 +46,21 @@
   box-shadow: inset 0 0 0 1px var(--lp-accent-light);
 }
 
+/*
+ * The icon, and nothing behind it. The box stays for the grid's rhythm, but the
+ * squircle is gone: hover and selection live on `.tile` around it, so the
+ * container was carrying no meaning — only weight.
+ */
 .tileIcon {
   display: grid;
   place-items: center;
   width: 52px;
   height: 52px;
-  border-radius: var(--lp-radius-md);
-  background: linear-gradient(180deg, var(--lp-platinum-0), var(--lp-platinum-3));
-  box-shadow:
-    var(--lp-shadow-emboss-raised),
-    0 0 0 1px var(--lp-edge-hairline),
-    0 2px 4px rgba(0, 0, 0, 0.15);
   color: var(--lp-ink-secondary);
 }
 
 .tileIcon[data-kind='folder'] {
   color: var(--lp-accent-base);
-  background: linear-gradient(180deg, var(--lp-accent-soft), var(--lp-platinum-2));
 }
 
 .tileName {

@@ -27,6 +27,19 @@ function brushOpacity(): number {
   return v ? parseFloat(v) : tokens.brush.opacity
 }
 
+/** A knob over a CSS custom property, for the values only stylesheets read. */
+function rootVar(name: string, fallback: number): Pick<Knob, 'get' | 'set'> {
+  return {
+    get() {
+      const v = getComputedStyle(document.documentElement).getPropertyValue(name)
+      return v ? parseFloat(v) : fallback
+    },
+    set(v) {
+      document.documentElement.style.setProperty(name, String(v))
+    },
+  }
+}
+
 export function MotionTab() {
   const [, bump] = useState(0)
   const [brush, setBrush] = useState<BrushParams>(defaultBrushParams)
@@ -55,6 +68,28 @@ export function MotionTab() {
     { label: 'Slosh max angle (rad)', min: 0.1, max: 1.2, step: 0.05, get: () => p.slosh.maxAngle, set: (v) => (p.slosh.maxAngle = v), path: 'motion.slosh-max' },
   ]
 
+  const cornerKnobs: Knob[] = [
+    { label: 'Corner rest (px)', min: 4, max: 20, step: 1, get: () => p.corners.rest, set: (v) => (p.corners.rest = v), path: 'radius.window' },
+    { label: 'Corner min (px)', min: 0, max: 16, step: 1, get: () => p.corners.min, set: (v) => (p.corners.min = v), path: 'radius.window-min' },
+    { label: 'Corner max (px)', min: 4, max: 28, step: 1, get: () => p.corners.max, set: (v) => (p.corners.max = v), path: 'radius.window-max' },
+    { label: 'Corner spread (px)', min: 0, max: 12, step: 0.5, get: () => p.corners.spread, set: (v) => (p.corners.spread = v), path: 'radius-flex.spread' },
+    { label: 'Corner frequency (Hz)', min: 0.5, max: 6, step: 0.1, get: () => p.radius.frequency, set: (v) => (p.radius.frequency = v), path: 'motion.spring-radius.frequency' },
+    { label: 'Corner damping', min: 0.1, max: 1.2, step: 0.02, get: () => p.radius.damping, set: (v) => (p.radius.damping = v), path: 'motion.spring-radius.damping' },
+    { label: 'Corner detune', min: 0, max: 0.3, step: 0.01, get: () => p.radiusDetune, set: (v) => (p.radiusDetune = v), path: 'motion.radius-detune' },
+    { label: 'Grain lag (px)', min: 0, max: 40, step: 1, get: () => p.grainLag, set: (v) => (p.grainLag = v), path: 'brush.lag' },
+    { label: 'Grain frequency (Hz)', min: 0.3, max: 4, step: 0.1, get: () => p.grain.frequency, set: (v) => (p.grain.frequency = v), path: 'motion.spring-grain.frequency' },
+    { label: 'Grain damping', min: 0.1, max: 1.2, step: 0.05, get: () => p.grain.damping, set: (v) => (p.grain.damping = v), path: 'motion.spring-grain.damping' },
+    { label: 'Smear lag frequency (Hz)', min: 0.2, max: 4, step: 0.1, get: () => p.vxLag.frequency, set: (v) => (p.vxLag.frequency = v), path: 'motion.spring-vx-lag.frequency' },
+  ]
+
+  /* These are read straight out of CSS, since only stylesheets consume them. */
+  const rootKnobs: Knob[] = [
+    { label: 'Merge stretch', min: 0, max: 1.6, step: 0.05, ...rootVar('--lp-goo-stretch', tokens.goo.stretch), path: 'goo.stretch' },
+    { label: 'Merge attract (px)', min: 0, max: 10, step: 0.5, ...rootVar('--lp-goo-attract', tokens.goo.attract), path: 'goo.attract' },
+    { label: 'Slosh scale (bubbles)', min: 0.5, max: 4, step: 0.05, ...rootVar('--lp-liquid-slosh-scale', tokens.liquid.sloshScale), path: 'liquid.slosh-scale' },
+    { label: 'Brush glint', min: 0, max: 2, step: 0.05, ...rootVar('--lp-brush-glint', tokens.brush.glint), path: 'brush.glint' },
+  ]
+
   const brushKnobs: Knob[] = [
     { label: 'Brush opacity', min: 0, max: 0.8, step: 0.02, get: brushOpacity, set: (v) => document.documentElement.style.setProperty('--lp-brush-opacity', String(v)), path: 'brush.opacity' },
     { label: 'Brush frequency x', min: 0.002, max: 0.08, step: 0.002, get: () => brush.freqX, set: (v) => applyBrush({ ...brush, freqX: v }), path: 'brush.freq-x' },
@@ -66,7 +101,7 @@ export function MotionTab() {
 
   const patch = () => {
     const out: Record<string, number> = {}
-    for (const k of [...knobs, ...brushKnobs]) {
+    for (const k of [...knobs, ...cornerKnobs, ...rootKnobs, ...brushKnobs]) {
       const v = k.get()
       out[k.path] = k.path === 'motion.slosh-gain' ? v / 1e5 : v
     }
@@ -81,7 +116,9 @@ export function MotionTab() {
 
   const reset = () => {
     resetMotionParams()
-    document.documentElement.style.removeProperty('--lp-brush-opacity')
+    for (const name of ['--lp-brush-opacity', '--lp-goo-stretch', '--lp-goo-attract', '--lp-liquid-slosh-scale', '--lp-brush-glint']) {
+      document.documentElement.style.removeProperty(name)
+    }
     applyBrush(defaultBrushParams())
     rerender()
   }
@@ -107,8 +144,31 @@ export function MotionTab() {
     <>
       <section className={styles.section}>
         <h2 className={styles.heading}>Motion</h2>
-        <p className={styles.note}>Drag any window while you move these. Nothing here re-renders React; the engine reads the values each frame.</p>
+        <p className={styles.note}>
+          Drag any window while you move these. Nothing here re-renders React; the engine reads the values each frame.
+          The liquid answers to two things: acceleration, which only exists at the start and end of a gesture, and{' '}
+          <em>shear</em> — how far the liquid&apos;s own speed lags the well&apos;s — which is what keeps it leaning all
+          the way through a drag.
+        </p>
         <div className={styles.motionGrid}>{knobs.map(render)}</div>
+      </section>
+      <section className={styles.section}>
+        <h2 className={styles.heading}>Corners and grain</h2>
+        <p className={styles.note}>
+          Each corner has its own spring, detuned off the others, so a moving window&apos;s leading corners flatten while
+          its trailing corners round — and they never settle in step. The velocity reference is deliberately far below
+          the jelly&apos;s: a careful drag peaks near 400 px/s, and the corners should be well off rest by then. The
+          impulse is kicked in on grab and on release. The grain is the metal skin lagging behind the frame.
+        </p>
+        <div className={styles.motionGrid}>{cornerKnobs.map(render)}</div>
+      </section>
+      <section className={styles.section}>
+        <h2 className={styles.heading}>Liquid merge</h2>
+        <p className={styles.note}>
+          Stretch is what closes the gaps between drops; the filter bridges the rest. Blur and threshold live in the SVG
+          filter definitions and need a reload to change.
+        </p>
+        <div className={styles.motionGrid}>{rootKnobs.map(render)}</div>
       </section>
       <section className={styles.section}>
         <h2 className={styles.heading}>Brush</h2>

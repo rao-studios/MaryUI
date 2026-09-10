@@ -7,6 +7,7 @@
 }
 
 .canvas,
+.gl,
 .raster {
   position: absolute;
   inset: 0;
@@ -15,13 +16,23 @@
   object-fit: cover;
 }
 
-.canvas {
+.canvas,
+.gl {
   opacity: 0;
   transition: opacity var(--lp-motion-slow) ease-out;
 }
 
-.canvas[data-ready='true'] {
+.canvas[data-ready='true'],
+.gl[data-ready='true'] {
   opacity: 1;
+}
+
+/*
+ * The shader renders below viewport resolution — the field is smooth, so the
+ * upscale costs nothing visible and leaves the GPU to the interface.
+ */
+.gl {
+  image-rendering: auto;
 }
 
 /* A slow, soft-light highlight wandering across the metal. Never touches the filter. */
@@ -39,6 +50,15 @@
   inset: 0;
   background: radial-gradient(ellipse at 50% 40%, transparent 55%, rgba(20, 22, 28, 0.35));
   pointer-events: none;
+}
+
+/* The shader grades its own vignette and drift, so the CSS pair stands down. */
+:global([data-wallpaper='molten']) .vignette {
+  opacity: 0.35;
+}
+
+:global([data-wallpaper='molten']) .drift {
+  opacity: 0.4;
 }
 
 @keyframes lp-drift {

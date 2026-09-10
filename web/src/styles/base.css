@@ -31,12 +31,37 @@
   --lp-sheen-x: 0.5;
   --lp-tilt: 0;
   --lp-vx: 0;
+  --lp-vx-lag: 0;
+  --lp-speed: 0;
+  --lp-radius-k: 0;
   --lp-slosh: 0deg;
+  --lp-slosh-x: 0px;
   --lp-slosh-y: 0px;
+  --lp-grain-x: 0px;
+  --lp-grain-y: 0px;
   --lp-bubble-phase: 0s;
   --lp-brush-url: none; /* set by src/lib/textures.ts at startup */
   color-scheme: light;
+
 }
+
+/*
+ * Live radius for anything smaller than a window.
+ *
+ * There is deliberately no shared helper property here. A var() inside a custom
+ * property is substituted where that property is *declared*, not where it is
+ * used, so a --lp-radius-scale defined on :root would capture :root's
+ * --lp-radius-k — zero — and never change again. The expression has to be
+ * written at the point of use, where --lp-radius-k carries the live value of
+ * the window the control is sitting in:
+ *
+ *   border-radius: calc(
+ *     var(--lp-radius-md) *
+ *     (var(--lp-radius-flex-base) + var(--lp-radius-flex-span) * var(--lp-radius-k))
+ *   );
+ *
+ * The same rule is why the goo smear spells out (--lp-vx - --lp-vx-lag) inline.
+ */
 
 /* MARK: - Reset */
 
@@ -99,6 +124,24 @@ svg {
 
 :root[data-goo='off'] [data-lp-goo-layer] {
   filter: none !important;
+}
+
+/*
+ * Debug switches, driven from the Gallery's Debug tab. `data-crest` is read in
+ * LiquidBubble; these two are global because they are about seeing the
+ * machinery rather than about any one component.
+ */
+
+/* Strip the filter so the raw blobs it is handed become visible. */
+:root[data-merge-layer] [data-lp-goo-layer] {
+  filter: none !important;
+  outline: 1px dashed var(--lp-accent-base);
+  outline-offset: 2px;
+}
+
+/* Hold the ambient wave still, so the slosh can be judged on its own. */
+:root[data-freeze-liquid] [data-lp-bubble] * {
+  animation-play-state: paused !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

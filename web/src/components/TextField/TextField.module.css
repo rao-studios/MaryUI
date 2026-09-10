@@ -4,7 +4,7 @@
   gap: var(--lp-space-1);
   height: var(--lp-size-control-height);
   padding: 0 var(--lp-space-2);
-  border-radius: var(--lp-radius-sm);
+  border-radius: calc(var(--lp-radius-sm) * (var(--lp-radius-flex-base) + var(--lp-radius-flex-span) * var(--lp-radius-k)));
   background: var(--lp-surface-well);
   box-shadow: var(--lp-shadow-emboss-well);
   color: var(--lp-ink-primary);

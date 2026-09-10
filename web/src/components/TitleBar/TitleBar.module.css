@@ -1,10 +1,12 @@
 .bar {
+  /* Clears the traffic lights on either side, so the title stays optically centered. */
+  --lp-title-inset: calc(var(--lp-size-traffic) * 3 + var(--lp-size-traffic-gap) * 2 + var(--lp-space-6));
   flex: none;
   display: flex;
   align-items: center;
-  gap: var(--lp-space-2);
+  gap: var(--lp-space-3);
   height: var(--lp-size-titlebar-height);
-  padding: 0 var(--lp-space-2);
+  padding: 0 var(--lp-space-3);
   cursor: default;
   touch-action: none;
   /* Hairline below the bar, drawn on top of the emboss. */
@@ -21,10 +23,10 @@
 
 .title {
   position: absolute;
-  left: 84px;
-  right: 84px;
+  left: var(--lp-title-inset);
+  right: var(--lp-title-inset);
   text-align: center;
-  font-size: var(--lp-text-md);
+  font-size: var(--lp-text-lg);
   font-weight: var(--lp-text-weight-semibold);
   color: var(--lp-ink-primary);
   text-shadow: 0 1px 0 var(--lp-ink-emboss);

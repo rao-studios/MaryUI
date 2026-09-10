@@ -95,6 +95,12 @@ export function buildMenus(store: WMStore, state: WMState, settings: Settings): 
         },
         SEP,
         {
+          id: 'wp-molten',
+          label: 'Molten Wallpaper',
+          checked: settings.wallpaper === 'molten',
+          onSelect: () => updateSettings({ wallpaper: 'molten' }),
+        },
+        {
           id: 'wp-proc',
           label: 'Procedural Wallpaper',
           checked: settings.wallpaper === 'procedural',
@@ -105,6 +111,21 @@ export function buildMenus(store: WMStore, state: WMState, settings: Settings): 
           label: 'Raster Wallpaper',
           checked: settings.wallpaper === 'raster',
           onSelect: () => updateSettings({ wallpaper: 'raster' }),
+        },
+        SEP,
+        {
+          id: 'wp-tone-platinum',
+          label: 'Molten · Platinum',
+          checked: settings.moltenTone === 'platinum',
+          disabled: settings.wallpaper !== 'molten',
+          onSelect: () => updateSettings({ moltenTone: 'platinum' }),
+        },
+        {
+          id: 'wp-tone-faithful',
+          label: 'Molten · Faithful',
+          checked: settings.moltenTone === 'faithful',
+          disabled: settings.wallpaper !== 'molten',
+          onSelect: () => updateSettings({ moltenTone: 'faithful' }),
         },
         SEP,
         {

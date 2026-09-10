@@ -1,11 +1,12 @@
 /**
  * SegmentedControl — a well holding a sliding platinum thumb. The thumb and a
- * hover blob live in a goo-filtered layer, so hovering the segment next to the
- * selection pulls a bead of metal toward it before it snaps over.
+ * hover blob live in a merge-filtered layer, so hovering the segment next to
+ * the selection necks a bead of metal toward it before the thumb snaps over.
+ * Hovering the track loosens the tension, exactly as it does in GooGroup.
  */
 
 import { useState, type CSSProperties, type ReactNode } from 'react'
-import { GOO_FILTER_IDS } from '@/components/SvgDefs'
+import { gooFilterId } from '@/components/SvgDefs'
 import { cx } from '@/lib/cx'
 import styles from './SegmentedControl.module.css'
 
@@ -46,7 +47,18 @@ export function SegmentedControl<T extends string>({ options, value, onChange, s
       onKeyDown={onKeyDown}
       onPointerLeave={() => setHot(null)}
     >
-      <div className={styles.gooLayer} data-lp-goo-layer="" style={{ filter: `url(#${GOO_FILTER_IDS.sm})` }} aria-hidden="true">
+      <div
+        className={styles.gooLayer}
+        data-lp-goo-layer=""
+        style={
+          {
+            /* xxs: these two shapes already touch, so blur only erodes the pill's caps. */
+            '--lp-goo-rest': `url(#${gooFilterId('xxs', 'rest')})`,
+            '--lp-goo-flow': `url(#${gooFilterId('xxs', 'flow')})`,
+          } as CSSProperties
+        }
+        aria-hidden="true"
+      >
         <span className={styles.thumb} />
         {options.map((_, i) => (
           <span

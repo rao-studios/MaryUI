@@ -22,6 +22,7 @@
   white-space: nowrap;
   transition:
     transform var(--lp-motion-fast) var(--lp-motion-ease-out),
+    border-radius var(--lp-motion-normal) var(--lp-motion-ease-spring),
     box-shadow var(--lp-motion-fast) var(--lp-motion-ease-out);
 }
 
@@ -49,6 +50,11 @@
     var(--lp-shadow-emboss-pressed),
     0 0 0 1px var(--lp-edge-hairline);
   transform: translateY(0.5px);
+}
+
+/* Squish: a held control softens its corners and springs them back on release. */
+.iconOnly:active {
+  border-radius: calc(var(--lp-radius-sm) * (var(--lp-radius-flex-base) + var(--lp-radius-flex-span) * var(--lp-radius-k)) * var(--lp-radius-flex-press));
 }
 
 .button:disabled {
@@ -104,7 +110,7 @@
 
 .iconOnly {
   padding: 0;
-  border-radius: var(--lp-radius-sm);
+  border-radius: calc(var(--lp-radius-sm) * (var(--lp-radius-flex-base) + var(--lp-radius-flex-span) * var(--lp-radius-k)));
 }
 
 .icon {

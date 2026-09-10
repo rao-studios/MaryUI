@@ -15,18 +15,24 @@
   box-shadow: var(--lp-shadow-emboss-raised);
 }
 
-/* Brush grain: mid-gray noise under overlay only adds directional texture. */
-.surface::before {
-  content: '';
+/*
+ * Brush grain: mid-gray noise under overlay only adds directional texture. It is
+ * oversized and translated rather than repainted, so the scratches can lag
+ * behind a moving frame for free. `--lp-brush-lag` caps the travel well inside
+ * the overhang, and the tile is seamless, so no seam ever enters the surface.
+ */
+.grain {
   position: absolute;
-  inset: 0;
+  inset: calc(var(--lp-brush-lag) * -1px);
   z-index: -1;
   pointer-events: none;
   background-image: var(--lp-brush-url);
   background-size: var(--lp-brush-tile, 256px) var(--lp-brush-tile, 256px);
   mix-blend-mode: overlay;
-  opacity: var(--lp-s-brush);
-  border-radius: inherit;
+  /* Hairlines catch the light while the surface is moving, then dim again. */
+  opacity: calc(var(--lp-s-brush) * (1 + var(--lp-speed) * var(--lp-brush-glint)));
+  transform: translate3d(var(--lp-grain-x), var(--lp-grain-y), 0);
+  will-change: transform;
 }
 
 /* The room light, reflected. The engine slides --lp-sheen-x across 0..1. */

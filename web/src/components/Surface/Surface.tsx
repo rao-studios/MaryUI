@@ -2,8 +2,13 @@
  * Surface — the brushed platinum every other component sits on.
  *
  * Anatomy: base gradient (from the variant's -top/-bottom tokens) → brush
- * grain (`::before`, the baked tile under `mix-blend-mode: overlay`) → sheen
- * (an optional highlight band positioned by `--lp-sheen-x`) → children.
+ * grain (the baked tile under `mix-blend-mode: overlay`) → sheen (an optional
+ * highlight band positioned by `--lp-sheen-x`) → children.
+ *
+ * The grain is a real element rather than a pseudo-element so it can be
+ * transformed: the engine writes `--lp-grain-x/y`, and the metal skin drags a
+ * few px behind the frame and springs back, so the hairline scratches visibly
+ * slide under the light as a window moves.
  */
 
 import { forwardRef, type HTMLAttributes, type ReactNode } from 'react'
@@ -25,6 +30,7 @@ export const Surface = forwardRef<HTMLDivElement, SurfaceProps>(function Surface
 ) {
   return (
     <div ref={ref} className={cx(styles.surface, styles[variant], className)} {...rest}>
+      <i className={styles.grain} aria-hidden="true" />
       {sheen ? <i className={styles.sheen} aria-hidden="true" /> : null}
       {children}
     </div>

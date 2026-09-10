@@ -345,9 +345,45 @@
       "alpha": 0.85
     },
     {
+      "red": 0,
+      "green": 0,
+      "blue": 0,
+      "alpha": 0.35
+    },
+    {
       "red": 1,
       "green": 1,
       "blue": 1,
+      "alpha": 0.3
+    },
+    {
+      "red": 1,
+      "green": 1,
+      "blue": 1,
+      "alpha": 0.72
+    },
+    {
+      "red": 0,
+      "green": 0,
+      "blue": 0,
+      "alpha": 0.28
+    },
+    {
+      "red": 1,
+      "green": 1,
+      "blue": 1,
+      "alpha": 1
+    },
+    {
+      "red": 0.4196,
+      "green": 0.4392,
+      "blue": 0.502,
+      "alpha": 1
+    },
+    {
+      "red": 0.302,
+      "green": 0.302,
+      "blue": 0.302,
       "alpha": 1
     },
     {

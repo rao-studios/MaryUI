@@ -11,13 +11,21 @@
   transition: none;
 }
 
-/* Engine-owned: only `transform` changes per frame. */
+/*
+ * Engine-owned: `transform` per frame, plus the four corner radii. Each corner
+ * has its own spring, so a moving window's leading corners flatten while its
+ * trailing ones round — the frame arrives like a drop, not a rectangle.
+ */
 .chrome {
   position: absolute;
   inset: 0;
   display: flex;
   flex-direction: column;
-  border-radius: var(--lp-radius-window);
+  border-radius:
+    var(--lp-r-tl, var(--lp-radius-window))
+    var(--lp-r-tr, var(--lp-radius-window))
+    var(--lp-r-br, var(--lp-radius-window))
+    var(--lp-r-bl, var(--lp-radius-window));
   box-shadow:
     var(--lp-shadow-window),
     var(--lp-shadow-emboss-raised);
@@ -30,16 +38,22 @@
     var(--lp-shadow-emboss-raised);
 }
 
-.frame[data-state='zoomed'] .chrome {
+/* Zoomed windows are flush with the screen; nothing to round, nothing to flex. */
+.frame[data-state='zoomed'] .chrome,
+.frame[data-state='zoomed'] .titleBar {
   border-radius: 0;
 }
 
 .titleBar {
-  border-radius: var(--lp-radius-window) var(--lp-radius-window) 0 0;
+  border-radius: var(--lp-r-tl, var(--lp-radius-window)) var(--lp-r-tr, var(--lp-radius-window)) 0 0;
 }
 
 .frame[data-state='shaded'] .titleBar {
-  border-radius: var(--lp-radius-window);
+  border-radius:
+    var(--lp-r-tl, var(--lp-radius-window))
+    var(--lp-r-tr, var(--lp-radius-window))
+    var(--lp-r-br, var(--lp-radius-window))
+    var(--lp-r-bl, var(--lp-radius-window));
   box-shadow: var(--lp-shadow-emboss-raised);
 }
 

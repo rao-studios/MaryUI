@@ -1,12 +1,25 @@
 /*
- * Tints set three colors: --lp-b-base (the liquid), --lp-b-deep (the empty
- * well behind it), --lp-b-light (the surface tint). Everything else is shared.
+ * Tints set three colors: --lp-b-base (the liquid), --lp-b-deep (the shadow in
+ * the liquid), --lp-b-light (the lit surface). Everything else is shared.
  */
 
 .shell {
   --lp-b-base: var(--lp-platinum-5);
   --lp-b-deep: var(--lp-platinum-8);
   --lp-b-light: var(--lp-platinum-1);
+  /*
+   * The empty part of the well is glass, not liquid: pale and barely tinted, so
+   * the colour you read is the liquid's. A well painted in --lp-b-deep put a
+   * dark cap over every bead and muddied the identity of all three lights.
+   */
+  background: radial-gradient(
+    circle at 50% 32%,
+    color-mix(in srgb, var(--lp-b-light) 40%, white),
+    color-mix(in srgb, var(--lp-b-base) 18%, var(--lp-platinum-2)) 88%
+  );
+  box-shadow:
+    inset 0 1px 2px var(--lp-traffic-rim),
+    inset 0 0 0 0.5px rgba(0, 0, 0, 0.25);
   position: relative;
   display: inline-block;
   flex: none;
@@ -14,31 +27,58 @@
   height: var(--lp-bubble-size);
   border-radius: 50%;
   overflow: hidden;
-  background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--lp-b-deep) 70%, white), var(--lp-b-deep) 80%);
-  box-shadow:
-    inset 0 1px 2px var(--lp-traffic-rim),
-    inset 0 0 0 0.5px rgba(0, 0, 0, 0.25);
   /* Clip children to the circle on every engine, transforms included. */
   clip-path: circle(50% at 50% 50%);
 }
 
+/* Liquid alone, for a caller that is about to run it through a merge filter. */
+.bare {
+  background: none;
+  box-shadow: none;
+}
+
+/*
+ * The liquid banks against a wall as well as tilting. At 18px the sideways
+ * pile-up is the stronger cue by far — a rotation alone is only a couple of
+ * pixels of crest movement, while the body visibly crowding one side is not.
+ */
 .sloshFrame {
   position: absolute;
   inset: 0;
-  transform: rotate(var(--lp-slosh)) translateY(var(--lp-slosh-y));
+  transform: rotate(calc(var(--lp-slosh) * var(--lp-liquid-slosh-scale)))
+    translate(
+      calc(var(--lp-slosh-x) * var(--lp-bubble-scale)),
+      calc(var(--lp-slosh-y) * var(--lp-bubble-scale))
+    );
   transform-origin: 50% 50%;
   will-change: transform;
 }
 
+/*
+ * The surface is a wide, shallow ellipse whose crest travels sideways, so what
+ * you see at 18px is water moving across the well — a rotating disc read as a
+ * spinning coin at this size.
+ */
 .liquid {
   position: absolute;
   left: -50%;
   width: 200%;
   height: 200%;
   top: calc((1 - var(--lp-bubble-fill, var(--lp-liquid-fill))) * 100%);
-  border-radius: 42% 45% 40% 44%;
-  background: radial-gradient(circle at 40% 30%, var(--lp-b-light), var(--lp-b-base) 42%, var(--lp-b-deep) 100%);
-  animation: lp-swirl var(--lp-motion-swirl-period) linear infinite;
+  border-radius: 44% 46% 40% 42%;
+  /*
+   * The surface of the body is lit along its top edge. This is the crest you
+   * actually read when the liquid tilts — and unlike the meniscus hairline it
+   * survives the merge filter, whose threshold touches alpha, not colour.
+   */
+  background:
+    linear-gradient(
+      180deg,
+      var(--lp-liquid-surface-light) 0,
+      transparent calc(var(--lp-liquid-surface-depth) * 100%)
+    ),
+    radial-gradient(circle at 40% 30%, var(--lp-b-light), var(--lp-b-base) 42%, var(--lp-b-deep) 100%);
+  animation: lp-wave var(--lp-liquid-wave-period) ease-in-out infinite alternate;
   animation-delay: var(--lp-bubble-phase);
   transform-origin: 50% 50%;
 }
@@ -49,11 +89,41 @@
 
 .back {
   opacity: var(--lp-liquid-opacity-back);
-  border-radius: 45% 40% 44% 41%;
+  border-radius: 46% 41% 44% 40%;
   top: calc((1 - var(--lp-bubble-fill, var(--lp-liquid-fill))) * 100% - 5%);
-  animation-duration: calc(var(--lp-motion-swirl-period) * 1.6);
-  animation-direction: reverse;
+  background-image: radial-gradient(circle at 40% 30%, var(--lp-b-light), var(--lp-b-base) 42%, var(--lp-b-deep) 100%);
+  animation-duration: calc(var(--lp-liquid-wave-period) * 1.55);
+  animation-direction: alternate-reverse;
   filter: brightness(1.15);
+}
+
+/*
+ * A painted hairline across the waterline: lit above, shadowed below. It was
+ * useful while the slosh was being tuned, but on a finished bead it reads as a
+ * stripe drawn on the liquid rather than as its surface — so it is off unless
+ * the Gallery's Debug tab asks for it. What actually shows you the waterline is
+ * the body's own top highlight (see `.liquid`), which is softer and tilts with
+ * the slosh just the same.
+ */
+.meniscus {
+  display: none;
+  position: absolute;
+  left: -25%;
+  width: 150%;
+  height: var(--lp-liquid-meniscus);
+  top: calc((1 - var(--lp-bubble-fill, var(--lp-liquid-fill))) * 100%);
+  background: var(--lp-liquid-meniscus-light);
+  box-shadow: 0 var(--lp-liquid-meniscus) 0 var(--lp-liquid-meniscus-shade);
+  animation: lp-crest var(--lp-liquid-wave-period) ease-in-out infinite alternate;
+  animation-delay: var(--lp-bubble-phase);
+}
+
+/*
+ * Never inside the merge filter, where a hairline would only alias against the
+ * threshold; the crest there is the body's own surface light either way.
+ */
+:global([data-crest]) .shell:not(.bare) .meniscus {
+  display: block;
 }
 
 .gloss {
@@ -72,57 +142,75 @@
   inset: 0;
   display: grid;
   place-items: center;
-  font-size: calc(var(--lp-bubble-size) * 0.8);
+  font-size: calc(var(--lp-bubble-size) * 0.72);
   line-height: 1;
   font-weight: 700;
   color: rgba(0, 0, 0, 0.55);
+  text-shadow: 0 1px 0 var(--lp-ink-emboss);
   opacity: 0;
   transition: opacity var(--lp-motion-fast) ease-out;
 }
 
-/* MARK: - Tints */
+/* MARK: - Tints
+ *
+ * Every tint reads a bead-scoped --lp-bead-<tint>-<role> first and falls back to
+ * the shared token. The Gallery's Customize tab writes only the bead variables,
+ * so recolouring a toggle knob cannot restyle buttons, tracks and selection —
+ * which is exactly what editing `accent` or `platinum` directly would do, since
+ * those alias tokens the rest of the UI is built on.
+ */
 
 .close {
-  --lp-b-base: var(--lp-traffic-close-base);
-  --lp-b-deep: var(--lp-traffic-close-deep);
-  --lp-b-light: var(--lp-traffic-close-light);
+  --lp-b-base: var(--lp-bead-close-base, var(--lp-traffic-close-base));
+  --lp-b-deep: var(--lp-bead-close-deep, var(--lp-traffic-close-deep));
+  --lp-b-light: var(--lp-bead-close-light, var(--lp-traffic-close-light));
 }
 
 .minimize {
-  --lp-b-base: var(--lp-traffic-minimize-base);
-  --lp-b-deep: var(--lp-traffic-minimize-deep);
-  --lp-b-light: var(--lp-traffic-minimize-light);
+  --lp-b-base: var(--lp-bead-minimize-base, var(--lp-traffic-minimize-base));
+  --lp-b-deep: var(--lp-bead-minimize-deep, var(--lp-traffic-minimize-deep));
+  --lp-b-light: var(--lp-bead-minimize-light, var(--lp-traffic-minimize-light));
 }
 
 .zoom {
-  --lp-b-base: var(--lp-traffic-zoom-base);
-  --lp-b-deep: var(--lp-traffic-zoom-deep);
-  --lp-b-light: var(--lp-traffic-zoom-light);
+  --lp-b-base: var(--lp-bead-zoom-base, var(--lp-traffic-zoom-base));
+  --lp-b-deep: var(--lp-bead-zoom-deep, var(--lp-traffic-zoom-deep));
+  --lp-b-light: var(--lp-bead-zoom-light, var(--lp-traffic-zoom-light));
 }
 
 .inactive {
-  --lp-b-base: var(--lp-traffic-inactive);
-  --lp-b-deep: var(--lp-traffic-inactive-deep);
-  --lp-b-light: var(--lp-platinum-1);
+  --lp-b-base: var(--lp-bead-inactive-base, var(--lp-traffic-inactive));
+  --lp-b-deep: var(--lp-bead-inactive-deep, var(--lp-traffic-inactive-deep));
+  --lp-b-light: var(--lp-bead-inactive-light, var(--lp-platinum-1));
 }
 
 .accent {
-  --lp-b-base: var(--lp-accent-base);
-  --lp-b-deep: var(--lp-accent-deep);
-  --lp-b-light: var(--lp-accent-light);
+  --lp-b-base: var(--lp-bead-accent-base, var(--lp-accent-base));
+  --lp-b-deep: var(--lp-bead-accent-deep, var(--lp-accent-deep));
+  --lp-b-light: var(--lp-bead-accent-light, var(--lp-accent-light));
 }
 
 .platinum {
-  --lp-b-base: var(--lp-platinum-4);
-  --lp-b-deep: var(--lp-platinum-7);
-  --lp-b-light: var(--lp-platinum-0);
+  --lp-b-base: var(--lp-bead-platinum-base, var(--lp-platinum-4));
+  --lp-b-deep: var(--lp-bead-platinum-deep, var(--lp-platinum-7));
+  --lp-b-light: var(--lp-bead-platinum-light, var(--lp-platinum-0));
 }
 
-@keyframes lp-swirl {
+/* The body rolls; the crest slides the other way and lifts a little. */
+@keyframes lp-wave {
   from {
-    transform: rotate(0deg);
+    transform: translateX(calc(var(--lp-liquid-wave-amplitude) * var(--lp-bubble-size) * -1)) rotate(-4deg);
   }
   to {
-    transform: rotate(360deg);
+    transform: translateX(calc(var(--lp-liquid-wave-amplitude) * var(--lp-bubble-size))) rotate(4deg);
+  }
+}
+
+@keyframes lp-crest {
+  from {
+    transform: translateY(calc(var(--lp-liquid-wave-amplitude) * var(--lp-bubble-size) * 0.35)) rotate(2deg);
+  }
+  to {
+    transform: translateY(calc(var(--lp-liquid-wave-amplitude) * var(--lp-bubble-size) * -0.35)) rotate(-2deg);
   }
 }

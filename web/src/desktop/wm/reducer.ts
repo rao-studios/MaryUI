@@ -9,10 +9,12 @@
  */
 
 import { clampToBounds, constrainRect, fitRect, rectsEqual, type Rect } from '@/lib/geometry'
+import { tokens } from '@/tokens/tokens'
 import type { WMAction } from './actions'
 import type { WMState, WindowRecord } from './types'
 
-export const TITLE_HEIGHT = 28
+/** The one height the reducer needs: how much of a window must stay reachable. */
+export const TITLE_HEIGHT = parseFloat(tokens.size.titlebarHeight)
 export const DEFAULT_MIN_SIZE = { w: 240, h: 160 }
 
 export function initialState(bounds: Rect): WMState {
@@ -51,7 +53,7 @@ function raise(state: WMState, id: string): WMState {
 function defaultRect(state: WMState, index: number): Rect {
   const w = Math.min(640, Math.max(DEFAULT_MIN_SIZE.w, state.bounds.w - 80))
   const h = Math.min(440, Math.max(DEFAULT_MIN_SIZE.h, state.bounds.h - 80))
-  const offset = (index % 8) * 28
+  const offset = (index % 8) * TITLE_HEIGHT
   return { x: state.bounds.x + 60 + offset, y: state.bounds.y + 40 + offset, w, h }
 }
 

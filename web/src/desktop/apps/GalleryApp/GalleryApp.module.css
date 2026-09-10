@@ -134,3 +134,50 @@
   user-select: text;
   -webkit-user-select: text;
 }
+
+/* MARK: - Customize tab */
+
+.colorWell {
+  width: 34px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--lp-radius-sm);
+  background: none;
+  box-shadow:
+    var(--lp-shadow-emboss-raised),
+    0 0 0 1px var(--lp-edge-hairline);
+  cursor: pointer;
+}
+
+/* Chrome and Safari each wrap the swatch differently; flatten both. */
+.colorWell::-webkit-color-swatch-wrapper {
+  padding: 2px;
+}
+
+.colorWell::-webkit-color-swatch {
+  border: 0;
+  border-radius: calc(var(--lp-radius-sm) - 2px);
+}
+
+.tintRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--lp-space-4);
+  padding: var(--lp-space-3);
+  border-radius: var(--lp-radius-md);
+}
+
+.tintPreview {
+  display: flex;
+  align-items: center;
+  gap: var(--lp-space-3);
+  min-width: 150px;
+}
+
+.tintFields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--lp-space-4);
+}

@@ -50,7 +50,8 @@ export const apps: Record<string, AppDefinition> = {
     icon: 'drop',
     component: GalleryApp,
     defaultRect: { x: 520, y: 140, w: 760, h: 560 },
-    minSize: { w: 520, h: 320 },
+    /* Wide enough for the seven tabs at full segmented metrics. */
+    minSize: { w: 640, h: 320 },
     singleton: true,
   },
   about: {

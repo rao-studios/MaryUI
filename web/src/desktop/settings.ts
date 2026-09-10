@@ -1,25 +1,44 @@
 /**
- * Desktop preferences: accent, goo, wallpaper source, reduced motion. A micro
- * store mirrored onto <html data-*> so CSS can react, and persisted to
- * localStorage so the inline script in index.html can restore it before paint.
+ * Desktop preferences: accent, goo, wallpaper source, reduced motion, and the
+ * Gallery's debug switches. A micro store mirrored onto <html data-*> so CSS can
+ * react, and persisted to localStorage so the inline script in index.html can
+ * restore it before paint.
  */
 
 import { useSyncExternalStore } from 'react'
 
 export type Accent = 'blue' | 'graphite'
-export type WallpaperMode = 'procedural' | 'raster'
+export type WallpaperMode = 'molten' | 'procedural' | 'raster'
+export type MoltenTone = 'platinum' | 'faithful'
 
 export interface Settings {
   accent: Accent
   goo: boolean
   wallpaper: WallpaperMode
+  /** Which grade the molten wallpaper wears. */
+  moltenTone: MoltenTone
   reducedMotion: boolean
+  /** Draw the painted hairline across each bead's waterline. Debug only. */
+  crestLine: boolean
+  /** Strip the merge filter so the raw blobs behind it are visible. */
+  showMergeLayer: boolean
+  /** Pause the ambient wave, to judge the slosh on its own. */
+  freezeLiquid: boolean
 }
 
 const KEY = 'lp-settings'
 
 function read(): Settings {
-  const defaults: Settings = { accent: 'blue', goo: true, wallpaper: 'procedural', reducedMotion: false }
+  const defaults: Settings = {
+    accent: 'blue',
+    goo: true,
+    wallpaper: 'molten',
+    moltenTone: 'platinum',
+    reducedMotion: false,
+    crestLine: false,
+    showMergeLayer: false,
+    freezeLiquid: false,
+  }
   try {
     return { ...defaults, ...JSON.parse(localStorage.getItem(KEY) ?? '{}') }
   } catch {
@@ -35,8 +54,18 @@ function apply(s: Settings): void {
   html.dataset.accent = s.accent
   html.dataset.goo = s.goo ? 'on' : 'off'
   html.dataset.wallpaper = s.wallpaper
+  html.dataset.moltenTone = s.moltenTone
   if (s.reducedMotion) html.dataset.reducedMotion = 'on'
   else delete html.dataset.reducedMotion
+  toggleFlag(html, 'crest', s.crestLine)
+  toggleFlag(html, 'mergeLayer', s.showMergeLayer)
+  toggleFlag(html, 'freezeLiquid', s.freezeLiquid)
+}
+
+/** Debug flags are absent rather than 'off', so CSS can match on presence alone. */
+function toggleFlag(html: HTMLElement, name: string, on: boolean): void {
+  if (on) html.dataset[name] = 'on'
+  else delete html.dataset[name]
 }
 
 export function getSettings(): Settings {

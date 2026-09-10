@@ -2,7 +2,7 @@
   position: fixed;
   z-index: var(--lp-z-menus);
   padding: var(--lp-space-1);
-  border-radius: var(--lp-radius-md);
+  border-radius: calc(var(--lp-radius-md) * (var(--lp-radius-flex-base) + var(--lp-radius-flex-span) * var(--lp-radius-k)));
   background: var(--lp-surface-menu);
   backdrop-filter: blur(14px) saturate(1.1);
   -webkit-backdrop-filter: blur(14px) saturate(1.1);

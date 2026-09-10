@@ -103,8 +103,9 @@ describe('the real tokens.json', () => {
     expect(out.c).toContain('#define LP_RADIUS_WINDOW 12.0f')
     expect(out.c).toContain('#define LP_SHEEN_ANGLE_DEG 105.0f')
     expect(out.c).toContain('#define LP_MOTION_FAST_MS 120.0f')
-    expect(out.c).toContain('#define LP_MOTION_SWIRL_PERIOD_MS 7000.0f')
-    expect(out.c).toContain('#define LP_MOTION_SLOSH_GAIN 0.00005f')
+    expect(out.c).toContain('#define LP_LIQUID_WAVE_PERIOD_MS 3400.0f')
+    // A very small float must not come through in scientific notation.
+    expect(out.c).toContain('#define LP_MOTION_SLOSH_GAIN 0.0009f')
     expect(out.c).toContain('#define LP_Z_WINDOWS 100')
     expect(out.c).toContain('#define LP_TEXT_WEIGHT_SEMIBOLD 600')
     expect(out.c).toContain('#define LP_MOTION_SPRING_JELLY ((lp_spring_params){ 2.2f, 0.55f })')
@@ -144,6 +145,8 @@ describe('the real tokens.json', () => {
 
   it('exposes motion constants as numbers in the TypeScript output', () => {
     expect(out.ts).toContain('springJelly: {')
-    expect(out.ts).toMatch(/sloshFrequency: 1\.7/)
+    // Read the expected value from the source rather than pinning a tuned
+    // number here: these emitter tests are about the emitter, not the design.
+    expect(out.ts).toContain(`sloshFrequency: ${tree.motion['slosh-frequency'].$value}`)
   })
 })

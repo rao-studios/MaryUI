@@ -25,7 +25,11 @@ export function SurfacesTab() {
 
       <section className={styles.section}>
         <h2 className={styles.heading}>Liquid merge</h2>
-        <p className={styles.note}>Adjacent controls share a goo-filtered metal layer; hover to see them flow together.</p>
+        <p className={styles.note}>
+          Adjacent controls share one filtered layer. The blobs carry no lighting of their own — the filter thresholds
+          them into a silhouette and lights <em>that</em>, which is what gives a merged bead volume. Hover to loosen the
+          tension and watch them neck; drag the window to see them trail and bridge.
+        </p>
         <div className={styles.row}>
           <GooGroup size="sm" blobs={{ count: 4, size: 30, shape: 'circle' }} gap={6}>
             {(['home', 'folder', 'star', 'gear'] as const).map((name, i) => (
@@ -41,6 +45,44 @@ export function SurfacesTab() {
               </button>
             ))}
           </GooGroup>
+        </div>
+      </section>
+
+      <section className={styles.section}>
+        <h2 className={styles.heading}>Merge tension</h2>
+        <p className={styles.note}>
+          The same three drops at rest and held open. `rest` thresholds steeply so beads stay distinct; `flow` blurs
+          further so they bridge. Both cut at the same alpha, so the silhouette keeps its size when tension changes.
+        </p>
+        <div className={styles.row}>
+          {([false, true] as const).map((flowing) => (
+            <div key={String(flowing)} style={{ display: 'grid', justifyItems: 'center', gap: 6 }}>
+              <GooGroup size="sm" blobs={{ count: 3, size: 26, shape: 'circle' }} gap={10} flowing={flowing}>
+                {[0, 1, 2].map((i) => (
+                  <span key={i} data-goo-index={i} style={{ width: 26, height: 26 }} />
+                ))}
+              </GooGroup>
+              <span className={styles.mono} style={{ color: 'var(--lp-ink-tertiary)' }}>{flowing ? 'flow' : 'rest'}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className={styles.section}>
+        <h2 className={styles.heading}>Liquid corners</h2>
+        <p className={styles.note}>
+          A window's four corners each run their own spring, detuned against each other, between{' '}
+          <code className={styles.mono}>radius.window-min</code> and <code className={styles.mono}>radius.window-max</code>.
+          Fling this window sideways: the corners it leads with flatten, the ones it trails with round, and they arrive
+          home one after another rather than together.
+        </p>
+        <div className={styles.row}>
+          {([['8px', 'min'], ['12px', 'rest'], ['16px', 'max']] as const).map(([r, label]) => (
+            <div key={label} style={{ display: 'grid', justifyItems: 'center', gap: 6 }}>
+              <Surface variant="raised" style={{ width: 76, height: 56, borderRadius: r, boxShadow: 'var(--lp-shadow-emboss-raised)' }} />
+              <span className={styles.mono} style={{ color: 'var(--lp-ink-tertiary)' }}>{`${label} ${r}`}</span>
+            </div>
+          ))}
         </div>
       </section>
 

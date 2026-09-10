@@ -55,7 +55,13 @@ traffic.inactive
 traffic.inactive-deep
 traffic.rim
 traffic.gloss
+traffic.bead-shadow
+liquid.surface-light
+liquid.meniscus-light
+liquid.meniscus-shade
 sheen.color
+molten.platinum.base
+molten.faithful.base
 edge.light
 edge.dark
 edge.hairline

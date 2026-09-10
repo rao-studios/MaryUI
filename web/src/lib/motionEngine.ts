@@ -5,9 +5,12 @@
  * every registered target while any of them is still moving; an idle desktop
  * schedules no frames at all. `WindowMotion` is the per-window target: it
  * turns pointer velocity into the sheen position, the tilt, the jelly
- * deformation, the FLIP flight, and the liquid slosh, and writes the results
- * straight to the DOM as a `transform` and a handful of `--lp-*` variables.
- * React never sees a frame.
+ * deformation, the FLIP flight, the four liquid corners, the lag of the brushed
+ * grain, and the liquid slosh, and writes the results straight to the DOM as a
+ * `transform` and a handful of `--lp-*` variables. React never sees a frame.
+ *
+ * Everything it writes is composited (`transform`, `opacity`) except the four
+ * corner radii, which repaint — those are quantized to a quarter-pixel.
  *
  * The constants live in `motionParams`, a mutable copy of the motion tokens so
  * the Gallery's Motion tab can retune the feel live.
@@ -16,6 +19,7 @@
 import { createSpring, isSettled, snapSpring, stepSpring, type SpringParams } from './spring'
 import { createSlosh, isSloshSettled, stepSlosh, type SloshParams, type SloshState } from './slosh'
 import { PointerTracker } from './velocity'
+import { CORNER_KEYS, cornerTargets, detunedFrequency, liquidity, type Corners, type RadiusParams } from './radius'
 import { clamp, flipTransform, type Rect } from './geometry'
 import { prefersReducedMotion, setVars } from './dom'
 import { tokens } from '@/tokens/tokens'
@@ -27,6 +31,12 @@ export interface MotionParams {
   tilt: SpringParams
   jelly: SpringParams
   fly: SpringParams
+  /** One spring for all four corners; each corner detunes its frequency off this. */
+  radius: SpringParams
+  /** The lag spring behind the brushed grain. */
+  grain: SpringParams
+  /** A slow follower of vx; the difference is what smears the goo. */
+  vxLag: SpringParams
   slosh: SloshParams
   jellyMaxScale: number
   jellyMaxSkew: number
@@ -34,6 +44,16 @@ export interface MotionParams {
   velocityRef: number
   /** Where the room light sits, as a fraction of viewport width. */
   lightX: number
+  /** Rest / min / max / spread for the liquid corners. */
+  corners: RadiusParams
+  /** Per-corner frequency spread, so the four never settle in lockstep. */
+  radiusDetune: number
+  /** px/s kicked into each corner spring when a window is grabbed and dropped. */
+  cornerImpulse: number
+  /** Speed (px/s) that counts as fully sheared, for the liquid. */
+  sloshVelocityRef: number
+  /** Max px the grain slides behind the frame. */
+  grainLag: number
 }
 
 export function motionParamsFromTokens(): MotionParams {
@@ -43,10 +63,15 @@ export function motionParamsFromTokens(): MotionParams {
     tilt: { ...m.springTilt },
     jelly: { ...m.springJelly },
     fly: { ...m.springFly },
+    radius: { ...m.springRadius },
+    grain: { ...m.springGrain },
+    vxLag: { ...m.springVxLag },
     slosh: {
       frequencyHz: m.sloshFrequency,
       dampingRatio: m.sloshDamping,
       gain: m.sloshGain,
+      shearGain: m.sloshShearGain,
+      shearGamma: m.sloshShearGamma,
       maxAngle: m.sloshMax,
       maxAccel: m.sloshMaxAccel,
     },
@@ -55,6 +80,18 @@ export function motionParamsFromTokens(): MotionParams {
     tiltMax: m.tiltMax,
     velocityRef: m.velocityRef,
     lightX: tokens.sheen.lightX,
+    corners: {
+      rest: parseFloat(tokens.radius.window),
+      min: parseFloat(tokens.radius.windowMin),
+      max: parseFloat(tokens.radius.windowMax),
+      spread: tokens.radiusFlex.spread,
+      velocityRef: tokens.radiusFlex.velocityRef,
+      gamma: tokens.radiusFlex.gamma,
+    },
+    radiusDetune: m.radiusDetune,
+    cornerImpulse: tokens.radiusFlex.impulse,
+    sloshVelocityRef: m.sloshVelocityRef,
+    grainLag: tokens.brush.lag,
   }
 }
 
@@ -132,6 +169,13 @@ export class WindowMotion implements MotionTarget {
   private flySy = createSpring(1)
   private slosh: SloshState = createSlosh()
   private sloshY: SloshState = createSlosh()
+  /** One spring per corner, in CORNER_KEYS order, each detuned off `params.radius`. */
+  private corners = CORNER_KEYS.map(() => createSpring(parseFloat(tokens.radius.window)))
+  private grainX = createSpring(0)
+  private grainY = createSpring(0)
+  private vxLag = createSpring(0)
+  private vyLag = createSpring(0)
+  private wroteCorners: Corners | null = null
 
   private dragging = false
   private resizing = false
@@ -164,6 +208,7 @@ export class WindowMotion implements MotionTarget {
     this.dragDx = 0
     this.dragDy = 0
     this.tracker.reset()
+    this.nudgeCorners(motionParams.cornerImpulse)
     if (this.elements) {
       this.elements.chrome.style.transformOrigin = `${grabX}px ${grabY}px`
       this.elements.chrome.style.willChange = 'transform'
@@ -180,11 +225,31 @@ export class WindowMotion implements MotionTarget {
 
   /** Ends the drag. The caller has already committed the final layout, so the delta returns to zero at once. */
   endDrag(): void {
+    // The frame is about to jump to its committed position while the delta drops
+    // to zero. Carry the grain's lag across with it, or the skin would snap.
+    this.grainX.value -= this.dragDx
+    this.grainY.value -= this.dragDy
     this.dragging = false
     this.dragDx = 0
     this.dragDy = 0
     this.tracker.reset()
+    this.nudgeCorners(-motionParams.cornerImpulse)
     this.writeTransform()
+    engine.wake()
+  }
+
+  /**
+   * Kicks the four corner springs — picking a window up and setting it down are
+   * impacts. Because the springs are detuned against each other, one kick sets
+   * all four wobbling out of phase and settling, which puts visible motion at
+   * the two moments the eye is actually on the window. An impulse rather than a
+   * bias, so it costs none of the lead/trail range during the drag itself.
+   */
+  nudgeCorners(impulse: number): void {
+    if (prefersReducedMotion()) return
+    for (const [i, corner] of this.corners.entries()) {
+      corner.velocity += impulse * (i % 2 === 0 ? 1 : -1)
+    }
     engine.wake()
   }
 
@@ -238,12 +303,26 @@ export class WindowMotion implements MotionTarget {
 
     this.sheen.target = clamp((p.lightX * vw - (rect.x + this.dragDx)) / Math.max(rect.w, 1), -0.3, 1.3)
     const n = clamp(vx / p.velocityRef, -1, 1)
+    const ny = clamp(vy / p.velocityRef, -1, 1)
     const m = clamp(Math.hypot(vx, vy) / p.velocityRef, 0, 1)
     const deform = this.dragging && !this.resizing && !reduced
     this.tilt.target = deform ? n * p.tiltMax : 0
     this.skew.target = deform ? n * p.jellyMaxSkew : 0
     this.sx.target = deform ? 1 + m * p.jellyMaxScale : 1
     this.sy.target = deform ? 1 - 0.6 * m * p.jellyMaxScale : 1
+
+    // The corners answer to how the window is *seen* to move, so a zoom's flight
+    // deforms them exactly as a drag does.
+    const seenVx = vx + this.flyX.velocity
+    const seenVy = vy + this.flyY.velocity
+    const targets = reduced ? null : cornerTargets(seenVx, seenVy, p.corners)
+    CORNER_KEYS.forEach((key, i) => {
+      this.corners[i].target = targets ? targets[key] : p.corners.rest
+    })
+    this.vxLag.target = n
+    this.vyLag.target = ny
+    this.grainX.target = this.dragDx
+    this.grainY.target = this.dragDy
 
     if (reduced) {
       snapSpring(this.sheen)
@@ -257,6 +336,11 @@ export class WindowMotion implements MotionTarget {
       snapSpring(this.flySy)
       this.slosh = createSlosh()
       this.sloshY = createSlosh()
+      for (const c of this.corners) snapSpring(c)
+      snapSpring(this.grainX)
+      snapSpring(this.grainY)
+      snapSpring(this.vxLag)
+      snapSpring(this.vyLag)
       this.flying = false
     } else {
       stepSpring(this.sheen, dt, p.sheen)
@@ -268,17 +352,37 @@ export class WindowMotion implements MotionTarget {
       stepSpring(this.flyY, dt, p.fly)
       stepSpring(this.flySx, dt, p.fly)
       stepSpring(this.flySy, dt, p.fly)
-      this.slosh = stepSlosh(this.slosh, ax, dt, p.slosh)
-      this.sloshY = stepSlosh(this.sloshY, ay, dt, p.slosh)
+      // The lag springs follow velocity normalized against the jelly's reference;
+      // the liquid shears against its own, lower one. Both normalizations are
+      // linear, so rescaling here is exact and saves a second pair of springs.
+      const shearScale = p.velocityRef / p.sloshVelocityRef
+      this.slosh = stepSlosh(this.slosh, { accel: ax, shear: (n - this.vxLag.value) * shearScale }, dt, p.slosh)
+      this.sloshY = stepSlosh(this.sloshY, { accel: ay, shear: (ny - this.vyLag.value) * shearScale }, dt, p.slosh)
+      this.corners.forEach((c, i) => {
+        stepSpring(c, dt, { frequency: detunedFrequency(p.radius.frequency, i, p.radiusDetune), damping: p.radius.damping })
+      })
+      stepSpring(this.grainX, dt, p.grain)
+      stepSpring(this.grainY, dt, p.grain)
+      stepSpring(this.vxLag, dt, p.vxLag)
+      stepSpring(this.vyLag, dt, p.vxLag)
     }
+
+    const gx = clamp(this.grainX.value - this.dragDx, -p.grainLag, p.grainLag)
+    const gy = clamp(this.grainY.value - this.dragDy, -p.grainLag, p.grainLag)
 
     setVars(el.frame, {
       '--lp-sheen-x': this.sheen.value.toFixed(4),
       '--lp-tilt': this.tilt.value.toFixed(3),
       '--lp-vx': n.toFixed(3),
+      '--lp-vx-lag': this.vxLag.value.toFixed(3),
+      '--lp-speed': liquidity(seenVx, seenVy, p.velocityRef).toFixed(3),
       '--lp-slosh': `${((-this.slosh.theta * 180) / Math.PI).toFixed(2)}deg`,
-      '--lp-slosh-y': `${(this.sloshY.theta * 6).toFixed(2)}px`,
+      '--lp-slosh-x': `${(-Math.sin(this.slosh.theta) * tokens.motion.sloshShift).toFixed(2)}px`,
+      '--lp-slosh-y': `${(this.sloshY.theta * tokens.motion.sloshLift).toFixed(2)}px`,
+      '--lp-grain-x': `${gx.toFixed(2)}px`,
+      '--lp-grain-y': `${gy.toFixed(2)}px`,
     })
+    this.writeCorners(el.frame)
     this.lastVx = n
 
     const flightSettled =
@@ -303,6 +407,11 @@ export class WindowMotion implements MotionTarget {
       deformSettled &&
       isSettled(this.tilt, 0.005, 0.05) &&
       isSettled(this.sheen, 0.0005, 0.005) &&
+      this.corners.every((c) => isSettled(c, 0.02, 0.2)) &&
+      isSettled(this.grainX, 0.05, 0.5) &&
+      isSettled(this.grainY, 0.05, 0.5) &&
+      isSettled(this.vxLag, 0.002, 0.02) &&
+      isSettled(this.vyLag, 0.002, 0.02) &&
       isSloshSettled(this.slosh) &&
       isSloshSettled(this.sloshY)
 
@@ -318,6 +427,30 @@ export class WindowMotion implements MotionTarget {
     this.wroteIdentity = false
     this.writeTransform()
     return true
+  }
+
+  /**
+   * `border-radius` repaints, unlike `transform`, so only write a corner once it
+   * has actually moved a visible quarter-pixel.
+   */
+  private writeCorners(frame: HTMLElement): void {
+    const next = {} as Corners
+    CORNER_KEYS.forEach((key, i) => {
+      next[key] = this.corners[i].value
+    })
+    const prev = this.wroteCorners
+    if (prev && CORNER_KEYS.every((key) => Math.abs(next[key] - prev[key]) < 0.25)) return
+    this.wroteCorners = next
+    setVars(frame, {
+      '--lp-r-tl': `${next.tl.toFixed(2)}px`,
+      '--lp-r-tr': `${next.tr.toFixed(2)}px`,
+      '--lp-r-br': `${next.br.toFixed(2)}px`,
+      '--lp-r-bl': `${next.bl.toFixed(2)}px`,
+      '--lp-radius-k': (
+        Math.max(...CORNER_KEYS.map((key) => Math.abs(next[key] - motionParams.corners.rest))) /
+        Math.max(motionParams.corners.max - motionParams.corners.rest, 1)
+      ).toFixed(3),
+    })
   }
 
   private writeTransform(): void {

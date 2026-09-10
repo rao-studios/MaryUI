@@ -23,7 +23,7 @@
   place-items: center;
   width: 15px;
   height: 15px;
-  border-radius: var(--lp-radius-xs);
+  border-radius: calc(var(--lp-radius-xs) * (var(--lp-radius-flex-base) + var(--lp-radius-flex-span) * var(--lp-radius-k)));
   background: linear-gradient(180deg, var(--lp-surface-raised-top), var(--lp-surface-raised-bottom));
   box-shadow:
     var(--lp-shadow-emboss-raised),

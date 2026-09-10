@@ -57,6 +57,8 @@ export function Window({ id, children }: WindowProps) {
   const [closing, setClosing] = useState(false)
   const [shading, setShading] = useState(false)
   const [resizing, setResizing] = useState(false)
+  /* Two renders per drag, not per frame: it only marks the window as in motion. */
+  const [dragging, setDragging] = useState(false)
   const pendingFlip = useRef<Rect | null>(null)
 
   const focus = useCallback(() => {
@@ -73,6 +75,7 @@ export function Window({ id, children }: WindowProps) {
         const w = store.getState().windows[id]
         if (!w || w.state === 'zoomed') return false
         focus()
+        setDragging(true)
         motion.beginDrag(local.x, local.y)
       },
       onMove(dx, dy, event) {
@@ -94,6 +97,7 @@ export function Window({ id, children }: WindowProps) {
           frame.style.top = `${next.y}px`
         }
         motion.endDrag()
+        setDragging(false)
         store.dispatch({ type: 'MOVE', id, x: next.x, y: next.y })
       },
     }),
@@ -182,6 +186,7 @@ export function Window({ id, children }: WindowProps) {
       data-focused={focused}
       data-state={record.state}
       data-anim={shading ? 'shade' : undefined}
+      data-moving={dragging ? '' : undefined}
       data-resizing={resizing ? '' : undefined}
       data-closing={closing ? '' : undefined}
       role="dialog"

@@ -22,6 +22,7 @@ import { flatten, parseColor, resolveAliases } from './tokens-lib.mjs'
 import * as S from './sketch-lib.mjs'
 import { brushedTextureSvg } from '../src/lib/brushSvg.ts'
 import { wallpaperSvg } from '../src/lib/wallpaperSvg.ts'
+import { MOLTEN_FRAGMENT, MOLTEN_VERTEX, hexToRgb } from '../src/lib/moltenShader.ts'
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), '..')
 const argv = Object.fromEntries(process.argv.slice(2).map((a) => a.replace(/^--/, '').split('=')))
@@ -60,14 +61,44 @@ function chromePath() {
   return candidates.find((c) => existsSync(c)) ?? null
 }
 
-function renderWithChrome(chrome, html, w, h, scale) {
+/**
+ * The desktop's real wallpaper: the molten shader, run in headless WebGL so the
+ * design file shows what the app shows. SwiftShader is enough for one frame.
+ */
+function moltenHtml(w, h, grade) {
+  const uniforms = JSON.stringify(grade)
+  return `<!doctype html><html><body style="margin:0"><canvas id="c" width="${w}" height="${h}" style="display:block"></canvas><script>
+const g = ${uniforms};
+const gl = document.getElementById('c').getContext('webgl', { alpha: false, preserveDrawingBuffer: true });
+const sh = (t, src) => { const s = gl.createShader(t); gl.shaderSource(s, src); gl.compileShader(s); return s };
+const p = gl.createProgram();
+gl.attachShader(p, sh(gl.VERTEX_SHADER, ${JSON.stringify(MOLTEN_VERTEX)}));
+gl.attachShader(p, sh(gl.FRAGMENT_SHADER, ${JSON.stringify(MOLTEN_FRAGMENT)}));
+gl.linkProgram(p); gl.useProgram(p);
+const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,3,-1,-1,3]), gl.STATIC_DRAW);
+const a = gl.getAttribLocation(p, 'a_position'); gl.enableVertexAttribArray(a);
+gl.vertexAttribPointer(a, 2, gl.FLOAT, false, 0, 0);
+gl.viewport(0, 0, ${w}, ${h});
+gl.uniform2f(gl.getUniformLocation(p, 'u_resolution'), ${w}, ${h});
+gl.uniform1f(gl.getUniformLocation(p, 'u_time'), 0);
+gl.uniform1f(gl.getUniformLocation(p, 'u_zoom'), g.zoom);
+gl.uniform3f(gl.getUniformLocation(p, 'u_base'), g.base[0], g.base[1], g.base[2]);
+gl.uniform1f(gl.getUniformLocation(p, 'u_lift'), g.lift);
+gl.uniform1f(gl.getUniformLocation(p, 'u_gain'), g.gain);
+gl.uniform1f(gl.getUniformLocation(p, 'u_saturation'), g.saturation);
+gl.drawArrays(gl.TRIANGLES, 0, 3); gl.finish();
+</script></body></html>`
+}
+
+function renderWithChrome(chrome, html, w, h, scale, extraFlags = []) {
   const dir = mkdtempSync(join(tmpdir(), 'lp-sketch-'))
   const file = join(dir, 'page.html')
   const out = join(dir, 'shot.png')
   writeFileSync(file, html)
   execFileSync(
     chrome,
-    ['--headless=new', '--disable-gpu', '--hide-scrollbars', `--window-size=${w},${h}`, `--force-device-scale-factor=${scale}`, `--screenshot=${out}`, `file://${file}`],
+    ['--headless=new', '--disable-gpu', ...extraFlags, '--hide-scrollbars', `--window-size=${w},${h}`, `--force-device-scale-factor=${scale}`, `--screenshot=${out}`, `file://${file}`],
     { stdio: 'ignore', timeout: 60_000 },
   )
   return readFileSync(out)
@@ -104,7 +135,19 @@ let brushPng
 let wallpaperPng = null
 if (chrome) {
   brushPng = renderWithChrome(chrome, wrap(brushedTextureSvg(brushParams), brushParams.tile, brushParams.tile), brushParams.tile, brushParams.tile, 2)
-  wallpaperPng = renderWithChrome(chrome, wrap(wallpaperSvg(), 1440, 900), 1440, 900, 1)
+  const grade = {
+    base: hexToRgb(val('molten.platinum.base')),
+    lift: num('molten.platinum.lift'),
+    gain: num('molten.platinum.gain'),
+    saturation: num('molten.platinum.saturation'),
+    zoom: num('molten.zoom'),
+  }
+  try {
+    wallpaperPng = renderWithChrome(chrome, moltenHtml(1440, 900, grade), 1440, 900, 1, ['--enable-unsafe-swiftshader'])
+  } catch {
+    console.warn('sketch: molten shader would not render — falling back to the procedural wallpaper')
+    wallpaperPng = renderWithChrome(chrome, wrap(wallpaperSvg(), 1440, 900), 1440, 900, 1)
+  }
 } else {
   console.warn('sketch: Chrome not found — using a procedural brush tile and a gradient desktop')
   brushPng = fallbackBrush()
@@ -123,6 +166,7 @@ const embossText = () => [S.shadow(col('ink.emboss'), { y: 1 })]
 const PILL = 999
 const R = { xs: num('radius.xs'), sm: num('radius.sm'), md: num('radius.md'), lg: num('radius.lg'), window: num('radius.window') }
 const CONTROL_H = num('size.control-height')
+const SEGMENTED_H = num('size.segmented-height')
 
 const f = (x, y, w, h) => ({ x, y, w, h })
 
@@ -202,53 +246,123 @@ const TINTS = {
 }
 const cap = (s) => s[0].toUpperCase() + s.slice(1)
 
-function bubbleLayers(s, tint, fill = num('liquid.fill')) {
+const TRAFFIC = num('size.traffic')
+const PITCH = TRAFFIC + num('size.traffic-gap')
+
+/**
+ * One object everywhere: a bead of glass standing proud of the surface, holding
+ * coloured liquid with a lit surface line across it. Toggle knob, slider thumb
+ * and traffic light are all this, at different sizes, tints and fills. The empty
+ * part of the well is pale glass, not dark liquid, so the colour you read is the
+ * liquid's.
+ */
+function bubbleLayers(s, tint, { fill = num('liquid.fill') } = {}) {
   const t = TINTS[tint]
   const deep = col(t.deep)
   const base = col(t.base)
   const light = col(t.light)
   const radial = () => S.fillGradient([[0, light], [0.42, base], [1, deep]], { type: 1, from: S.pt(0.4, 0.3), to: S.pt(0.4, 0.95), elipseLength: 1 })
-  const shell = S.oval(
-    'shell',
-    f(0, 0, s, s),
-    S.style({
-      fills: [S.fillGradient([[0, mix(deep, S.WHITE(), 0.3)], [0.8, deep]], { type: 1, from: S.pt(0.5, 0.35), to: S.pt(0.5, 1.15), elipseLength: 1 })],
+  const glass = mix(light, S.WHITE(), 0.6)
+  const glassDeep = mix(base, col('platinum.2'), 0.82)
+  const layers = [
+    S.oval('shell', f(0, 0, s, s), S.style({
+      fills: [S.fillGradient([[0, glass], [0.88, glassDeep]], { type: 1, from: S.pt(0.5, 0.32), to: S.pt(0.5, 1.15), elipseLength: 1 })],
       innerShadows: [S.innerShadow(col('traffic.rim'), { y: 1, blur: 2 }), S.innerShadow(S.BLACK(0.25), { spread: 0.5 })],
-    }),
-  )
+    })),
+  ]
+
   const mask = S.oval('mask', f(0, 0, s, s), S.style(), { hasClippingMask: true })
   const back = S.oval('liquid.back', f(-0.58 * s, (1 - fill) * s - 0.05 * s, 2 * s, 2 * s), S.style({ fills: [radial()], opacity: num('liquid.opacity-back') }))
   const front = S.oval('liquid.front', f(-0.5 * s, (1 - fill) * s, 2 * s, 2 * s), S.style({ fills: [radial()], opacity: num('liquid.opacity-front') }))
-  const liquid = fit('liquid', [mask, back, front])
-  const gloss = S.oval('gloss', f(0.18 * s, 0.08 * s, 0.46 * s, 0.32 * s), S.style({ fills: [S.fillGradient([[0, col('traffic.gloss')], [1, S.WHITE(0)]])] }))
-  return [shell, liquid, gloss]
+  /* No crest hairline: that is a debug overlay in the web app, off by default. */
+  layers.push(fit('liquid', [mask, back, front]))
+
+  layers.push(S.oval('gloss', f(0.18 * s, 0.08 * s, 0.46 * s, 0.32 * s), S.style({ fills: [S.fillGradient([[0, col('traffic.gloss')], [1, S.WHITE(0)]])] })))
+  return layers
 }
 
-for (const size of [12, 16, 40]) {
+for (const size of [16, 40]) {
   for (const tint of Object.keys(TINTS)) defineSymbol(`Bubble/${size}/${cap(tint)}`, size, size, bubbleLayers(size, tint))
+}
+for (const tint of Object.keys(TINTS)) {
+  defineSymbol(`Bubble/${TRAFFIC}/${cap(tint)}`, TRAFFIC, TRAFFIC, bubbleLayers(TRAFFIC, tint, { fill: num('liquid.fill-traffic') }))
 }
 
 // MARK: - Traffic lights, title bar, window chrome
 
-const TRAFFIC = num('size.traffic')
-const RIM = TRAFFIC + 2
-const PITCH = TRAFFIC + num('size.traffic-gap')
-
-function trafficLights(active) {
+/**
+ * Each light is the same glass bead the Toggle uses for its knob, sat proud of
+ * the bar on its own shadow. The glyphs only surface on hover, so `Hover` is a
+ * separate variant. A moving window does nothing to these but slosh the liquid
+ * inside them — the necking in `Liquid Merge` is a hover flourish.
+ */
+function trafficLights({ active = true, hover = false } = {}) {
   const layers = []
   const tints = active ? ['close', 'minimize', 'zoom'] : ['inactive', 'inactive', 'inactive']
+  const glyphs = ['×', '–', '+']
   tints.forEach((tint, i) => {
-    layers.push(S.oval(`rim ${i + 1}`, f(i * PITCH, 0, RIM, RIM), S.style({ fills: metalFills('surface.raised-top', 'platinum.5'), innerShadows: emboss(), borders: [S.border(S.BLACK(0.2), 0.5, 1)] })))
-    layers.push(inst(`Bubble/12/${cap(tint)}`, i * PITCH + 1, 1, { layerName: ['close', 'shade', 'zoom'][i] }))
+    layers.push(
+      Object.assign(inst(`Bubble/${TRAFFIC}/${cap(tint)}`, i * PITCH, 0, { layerName: ['close', 'shade', 'zoom'][i] }), {
+        style: S.style({ shadows: [S.shadow(col('traffic.bead-shadow'), { y: 1, blur: 2 })] }),
+      }),
+    )
+    if (hover) {
+      layers.push(label(`glyph ${i + 1}`, f(i * PITCH, (TRAFFIC - TRAFFIC * 0.72) / 2, TRAFFIC, TRAFFIC * 0.72), glyphs[i], {
+        size: TRAFFIC * 0.62,
+        font: S.FONT.bold,
+        colorObj: S.BLACK(0.5),
+      }))
+    }
   })
   return layers
 }
-defineSymbol('Traffic Lights/Active', 2 * PITCH + RIM, RIM, trafficLights(true))
-defineSymbol('Traffic Lights/Inactive', 2 * PITCH + RIM, RIM, trafficLights(false))
+defineSymbol('Traffic Lights/Active', 2 * PITCH + TRAFFIC, TRAFFIC, trafficLights())
+defineSymbol('Traffic Lights/Hover', 2 * PITCH + TRAFFIC, TRAFFIC, trafficLights({ hover: true }))
+defineSymbol('Traffic Lights/Inactive', 2 * PITCH + TRAFFIC, TRAFFIC, trafficLights({ active: false }))
+
+/**
+ * The hover necking, as three still frames. Sketch has no goo filter, so the
+ * bridged states are drawn: the drops swell toward each other and the necks
+ * between them are the filter's threshold closing what the swelling leaves.
+ */
+{
+  const w = 2 * PITCH + TRAFFIC
+  const tints = ['close', 'minimize', 'zoom']
+  const states = [
+    { name: 'Apart', stretch: 0, neck: 0 },
+    { name: 'Necking', stretch: 0.25, neck: 0.28 },
+    { name: 'Merged', stretch: 0.55, neck: 1 },
+  ]
+  for (const state of states) {
+    const layers = []
+    const grow = TRAFFIC * state.stretch
+    tints.forEach((tint, i) => {
+      const x = i * PITCH - grow / 2
+      const dw = TRAFFIC + grow
+      layers.push(S.oval(`drop ${i + 1}`, f(x, 0, dw, TRAFFIC), S.style({
+        fills: [S.fillGradient([[0, col(TINTS[tint].light)], [0.42, col(TINTS[tint].base)], [1, col(TINTS[tint].deep)]], { type: 1, from: S.pt(0.4, 0.3), to: S.pt(0.4, 0.95), elipseLength: 1 })],
+      })))
+      if (i < tints.length - 1 && state.neck > 0) {
+        const nh = TRAFFIC * (0.32 + 0.62 * state.neck)
+        const nx = i * PITCH + TRAFFIC / 2
+        layers.push(S.rectangle(`neck ${i + 1}`, f(nx, (TRAFFIC - nh) / 2, PITCH, nh), S.style({
+          fills: [S.fillGradient([[0, col(TINTS[tint].base)], [1, col(TINTS[tints[i + 1]].base)]], { from: S.pt(0, 0.5), to: S.pt(1, 0.5) })],
+        }), { radius: nh / 2 }))
+      }
+    })
+    layers.push(S.rectangle('specular', f(TRAFFIC * 0.1, TRAFFIC * 0.22, w - TRAFFIC * 0.2, TRAFFIC * 0.22), S.style({
+      fills: [S.fillGradient([[0, S.WHITE(0)], [0.5, S.WHITE(0.7)], [1, S.WHITE(0)]], { from: S.pt(0, 0.5), to: S.pt(1, 0.5) })],
+    }), { radius: TRAFFIC * 0.11 }))
+    defineSymbol(`Liquid Merge/${state.name}`, w, TRAFFIC, layers)
+  }
+}
+
 
 const WIN_W = 720
 const WIN_H = 460
 const TITLE_H = num('size.titlebar-height')
+/* Matches TitleBar.module.css: clear the lights on both sides. */
+const TITLE_INSET = 3 * TRAFFIC + 2 * num('size.traffic-gap') + num('space.6')
 
 function titleBar(active) {
   const top = active ? 'surface.titlebar-top' : 'surface.titlebar-inactive-top'
@@ -257,8 +371,8 @@ function titleBar(active) {
     metal('bar', f(0, 0, WIN_W, TITLE_H), { top, bottom, radius: [R.window, R.window, 0, 0] }),
     sheen(f(0, 0, WIN_W, TITLE_H), [R.window, R.window, 0, 0], { alpha: active ? num('sheen.alpha') : num('sheen.alpha-inactive') }),
     S.rectangle('hairline', f(0, TITLE_H - 1, WIN_W, 1), S.style({ fills: [S.fillColor(col('edge.hairline'))] }), { extra: {}, resizingConstraint: PIN.topStretchX }),
-    inst(active ? 'Traffic Lights/Active' : 'Traffic Lights/Inactive', 8, (TITLE_H - RIM) / 2, { layerName: 'traffic lights', extra: { resizingConstraint: PIN.leftTopFixed } }),
-    label('title', f(84, (TITLE_H - 16) / 2, WIN_W - 168, 16), 'Window Title', { color: active ? 'ink.primary' : 'ink.tertiary', extra: { resizingConstraint: PIN.topStretchX } }),
+    inst(active ? 'Traffic Lights/Active' : 'Traffic Lights/Inactive', num('space.3'), (TITLE_H - TRAFFIC) / 2, { layerName: 'traffic lights', extra: { resizingConstraint: PIN.leftTopFixed } }),
+    label('title', f(TITLE_INSET, (TITLE_H - 20) / 2, WIN_W - 2 * TITLE_INSET, 20), 'Window Title', { size: num('text.lg'), color: active ? 'ink.primary' : 'ink.tertiary', extra: { resizingConstraint: PIN.topStretchX } }),
   ]
 }
 defineSymbol('Title Bar/Active', WIN_W, TITLE_H, titleBar(true))
@@ -294,10 +408,10 @@ defineSymbol('Button/Icon', CONTROL_H, CONTROL_H, [
 {
   const w = 240
   const seg = w / 3
-  defineSymbol('Segmented Control', w, CONTROL_H, [
-    S.rectangle('track', f(0, 0, w, CONTROL_H), S.style({ fills: [S.fillColor(col('platinum.3'))], innerShadows: wellShadows() }), { radius: PILL }),
-    metal('thumb', f(2 + seg, 2, seg - 4, CONTROL_H - 4), { radius: PILL, shadows: [S.shadow(S.BLACK(0.25), { y: 1, blur: 2 })] }),
-    ...['Day', 'Week', 'Month'].map((t, i) => label(t, f(i * seg, (CONTROL_H - 15) / 2, seg, 15), t, { size: 12, color: i === 1 ? 'ink.primary' : 'ink.secondary', emboss: i === 1 })),
+  defineSymbol('Segmented Control', w, SEGMENTED_H, [
+    S.rectangle('track', f(0, 0, w, SEGMENTED_H), S.style({ fills: [S.fillColor(col('platinum.3'))], innerShadows: wellShadows() }), { radius: PILL }),
+    metal('thumb', f(2 + seg, 2, seg - 4, SEGMENTED_H - 4), { radius: PILL, shadows: [S.shadow(S.BLACK(0.25), { y: 1, blur: 2 })] }),
+    ...['Day', 'Week', 'Month'].map((t, i) => label(t, f(i * seg, (SEGMENTED_H - 16) / 2, seg, 16), t, { size: num('text.md'), color: i === 1 ? 'ink.primary' : 'ink.secondary', emboss: i === 1 })),
   ])
 }
 
@@ -446,7 +560,7 @@ defineSymbol('Toolbar', WIN_W, 40, [
   S.rectangle('hairline', f(0, 39, WIN_W, 1), S.style({ fills: [S.fillColor(col('edge.hairline'))] })),
   label('back', f(12, 12, 16, 16), '‹', { size: 16, color: 'ink.disabled', emboss: false }),
   label('forward', f(32, 12, 16, 16), '›', { size: 16, color: 'ink.disabled', emboss: false }),
-  inst('Segmented Control', 60, 9, { w: 120, h: CONTROL_H, layerName: 'view' }),
+  inst('Segmented Control', 60, (40 - SEGMENTED_H) / 2, { w: 120, h: SEGMENTED_H, layerName: 'view' }),
   inst('Text Field/Round', WIN_W - 192, 9, { layerName: 'search' }),
 ])
 
@@ -526,6 +640,37 @@ defineSymbol('Surface/Well', 200, 96, [well('well', f(0, 0, 200, 96), { radius: 
   defineSymbol('Window', WIN_W, WIN_H, layers)
 }
 
+/**
+ * The same window mid-fling, so the motion is legible in a still file: the
+ * corners it leads with flattened to radius.window-min, the ones it trails with
+ * rounded to radius.window-max, the grain slid back against the travel, and the
+ * lights merged into a ribbon.
+ */
+{
+  const lead = num('radius.window-min')
+  const trail = num('radius.window-max')
+  /* Travelling right: tr/br lead, tl/bl trail. Sketch order is tl, tr, br, bl. */
+  const corners = [trail, lead, lead, trail]
+  const layers = [
+    metal('chrome', f(0, 0, WIN_W, WIN_H), {
+      top: 'surface.window-top',
+      bottom: 'surface.window-bottom',
+      radius: corners,
+      brush: BRUSH,
+      shadows: [S.shadow(rgbaTok(20, 22, 28, 0.4), { y: 24, blur: 56 })],
+      borders: [S.border(S.BLACK(0.34), 1, 2)],
+    }),
+    metal('title bar', f(0, 0, WIN_W, TITLE_H), { top: 'surface.titlebar-top', bottom: 'surface.titlebar-bottom', radius: [trail, lead, 0, 0] }),
+    sheen(f(0, 0, WIN_W, TITLE_H), [trail, lead, 0, 0]),
+    S.rectangle('hairline', f(0, TITLE_H - 1, WIN_W, 1), S.style({ fills: [S.fillColor(col('edge.hairline'))] })),
+    inst('Traffic Lights/Active', num('space.3'), (TITLE_H - TRAFFIC) / 2, { layerName: 'traffic lights' }),
+    label('title', f(TITLE_INSET, (TITLE_H - 20) / 2, WIN_W - 2 * TITLE_INSET, 20), 'Window Title', { size: num('text.lg') }),
+    S.rectangle('body', f(0, TITLE_H, WIN_W, WIN_H - TITLE_H), S.style({ fills: [S.fillColor(col('surface.body')), brushFill(BRUSH * 0.25)] }), { radius: [0, 0, lead, trail] }),
+    label('note', f(0, TITLE_H + 40, WIN_W, 20), `leading corners ${lead}px · trailing ${trail}px · grain lagging ${num('brush.lag')}px`, { size: 12, color: 'ink.tertiary', emboss: false }),
+  ]
+  defineSymbol('Window/In Motion', WIN_W, WIN_H, layers)
+}
+
 // MARK: - Pages
 
 const INK = (name) => col(name)
@@ -582,7 +727,7 @@ const symbolsPage = S.page('Symbols', symbolsLayers)
 // Components overview.
 const componentsLayers = []
 {
-  const order = ['Window', 'Title Bar', 'Menu Bar', 'Toolbar', 'Traffic Lights', 'Bubble', 'Button', 'Segmented Control', 'Toggle', 'Checkbox', 'Slider', 'Text Field', 'Progress Bar', 'Menu', 'Menu Item', 'Menu Separator', 'Sidebar Item', 'List Row', 'Surface', 'Monogram']
+  const order = ['Window', 'Title Bar', 'Menu Bar', 'Toolbar', 'Traffic Lights', 'Liquid Merge', 'Bubble', 'Button', 'Segmented Control', 'Toggle', 'Checkbox', 'Slider', 'Text Field', 'Progress Bar', 'Menu', 'Menu Item', 'Menu Separator', 'Sidebar Item', 'List Row', 'Surface', 'Monogram']
   let y = 48
   componentsLayers.push(S.text('heading', f(40, y, 800, 34), 'Liquid Platinum — Components', { font: S.FONT.display, size: 28, color: INK('ink.primary'), behaviour: 0, shadows: embossText() }))
   componentsLayers.push(S.text('sub', f(40, y + 40, 900, 18), `Brushed platinum overlay at ${BRUSH} · every color is a Color Variable from tokens/tokens.json · symbols live on the Symbols page`, { font: S.FONT.regular, size: 13, color: INK('ink.secondary'), behaviour: 0 }))
@@ -650,6 +795,15 @@ const tokensLayers = []
     tokensLayers.push(S.text(`radius-${key} label`, f(x, y + 60, 80, 12), `${key} ${R[key]}`, { font: S.FONT.mono, size: 9, color: INK('ink.secondary'), behaviour: 0 }))
     x += 80
   }
+  /* The live range a window's corners travel through, and one corner of each. */
+  x += 24
+  for (const [key, label_] of [['window-min', 'min'], ['window', 'rest'], ['window-max', 'max']]) {
+    const r = num(`radius.${key}`)
+    tokensLayers.push(metal(`radius-${key}`, f(x, y, 56, 56), { radius: r, hairline: true }))
+    tokensLayers.push(S.text(`radius-${key} label`, f(x, y + 60, 80, 12), `${label_} ${r}`, { font: S.FONT.mono, size: 9, color: INK('ink.secondary'), behaviour: 0 }))
+    x += 80
+  }
+  tokensLayers.push(S.text('radius range note', f(x, y + 18, 300, 14), `in motion each corner springs freely between ${num('radius.window-min')} and ${num('radius.window-max')}`, { font: S.FONT.regular, size: 11, color: INK('ink.tertiary'), behaviour: 0 }))
   x += 40
   for (let i = 1; i <= 8; i++) {
     const s = num(`space.${i}`)
@@ -669,7 +823,8 @@ const desktopLayers = []
   desktopLayers.push(S.rectangle('vignette', f(0, 0, 1440, 900), S.style({ fills: [S.fillGradient([[0.55, S.BLACK(0)], [1, rgbaTok(20, 22, 28, 0.35)]], { type: 1, from: S.pt(0.5, 0.4), to: S.pt(0.5, 1.1), elipseLength: 1.6 })] })))
   desktopLayers.push(inst('Menu Bar', 0, 0))
   desktopLayers.push(inst('Window', 72, 72, { layerName: 'Rao' }))
-  desktopLayers.push(inst('Window', 560, 200, { layerName: 'Liquid Platinum' }))
+  /* One at rest, one mid-fling, so the motion vocabulary is visible in a still file. */
+  desktopLayers.push(inst('Window/In Motion', 560, 200, { layerName: 'Liquid Platinum (in motion)' }))
 }
 const desktopBoard = S.artboard('Desktop', f(0, 0, 1440, 900), desktopLayers, { background: col('platinum.6') })
 

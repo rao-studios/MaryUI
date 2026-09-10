@@ -3,19 +3,39 @@
 }
 
 .light {
+  position: relative;
   display: grid;
   place-items: center;
-  width: calc(var(--lp-size-traffic) + 2px);
-  height: calc(var(--lp-size-traffic) + 2px);
+  width: var(--lp-size-traffic);
+  height: var(--lp-size-traffic);
   border-radius: 50%;
 }
 
-.light:focus-visible {
-  box-shadow: 0 0 0 2px var(--lp-accent-focus-ring);
+/*
+ * The bead is the Toggle's knob: the same glass well, the same drop shadow
+ * sitting it proud of the surface behind it — and, like a knob, it never changes
+ * size or fades. Everything a moving window does to these lights happens to the
+ * liquid *inside* them.
+ */
+.bead {
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px var(--lp-traffic-bead-shadow);
+}
+
+.lights [data-lp-glyph] {
+  font-size: calc(var(--lp-size-traffic) * 0.6);
+  color: rgba(0, 0, 0, 0.5);
+  text-shadow: 0 1px 0 var(--lp-ink-emboss);
 }
 
 .lights:hover [data-lp-glyph] {
   opacity: 1;
+}
+
+.light:focus-visible {
+  box-shadow: 0 0 0 2px var(--lp-accent-focus-ring);
 }
 
 /* Inactive windows: the liquid drains to platinum until hovered. */

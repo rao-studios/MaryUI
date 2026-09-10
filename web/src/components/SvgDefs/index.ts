@@ -1,1 +1,1 @@
-export { SvgDefs, GOO_FILTER_IDS, MONOGRAM_SYMBOL_ID } from './SvgDefs'
+export { SvgDefs, gooFilterId, GOO_SIZES, GOO_TENSIONS, MONOGRAM_SYMBOL_ID, type GooSize, type GooTension } from './SvgDefs'

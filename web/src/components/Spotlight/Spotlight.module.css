@@ -30,14 +30,14 @@
 .shell {
   width: var(--lp-size-spotlight-width);
   max-width: 100%;
-  border-radius: var(--lp-radius-lg);
+  border-radius: calc(var(--lp-radius-lg) * (var(--lp-radius-flex-base) + var(--lp-radius-flex-span) * var(--lp-radius-k)));
   box-shadow: var(--lp-shadow-menu);
   backdrop-filter: blur(14px) saturate(1.1);
   -webkit-backdrop-filter: blur(14px) saturate(1.1);
 }
 
 .panel {
-  border-radius: var(--lp-radius-lg);
+  border-radius: calc(var(--lp-radius-lg) * (var(--lp-radius-flex-base) + var(--lp-radius-flex-span) * var(--lp-radius-k)));
   padding: var(--lp-space-2);
 }
 
@@ -85,17 +85,15 @@
   box-shadow: inset 0 0 0 1px var(--lp-accent-light);
 }
 
+/*
+ * Bare icon, like Finder's. The box holds the grid's rhythm; `.cell` around it
+ * carries hover and selection, which is what the plate used to be mistaken for.
+ */
 .plate {
   display: grid;
   place-items: center;
   width: var(--lp-size-spotlight-tile);
   height: var(--lp-size-spotlight-tile);
-  border-radius: var(--lp-radius-md);
-  background: linear-gradient(180deg, var(--lp-platinum-0), var(--lp-platinum-3));
-  box-shadow:
-    var(--lp-shadow-emboss-raised),
-    0 0 0 1px rgba(0, 0, 0, 0.32),
-    0 2px 4px rgba(0, 0, 0, 0.15);
   color: var(--lp-ink-secondary);
 }
 

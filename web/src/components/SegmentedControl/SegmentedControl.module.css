@@ -1,15 +1,15 @@
 .track {
   position: relative;
   display: inline-grid;
-  height: var(--lp-size-control-height);
-  padding: 2px;
+  height: var(--lp-size-segmented-height);
+  padding: var(--lp-size-segmented-pad);
   border-radius: var(--lp-radius-pill);
   background: var(--lp-platinum-3);
   box-shadow: var(--lp-shadow-emboss-well);
 }
 
 .sm {
-  height: var(--lp-size-control-height-sm);
+  height: var(--lp-size-segmented-height-sm);
 }
 
 .gooLayer,
@@ -20,6 +20,11 @@
 
 .gooLayer {
   pointer-events: none;
+  filter: var(--lp-goo-tension, var(--lp-goo-rest));
+}
+
+.track:hover .gooLayer {
+  --lp-goo-tension: var(--lp-goo-flow);
 }
 
 .thumb,
@@ -31,12 +36,10 @@
   border-radius: var(--lp-radius-pill);
 }
 
+/* No emboss inside the filter — it would blur with the shape. The filter lights it. */
 .thumb {
   left: 0;
   background: linear-gradient(180deg, var(--lp-surface-raised-top), var(--lp-surface-raised-bottom));
-  box-shadow:
-    var(--lp-shadow-emboss-raised),
-    0 1px 2px rgba(0, 0, 0, 0.25);
   transform: translateX(calc(var(--lp-seg-index) * 100%));
   transition: transform var(--lp-motion-normal) var(--lp-motion-ease-spring);
 }
@@ -51,9 +54,11 @@
     transform var(--lp-motion-normal) var(--lp-motion-ease-spring);
 }
 
+/* The bead swells and leans toward the thumb, so the two neck rather than merely overlap. */
 .hotBlob[data-hot] {
   opacity: 0.85;
-  transform: scale(1.02, 1.1);
+  transform: translateX(calc(clamp(-1, calc(var(--lp-seg-index) - var(--lp-seg-i)), 1) * var(--lp-goo-attract) * 1px))
+    scale(1.02, 1.1);
 }
 
 .segments {
@@ -67,9 +72,9 @@
   align-items: center;
   justify-content: center;
   gap: var(--lp-space-1);
-  padding: 0 var(--lp-space-3);
+  padding: 0 var(--lp-space-4);
   border-radius: var(--lp-radius-pill);
-  font-size: var(--lp-text-sm);
+  font-size: var(--lp-text-md);
   font-weight: var(--lp-text-weight-medium);
   color: var(--lp-ink-secondary);
   white-space: nowrap;
@@ -77,8 +82,8 @@
 }
 
 .sm .segment {
-  padding: 0 var(--lp-space-2);
-  font-size: var(--lp-text-xs);
+  padding: 0 var(--lp-space-3);
+  font-size: var(--lp-text-sm);
 }
 
 .segment[data-selected] {

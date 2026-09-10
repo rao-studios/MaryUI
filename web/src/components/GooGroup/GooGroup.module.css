@@ -11,8 +11,30 @@
   gap: var(--lp-goo-gap);
 }
 
+/*
+ * Tension lives here rather than in React: the group hands CSS both filters and
+ * CSS picks one. A window being dragged sets `data-moving` on its frame, so the
+ * beads loosen mid-fling without a single re-render.
+ */
 .gooLayer {
   pointer-events: none;
+  filter: var(--lp-goo-tension, var(--lp-goo-rest));
+}
+
+.group:hover .gooLayer,
+.flowing .gooLayer,
+:global([data-moving]) .group:not(.still) .gooLayer {
+  --lp-goo-tension: var(--lp-goo-flow);
+}
+
+/*
+ * A group that keeps its silhouette while the window travels: no smear, no
+ * stretch, and no loosening from motion. Hover still works — this opts out of
+ * the motion half of the tension rule only.
+ */
+.still {
+  --lp-goo-smear: 0px;
+  --lp-goo-stretch: 0;
 }
 
 .content {
@@ -27,14 +49,52 @@
   height: 100%;
 }
 
-/* MARK: - Blobs: the metal that flows */
+/* MARK: - Blobs: the metal that flows
+ *
+ * Two nested elements on purpose. `.blob` carries the slow, transitioned moves
+ * — swelling under the pointer, leaning toward a neighbour — while `.blobMotion`
+ * carries the per-frame smear the engine drives. Putting both on one transform
+ * is what used to smear the live term through a 200ms transition and leave the
+ * merge feeling like syrup rather than mercury.
+ */
 
 .blob {
   display: block;
-  background: linear-gradient(180deg, var(--lp-surface-raised-top), var(--lp-platinum-5));
-  box-shadow: var(--lp-shadow-emboss-raised);
-  transform: translateX(calc(var(--lp-vx) * var(--lp-goo-smear) * var(--lp-goo-i))) scale(1);
+  transform: scale(1) translateX(0);
   transition: transform var(--lp-motion-normal) var(--lp-motion-ease-spring);
+  transition-delay: calc(var(--lp-goo-i) * var(--lp-goo-lag));
+}
+
+.blobMotion {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  /* No emboss, no border: the filter lights the merged silhouette instead. */
+  background: linear-gradient(180deg, var(--lp-surface-raised-top), var(--lp-platinum-5));
+  /*
+   * Beads trail the row and stretch along travel. The lag term — the part of the
+   * velocity the slow spring has not caught up with — builds as the window
+   * accelerates and collapses as it settles, so this is never a constant offset.
+   * Written out rather than shared through a custom property: see base.css.
+   *
+   * The drops trail *against* the travel and each one a little further than the
+   * last, which stretches the row into a comet; the elongation is what actually
+   * closes the gaps, and the filter bridges what is left.
+   */
+  transform: translateX(
+      calc((var(--lp-vx) - var(--lp-vx-lag)) * var(--lp-goo-smear) * -1 * (var(--lp-goo-i) * 0.5 + 1))
+    )
+    scaleX(
+      calc(
+        1 + max(var(--lp-vx) - var(--lp-vx-lag), (var(--lp-vx) - var(--lp-vx-lag)) * -1) * var(--lp-goo-stretch)
+      )
+    );
+}
+
+.custom .blobMotion {
+  background: none;
 }
 
 .circle {
@@ -55,16 +115,26 @@
   border-radius: var(--lp-radius-sm);
 }
 
+/* Surface tension: the hot blob swells, its neighbours lean in and neck. */
 .blob[data-hot] {
-  transform: translateX(calc(var(--lp-vx) * var(--lp-goo-smear) * var(--lp-goo-i))) scale(1.22);
+  transform: scale(1.22);
+  transition-delay: 0ms;
 }
 
-.blob[data-near] {
-  transform: translateX(calc(var(--lp-vx) * var(--lp-goo-smear) * var(--lp-goo-i))) scale(1.08);
+.blob[data-pull='-1'] {
+  transform: scale(1.08) translateX(calc(var(--lp-goo-attract) * -1px));
+}
+
+.blob[data-pull='1'] {
+  transform: scale(1.08) translateX(calc(var(--lp-goo-attract) * 1px));
 }
 
 /* With goo disabled the blobs simply sit in a shared row; nothing looks broken. */
 :root[data-goo='off'] .blob[data-hot],
-:root[data-goo='off'] .blob[data-near] {
+:root[data-goo='off'] .blob[data-pull] {
+  transform: none;
+}
+
+:root[data-goo='off'] .blobMotion {
   transform: none;
 }

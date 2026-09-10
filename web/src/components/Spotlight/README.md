@@ -9,9 +9,10 @@ A `flat` Surface, `--lp-size-spotlight-width` (560px) wide, `--lp-radius-lg`, pa
 Inside, top to bottom: the **bar** — a `round` `large` TextField `--lp-size-spotlight-bar-height` (44px) tall
 with a 16px `search` icon, `--lp-text-lg`, the placeholder “Say “Hey Mary” or type something…” and the accent
 focus ring while the panel is up; a hairline `--lp-edge-divider`; then either the **dock** (one centred row of
-88×84 cells: a `--lp-size-spotlight-tile` plate of `platinum-0 → platinum-3` at `--lp-radius-md` with
-`emboss-raised`, a 28px `--lp-ink-secondary` icon, a `--lp-text-xs` label and a 4px `--lp-accent-base` dot under
-running apps) or the **results** (up to 8 ListRows in a `--lp-surface-well`).
+88×84 cells: a bare 36px `--lp-ink-secondary` icon in a `--lp-size-spotlight-tile` box, a `--lp-text-xs` label
+and a 4px `--lp-accent-base` dot under running apps) or the **results** (up to 8 ListRows in a
+`--lp-surface-well`). The icon sits in no container of its own — hover and selection belong to the cell around
+it, which is what the old raised plate was being mistaken for.
 
 ## States
 Dock cell hover `rgba(0,0,0,.04)` · selected `--lp-accent-soft` with a 1px inset `--lp-accent-light` ring (the
