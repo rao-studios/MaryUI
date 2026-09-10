@@ -71,15 +71,82 @@ static PangoLayout *make_layout_ex(cairo_t *cr, const char *text, int len, const
     return layout;
 }
 
+/* Shaping a string is far more expensive than drawing it, and the desktop draws
+ * the same handful of strings — a window title, a menu label, a row of file
+ * names — on every repaint. Layouts are therefore cached and handed out
+ * borrowed; the cache owns them. Only the single-paragraph, non-wrapping path
+ * is cached, because the wrapped layouts behind a TextArea are stateful. */
+#define LAYOUT_CACHE_MAX 96
+
+typedef struct layout_entry {
+    PangoLayout *layout;
+    char *text;
+    unsigned hash;
+    /* Everything about the style that changes the shaped result. Colour and
+     * emboss are applied at draw time and are deliberately not keyed on. */
+    enum lp_font font;
+    float size_px, letter_spacing, width;
+    int weight, tabular_nums, uppercase, ellipsize;
+    unsigned used;
+} layout_entry;
+
+static layout_entry layout_cache[LAYOUT_CACHE_MAX];
+static int layout_cache_count = 0;
+static unsigned layout_clock = 0;
+
+static unsigned text_hash(const char *s) {
+    unsigned h = 2166136261u;
+    for (; *s; s++) { h ^= (unsigned char)*s; h *= 16777619u; }
+    return h;
+}
+
 static PangoLayout *make_layout(cairo_t *cr, const char *text, const lp_text_style *style, float width) {
-    return make_layout_ex(cr, text, -1, style, width, 1, 0);
+    unsigned h = text_hash(text);
+    for (int i = 0; i < layout_cache_count; i++) {
+        layout_entry *e = &layout_cache[i];
+        if (e->hash != h || e->font != style->font || e->size_px != style->size_px || e->weight != style->weight ||
+            e->tabular_nums != style->tabular_nums || e->letter_spacing != style->letter_spacing ||
+            e->uppercase != style->uppercase || e->ellipsize != style->ellipsize || e->width != width)
+            continue;
+        if (strcmp(e->text, text) != 0) continue;
+        e->used = ++layout_clock;
+        /* Re-sync to this context's font options before it is measured or drawn. */
+        if (cr) pango_cairo_update_layout(cr, e->layout);
+        return e->layout;
+    }
+
+    PangoLayout *layout = make_layout_ex(cr, text, -1, style, width, 1, 0);
+    int slot = layout_cache_count;
+    if (layout_cache_count < LAYOUT_CACHE_MAX) {
+        layout_cache_count++;
+    } else {
+        slot = 0;
+        for (int i = 1; i < LAYOUT_CACHE_MAX; i++) {
+            if (layout_cache[i].used < layout_cache[slot].used) slot = i;
+        }
+        g_object_unref(layout_cache[slot].layout);
+        free(layout_cache[slot].text);
+    }
+    layout_entry *e = &layout_cache[slot];
+    e->layout = layout;
+    e->text = strdup(text);
+    e->hash = h;
+    e->font = style->font;
+    e->size_px = style->size_px;
+    e->weight = style->weight;
+    e->tabular_nums = style->tabular_nums;
+    e->letter_spacing = style->letter_spacing;
+    e->uppercase = style->uppercase;
+    e->ellipsize = style->ellipsize;
+    e->width = width;
+    e->used = ++layout_clock;
+    return layout;
 }
 
 lp_size lp_text_measure(cairo_t *cr, const char *text, const lp_text_style *style) {
     PangoLayout *layout = make_layout(cr, text, style, 0);
     PangoRectangle ink, logical;
     pango_layout_get_pixel_extents(layout, &ink, &logical);
-    g_object_unref(layout);
     return (lp_size){ (float)logical.width, (float)logical.height };
 }
 
@@ -101,7 +168,6 @@ void lp_text_draw(cairo_t *cr, const char *text, lp_rect r, const lp_text_style 
     cairo_move_to(cr, x, y);
     cairo_set_source_rgba(cr, style->color.r, style->color.g, style->color.b, style->color.a);
     pango_cairo_show_layout(cr, layout);
-    g_object_unref(layout);
 }
 
 void lp_text_draw_at(cairo_t *cr, const char *text, float x, float y, const lp_text_style *style) {
@@ -115,7 +181,6 @@ void lp_text_draw_at(cairo_t *cr, const char *text, float x, float y, const lp_t
     cairo_move_to(cr, x, y - baseline);
     cairo_set_source_rgba(cr, style->color.r, style->color.g, style->color.b, style->color.a);
     pango_cairo_show_layout(cr, layout);
-    g_object_unref(layout);
 }
 
 /* MARK: - Multi-line layouts */

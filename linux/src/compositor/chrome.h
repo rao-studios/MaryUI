@@ -25,6 +25,10 @@ struct mui_chrome {
     pixman_region32_t opaque_region; /* buffer-local; used when set (mui_chrome_set_opaque_region) and the node is unscaled */
     int has_opaque_region;
     pixman_region32_t damage;    /* pending, in chrome coordinates */
+    /* Buffer age: where each buffer differs from what is on screen. Repainting
+     * into one only has to restore that much from the current buffer, instead of
+     * copying the whole surface every time. */
+    pixman_region32_t stale[MUI_CHROME_BUFFERS];
     mui_chrome_paint_fn paint;
     void *data;
     lp_ctx ctx;

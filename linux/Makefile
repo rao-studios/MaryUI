@@ -31,7 +31,11 @@ HAVE_WLROOTS := $(shell $(PKG_CONFIG) --exists $(DESKTOP_PKGS) 2>/dev/null && ec
 MOLTEN_PKGS := egl glesv2
 HAVE_EGL := $(shell $(PKG_CONFIG) --exists $(MOLTEN_PKGS) 2>/dev/null && echo 1)
 
-CFLAGS ?= -O2 -g
+# -O3 for the drawing loops (blur, noise, per-pixel compositing), which is what
+# this library spends its time in. No -mcpu=native: one ui build is installed
+# into every target (MaryPi's build.sh runs the stage once), so the code has to
+# run on both a Pi 5's Cortex-A76 and Apple silicon. A76 is the floor of the two.
+CFLAGS ?= -O3 -g -DNDEBUG
 CFLAGS += -std=c11 -Wall -Wextra -Wno-unused-parameter -Werror=implicit-function-declaration -fPIC
 CPPFLAGS += -Iinclude -D_POSIX_C_SOURCE=200809L -D_DEFAULT_SOURCE -DMARYUI_VERSION=\"$(VERSION)\"
 LIB_CFLAGS := $(shell $(PKG_CONFIG) --cflags $(LIB_PKGS))

@@ -66,7 +66,10 @@ int lp_segmented(lp_ctx *ctx, lp_id id, float x, float y, const lp_segment *opti
     }
     /* thumb */
     lp_rect thumb = LP_RECT(inner.x + (*index) * seg_w, inner.y, seg_w, inner.h);
+    static const lp_shadow_layer thumb_shadow[] = { { 0, 0, 1, 2, 0, { 0, 0, 0, 0.25f } } };
+    lp_draw_outer_shadows(cr, thumb, LP_RADIUS_PILL, thumb_shadow, 1);
     lp_fill_vgradient(cr, thumb, LP_SURFACE_RAISED_TOP, LP_SURFACE_RAISED_BOTTOM, LP_RADIUS_PILL);
+    lp_draw_inset_shadows(cr, thumb, LP_RADIUS_PILL, LP_SHADOW_EMBOSS_RAISED, LP_SHADOW_EMBOSS_RAISED_COUNT);
     if (ctx->focus == id) lp_draw_focus_ring(cr, thumb, LP_RADIUS_PILL, accent.focus_ring, 2);
     for (int i = 0; i < n; i++) {
         lp_rect s = LP_RECT(inner.x + i * seg_w, inner.y, seg_w, inner.h);

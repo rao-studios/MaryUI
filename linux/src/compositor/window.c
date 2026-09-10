@@ -7,6 +7,7 @@
 
 #include "maryui/components/lp_surface.h"
 #include "maryui/components/lp_window.h"
+#include "maryui/lp_draw.h"
 #include "maryui/lp_geometry.h"
 #include "maryui/lp_tokens.h"
 #include "window.h"
@@ -53,12 +54,11 @@ static void paint_window(lp_ctx *ctx, struct mui_chrome *chrome, void *data) {
     if (win->kind == MUI_WINDOW_APP && win->instance && win->instance->app->paint && body.h > 0) {
         int draw = ctx->pass == LP_PASS_DRAW && ctx->cr;
         int paint_body = 1;
-        if (draw) {
-            /* A title-strip repaint (sheen, lights) does not run the app's paint. */
-            double x1, y1, x2, y2;
-            cairo_clip_extents(ctx->cr, &x1, &y1, &x2, &y2);
-            if (x2 <= body.x || x1 >= body.x + body.w || y2 <= body.y || y1 >= body.y + body.h) paint_body = 0;
-        }
+        /* A title-strip repaint (sheen, lights) does not run the app's paint.
+         * This has to be a region test, not a bounding box: a strip repaint that
+         * also damages the bottom lip for the corners would otherwise have a
+         * bbox spanning the whole window and repaint the entire widget tree. */
+        if (draw) paint_body = lp_clip_intersects(ctx->cr, body);
         if (paint_body) {
             if (draw) {
                 cairo_save(ctx->cr);
@@ -317,7 +317,10 @@ void mui_windows_sync(struct mui_server *server) {
         int rect_changed = (int)rec->rect.w != (int)prev.w || (int)rec->rect.h != (int)prev.h;
         int state_changed = prev_state != rec->state;
         int focus_changed = win->focused != focused;
-        int repaint = rect_changed || state_changed || focus_changed || server->grab.kind == MUI_GRAB_NONE;
+        /* Only repaint what actually changed. This used to include
+          * `|| grab.kind == MUI_GRAB_NONE`, which is the normal state, so every
+          * model change repainted every window. */
+        int repaint = rect_changed || state_changed || focus_changed;
         if (focus_changed) {
             /* Blur drops the widget focus (the caret) and stops a repeating key. */
             if (!focused) win->chrome.ctx.focus = 0;

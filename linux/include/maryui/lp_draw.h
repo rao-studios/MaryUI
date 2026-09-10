@@ -31,6 +31,12 @@ void lp_draw_outer_shadows(cairo_t *cr, lp_rect r, float radius, const lp_shadow
 /* Both, from one list: inset layers inside, others outside. */
 void lp_draw_box_shadow(cairo_t *cr, lp_rect r, float radius, const lp_shadow_layer *layers, int n);
 
+/* Whether `r` touches anything the current clip still lets through. Cairo's
+ * clip here is always a list of damage rectangles, so this is exact — unlike
+ * cairo_clip_extents, whose bounding box says "yes" for a rect that falls in
+ * the gap between two damage strips. Used to skip whole subtrees. */
+int lp_clip_intersects(cairo_t *cr, lp_rect r);
+
 /* feSpecularLighting (SVG 1.1 §15.19) over an alpha height map. Both the
  * wallpaper's metal and the liquid merge light a field this way, which is the
  * design direction's rule: light the surface, do not paint it. */

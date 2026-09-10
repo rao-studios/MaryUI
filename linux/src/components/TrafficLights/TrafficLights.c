@@ -21,17 +21,6 @@ static const enum lp_bubble_tint TINTS[3] = { LP_TINT_CLOSE, LP_TINT_MINIMIZE, L
 
 lp_size lp_traffic_lights_size(void) { return (lp_size){ 3 * BEAD + 2 * GAP, BEAD }; }
 
-struct merge_layer { int drained; };
-
-/* The hidden mass the filter merges: the same liquid, full to the brim, with no
- * glass, no gloss and no glyph — only the shape survives the threshold. */
-static void merge_blob(lp_ctx *ctx, lp_rect r, int i, void *user) {
-    struct merge_layer *m = user;
-    lp_bubble_spec spec = lp_liquid_bubble_spec(ctx, r.w, m->drained ? LP_TINT_INACTIVE : TINTS[i], PHASES[i], 1.0f);
-    spec.liquid_only = 1;
-    lp_bubble_paint(ctx->cr, r.x + r.w / 2, r.y + r.h / 2, &spec);
-}
-
 void lp_traffic_lights(lp_ctx *ctx, float x, float y, int active, int shaded, int zoomed, lp_traffic_result *out) {
     lp_traffic_result res;
     memset(&res, 0, sizeof res);
@@ -56,16 +45,10 @@ void lp_traffic_lights(lp_ctx *ctx, float x, float y, int active, int shaded, in
     if (ctx->pass != LP_PASS_DRAW || !ctx->cr) return;
 
     int drained = !active && !res.hovered;
-    struct merge_layer merge = { drained };
-    /* Hovering the group is the only thing that loosens the filter; the beads
-     * above it do not move, so what you see is the liquid bridging. */
-    /* The hot bead swells and its neighbours lean in. That, not the blur alone,
-     * is what closes a 10px gap far enough for the liquid to bridge. */
-    goo.hot = hovered_light;
-    goo.flowing = res.hovered;
-    goo.render_blob = merge_blob;
-    goo.user = &merge;
-    lp_goo_group(ctx, res.bounds, &goo);
+    /* Nothing is painted behind the beads: the web's hidden merge layer is not
+     * ported (PARITY.md D8). hovered_light stays in the hit-test above so the
+     * ids and the click routing match the web's. */
+    (void)hovered_light;
 
     const char *glyphs[3] = { "×", "–", zoomed ? "−" : "+" };
     static const lp_shadow_layer bead_shadow[] = { { 0, 0, 1, 2, 0, { 0, 0, 0, 0.35f } } };

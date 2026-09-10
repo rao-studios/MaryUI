@@ -57,6 +57,10 @@ typedef struct lp_ctx {
     cairo_t *cr;              /* NULL in the EVENT pass */
     lp_input in;
     lp_id hot, active, focus, next_hot;
+    /* Where the hot widget is, and where the one taking over from it is, so a
+     * hover change repaints two small rectangles instead of the whole chrome. */
+    lp_rect hot_rect, next_hot_rect;
+    int has_hot_rect, has_next_hot_rect;
     lp_rect bounds;           /* the chrome's rectangle in its own coordinates */
     int dirty;                /* set by widgets whose look changed: the whole chrome repaints */
     lp_rect damage;           /* lp_damage: a part of the chrome to repaint instead (union) */

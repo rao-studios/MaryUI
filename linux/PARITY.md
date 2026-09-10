@@ -140,14 +140,14 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   image yet).
 - **D7 — menu backdrop.** `backdrop-filter: blur(14px) saturate(1.1)` is not available to a
   scene node; the dropdown is the 94 %-alpha surface alone.
-- **D8 — liquid merge.** The whole filter is ported (`src/draw/lp_goo.c`): the group's blobs go
-  into an offscreen surface, `feGaussianBlur` at the size's and tension's σ, the `feColorMatrix`
-  alpha threshold, then the volume — a specular dome off the silhouette's own alpha
-  (`lp_specular_at`, shared with the wallpaper) and a shaded lower rim, merged. The blobs
-  themselves carry no lighting, as on the web. Two deviations remain: the group re-filters on
-  every paint rather than caching the silhouette between hover changes, and the per-index
-  `goo.lag` transition delay is not staged — a neighbour reaches its `goo.attract` offset in the
-  same frame the hover lands, where CSS staggers them by 26 ms each.
+- **D8 — liquid merge.** Not ported, by choice. The web puts each GooGroup through an SVG filter
+  that blurs the blobs together, thresholds them into one silhouette and lights that; C draws the
+  blobs discrete and embossed instead. It was ported once and then removed: the filter is a
+  per-pixel blur plus a `pow()` per pixel with no clip test, so it ran on every repaint of every
+  window, and merged metal at 18px read as putty rather than mercury. The blobs still swell on
+  hover, lean `goo.attract` toward the hot one, and smear with the drag's shear. The traffic
+  lights lose their hover bridge with it; the `goo.blur-*`, `goo.slope-*`, `goo.intercept-*`,
+  `goo.specular-*` and `goo.rim-shade` tokens are now web-only.
 - **D9 — the Terminal tile.** Spotlight lists `Terminal` as a command on both sides. In C it runs
   `LP_CMD_NEW_TERMINAL` (`spawn("foot")`) and the dock's dot lights while a client window is
   open; on the web it is a no-op — the browser has no processes.
@@ -201,7 +201,7 @@ them is the follow-up; each row names both homes.
 
 | Constant | Web | C |
 |---|---|---|
-| Goo size scale xxs .55 / xs 1.2 / sm 1.9 / md 3.75 (the blur numbers themselves are `goo.*` tokens now) | `SvgDefs.tsx` | `lp_goo.c` |
+| Goo filter (blur, threshold, specular) | `SvgDefs.tsx` | — (D8: not ported) |
 | Wallpaper gradient stops, turbulence, blur, lighting, arithmetic | `wallpaperSvg.ts` | `lp_wallpaper.c` |
 | Brush period 512/√5, angle −atan2(1, 2), desaturation, transfer | `brushSvg.ts` | `lp_texture.c` |
 | Toolbar height 40, sidebar width 180 | `Toolbar.module.css`, `Sidebar.module.css` | `LP_TOOLBAR_H`, `LP_SIDEBAR_W` |

@@ -198,8 +198,8 @@ static void surfaces_tab(struct gallery *g, lp_ctx *ctx, lp_rect *c) {
     c->y += ((6 + cols - 1) / cols) * (96 + LP_SPACE_3);
     section_end(c);
 
-    heading(ctx, c, "Liquid merge");
-    note(ctx, c, "Adjacent controls share a goo-filtered metal layer; hover to see them flow together.");
+    heading(ctx, c, "Metal beds");
+    note(ctx, c, "Adjacent controls share one metal bed; hover a blob and its neighbours lean toward it.");
     lp_goo_spec circles = { .size = LP_GOO_SM, .count = 4, .blob_size = 30, .shape = LP_GOO_CIRCLE, .gap = 6, .hot = -1 };
     lp_rect row = LP_RECT(c->x, c->y, 4 * 30 + 3 * 6, 30);
     static const lp_icon names[4] = { LP_ICON_HOME, LP_ICON_FOLDER, LP_ICON_STAR, LP_ICON_GEAR };

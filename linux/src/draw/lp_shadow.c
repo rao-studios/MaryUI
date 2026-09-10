@@ -25,10 +25,18 @@ void lp_shadow_extents(const lp_shadow_layer *layers, int n, int *left, int *top
 #define CACHE_MAX 16
 static lp_shadow_sprite cache[CACHE_MAX];
 static int cache_count = 0;
+static unsigned cache_clock = 0;
 
 const lp_shadow_sprite *lp_shadow_get(const lp_shadow_layer *layers, int n, float radius) {
+    /* Quantise: rendering a sprite means blurring at the layer's sigma, so an
+     * unrounded radius from a live spring would miss the cache every frame.
+     * The sprite is stretched to fit anyway. */
+    radius = roundf(radius);
     for (int i = 0; i < cache_count; i++) {
-        if (cache[i].layers == layers && cache[i].count == n && cache[i].radius == radius) return &cache[i];
+        if (cache[i].layers == layers && cache[i].count == n && cache[i].radius == radius) {
+            cache[i].used = ++cache_clock;
+            return &cache[i];
+        }
     }
     int l, t, r, b;
     lp_shadow_extents(layers, n, &l, &t, &r, &b);
@@ -44,9 +52,20 @@ const lp_shadow_sprite *lp_shadow_get(const lp_shadow_layer *layers, int n, floa
     lp_draw_outer_shadows(cr, LP_RECT(extent, extent, box, box), radius, layers, n);
     cairo_destroy(cr);
     cairo_surface_flush(surface);
-    lp_shadow_sprite *s = &cache[cache_count < CACHE_MAX ? cache_count++ : CACHE_MAX - 1];
+    /* Evict the least recently used, not always the last slot: clobbering one
+     * slot leaves the other fifteen holding radii that can never match again. */
+    int slot = cache_count;
+    if (cache_count < CACHE_MAX) {
+        cache_count++;
+    } else {
+        slot = 0;
+        for (int i = 1; i < CACHE_MAX; i++) {
+            if (cache[i].used < cache[slot].used) slot = i;
+        }
+    }
+    lp_shadow_sprite *s = &cache[slot];
     if (s->surface) cairo_surface_destroy(s->surface);
-    *s = (lp_shadow_sprite){ surface, extent, corner + extent, box, layers, n, radius };
+    *s = (lp_shadow_sprite){ surface, extent, corner + extent, box, layers, n, radius, ++cache_clock };
     return s;
 }
 

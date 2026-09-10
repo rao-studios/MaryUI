@@ -24,6 +24,7 @@ void mui_chrome_init(struct mui_chrome *chrome, struct mui_server *server, struc
     chrome->current = -1;
     pixman_region32_init(&chrome->damage);
     pixman_region32_init(&chrome->opaque_region);
+    for (int i = 0; i < MUI_CHROME_BUFFERS; i++) pixman_region32_init(&chrome->stale[i]);
     chrome->node = wlr_scene_buffer_create(parent, NULL);
     chrome->node->node.data = chrome;
     chrome->ctx.settings = server->settings;
@@ -43,6 +44,8 @@ void mui_chrome_finish(struct mui_chrome *chrome) {
     if (chrome->node) wlr_scene_node_destroy(&chrome->node->node);
     chrome->node = NULL;
     pixman_region32_fini(&chrome->damage);
+    pixman_region32_fini(&chrome->opaque_region);
+    for (int i = 0; i < MUI_CHROME_BUFFERS; i++) pixman_region32_fini(&chrome->stale[i]);
 }
 
 void mui_chrome_resize(struct mui_chrome *chrome, int width, int height) {
@@ -52,6 +55,7 @@ void mui_chrome_resize(struct mui_chrome *chrome, int width, int height) {
     for (int i = 0; i < MUI_CHROME_BUFFERS; i++) {
         if (chrome->buffers[i]) wlr_buffer_drop(&chrome->buffers[i]->base);
         chrome->buffers[i] = NULL;
+        pixman_region32_clear(&chrome->stale[i]);
     }
     chrome->current = -1;
     chrome->ctx.dirty = 1;
@@ -82,6 +86,8 @@ static int free_buffer(struct mui_chrome *chrome) {
         struct lp_cairo_buffer *b = chrome->buffers[i];
         if (!b) {
             chrome->buffers[i] = lp_cairo_buffer_create(chrome->width, chrome->height);
+            /* Brand new: it holds nothing that matches the screen. */
+            pixman_region32_union_rect(&chrome->stale[i], &chrome->stale[i], 0, 0, chrome->width, chrome->height);
             return chrome->buffers[i] ? i : -1;
         }
         if (b->base.n_locks == 0) return i;
@@ -90,6 +96,7 @@ static int free_buffer(struct mui_chrome *chrome) {
     int i = chrome->current == 0 ? 1 : 0;
     wlr_buffer_drop(&chrome->buffers[i]->base);
     chrome->buffers[i] = lp_cairo_buffer_create(chrome->width, chrome->height);
+    pixman_region32_union_rect(&chrome->stale[i], &chrome->stale[i], 0, 0, chrome->width, chrome->height);
     return chrome->buffers[i] ? i : -1;
 }
 
@@ -101,18 +108,32 @@ void mui_chrome_repaint(struct mui_chrome *chrome, double now_ms) {
     if (chrome->painting) return;
     chrome->painting = 1;
     int next = free_buffer(chrome);
-    if (next < 0) return;
+    if (next < 0) { chrome->painting = 0; return; }  /* or this chrome never paints again */
     struct lp_cairo_buffer *target = chrome->buffers[next];
     int full = chrome->current < 0 || !chrome->buffers[chrome->current];
     if (full) pixman_region32_union_rect(&chrome->damage, &chrome->damage, 0, 0, chrome->width, chrome->height);
 
     cairo_t *cr = cairo_create(target->surface);
     if (!full) {
-        /* Start from what is on screen, then repaint only the damage. */
-        cairo_set_source_surface(cr, chrome->buffers[chrome->current]->surface, 0, 0);
-        cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
-        cairo_paint(cr);
-        cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
+        /* Bring this buffer up to what is on screen — but only where it is
+         * behind, and not where we are about to repaint anyway. Copying the
+         * whole surface here cost megabytes a frame. */
+        pixman_region32_t restore;
+        pixman_region32_init(&restore);
+        pixman_region32_subtract(&restore, &chrome->stale[next], &chrome->damage);
+        if (pixman_region32_not_empty(&restore)) {
+            int rn;
+            pixman_box32_t *rb = pixman_region32_rectangles(&restore, &rn);
+            cairo_save(cr);
+            for (int i = 0; i < rn; i++) cairo_rectangle(cr, rb[i].x1, rb[i].y1, rb[i].x2 - rb[i].x1, rb[i].y2 - rb[i].y1);
+            cairo_clip(cr);
+            cairo_set_source_surface(cr, chrome->buffers[chrome->current]->surface, 0, 0);
+            cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
+            cairo_paint(cr);
+            cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
+            cairo_restore(cr);
+        }
+        pixman_region32_fini(&restore);
     }
     int nrects;
     pixman_box32_t *boxes = pixman_region32_rectangles(&chrome->damage, &nrects);
@@ -140,6 +161,12 @@ void mui_chrome_repaint(struct mui_chrome *chrome, double now_ms) {
         lp_rect a = chrome->ambient_rect;
         pixman_box32_t box = { (int)floorf(a.x), (int)floorf(a.y), (int)ceilf(a.x + a.w), (int)ceilf(a.y + a.h) };
         if (pixman_region32_contains_rectangle(&chrome->damage, &box) == PIXMAN_REGION_IN) chrome->ambient = 0;
+    }
+    /* This buffer now matches the screen; every other one is behind by what we
+     * just painted. */
+    for (int i = 0; i < MUI_CHROME_BUFFERS; i++) {
+        if (i == next) pixman_region32_clear(&chrome->stale[i]);
+        else pixman_region32_union(&chrome->stale[i], &chrome->stale[i], &chrome->damage);
     }
     chrome->current = next;
     pixman_region32_clear(&chrome->damage);

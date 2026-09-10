@@ -8,18 +8,14 @@ The bead **is** the Toggle's knob: the same glass well, the same
 more; an earlier pass set each bubble in a metal disc, which at 18px read as a button around a
 light rather than the light itself.
 
-## The two layers
+## No merge layer
 
-Behind the beads sits a second copy of the same three liquids, rendered `liquid_only` at
-`fill = 1` — bare liquid, no glass, no gloss, no glyph — and put through GooGroup's merge filter.
-At rest the beads cover it exactly. On hover the filter loosens to its flow tension *and* the hot
-bead's blob swells to 1.22× while its neighbours lean `goo.attract` toward it, which is what
-closes a 10px gap far enough for the liquid to bridge into one lit ribbon. The beads themselves
-never move, never scale and never fade — an earlier pass faded them mid-drag, which turned three
-fixed circles into three fat drops.
-
-Measured across a drag, a bead's width varies about as much as a Toggle knob's: both are only
-riding the window's jelly.
+The web puts a second copy of the three liquids behind the beads, at full fill and with no glass,
+and merges them through the goo filter so that hovering the group bridges them into one lit ribbon.
+That is not ported (**D8** in `../../../PARITY.md`): the filter cost a blur and a `pow()` per pixel
+on every window repaint, and the bridge read as putty at 18px. The beads still swell and lean
+toward the one under the pointer; they never move otherwise, never scale and never fade — an
+earlier pass faded them mid-drag, which turned three fixed circles into three fat drops.
 
 ## Levels and states
 

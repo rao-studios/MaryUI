@@ -12,6 +12,7 @@ void lp_ctx_begin(lp_ctx *ctx, enum lp_pass pass, cairo_t *cr, const lp_input *i
     ctx->bounds = bounds;
     ctx->now_ms = now_ms;
     ctx->next_hot = 0;
+    ctx->has_next_hot_rect = 0;
     ctx->cursor = LP_CURSOR_ARROW;
     ctx->wants_frame = 0;
     ctx->wants_frame_rect = LP_RECT(0, 0, 0, 0);
@@ -30,8 +31,24 @@ void lp_damage(lp_ctx *ctx, lp_rect r) {
 
 void lp_ctx_end(lp_ctx *ctx) {
     if (ctx->pass == LP_PASS_EVENT) {
-        if (ctx->next_hot != ctx->hot) ctx->dirty = 1;
+        if (ctx->next_hot != ctx->hot) {
+            /* Only the widget losing the hover and the one gaining it change.
+             * Pad for focus rings and drop shadows that sit outside the rect;
+             * if either rect is unknown (the old one scrolled away, say) fall
+             * back to repainting everything. */
+            if ((ctx->hot == 0 || ctx->has_hot_rect) && (ctx->next_hot == 0 || ctx->has_next_hot_rect)) {
+                const float pad = 6;
+                if (ctx->hot && ctx->has_hot_rect)
+                    lp_damage(ctx, LP_RECT(ctx->hot_rect.x - pad, ctx->hot_rect.y - pad, ctx->hot_rect.w + 2 * pad, ctx->hot_rect.h + 2 * pad));
+                if (ctx->next_hot && ctx->has_next_hot_rect)
+                    lp_damage(ctx, LP_RECT(ctx->next_hot_rect.x - pad, ctx->next_hot_rect.y - pad, ctx->next_hot_rect.w + 2 * pad, ctx->next_hot_rect.h + 2 * pad));
+            } else {
+                ctx->dirty = 1;
+            }
+        }
         ctx->hot = ctx->next_hot;
+        ctx->has_hot_rect = ctx->has_next_hot_rect;
+        ctx->hot_rect = ctx->next_hot_rect;
         if (ctx->in.released & LP_BUTTON_LEFT) {
             if (ctx->active) ctx->dirty = 1;
             ctx->active = 0;
@@ -73,7 +90,9 @@ int lp_hit(const lp_ctx *ctx, lp_rect r) {
 int lp_hot(lp_ctx *ctx, lp_id id, lp_rect r) {
     if (ctx->pass == LP_PASS_EVENT) {
         /* Only the pointer's current position counts; last registered wins (topmost). */
-        if (lp_hit(ctx, r)) ctx->next_hot = id;
+        if (lp_hit(ctx, r)) { ctx->next_hot = id; ctx->next_hot_rect = r; ctx->has_next_hot_rect = 1; }
+        /* Remember where the currently hot widget is while we are passing it. */
+        if (ctx->hot == id) { ctx->hot_rect = r; ctx->has_hot_rect = 1; }
         return ctx->next_hot == id;
     }
     return ctx->hot == id;

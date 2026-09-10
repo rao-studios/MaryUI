@@ -17,6 +17,7 @@ typedef struct lp_shadow_sprite {
     const lp_shadow_layer *layers;
     int count;
     float radius;
+    unsigned used;  /* cache bookkeeping: the clock tick of the last hit */
 } lp_shadow_sprite;
 
 /* Extent of the outer layers on each side, for sizing chrome buffers. */

@@ -25,7 +25,6 @@ lp_rect lp_window_chrome(lp_ctx *ctx, const lp_window_view *v, lp_title_bar_resu
     lp_corners live = ctx->corners;
     if (live.tl <= 0 && live.tr <= 0 && live.br <= 0 && live.bl <= 0) live = lp_rest_corners(LP_RADIUS_WINDOW);
     lp_corners radii = zoomed ? lp_rest_corners(0) : live;
-    float radius = zoomed ? 0 : (radii.tl + radii.tr + radii.br + radii.bl) / 4;
     lp_rect frame = v->rect;
     if (shaded) frame.h = LP_TITLE_HEIGHT;
     lp_rect title = LP_RECT(frame.x, frame.y, frame.w, LP_TITLE_HEIGHT);
@@ -33,8 +32,12 @@ lp_rect lp_window_chrome(lp_ctx *ctx, const lp_window_view *v, lp_title_bar_resu
 
     if (ctx->pass == LP_PASS_DRAW && ctx->cr) {
         cairo_t *cr = ctx->cr;
-        if (v->focused) lp_draw_shadow_9slice(cr, frame, radius, LP_SHADOW_WINDOW_FOCUSED, LP_SHADOW_WINDOW_FOCUSED_COUNT);
-        else lp_draw_shadow_9slice(cr, frame, radius, LP_SHADOW_WINDOW, LP_SHADOW_WINDOW_COUNT);
+        /* The shadow keeps the resting radius. Feeding it the live corners
+         * meant a new sprite — a 56px-blur render — on every frame of a drag,
+         * and under a 56px blur the difference is invisible anyway. */
+        float shadow_radius = zoomed ? 0 : LP_RADIUS_WINDOW;
+        if (v->focused) lp_draw_shadow_9slice(cr, frame, shadow_radius, LP_SHADOW_WINDOW_FOCUSED, LP_SHADOW_WINDOW_FOCUSED_COUNT);
+        else lp_draw_shadow_9slice(cr, frame, shadow_radius, LP_SHADOW_WINDOW, LP_SHADOW_WINDOW_COUNT);
         if (!shaded) {
             cairo_save(cr);
             lp_path_rrect4(cr, frame, radii.tl, radii.tr, radii.br, radii.bl);

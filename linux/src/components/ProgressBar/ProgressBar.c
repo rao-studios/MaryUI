@@ -56,7 +56,9 @@ void lp_progress(lp_ctx *ctx, lp_rect r, float value) {
             cairo_set_source(cr, g);
             cairo_fill(cr);
             cairo_pattern_destroy(g);
-            lp_want_frame_rect(ctx, r);
+            /* The glint only travels while the bar is partly filled; a full or
+              * empty bar is static and must not keep the desktop awake. */
+            if (pct > 0.001f && pct < 0.999f) lp_want_frame_rect(ctx, r);
         }
     }
     cairo_restore(cr);

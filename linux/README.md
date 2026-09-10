@@ -95,3 +95,28 @@ One caveat is recorded in `NOTICE`: the molten wallpaper's GLSL is derived from 
 Mårten Rånge published on Shadertoy, whose terms have not been established. Shadertoy's default
 is CC BY-NC-SA 3.0, which Apache-2.0 cannot absorb, so that needs settling before the shader
 ships under this licence.
+
+## Performance notes
+
+The library is drawing software: it spends its time in per-pixel loops, so it is built `-O3` and
+the expensive things are cached rather than recomputed.
+
+Three caches carry most of it, and all three are keyed on values that must stay *quantised* or they
+degrade into nothing:
+
+- **Shadow sprites** (`lp_shadow.c`) — a sprite is a blur at the layer's sigma, tens of milliseconds
+  for a window shadow. The key rounds the corner radius, because it used to be fed a live spring
+  value and missed on every frame of every drag. Never pass an unrounded animated float here.
+- **Pango layouts** (`lp_text.c`) — shaping costs more than drawing, and the desktop draws the same
+  strings every frame. Layouts are handed out *borrowed*; the cache owns them, so callers must not
+  unref.
+- **The brushed tile** (`lp_texture.c`) — rendered once and shared.
+
+Two structural rules matter as much as the caches. Chrome repaints are clipped to the damage
+region, and a subtree that falls outside it should be skipped *before* it draws — use
+`lp_clip_intersects`, not `cairo_clip_extents`, whose bounding box says "yes" for a rect lying in
+the gap between two damage strips. And `mui_chrome_repaint` restores a buffer from the one on
+screen only where that buffer is actually behind (`chrome->stale`), rather than copying the whole
+surface every frame.
+
+`MARYUI_DEBUG=frames` prints a frame-time histogram and a breakdown every five seconds.

@@ -3,7 +3,6 @@
 
 #include "maryui/components/lp_goo_group.h"
 #include "maryui/lp_draw.h"
-#include "maryui/lp_goo.h"
 #include "maryui/lp_tokens.h"
 
 lp_rect lp_goo_blob_rect(lp_rect area, const lp_goo_spec *spec, int i) {
@@ -12,15 +11,6 @@ lp_rect lp_goo_blob_rect(lp_rect area, const lp_goo_spec *spec, int i) {
     float x = area.x + i * (w + spec->gap);
     float y = area.y + (area.h - h) / 2;
     return LP_RECT(x, y, w, h);
-}
-
-static float blob_radius(const lp_goo_spec *spec, lp_rect r) {
-    return spec->shape == LP_GOO_CIRCLE ? r.h / 2 : (spec->shape == LP_GOO_PILL ? LP_RADIUS_PILL : LP_RADIUS_SM);
-}
-
-/* The default blob: blank metal. It carries no emboss — the filter lights it. */
-static void default_blob(cairo_t *cr, lp_rect r, float radius) {
-    lp_fill_vgradient(cr, r, LP_SURFACE_RAISED_TOP, LP_PLATINUM_5, radius);
 }
 
 /* Where blob i actually lands once hover and the drag's shear have moved it. */
@@ -47,37 +37,14 @@ static lp_rect blob_placement(lp_ctx *ctx, lp_rect area, const lp_goo_spec *spec
 
 void lp_goo_group(lp_ctx *ctx, lp_rect area, const lp_goo_spec *spec) {
     if (ctx->pass != LP_PASS_DRAW || !ctx->cr) return;
-
-    /* The filter needs room to bleed into: SvgDefs' region is -25% / -45%. */
-    int pad_x = (int)ceilf(area.w * 0.25f), pad_y = (int)ceilf(area.h * 0.45f);
-    int lw = (int)ceilf(area.w) + 2 * pad_x, lh = (int)ceilf(area.h) + 2 * pad_y;
-    cairo_surface_t *layer = lw > 0 && lh > 0 ? cairo_image_surface_create(CAIRO_FORMAT_ARGB32, lw, lh) : NULL;
-    if (!layer || cairo_surface_status(layer) != CAIRO_STATUS_SUCCESS) {
-        if (layer) cairo_surface_destroy(layer);
-        return;
-    }
-    cairo_t *lc = cairo_create(layer);
-    cairo_translate(lc, pad_x - area.x, pad_y - area.y);
-
+    cairo_t *cr = ctx->cr;
     for (int i = 0; i < spec->count; i++) {
-        lp_rect placed = blob_placement(ctx, area, spec, i);
-        if (spec->render_blob) {
-            cairo_save(lc);
-            cairo_t *saved = ctx->cr;
-            ctx->cr = lc;
-            spec->render_blob(ctx, placed, i, spec->user);
-            ctx->cr = saved;
-            cairo_restore(lc);
-        } else {
-            default_blob(lc, placed, blob_radius(spec, placed));
-        }
+        lp_rect r = blob_placement(ctx, area, spec, i);
+        float radius = spec->shape == LP_GOO_CIRCLE ? r.h / 2 : (spec->shape == LP_GOO_PILL ? LP_RADIUS_PILL : LP_RADIUS_SM);
+        /* Each blob is lit by its own emboss. The web merges the group through
+         * an SVG filter and lets that light the merged silhouette instead; see
+         * D8 in PARITY.md for why the C side does not. */
+        lp_fill_vgradient(cr, r, LP_SURFACE_RAISED_TOP, LP_PLATINUM_5, radius);
+        lp_draw_inset_shadows(cr, r, radius, LP_SHADOW_EMBOSS_RAISED, LP_SHADOW_EMBOSS_RAISED_COUNT);
     }
-    cairo_destroy(lc);
-
-    enum lp_goo_tension tension = spec->flowing || spec->hot >= 0 ? LP_GOO_FLOW : LP_GOO_REST;
-    lp_goo_filter(layer, lp_goo_blur((int)spec->size, tension), tension);
-
-    cairo_set_source_surface(ctx->cr, layer, area.x - pad_x, area.y - pad_y);
-    cairo_paint(ctx->cr);
-    cairo_surface_destroy(layer);
 }

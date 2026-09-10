@@ -14,6 +14,23 @@ lp_color lp_color_mix(lp_color a, lp_color b, float t) {
 
 lp_color lp_color_with_alpha(lp_color c, float alpha) { c.a = alpha; return c; }
 
+int lp_clip_intersects(cairo_t *cr, lp_rect r) {
+    cairo_rectangle_list_t *list = cairo_copy_clip_rectangle_list(cr);
+    if (!list) return 1;
+    if (list->status != CAIRO_STATUS_SUCCESS) {
+        /* Not representable as rectangles: fall back to painting. */
+        cairo_rectangle_list_destroy(list);
+        return 1;
+    }
+    int hit = 0;
+    for (int i = 0; i < list->num_rectangles && !hit; i++) {
+        const cairo_rectangle_t *c = &list->rectangles[i];
+        if (c->x < r.x + r.w && c->x + c->width > r.x && c->y < r.y + r.h && c->y + c->height > r.y) hit = 1;
+    }
+    cairo_rectangle_list_destroy(list);
+    return hit;
+}
+
 lp_distant_light lp_distant_light_make(double azimuth_deg, double elevation_deg) {
     double az = azimuth_deg * M_PI / 180.0, el = elevation_deg * M_PI / 180.0;
     double lx = cos(az) * cos(el), ly = sin(az) * cos(el), lz = sin(el);
@@ -119,7 +136,8 @@ static void paint_layer(cairo_t *cr, lp_rect r, float radius, const lp_shadow_la
         cairo_fill(tc);
     }
     cairo_destroy(tc);
-    if (l->blur > 0) lp_blur_surface(tmp, sigma_for(l->blur));
+    /* The layer is one flat colour, so only its alpha carries shape. */
+    if (l->blur > 0) lp_blur_surface_tinted(tmp, sigma_for(l->blur), l->color);
 
     cairo_save(cr);
     if (l->inset) {
