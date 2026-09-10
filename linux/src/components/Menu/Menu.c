@@ -43,9 +43,10 @@ void lp_menu(lp_ctx *ctx, lp_rect r, const lp_menu_model *m, int active, lp_menu
 
     if (ctx->pass == LP_PASS_DRAW && ctx->cr) {
         cairo_t *cr = ctx->cr;
-        lp_draw_shadow_9slice(cr, panel, LP_RADIUS_MD, LP_SHADOW_MENU, LP_SHADOW_MENU_COUNT);
-        lp_fill_solid(cr, panel, LP_SURFACE_MENU, LP_RADIUS_MD);
-        lp_draw_inset_shadows(cr, panel, LP_RADIUS_MD, LP_SHADOW_EMBOSS_RAISED, LP_SHADOW_EMBOSS_RAISED_COUNT);
+        float radius = lp_radius_flex(ctx, LP_RADIUS_MD);
+        lp_draw_shadow_9slice(cr, panel, radius, LP_SHADOW_MENU, LP_SHADOW_MENU_COUNT);
+        lp_fill_solid(cr, panel, LP_SURFACE_MENU, radius);
+        lp_draw_inset_shadows(cr, panel, radius, LP_SHADOW_EMBOSS_RAISED, LP_SHADOW_EMBOSS_RAISED_COUNT);
     }
     float y = panel.y + LP_SPACE_1;
     for (int i = 0; i < m->count; i++) {

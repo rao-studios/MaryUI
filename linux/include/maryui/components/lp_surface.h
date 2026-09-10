@@ -23,6 +23,8 @@ typedef struct lp_surface_opts {
     int sheen;            /* paint the specular band (title bars, the menu bar) */
     float sheen_alpha;    /* < 0: the token (or the inactive token when !ctx->active_window) */
     int inactive;         /* the title bar's inactive stops */
+    float grain_x, grain_y;  /* how far the brushed skin lags the frame */
+    float speed;          /* 0..1; the grain glints as the window picks up speed */
 } lp_surface_opts;
 
 /* The two gradient stops a variant uses (surface.* tokens). */

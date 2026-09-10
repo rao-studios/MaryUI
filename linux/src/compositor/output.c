@@ -112,6 +112,9 @@ static void output_frame(struct wl_listener *listener, void *data) {
         }
         return;
     }
+    /* Seconds since the previous frame, before last_frame_ms moves on. */
+    float frame_dt = (float)(since / 1000.0);
+    if (frame_dt < 0 || frame_dt > LP_MOTION_MAX_DT) frame_dt = LP_MOTION_MAX_DT;
     output->last_frame_ms = now_ms;
     int wanted = output->frame_wanted;
     output->frame_wanted = 0;
@@ -131,12 +134,15 @@ static void output_frame(struct wl_listener *listener, void *data) {
         wlr_log(WLR_INFO, "motion: idle (%u wakes, %u idles, %u frames)", server->engine.wakes, server->engine.idles, server->engine.frames);
     server->frame_stats.motion_active = motion;
     int active = motion;
+    /* The molten wallpaper's clock is window motion. It never returns "active",
+     * so it can extend a frame that was already happening but never start one. */
+    mui_desktop_molten_tick(server, now_ms, frame_dt, motion);
     double t_anim = mui_now_ms();
     active |= mui_windows_animate(server, now_ms);
     active |= mui_desktop_animate(server, now_ms);
     if (server->debug_frames) server->frame_stats.anim_ms += mui_now_ms() - t_anim;
 
-    /* Ambient animations (bubbles swirling, progress glints) repaint at most 30 times a second. */
+    /* Ambient animations (bubbles rolling, progress glints) repaint at most 30 times a second. */
     static double last_ambient = 0;
     if (ambient_pending(server) && now_ms - last_ambient >= 1000.0 / 30) {
         last_ambient = now_ms;

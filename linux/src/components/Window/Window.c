@@ -18,7 +18,14 @@ void lp_window_shadow_margins(int *left, int *top, int *right, int *bottom) {
 
 lp_rect lp_window_chrome(lp_ctx *ctx, const lp_window_view *v, lp_title_bar_result *bar) {
     int shaded = v->state == LP_WIN_SHADED, zoomed = v->state == LP_WIN_ZOOMED;
-    float radius = zoomed ? 0 : LP_RADIUS_WINDOW;
+    /* A moving window's corners are four independent springs (lp_radius.h); a
+     * zoomed one is flush with the desktop and has none. A live corner is
+     * clamped to radius.window-min..max, so all-zero means the context never
+     * carried any — an offline render, say — and the resting radius applies. */
+    lp_corners live = ctx->corners;
+    if (live.tl <= 0 && live.tr <= 0 && live.br <= 0 && live.bl <= 0) live = lp_rest_corners(LP_RADIUS_WINDOW);
+    lp_corners radii = zoomed ? lp_rest_corners(0) : live;
+    float radius = zoomed ? 0 : (radii.tl + radii.tr + radii.br + radii.bl) / 4;
     lp_rect frame = v->rect;
     if (shaded) frame.h = LP_TITLE_HEIGHT;
     lp_rect title = LP_RECT(frame.x, frame.y, frame.w, LP_TITLE_HEIGHT);
@@ -29,11 +36,15 @@ lp_rect lp_window_chrome(lp_ctx *ctx, const lp_window_view *v, lp_title_bar_resu
         if (v->focused) lp_draw_shadow_9slice(cr, frame, radius, LP_SHADOW_WINDOW_FOCUSED, LP_SHADOW_WINDOW_FOCUSED_COUNT);
         else lp_draw_shadow_9slice(cr, frame, radius, LP_SHADOW_WINDOW, LP_SHADOW_WINDOW_COUNT);
         if (!shaded) {
-            lp_surface_paint(cr, frame, (lp_surface_opts){ .variant = LP_VARIANT_FLAT, .radius = radius, .sheen = 0 }, ctx->sheen_x, ctx->tilt);
+            cairo_save(cr);
+            lp_path_rrect4(cr, frame, radii.tl, radii.tr, radii.br, radii.bl);
+            cairo_clip(cr);
+            lp_surface_paint(cr, frame, (lp_surface_opts){ .variant = LP_VARIANT_FLAT, .radius = 0, .sheen = 0 }, ctx->sheen_x, ctx->tilt);
+            cairo_restore(cr);
         }
     }
     lp_title_bar_model m = { .title = v->title, .active = v->focused, .shaded = shaded, .zoomed = zoomed,
-        .radius_top = radius, .radius_bottom = shaded ? radius : 0 };
+        .radii = { radii.tl, radii.tr, shaded ? radii.br : 0, shaded ? radii.bl : 0 } };
     lp_title_bar(ctx, title, &m, bar);
     return body;
 }

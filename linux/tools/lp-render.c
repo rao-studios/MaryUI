@@ -18,12 +18,14 @@
 #include "maryui/lp_texture.h"
 #include "maryui/lp_tokens.h"
 #include "maryui/lp_ui.h"
+#include "maryui/lp_molten.h"
 #include "maryui/lp_wallpaper.h"
 
 static int usage(int status) {
     fprintf(status ? stderr : stdout,
         "usage: lp-render --brush <out.png>              the 512px brushed-platinum tile\n"
         "       lp-render --wallpaper WxH <out.png>      the wallpaper cover-fitted to WxH\n"
+        "       lp-render --molten WxH [TONE] <out.png>  the molten shader at WxH (TONE platinum|faithful); needs EGL\n"
         "       lp-render --menubar W <out.png>          the menu bar, W px wide, over the wallpaper\n"
         "       lp-render --window <out.png>             a focused About window and an inactive one, over the wallpaper\n"
         "       lp-render --finder <out.png>             the Finder window (icon view)\n"
@@ -64,6 +66,25 @@ static int render_wallpaper(int w, int h, const char *path) {
     cairo_surface_t *s = lp_wallpaper_render(w, h);
     cairo_t *cr = cairo_create(s);
     lp_wallpaper_vignette(cr, w, h);
+    cairo_destroy(cr);
+    int rc = write_png(s, path);
+    cairo_surface_destroy(s);
+    return rc;
+}
+
+static int render_molten(int w, int h, const char *tone_name, const char *path) {
+    if (!lp_molten_available()) {
+        fprintf(stderr, "lp-render: no EGL/GLES2 context; the molten wallpaper is unavailable here\n");
+        return 1;
+    }
+    enum lp_molten_tone tone = tone_name && strcmp(tone_name, "faithful") == 0 ? LP_MOLTEN_FAITHFUL : LP_MOLTEN_PLATINUM;
+    cairo_surface_t *s = lp_molten_render(w, h, 0.0f, LP_MOLTEN_ZOOM, tone);
+    if (!s) {
+        fprintf(stderr, "lp-render: the molten render failed\n");
+        return 1;
+    }
+    cairo_t *cr = cairo_create(s);
+    lp_wallpaper_vignette_at(cr, w, h, 0.35f);
     cairo_destroy(cr);
     int rc = write_png(s, path);
     cairo_surface_destroy(s);
@@ -221,6 +242,11 @@ int main(int argc, char **argv) {
         if (!parse_size(argv[2], &w, &h)) return usage(2);
         return render_wallpaper(w, h, argv[3]);
     }
+    if (strcmp(argv[1], "--molten") == 0 && (argc == 4 || argc == 5)) {
+        int w, h;
+        if (!parse_size(argv[2], &w, &h)) return usage(2);
+        return argc == 5 ? render_molten(w, h, argv[3], argv[4]) : render_molten(w, h, NULL, argv[3]);
+    }
     if (strcmp(argv[1], "--menubar") == 0 && argc == 4) return render_menubar(atoi(argv[2]), argv[3]);
     if (strcmp(argv[1], "--window") == 0 && argc == 3) return render_window(argv[2]);
     if (strcmp(argv[1], "--finder") == 0 && argc == 3) return render_app(&lp_app_finder, 0, argv[2]);
@@ -236,6 +262,15 @@ int main(int argc, char **argv) {
         rc |= render_brush(path);
         snprintf(path, sizeof path, "%s/wallpaper-1280x800.png", argv[2]);
         rc |= render_wallpaper(1280, 800, path);
+        /* The molten still, when this build can reach a GL context. Under a
+         * software rasteriser it takes seconds, which is exactly why it is
+         * baked here and shipped rather than rendered on a first boot. */
+        if (lp_molten_available()) {
+            snprintf(path, sizeof path, "%s/molten-platinum-1280x800.png", argv[2]);
+            rc |= render_molten(1280, 800, "platinum", path);
+        } else {
+            fprintf(stderr, "lp-render: no EGL here; the molten wallpaper is not baked\n");
+        }
         snprintf(path, sizeof path, "%s/menubar.png", argv[2]);
         rc |= render_menubar(640, path);
         snprintf(path, sizeof path, "%s/window.png", argv[2]);

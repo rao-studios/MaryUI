@@ -52,11 +52,9 @@ static void tile(lp_ctx *ctx, lp_id id, lp_rect cell, const lp_spotlight_item *i
     }
     float plate = LP_SIZE_SPOTLIGHT_TILE;
     lp_rect ic = LP_RECT(cell.x + (cell.w - plate) / 2, cell.y + 6, plate, plate);
-    static const lp_shadow_layer icon_shadow[] = { { 0, 0, 0, 0, 1, { 0, 0, 0, 0.32f } }, { 0, 0, 2, 4, 0, { 0, 0, 0, 0.15f } } };
-    lp_draw_outer_shadows(cr, ic, LP_RADIUS_MD, icon_shadow, 2);
-    lp_fill_vgradient(cr, ic, LP_PLATINUM_0, LP_PLATINUM_3, LP_RADIUS_MD);
-    lp_draw_inset_shadows(cr, ic, LP_RADIUS_MD, LP_SHADOW_EMBOSS_RAISED, LP_SHADOW_EMBOSS_RAISED_COUNT);
-    lp_icon_draw(cr, it->icon, ic.x + (plate - 28) / 2, ic.y + (plate - 28) / 2, 28, 1.3f, LP_INK_SECONDARY);
+    /* No raised plate: hover and selection belong to the cell around the icon,
+     * which is what the plate was being mistaken for. */
+    lp_icon_draw(cr, it->icon, ic.x + (plate - 36) / 2, ic.y + (plate - 36) / 2, 36, 1.6f, LP_INK_SECONDARY);
     lp_text_style st = lp_text_style_default();
     st.size_px = LP_TEXT_XS;
     st.ellipsize = 1;
@@ -75,8 +73,9 @@ void lp_spotlight_panel(lp_ctx *ctx, float x, float y, const lp_spotlight_view *
     lp_id base = LP_ID("spotlight");
 
     if (draw) {
-        lp_draw_shadow_9slice(cr, panel, LP_RADIUS_LG, LP_SHADOW_MENU, LP_SHADOW_MENU_COUNT);
-        lp_surface_paint(cr, panel, (lp_surface_opts){ .variant = LP_VARIANT_FLAT, .radius = LP_RADIUS_LG, .sheen = 1, .sheen_alpha = -1 }, 0.5f, 0);
+        float shell_radius = lp_radius_flex(ctx, LP_RADIUS_LG);
+        lp_draw_shadow_9slice(cr, panel, shell_radius, LP_SHADOW_MENU, LP_SHADOW_MENU_COUNT);
+        lp_surface_paint(cr, panel, (lp_surface_opts){ .variant = LP_VARIANT_FLAT, .radius = shell_radius, .sheen = 1, .sheen_alpha = -1 }, 0.5f, 0);
     }
 
     /* The bar */

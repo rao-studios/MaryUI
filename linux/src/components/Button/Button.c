@@ -37,7 +37,9 @@ int lp_button(lp_ctx *ctx, lp_id id, lp_rect r, const char *label, lp_button_opt
     int hot = !o.disabled && lp_is_hot(ctx, id);
     int active = !o.disabled && lp_is_active(ctx, id) && hot;
     lp_accent accent = lp_settings_accent(ctx->settings);
-    float radius = o.icon_only ? LP_RADIUS_SM : LP_RADIUS_PILL;
+    float radius = o.icon_only ? lp_radius_flex(ctx, LP_RADIUS_SM) : LP_RADIUS_PILL;
+    /* Pressing an icon button rounds it further: the squish under a thumb. */
+    if (o.icon_only && lp_is_active(ctx, id)) radius *= LP_RADIUS_FLEX_PRESS;
     lp_color top = LP_SURFACE_RAISED_TOP, bottom = LP_SURFACE_RAISED_BOTTOM, ink = LP_INK_PRIMARY, emboss = LP_INK_EMBOSS;
     if (hot) { top = LP_PLATINUM_0; bottom = LP_PLATINUM_2; }
     if (active) { top = LP_SURFACE_PRESSED_TOP; bottom = LP_SURFACE_PRESSED_BOTTOM; }
@@ -60,7 +62,7 @@ int lp_button(lp_ctx *ctx, lp_id id, lp_rect r, const char *label, lp_button_opt
         else if (!active) lp_draw_outer_shadows(cr, box, radius, outer, 2);
         else lp_draw_outer_shadows(cr, box, radius, outer, 1);
         lp_fill_vgradient(cr, box, top, bottom, radius);
-        if (o.variant != LP_BUTTON_QUIET) lp_draw_brush(cr, box, radius, LP_BRUSH_OPACITY * 0.8f);
+        if (o.variant != LP_BUTTON_QUIET) lp_draw_brush(cr, box, radius, LP_BRUSH_OPACITY * 0.8f, ctx->grain_x, ctx->grain_y);
         if (active) lp_draw_inset_shadows(cr, box, radius, LP_SHADOW_EMBOSS_PRESSED, LP_SHADOW_EMBOSS_PRESSED_COUNT);
         else lp_draw_inset_shadows(cr, box, radius, LP_SHADOW_EMBOSS_RAISED, LP_SHADOW_EMBOSS_RAISED_COUNT);
     }

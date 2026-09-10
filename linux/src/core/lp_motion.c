@@ -10,17 +10,29 @@
 lp_motion_params lp_motion_params_from_tokens(void) {
     return (lp_motion_params){
         .sheen = LP_MOTION_SPRING_SHEEN, .tilt = LP_MOTION_SPRING_TILT, .jelly = LP_MOTION_SPRING_JELLY, .fly = LP_MOTION_SPRING_FLY,
-        .slosh = { LP_MOTION_SLOSH_FREQUENCY, LP_MOTION_SLOSH_DAMPING, LP_MOTION_SLOSH_GAIN, LP_MOTION_SLOSH_MAX, LP_MOTION_SLOSH_MAX_ACCEL },
+        .radius = LP_MOTION_SPRING_RADIUS, .grain = LP_MOTION_SPRING_GRAIN, .vx_lag = LP_MOTION_SPRING_VX_LAG,
+        .slosh = { LP_MOTION_SLOSH_FREQUENCY, LP_MOTION_SLOSH_DAMPING, LP_MOTION_SLOSH_GAIN, LP_MOTION_SLOSH_SHEAR_GAIN,
+                   LP_MOTION_SLOSH_SHEAR_GAMMA, LP_MOTION_SLOSH_MAX, LP_MOTION_SLOSH_MAX_ACCEL },
+        .corners = { LP_RADIUS_WINDOW, LP_RADIUS_WINDOW_MIN, LP_RADIUS_WINDOW_MAX, LP_RADIUS_FLEX_SPREAD,
+                     LP_RADIUS_FLEX_VELOCITY_REF, LP_RADIUS_FLEX_GAMMA },
         .jelly_max_scale = LP_MOTION_JELLY_MAX_SCALE, .jelly_max_skew = LP_MOTION_JELLY_MAX_SKEW, .tilt_max = LP_MOTION_TILT_MAX,
         .velocity_ref = LP_MOTION_VELOCITY_REF, .light_x = LP_SHEEN_LIGHT_X,
+        .radius_detune = LP_MOTION_RADIUS_DETUNE, .corner_impulse = LP_RADIUS_FLEX_IMPULSE,
+        .slosh_velocity_ref = LP_MOTION_SLOSH_VELOCITY_REF, .grain_lag = LP_BRUSH_LAG,
     };
 }
 
 lp_motion_params lp_motion_live = {
     .sheen = LP_MOTION_SPRING_SHEEN, .tilt = LP_MOTION_SPRING_TILT, .jelly = LP_MOTION_SPRING_JELLY, .fly = LP_MOTION_SPRING_FLY,
-    .slosh = { LP_MOTION_SLOSH_FREQUENCY, LP_MOTION_SLOSH_DAMPING, LP_MOTION_SLOSH_GAIN, LP_MOTION_SLOSH_MAX, LP_MOTION_SLOSH_MAX_ACCEL },
+    .radius = LP_MOTION_SPRING_RADIUS, .grain = LP_MOTION_SPRING_GRAIN, .vx_lag = LP_MOTION_SPRING_VX_LAG,
+    .slosh = { LP_MOTION_SLOSH_FREQUENCY, LP_MOTION_SLOSH_DAMPING, LP_MOTION_SLOSH_GAIN, LP_MOTION_SLOSH_SHEAR_GAIN,
+               LP_MOTION_SLOSH_SHEAR_GAMMA, LP_MOTION_SLOSH_MAX, LP_MOTION_SLOSH_MAX_ACCEL },
+    .corners = { LP_RADIUS_WINDOW, LP_RADIUS_WINDOW_MIN, LP_RADIUS_WINDOW_MAX, LP_RADIUS_FLEX_SPREAD,
+                 LP_RADIUS_FLEX_VELOCITY_REF, LP_RADIUS_FLEX_GAMMA },
     .jelly_max_scale = LP_MOTION_JELLY_MAX_SCALE, .jelly_max_skew = LP_MOTION_JELLY_MAX_SKEW, .tilt_max = LP_MOTION_TILT_MAX,
     .velocity_ref = LP_MOTION_VELOCITY_REF, .light_x = LP_SHEEN_LIGHT_X,
+    .radius_detune = LP_MOTION_RADIUS_DETUNE, .corner_impulse = LP_RADIUS_FLEX_IMPULSE,
+    .slosh_velocity_ref = LP_MOTION_SLOSH_VELOCITY_REF, .grain_lag = LP_BRUSH_LAG,
 };
 
 void lp_motion_reset_params(void) { lp_motion_live = lp_motion_params_from_tokens(); }
@@ -125,9 +137,15 @@ void lp_window_motion_init(lp_window_motion *m) {
     m->fly_y = lp_spring_make(0, 0);
     m->fly_sx = lp_spring_make(1, 1);
     m->fly_sy = lp_spring_make(1, 1);
+    for (int i = 0; i < LP_CORNER_COUNT; i++) m->corners[i] = lp_spring_make(LP_RADIUS_WINDOW, LP_RADIUS_WINDOW);
+    m->grain_x = lp_spring_make(0, 0);
+    m->grain_y = lp_spring_make(0, 0);
+    m->vx_lag = lp_spring_make(0, 0);
+    m->vy_lag = lp_spring_make(0, 0);
     m->slosh = lp_slosh_make();
     m->slosh_y = lp_slosh_make();
-    m->out = (lp_window_motion_out){ .sx = 1, .sy = 1, .jelly_sx = 1, .jelly_sy = 1, .fly_sx = 1, .fly_sy = 1, .sheen_x = 0.5f, .identity = 1 };
+    m->out = (lp_window_motion_out){ .sx = 1, .sy = 1, .jelly_sx = 1, .jelly_sy = 1, .fly_sx = 1, .fly_sy = 1, .sheen_x = 0.5f,
+                                     .corners = lp_rest_corners(LP_RADIUS_WINDOW), .identity = 1 };
 }
 
 static void write_transform(lp_window_motion *m) {
@@ -154,12 +172,18 @@ static void write_identity(lp_window_motion *m) {
     o->identity = 1;
 }
 
+void lp_window_motion_nudge_corners(lp_window_motion *m, float impulse, int reduced_motion) {
+    if (reduced_motion) return;
+    for (int i = 0; i < LP_CORNER_COUNT; i++) m->corners[i].velocity += impulse * (i % 2 == 0 ? 1.0f : -1.0f);
+}
+
 void lp_window_motion_begin_drag(lp_window_motion *m, float grab_x, float grab_y) {
     m->dragging = 1;
     m->drag_dx = m->drag_dy = 0;
     lp_pointer_tracker_reset(&m->tracker);
     m->origin_x = grab_x;
     m->origin_y = grab_y;
+    lp_window_motion_nudge_corners(m, lp_motion_live.corner_impulse, 0);
 }
 
 void lp_window_motion_move_drag(lp_window_motion *m, float dx, float dy, double t_ms, float x, float y) {
@@ -169,9 +193,14 @@ void lp_window_motion_move_drag(lp_window_motion *m, float dx, float dy, double 
 }
 
 void lp_window_motion_end_drag(lp_window_motion *m) {
+    /* The frame is about to jump to its committed position while the delta drops
+     * to zero. Carry the grain's lag across with it, or the skin would snap. */
+    m->grain_x.value -= m->drag_dx;
+    m->grain_y.value -= m->drag_dy;
     m->dragging = 0;
     m->drag_dx = m->drag_dy = 0;
     lp_pointer_tracker_reset(&m->tracker);
+    lp_window_motion_nudge_corners(m, -lp_motion_live.corner_impulse, 0);
     write_transform(m);
 }
 
@@ -191,6 +220,36 @@ void lp_window_motion_fly_from(lp_window_motion *m, lp_rect from, lp_rect to, in
     write_transform(m);
 }
 
+static int corners_settled(const lp_window_motion *m) {
+    for (int i = 0; i < LP_CORNER_COUNT; i++) {
+        if (!lp_spring_settled(&m->corners[i], 0.02f, 0.2f)) return 0;
+    }
+    return 1;
+}
+
+/* Publishing a radius forces a chrome repaint, so the corners only move in
+ * quarter-pixels — the same throttle the web puts on writing --lp-r-*. */
+static void write_corners(lp_window_motion *m, const lp_motion_params *p) {
+    lp_corners next = { m->corners[LP_CORNER_TL].value, m->corners[LP_CORNER_TR].value,
+                        m->corners[LP_CORNER_BR].value, m->corners[LP_CORNER_BL].value };
+    if (m->wrote_corners_valid) {
+        int moved = 0;
+        for (int i = 0; i < LP_CORNER_COUNT; i++) {
+            if (fabsf(lp_corner_at(next, i) - lp_corner_at(m->wrote_corners, i)) >= 0.25f) { moved = 1; break; }
+        }
+        if (!moved) return;
+    }
+    m->wrote_corners = next;
+    m->wrote_corners_valid = 1;
+    m->out.corners = next;
+    float spread = 0;
+    for (int i = 0; i < LP_CORNER_COUNT; i++) {
+        float d = fabsf(lp_corner_at(next, i) - p->corners.rest);
+        if (d > spread) spread = d;
+    }
+    m->out.radius_k = spread / fmaxf(p->corners.max - p->corners.rest, 1.0f);
+}
+
 int lp_window_motion_step(lp_window_motion *m, float dt, double now_ms, lp_rect rect, float viewport_w,
                           const lp_motion_params *p, int reduced) {
     lp_motion_sample s = m->dragging ? lp_pointer_tracker_sample(&m->tracker, now_ms) : (lp_motion_sample){ 0, 0, 0, 0 };
@@ -205,6 +264,17 @@ int lp_window_motion_step(lp_window_motion *m, float dt, double now_ms, lp_rect 
     m->sx.target = deform ? 1 + mag * p->jelly_max_scale : 1;
     m->sy.target = deform ? 1 - 0.6f * mag * p->jelly_max_scale : 1;
 
+    /* The corners answer to how the window is *seen* to move, so a zoom's flight
+     * deforms them exactly as a drag does. */
+    float seen_vx = s.vx + m->fly_x.velocity, seen_vy = s.vy + m->fly_y.velocity;
+    lp_corners targets = reduced ? lp_rest_corners(p->corners.rest) : lp_corner_targets(seen_vx, seen_vy, p->corners);
+    for (int i = 0; i < LP_CORNER_COUNT; i++) m->corners[i].target = lp_corner_at(targets, i);
+    float ny = clampf(s.vy / p->velocity_ref, -1, 1);
+    m->vx_lag.target = n;
+    m->vy_lag.target = ny;
+    m->grain_x.target = m->drag_dx;
+    m->grain_y.target = m->drag_dy;
+
     if (reduced) {
         lp_spring_snap(&m->sheen);
         lp_spring_snap(&m->tilt);
@@ -217,6 +287,11 @@ int lp_window_motion_step(lp_window_motion *m, float dt, double now_ms, lp_rect 
         lp_spring_snap(&m->fly_sy);
         m->slosh = lp_slosh_make();
         m->slosh_y = lp_slosh_make();
+        for (int i = 0; i < LP_CORNER_COUNT; i++) lp_spring_snap(&m->corners[i]);
+        lp_spring_snap(&m->grain_x);
+        lp_spring_snap(&m->grain_y);
+        lp_spring_snap(&m->vx_lag);
+        lp_spring_snap(&m->vy_lag);
         m->flying = 0;
     } else {
         lp_spring_step(&m->sheen, dt, p->sheen);
@@ -228,15 +303,37 @@ int lp_window_motion_step(lp_window_motion *m, float dt, double now_ms, lp_rect 
         lp_spring_step(&m->fly_y, dt, p->fly);
         lp_spring_step(&m->fly_sx, dt, p->fly);
         lp_spring_step(&m->fly_sy, dt, p->fly);
-        m->slosh = lp_slosh_step(m->slosh, s.ax, dt, p->slosh);
-        m->slosh_y = lp_slosh_step(m->slosh_y, s.ay, dt, p->slosh);
+        /* The lag springs follow velocity normalized against the jelly's reference;
+         * the liquid shears against its own, lower one. Both normalizations are
+         * linear, so rescaling here is exact and saves a second pair of springs. */
+        float shear_scale = p->velocity_ref / fmaxf(p->slosh_velocity_ref, 1.0f);
+        lp_slosh_drive dx = { s.ax, (n - m->vx_lag.value) * shear_scale };
+        lp_slosh_drive dy = { s.ay, (ny - m->vy_lag.value) * shear_scale };
+        m->slosh = lp_slosh_step(m->slosh, dx, dt, p->slosh);
+        m->slosh_y = lp_slosh_step(m->slosh_y, dy, dt, p->slosh);
+        for (int i = 0; i < LP_CORNER_COUNT; i++) {
+            lp_spring_params cp = { lp_detuned_frequency(p->radius.frequency, i, p->radius_detune), p->radius.damping };
+            lp_spring_step(&m->corners[i], dt, cp);
+        }
+        lp_spring_step(&m->grain_x, dt, p->grain);
+        lp_spring_step(&m->grain_y, dt, p->grain);
+        lp_spring_step(&m->vx_lag, dt, p->vx_lag);
+        lp_spring_step(&m->vy_lag, dt, p->vx_lag);
     }
 
     m->out.sheen_x = m->sheen.value;
     m->out.tilt_deg = m->tilt.value;
     m->out.vx = n;
     m->out.slosh_deg = -m->slosh.theta * 180.0f / (float)M_PI;
-    m->out.slosh_y_px = m->slosh_y.theta * 6.0f;
+    /* The sideways pile-up is the strongest cue at 18px; rotation alone is only
+     * a couple of pixels of crest movement. */
+    m->out.slosh_x_px = -sinf(m->slosh.theta) * LP_MOTION_SLOSH_SHIFT;
+    m->out.slosh_y_px = m->slosh_y.theta * LP_MOTION_SLOSH_LIFT;
+    m->out.vx_lag = m->vx_lag.value;
+    m->out.speed = lp_liquidity(seen_vx, seen_vy, p->velocity_ref, 1.0f);
+    m->out.grain_x = clampf(m->grain_x.value - m->drag_dx, -p->grain_lag, p->grain_lag);
+    m->out.grain_y = clampf(m->grain_y.value - m->drag_dy, -p->grain_lag, p->grain_lag);
+    write_corners(m, p);
     m->last_vx = n;
 
     int flight_settled = lp_spring_settled(&m->fly_x, 0.05f, 0.5f) && lp_spring_settled(&m->fly_y, 0.05f, 0.5f) &&
@@ -253,6 +350,9 @@ int lp_window_motion_step(lp_window_motion *m, float dt, double now_ms, lp_rect 
                          lp_spring_settled(&m->sy, 0.0005f, 0.005f);
     int settled = !m->dragging && !m->flying && !m->resizing && deform_settled &&
                   lp_spring_settled(&m->tilt, 0.005f, 0.05f) && lp_spring_settled(&m->sheen, 0.0005f, 0.005f) &&
+                  lp_spring_settled(&m->grain_x, 0.05f, 0.5f) && lp_spring_settled(&m->grain_y, 0.05f, 0.5f) &&
+                  lp_spring_settled(&m->vx_lag, 0.002f, 0.02f) && lp_spring_settled(&m->vy_lag, 0.002f, 0.02f) &&
+                  corners_settled(m) &&
                   lp_slosh_settled(m->slosh, LP_SLOSH_TOLERANCE, LP_SLOSH_VELOCITY_TOLERANCE) &&
                   lp_slosh_settled(m->slosh_y, LP_SLOSH_TOLERANCE, LP_SLOSH_VELOCITY_TOLERANCE);
 

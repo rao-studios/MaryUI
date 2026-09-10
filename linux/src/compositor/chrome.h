@@ -52,7 +52,7 @@ void mui_chrome_pointer_leave(struct mui_chrome *chrome, double now_ms);
 void mui_chrome_key(struct mui_chrome *chrome, uint32_t keysym, uint32_t mods, const char *utf8, int pressed, double now_ms);
 /* A wheel event over the chrome. */
 void mui_chrome_scroll(struct mui_chrome *chrome, float dx, float dy, double now_ms);
-/* Whether an ambient animation (progress glint, swirling bubble) wants another frame, and where. */
+/* Whether an ambient animation (progress glint, rolling bubble) wants another frame, and where. */
 int mui_chrome_wants_frame(const struct mui_chrome *chrome);
 lp_rect mui_chrome_ambient_rect(const struct mui_chrome *chrome);
 /* Repaint the damaged region (or everything on the first paint) and publish it. */

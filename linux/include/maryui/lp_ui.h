@@ -9,6 +9,7 @@
 #include <cairo.h>
 #include <stdint.h>
 
+#include "maryui/lp_radius.h"
 #include "maryui/lp_types.h"
 
 enum lp_pass { LP_PASS_EVENT, LP_PASS_DRAW };
@@ -63,6 +64,12 @@ typedef struct lp_ctx {
     enum lp_cursor_shape cursor;
     /* The --lp-* motion variables of the enclosing window. */
     float sheen_x, tilt, vx, slosh_deg, slosh_y;
+    float vx_lag;             /* vx - vx_lag is the shear the goo smears with */
+    float speed;              /* normalized speed, 0..1: the grain's glint rides it */
+    float slosh_x;            /* the liquid's lateral bank */
+    float grain_x, grain_y;   /* how far the brushed skin lags the frame */
+    lp_corners corners;       /* the window's four live radii */
+    float radius_k;           /* how far they are from rest, 0..1 */
     int active_window;        /* the window is focused (inactive chrome drains its colours) */
     double now_ms;
     int wants_frame;          /* an ambient animation asks for another frame */
@@ -77,6 +84,10 @@ lp_id lp_id_hash(const char *s);
 lp_id lp_id_index(lp_id base, int index);
 #define LP_ID(str) lp_id_hash(str)
 
+/* A radius that swells while the window's corners are in motion: the whole
+ * frame goes liquid together, not just its outline. radius.flex-* tokens. */
+float lp_radius_flex(const lp_ctx *ctx, float radius);
+
 int lp_hit(const lp_ctx *ctx, lp_rect r);
 /* Registers r as the hot area for id when the pointer is over it; returns hot. */
 int lp_hot(lp_ctx *ctx, lp_id id, lp_rect r);
@@ -88,7 +99,7 @@ int lp_is_hot(const lp_ctx *ctx, lp_id id);
 void lp_damage(lp_ctx *ctx, lp_rect r);
 /* Asks the host for another frame; the whole chrome is repainted. */
 void lp_want_frame(lp_ctx *ctx);
-/* Asks for another frame for r only (a progress glint, a swirling bubble). */
+/* Asks for another frame for r only (a progress glint, a rolling bubble). */
 void lp_want_frame_rect(lp_ctx *ctx, lp_rect r);
 
 /* Layout helpers: cut a strip off an area, split an area into columns/rows. */

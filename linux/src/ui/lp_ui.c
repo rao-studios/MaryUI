@@ -1,6 +1,7 @@
 #include <math.h>
 #include <string.h>
 
+#include "maryui/lp_tokens.h"
 #include "maryui/lp_ui.h"
 
 void lp_ctx_begin(lp_ctx *ctx, enum lp_pass pass, cairo_t *cr, const lp_input *in, lp_rect bounds, double now_ms) {
@@ -59,6 +60,10 @@ lp_id lp_id_index(lp_id base, int index) {
 
 int lp_rect_contains(lp_rect r, float x, float y) {
     return x >= r.x && y >= r.y && x < r.x + r.w && y < r.y + r.h;
+}
+
+float lp_radius_flex(const lp_ctx *ctx, float radius) {
+    return radius * (LP_RADIUS_FLEX_BASE + LP_RADIUS_FLEX_SPAN * ctx->radius_k);
 }
 
 int lp_hit(const lp_ctx *ctx, lp_rect r) {

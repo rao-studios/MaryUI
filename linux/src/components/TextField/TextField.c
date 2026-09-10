@@ -81,7 +81,7 @@ static int edit(lp_text_buffer *b, const lp_input *in) {
 
 int lp_text_field(lp_ctx *ctx, lp_id id, lp_rect r, lp_text_buffer *b, lp_text_field_opts o) {
     float pad = o.round ? LP_SPACE_3 : LP_SPACE_2;
-    float radius = o.round ? LP_RADIUS_PILL : LP_RADIUS_SM;
+    float radius = o.round ? LP_RADIUS_PILL : lp_radius_flex(ctx, LP_RADIUS_SM);
     int changed = 0;
     if (!o.disabled) {
         lp_hot(ctx, id, r);

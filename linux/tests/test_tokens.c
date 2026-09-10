@@ -16,7 +16,7 @@ LP_TEST(colors_dimensions_and_springs_carry_their_values) {
     LP_ASSERT_NEAR(p0.b, 0xf9 / 255.0, 0.001);
     LP_ASSERT_NEAR(LP_RADIUS_WINDOW, 12, 0);
     LP_ASSERT_NEAR(LP_SIZE_MENUBAR_HEIGHT, 24, 0);
-    LP_ASSERT_NEAR(LP_SIZE_TITLEBAR_HEIGHT, 28, 0);
+    LP_ASSERT_NEAR(LP_SIZE_TITLEBAR_HEIGHT, 42, 0);
     LP_ASSERT_NEAR(LP_MOTION_FAST_MS, 120, 0);
     lp_spring_params jelly = LP_MOTION_SPRING_JELLY;
     LP_ASSERT_NEAR(jelly.frequency, 2.2, 1e-6);

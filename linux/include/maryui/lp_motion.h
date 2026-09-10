@@ -12,6 +12,7 @@
 #ifndef MARYUI_LP_MOTION_H
 #define MARYUI_LP_MOTION_H
 
+#include "maryui/lp_radius.h"
 #include "maryui/lp_slosh.h"
 #include "maryui/lp_spring.h"
 #include "maryui/lp_types.h"
@@ -20,10 +21,15 @@
 /* MARK: - Parameters */
 
 typedef struct lp_motion_params {
-    lp_spring_params sheen, tilt, jelly, fly;
+    lp_spring_params sheen, tilt, jelly, fly, radius, grain, vx_lag;
     lp_slosh_params slosh;
+    lp_radius_params corners;
     float jelly_max_scale, jelly_max_skew, tilt_max, velocity_ref;
-    float light_x;  /* where the room light sits, as a fraction of viewport width */
+    float light_x;         /* where the room light sits, as a fraction of viewport width */
+    float radius_detune;   /* how far apart the four corner springs are tuned */
+    float corner_impulse;  /* px/s kicked into each corner spring on grab and drop */
+    float slosh_velocity_ref;  /* speed (px/s) that counts as fully sheared, for the liquid */
+    float grain_lag;       /* max px the grain slides behind the frame */
 } lp_motion_params;
 
 lp_motion_params lp_motion_params_from_tokens(void);
@@ -76,18 +82,27 @@ typedef struct lp_window_motion_out {
     float skew_deg;               /* skewX; computed for parity, wlr_scene cannot apply it */
     float origin_x, origin_y;     /* transform origin in window-rect coordinates */
     float sheen_x, tilt_deg, vx, slosh_deg, slosh_y_px;  /* the --lp-* variables */
+    float vx_lag;                 /* the slow follower of vx; vx - vx_lag is the shear */
+    float speed;                  /* normalized speed of the window as seen, 0..1 */
+    float slosh_x_px;             /* the liquid's lateral bank: the strongest cue at 18px */
+    float grain_x, grain_y;       /* how far the brushed skin lags the frame */
+    lp_corners corners;           /* the four live radii */
+    float radius_k;               /* how far the corners are from rest, 0..1 */
     int identity;                 /* the transform is exactly the identity (settled) */
 } lp_window_motion_out;
 
 typedef struct lp_window_motion {
     lp_pointer_tracker tracker;
     lp_spring sheen, tilt, skew, sx, sy, fly_x, fly_y, fly_sx, fly_sy;
+    lp_spring corners[LP_CORNER_COUNT], grain_x, grain_y, vx_lag, vy_lag;
     lp_slosh_state slosh, slosh_y;
     int dragging, resizing, flying;
     float drag_dx, drag_dy;
     float last_vx;
     float origin_x, origin_y;
     int wrote_identity;
+    lp_corners wrote_corners;  /* the last radii published; they only move in quarter-pixels */
+    int wrote_corners_valid;
     lp_window_motion_out out;
 } lp_window_motion;
 
@@ -108,5 +123,10 @@ int lp_window_motion_step(lp_window_motion *m, float dt, double now_ms, lp_rect 
                           const lp_motion_params *p, int reduced_motion);
 /* Normalized horizontal velocity from the last frame; the traffic lights smear with it. */
 float lp_window_motion_velocity_x(const lp_window_motion *m);
+/* Kicks the four corner springs. Picking a window up and setting it down are
+ * impacts; because the springs are detuned, one kick sets all four wobbling out
+ * of phase, putting visible motion at the two moments the eye is on the window.
+ * An impulse rather than a bias, so it costs none of the lead/trail range. */
+void lp_window_motion_nudge_corners(lp_window_motion *m, float impulse, int reduced_motion);
 
 #endif

@@ -169,6 +169,11 @@ struct mui_output {
     struct wlr_scene_rect *background;
     struct wlr_scene_buffer *wallpaper;
     struct lp_cairo_buffer *wallpaper_buffer;
+    /* The molten wallpaper's own clock: shader units, advanced by window
+     * motion rather than wall-clock, so an idle desktop stays idle. */
+    float molten_time;
+    double molten_moved_ms;   /* when it last flowed; the still is re-baked settle-ms later */
+    int molten_reduced;       /* the last frame was drawn at molten.scale, not full */
     int width, height;
     struct wl_event_source *frame_timer;  /* paces frames to the refresh rate (output.c request_frame) */
     double last_frame_ms;
@@ -212,6 +217,10 @@ int mui_desktop_key(struct mui_server *server, uint32_t keysym, uint32_t modifie
 int mui_desktop_scroll(struct mui_server *server, double lx, double ly, float dx, float dy);
 /* Repaints chromes whose last paint asked for another frame. */
 void mui_desktop_ambient_tick(struct mui_server *server);
+/* Advances the molten wallpaper while the desktop is already animating, and
+ * re-bakes the full-resolution still once it settles. `moving` is whether the
+ * motion engine is active this frame. Never asks for a frame of its own. */
+void mui_desktop_molten_tick(struct mui_server *server, double now_ms, float dt, int moving);
 /* Repaints everything that depends on the settings (accent, wallpaper). */
 void mui_desktop_settings_changed(struct mui_server *server);
 /* What is under a layout point: a chrome (sx/sy chrome-local), a client surface (surface-local), or nothing.

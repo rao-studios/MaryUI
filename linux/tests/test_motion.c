@@ -114,6 +114,15 @@ LP_TEST(dragging_fast_tilts_the_sheen_and_stretches_the_jelly) {
     LP_ASSERT_NEAR(m.out.tx, 640, 0);
     LP_ASSERT(!m.out.identity);
     LP_ASSERT(fabsf(m.out.slosh_deg) > 0.01f);
+    /* The sideways bank is what actually reads at 18px. */
+    LP_ASSERT(fabsf(m.out.slosh_x_px) > 0.1f);
+    /* Travelling +x: the right corners lead and flatten, the left ones trail. */
+    LP_ASSERT(m.out.corners.tr < m.out.corners.tl);
+    LP_ASSERT(m.out.corners.br < m.out.corners.bl);
+    LP_ASSERT(m.out.radius_k > 0.1f);
+    /* The grain hangs back from the frame, up to brush.lag. */
+    LP_ASSERT(fabsf(m.out.grain_x) > 0.5f);
+    LP_ASSERT(fabsf(m.out.grain_x) <= LP_BRUSH_LAG);
 }
 
 LP_TEST(a_released_drag_settles_to_the_identity_transform) {
@@ -135,6 +144,10 @@ LP_TEST(a_released_drag_settles_to_the_identity_transform) {
     LP_ASSERT(m.out.identity);
     LP_ASSERT_NEAR(m.out.sx, 1, 0);
     LP_ASSERT_NEAR(m.out.tilt_deg, 0, 0.005);
+    LP_ASSERT_NEAR(lp_window_motion_velocity_x(&m), 0, 0);
+    LP_ASSERT_NEAR(m.out.corners.tl, LP_RADIUS_WINDOW, 0.3);
+    LP_ASSERT_NEAR(m.out.corners.br, LP_RADIUS_WINDOW, 0.3);
+    LP_ASSERT_NEAR(m.out.grain_x, 0, 0.1);
     LP_ASSERT_NEAR(lp_window_motion_velocity_x(&m), 0, 0);
 }
 

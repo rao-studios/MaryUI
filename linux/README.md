@@ -16,9 +16,9 @@ as the vitest suites so `make test` can be read next to `npm test`. `PARITY.md` 
 every web file, its C counterpart, and every deliberate deviation.
 
 ```sh
-make check-deps        # cairo pangocairo fontconfig pixman-1 xkbcommon, wlroots wayland-server wayland-protocols
+make check-deps        # cairo pangocairo fontconfig pixman-1 xkbcommon, wlroots wayland-server wayland-protocols, egl glesv2
 make                   # build/libmaryui.a (+ .so), build/lp-render, build/lp-input, build/maryui-desktop
-make test              # tests/test_*.c (112 cases)
+make test              # tests/test_*.c (124 cases)
 make parity            # tools/parity-check.sh: every web component and ported file has its C twin
 make gen-check         # the generated headers match tokens.json and icons.json
 make install DESTDIR=/tmp/root PREFIX=/usr
@@ -27,9 +27,14 @@ build/maryui-desktop   # from a tty with a logind/seatd seat, or nested inside a
 
 Ubuntu 24.04 build dependencies: `build-essential pkg-config libwlroots-dev libwayland-dev
 wayland-protocols libxkbcommon-dev libpixman-1-dev libcairo2-dev libpango1.0-dev
-libfontconfig1-dev libseat-dev libdrm-dev`. Runtime: `libwlroots12t64 libseat1 libcairo2
-libpango-1.0-0 libpangocairo-1.0-0 fonts-inter fonts-urw-base35 fonts-jetbrains-mono`, and
-`polkitd` when the session comes from logind.
+libfontconfig1-dev libseat-dev libdrm-dev`, plus `libegl-dev libgles2-mesa-dev` for the molten
+wallpaper. Runtime: `libwlroots12t64 libseat1 libcairo2 libpango-1.0-0 libpangocairo-1.0-0
+libegl1 libegl-mesa0 libgles2 libgl1-mesa-dri fonts-inter fonts-urw-base35
+fonts-jetbrains-mono`, and `polkitd` when the session comes from logind.
+
+EGL is optional at build time: without it `lp_molten.c` compiles to stubs, `make` says so, and the
+wallpaper falls back to the procedural filter chain. That is how this tree builds on macOS, where
+`lp-render` and the library are the only targets anyway.
 
 ## Using it in your own distro
 
@@ -78,6 +83,15 @@ tools/lp-render.c   headless PNG renders for parity checks (--all DIR renders ev
 tools/lp-input.c    a uinput pointer + keyboard for scripted tests inside a VM
 tests/              C tests; case names mirror the vitest suites
 PARITY.md           web file → C file, status, deviations, constants not yet in tokens.json
+LICENSE NOTICE      Apache-2.0, and the attribution the wallpaper's shader still needs
 ```
 
-Apache-2.0, like the web.
+## Licence
+
+Apache-2.0, like the web: `LICENSE` here, `../web/LICENSE` there, and both are installed to
+`$PREFIX/share/maryui/` with the library.
+
+One caveat is recorded in `NOTICE`: the molten wallpaper's GLSL is derived from a shader by
+Mårten Rånge published on Shadertoy, whose terms have not been established. Shadertoy's default
+is CC BY-NC-SA 3.0, which Apache-2.0 cannot absorb, so that needs settling before the shader
+ships under this licence.

@@ -27,11 +27,9 @@ lp_icon lp_icon_by_name(const char *name) {
 
 /* finder.c's tile, shared with the drag ghost and the Info window. */
 void lp_file_icon_paint(cairo_t *cr, lp_rect r, lp_icon icon, int folder, lp_accent accent) {
-    static const lp_shadow_layer icon_shadow[] = { { 0, 0, 0, 0, 1, { 0, 0, 0, 0.32f } }, { 0, 0, 2, 4, 0, { 0, 0, 0, 0.15f } } };
-    lp_draw_outer_shadows(cr, r, LP_RADIUS_MD, icon_shadow, 2);
-    if (folder) lp_fill_vgradient(cr, r, accent.soft, LP_PLATINUM_2, LP_RADIUS_MD);
-    else lp_fill_vgradient(cr, r, LP_PLATINUM_0, LP_PLATINUM_3, LP_RADIUS_MD);
-    lp_draw_inset_shadows(cr, r, LP_RADIUS_MD, LP_SHADOW_EMBOSS_RAISED, LP_SHADOW_EMBOSS_RAISED_COUNT);
-    float inset = r.w * 9.0f / 52.0f, size = r.w - 2 * inset;
-    lp_icon_draw(cr, icon, r.x + inset, r.y + inset, size, 1.2f, folder ? accent.base : LP_INK_SECONDARY);
+    /* The raised squircle plate is gone: it was carrying no meaning, only
+     * weight. What is left is the glyph, larger and drawn in the accent for a
+     * folder — the same move as the Spotlight dock's tiles. */
+    float inset = r.w * 2.0f / 52.0f, size = r.w - 2 * inset;
+    lp_icon_draw(cr, icon, r.x + inset, r.y + inset, size, 1.6f, folder ? accent.base : LP_INK_SECONDARY);
 }

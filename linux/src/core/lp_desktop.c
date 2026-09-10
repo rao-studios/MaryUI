@@ -188,6 +188,7 @@ int lp_desktop_run_command(lp_desktop *d, enum lp_command command, int arg) {
     case LP_CMD_SET_ACCENT: d->settings.accent = (enum lp_accent_kind)arg; settings_changed(d); return 1;
     case LP_CMD_TOGGLE_GOO: d->settings.goo = !d->settings.goo; settings_changed(d); return 1;
     case LP_CMD_SET_WALLPAPER: d->settings.wallpaper = (enum lp_wallpaper_mode)arg; settings_changed(d); return 1;
+    case LP_CMD_SET_MOLTEN_TONE: d->settings.molten_tone = (enum lp_molten_tone)arg; settings_changed(d); return 1;
     case LP_CMD_TOGGLE_REDUCED_MOTION: d->settings.reduced_motion = !d->settings.reduced_motion; settings_changed(d); return 1;
     case LP_CMD_NEW_TERMINAL: if (d->spawn) d->spawn(d, "foot"); return 1;
     case LP_CMD_HELP: return 1;
@@ -277,8 +278,20 @@ void lp_desktop_build_menus(lp_desktop *d) {
     if (m->count > before) sep(m);
     add(m, "Liquid Merge", NULL, LP_CMD_TOGGLE_GOO, 0)->checked = d->settings.goo;
     sep(m);
+    add(m, "Molten Wallpaper", NULL, LP_CMD_SET_WALLPAPER, LP_WALLPAPER_MOLTEN)->checked = d->settings.wallpaper == LP_WALLPAPER_MOLTEN;
     add(m, "Procedural Wallpaper", NULL, LP_CMD_SET_WALLPAPER, LP_WALLPAPER_PROCEDURAL)->checked = d->settings.wallpaper == LP_WALLPAPER_PROCEDURAL;
     add(m, "Raster Wallpaper", NULL, LP_CMD_SET_WALLPAPER, LP_WALLPAPER_RASTER)->checked = d->settings.wallpaper == LP_WALLPAPER_RASTER;
+    sep(m);
+    {
+        /* The two grades only mean anything while the shader is what is showing. */
+        int molten = d->settings.wallpaper == LP_WALLPAPER_MOLTEN;
+        lp_menu_entry *it = add(m, "Molten · Platinum", NULL, LP_CMD_SET_MOLTEN_TONE, LP_MOLTEN_PLATINUM);
+        it->checked = d->settings.molten_tone == LP_MOLTEN_PLATINUM;
+        it->disabled = !molten;
+        it = add(m, "Molten · Faithful", NULL, LP_CMD_SET_MOLTEN_TONE, LP_MOLTEN_FAITHFUL);
+        it->checked = d->settings.molten_tone == LP_MOLTEN_FAITHFUL;
+        it->disabled = !molten;
+    }
     sep(m);
     add(m, "Blue Appearance", NULL, LP_CMD_SET_ACCENT, LP_ACCENT_BLUE)->checked = d->settings.accent == LP_ACCENT_BLUE;
     add(m, "Graphite Appearance", NULL, LP_CMD_SET_ACCENT, LP_ACCENT_GRAPHITE)->checked = d->settings.accent == LP_ACCENT_GRAPHITE;

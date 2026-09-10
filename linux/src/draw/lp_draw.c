@@ -14,6 +14,30 @@ lp_color lp_color_mix(lp_color a, lp_color b, float t) {
 
 lp_color lp_color_with_alpha(lp_color c, float alpha) { c.a = alpha; return c; }
 
+lp_distant_light lp_distant_light_make(double azimuth_deg, double elevation_deg) {
+    double az = azimuth_deg * M_PI / 180.0, el = elevation_deg * M_PI / 180.0;
+    double lx = cos(az) * cos(el), ly = sin(az) * cos(el), lz = sin(el);
+    /* The eye is straight on, so the halfway vector is L + (0, 0, 1). */
+    double hx = lx, hy = ly, hz = lz + 1;
+    double n = sqrt(hx * hx + hy * hy + hz * hz);
+    return (lp_distant_light){ hx / n, hy / n, hz / n };
+}
+
+double lp_specular_at(const float *alpha, int w, int h, int x, int y, double surface_scale, double ks,
+                      double exponent, lp_distant_light l) {
+#define AT(xx, yy) alpha[(size_t)((yy) < 0 ? 0 : ((yy) >= h ? h - 1 : (yy))) * w + ((xx) < 0 ? 0 : ((xx) >= w ? w - 1 : (xx)))]
+    /* The Sobel surface normal of the height map, per the spec's interior kernel. */
+    double nx = -surface_scale * 0.25 * ((AT(x + 1, y - 1) + 2 * AT(x + 1, y) + AT(x + 1, y + 1)) -
+                                         (AT(x - 1, y - 1) + 2 * AT(x - 1, y) + AT(x - 1, y + 1)));
+    double ny = -surface_scale * 0.25 * ((AT(x - 1, y + 1) + 2 * AT(x, y + 1) + AT(x + 1, y + 1)) -
+                                         (AT(x - 1, y - 1) + 2 * AT(x, y - 1) + AT(x + 1, y - 1)));
+#undef AT
+    double nn = sqrt(nx * nx + ny * ny + 1);
+    double ndoth = (nx * l.hx + ny * l.hy + l.hz) / nn;
+    double spec = ndoth > 0 ? ks * pow(ndoth, exponent) : 0;
+    return spec > 1 ? 1 : spec;
+}
+
 static float clamp_radius(lp_rect r, float radius) {
     float m = fminf(r.w, r.h) / 2;
     return radius < 0 ? 0 : (radius > m ? m : radius);
@@ -128,7 +152,7 @@ void lp_draw_box_shadow(cairo_t *cr, lp_rect r, float radius, const lp_shadow_la
     lp_draw_inset_shadows(cr, r, radius, layers, n);
 }
 
-void lp_draw_brush(cairo_t *cr, lp_rect r, float radius, float opacity) {
+void lp_draw_brush(cairo_t *cr, lp_rect r, float radius, float opacity, float dx, float dy) {
     if (opacity <= 0) return;
     cairo_surface_t *tile = lp_brush_tile();
     cairo_save(cr);
@@ -136,6 +160,13 @@ void lp_draw_brush(cairo_t *cr, lp_rect r, float radius, float opacity) {
     cairo_clip(cr);
     cairo_pattern_t *p = cairo_pattern_create_for_surface(tile);
     cairo_pattern_set_extend(p, CAIRO_EXTEND_REPEAT);
+    if (dx != 0 || dy != 0) {
+        /* The pattern matrix maps user space to pattern space, so the shift is
+         * inverted: a positive dx slides the grain right. */
+        cairo_matrix_t m;
+        cairo_matrix_init_translate(&m, -dx, -dy);
+        cairo_pattern_set_matrix(p, &m);
+    }
     cairo_set_source(cr, p);
     cairo_set_operator(cr, CAIRO_OPERATOR_OVERLAY);
     cairo_paint_with_alpha(cr, opacity);

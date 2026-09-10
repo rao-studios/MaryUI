@@ -8,8 +8,7 @@
 typedef struct lp_title_bar_model {
     const char *title;
     int active, shaded, zoomed;
-    float radius_top;      /* the window radius on the top corners */
-    float radius_bottom;   /* the window radius on the bottom corners (shaded) */
+    lp_corners radii;      /* the window's live corner radii; the bottom pair is 0 unless shaded */
 } lp_title_bar_model;
 
 typedef struct lp_title_bar_result {

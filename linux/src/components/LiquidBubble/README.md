@@ -1,22 +1,29 @@
 # LiquidBubble
 
-A well of coloured liquid behind glass. The liquid swirls on its own and tilts with the window it lives in.
-Mirrors `web/src/components/LiquidBubble` (which is pure CSS; here it is `lp_bubble_paint`).
+A well of coloured liquid behind pale glass. The liquid rolls on its own and banks with the window
+it lives in.
 
-## Anatomy
-shell (radial well: deep lightened 30% → deep at 80%) → slosh frame (`rotate(slosh) translateY(slosh_y)`) →
-liquid back (opacity `liquid.opacity-back`, brightened 15%, reverse swirl at 1.6× the period) + liquid front
-(opacity `liquid.opacity-front`) — each a 200% blob with corner radii 42/45/40/44% (back 45/40/44/41%) sitting
-at `(1 − fill) × 100%` (back 5% higher), filled `light → base 42% → deep` radially at 40% 30% — → gloss
-(ellipse 18% 8% 46% × 32%, `traffic.gloss` fading down) → rim (`inset 0 1px 2px traffic.rim`,
-`inset 0 0 0 .5px rgba(0,0,0,.25)`) → glyph (`size × 0.8`, 700, `rgba(0,0,0,.55)`, alpha 0 → 1 on hover).
+The waterline is the boundary between the pale glass above and the colour below, not a painted line.
+An earlier pass painted the empty well in the tint's `deep` colour, which put a dark cap over every
+bead and muddied the identity of all three traffic lights.
 
-## Tints
-`close` · `minimize` · `zoom` · `inactive` · `accent` · `platinum` — `enum lp_bubble_tint`, three colours each
-(`lp_bubble_tint_colors`).
+Anatomy, in paint order: shell (the glass well, clipped to a circle) → slosh frame → liquid back
+(opacity `liquid.opacity-back`, brightened 15%, running against the front at 1.55× the period) +
+liquid front (opacity `liquid.opacity-front`, with a `liquid.surface-light` band down its top
+`liquid.surface-depth`) → gloss → rim (`traffic.rim`) → glyph.
 
-## Motion
-Consumes `ctx->slosh_deg`, `ctx->slosh_y` and `ctx->now_ms` (swirl period `motion.swirl-period`, phase per bubble).
+Each liquid layer is a 200% blob with four unequal corner radii. It rolls sideways by
+`liquid.wave-amplitude` of the diameter and rocks ±4° over `liquid.wave-period`, eased `ease-in-out`
+and ping-ponged; `phase_s` keeps neighbouring bubbles out of lockstep.
 
-## C
-`lp_liquid_bubble(ctx, cx, cy, size, tint, phase_s, fill /* < 0 = token */, glyph, glyph_alpha)`.
+`liquid_only` paints the liquid alone — no glass, no gloss, no rim, no glyph. That is the layer
+GooGroup's filter merges; see `../TrafficLights/README.md`.
+
+## API
+
+`lp_liquid_bubble(ctx, cx, cy, size, tint, phase_s, fill, glyph, glyph_alpha)` for the common case,
+or `lp_liquid_bubble_spec(...)` to fill in what the context owns and then set the rest yourself.
+
+Consumes `ctx->slosh_deg`, `ctx->slosh_x`, `ctx->slosh_y` and `ctx->now_ms`. Everything the slosh
+moves is scaled by `size / 12`, so an 18px bead banks half again as far as the 12px bead the motion
+tokens were tuned against; the rotation additionally carries `liquid.slosh-scale`.

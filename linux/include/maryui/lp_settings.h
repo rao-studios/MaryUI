@@ -5,15 +5,17 @@
 #ifndef MARYUI_LP_SETTINGS_H
 #define MARYUI_LP_SETTINGS_H
 
+#include "maryui/lp_molten.h"
 #include "maryui/lp_types.h"
 
 enum lp_accent_kind { LP_ACCENT_BLUE, LP_ACCENT_GRAPHITE };
-enum lp_wallpaper_mode { LP_WALLPAPER_PROCEDURAL, LP_WALLPAPER_RASTER };
+enum lp_wallpaper_mode { LP_WALLPAPER_MOLTEN, LP_WALLPAPER_PROCEDURAL, LP_WALLPAPER_RASTER };
 
 typedef struct lp_settings {
     enum lp_accent_kind accent;
     int goo;
     enum lp_wallpaper_mode wallpaper;
+    enum lp_molten_tone molten_tone;
     int reduced_motion;
 } lp_settings;
 

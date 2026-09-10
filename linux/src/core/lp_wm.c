@@ -51,7 +51,7 @@ static uint64_t raise_window(lp_wm_state *s, int i) {
 static lp_rect default_rect(const lp_wm_state *s, int index) {
     float w = fminf(640, fmaxf(LP_DEFAULT_MIN_SIZE.w, s->bounds.w - 80));
     float h = fminf(440, fmaxf(LP_DEFAULT_MIN_SIZE.h, s->bounds.h - 80));
-    float offset = (float)((index % 8) * 28);
+    float offset = (float)(index % 8) * LP_TITLE_HEIGHT;
     return LP_RECT(s->bounds.x + 60 + offset, s->bounds.y + 40 + offset, w, h);
 }
 

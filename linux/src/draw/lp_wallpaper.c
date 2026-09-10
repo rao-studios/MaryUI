@@ -5,6 +5,8 @@
 #include <sys/stat.h>
 
 #include "maryui/lp_blur.h"
+#include "maryui/lp_draw.h"
+#include "maryui/lp_molten.h"
 #include "maryui/lp_noise.h"
 #include "maryui/lp_tokens.h"
 #include "maryui/lp_wallpaper.h"
@@ -81,27 +83,17 @@ cairo_surface_t *lp_wallpaper_render(int w, int h) {
     lp_blur_plane(A2, w, h, (float)(3.0 * scale), scratch);
 
     /* feSpecularLighting: surfaceScale 3, ks 0.7, exponent 26, white, distant light az 230° el 50°. */
-    double az = 230.0 * M_PI / 180.0, el = 50.0 * M_PI / 180.0;
-    double Lx = cos(az) * cos(el), Ly = sin(az) * cos(el), Lz = sin(el);
-    double Hx = Lx, Hy = Ly, Hz = Lz + 1;
-    double Hn = sqrt(Hx * Hx + Hy * Hy + Hz * Hz);
-    Hx /= Hn; Hy /= Hn; Hz /= Hn;
+    lp_distant_light light = lp_distant_light_make(230, 50);
     const double surface_scale = 3, ks = 0.7, exponent = 26;
 
     cairo_surface_t *out = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, w, h);
     cairo_surface_flush(out);
     unsigned char *data = cairo_image_surface_get_data(out);
     int stride = cairo_image_surface_get_stride(out);
-#define AT(xx, yy) A2[(size_t)((yy) < 0 ? 0 : ((yy) >= h ? h - 1 : (yy))) * w + ((xx) < 0 ? 0 : ((xx) >= w ? w - 1 : (xx)))]
     for (int y = 0; y < h; y++) {
         unsigned char *row = data + (size_t)y * stride;
         for (int x = 0; x < w; x++) {
-            double nx = -surface_scale * 0.25 * ((AT(x + 1, y - 1) + 2 * AT(x + 1, y) + AT(x + 1, y + 1)) - (AT(x - 1, y - 1) + 2 * AT(x - 1, y) + AT(x - 1, y + 1)));
-            double ny = -surface_scale * 0.25 * ((AT(x - 1, y + 1) + 2 * AT(x, y + 1) + AT(x + 1, y + 1)) - (AT(x - 1, y - 1) + 2 * AT(x, y - 1) + AT(x + 1, y - 1)));
-            double nn = sqrt(nx * nx + ny * ny + 1);
-            double ndoth = (nx * Hx + ny * Hy + Hz) / nn;
-            double spec = ndoth > 0 ? ks * pow(ndoth, exponent) : 0;
-            if (spec > 1) spec = 1;
+            double spec = lp_specular_at(A2, w, h, x, y, surface_scale, ks, exponent, light);
             /* feComposite arithmetic k2 = 0.35 (spec) k3 = 1 (soft), then alpha := 1. */
             size_t i = (size_t)y * w + x;
             double r = 0.35 * spec + R[i], g = 0.35 * spec + G[i], b = 0.35 * spec + B[i];
@@ -111,20 +103,22 @@ cairo_surface_t *lp_wallpaper_render(int w, int h) {
             row[x * 4 + 3] = 0xff;
         }
     }
-#undef AT
     free(R); free(G); free(B); free(A2); free(scratch);
     cairo_surface_mark_dirty(out);
     return out;
 }
 
-void lp_wallpaper_vignette(cairo_t *cr, int w, int h) {
+void lp_wallpaper_vignette(cairo_t *cr, int w, int h) { lp_wallpaper_vignette_at(cr, w, h, 1.0f); }
+
+void lp_wallpaper_vignette_at(cairo_t *cr, int w, int h, float strength) {
     /* radial-gradient(ellipse at 50% 40%, transparent 55%, rgba(20,22,28,0.35)) */
+    if (strength <= 0) return;
     cairo_save(cr);
     cairo_translate(cr, w / 2.0, h * 0.4);
     cairo_scale(cr, w / 2.0, h / 2.0);
     cairo_pattern_t *p = cairo_pattern_create_radial(0, 0, 0, 0, 0, 1);
     cairo_pattern_add_color_stop_rgba(p, 0.55, 20 / 255.0, 22 / 255.0, 28 / 255.0, 0);
-    cairo_pattern_add_color_stop_rgba(p, 1.0, 20 / 255.0, 22 / 255.0, 28 / 255.0, 0.35);
+    cairo_pattern_add_color_stop_rgba(p, 1.0, 20 / 255.0, 22 / 255.0, 28 / 255.0, 0.35 * strength);
     cairo_set_source(cr, p);
     cairo_rectangle(cr, -1.5, -1.5, 3, 3);
     cairo_fill(cr);
@@ -141,31 +135,61 @@ static int mkdir_p(const char *path) {
     return mkdir(buf, 0755) == 0 || 1;
 }
 
-cairo_surface_t *lp_wallpaper_cached(int w, int h) {
+/* A shipped or previously baked PNG for `name`, or NULL. Looked up in the dev
+ * override, then the image's share directory, then the user's cache. */
+static cairo_surface_t *load_cached(const char *name, char *cache_dir, size_t dir_n, char *cache_path, size_t path_n) {
     char path[1400];
     const char *data_dir = getenv("MARYUI_DATA_DIR");
     if (data_dir && *data_dir) {
-        snprintf(path, sizeof path, "%s/wallpaper-%dx%d.png", data_dir, w, h);
+        snprintf(path, sizeof path, "%s/%s.png", data_dir, name);
         cairo_surface_t *s = cairo_image_surface_create_from_png(path);
         if (cairo_surface_status(s) == CAIRO_STATUS_SUCCESS) return s;
         cairo_surface_destroy(s);
     }
-    snprintf(path, sizeof path, "/usr/share/maryui/wallpaper-%dx%d.png", w, h);
+    snprintf(path, sizeof path, "/usr/share/maryui/%s.png", name);
     cairo_surface_t *s = cairo_image_surface_create_from_png(path);
     if (cairo_surface_status(s) == CAIRO_STATUS_SUCCESS) return s;
     cairo_surface_destroy(s);
 
     const char *cache = getenv("XDG_CACHE_HOME");
-    char dir[1024];
-    if (cache && *cache) snprintf(dir, sizeof dir, "%s/maryui", cache);
-    else snprintf(dir, sizeof dir, "%s/.cache/maryui", getenv("HOME") ? getenv("HOME") : "/tmp");
-    snprintf(path, sizeof path, "%s/wallpaper-%dx%d.png", dir, w, h);
-    s = cairo_image_surface_create_from_png(path);
+    if (cache && *cache) snprintf(cache_dir, dir_n, "%s/maryui", cache);
+    else snprintf(cache_dir, dir_n, "%s/.cache/maryui", getenv("HOME") ? getenv("HOME") : "/tmp");
+    snprintf(cache_path, path_n, "%s/%s.png", cache_dir, name);
+    s = cairo_image_surface_create_from_png(cache_path);
     if (cairo_surface_status(s) == CAIRO_STATUS_SUCCESS) return s;
     cairo_surface_destroy(s);
+    return NULL;
+}
 
-    s = lp_wallpaper_render(w, h);
+static void store_cached(cairo_surface_t *s, const char *dir, const char *path) {
     mkdir_p(dir);
     cairo_surface_write_to_png(s, path);
+}
+
+cairo_surface_t *lp_wallpaper_cached(int w, int h) {
+    char name[64], dir[1024], path[1400];
+    snprintf(name, sizeof name, "wallpaper-%dx%d", w, h);
+    cairo_surface_t *s = load_cached(name, dir, sizeof dir, path, sizeof path);
+    if (s) return s;
+    s = lp_wallpaper_render(w, h);
+    store_cached(s, dir, path);
+    return s;
+}
+
+cairo_surface_t *lp_wallpaper_for(int w, int h, const lp_settings *settings) {
+    /* View › Raster Wallpaper is remembered but still renders the procedural
+     * chain: no platinum.jpg ships in the image yet (PARITY.md D6). */
+    if (!settings || settings->wallpaper != LP_WALLPAPER_MOLTEN) return lp_wallpaper_cached(w, h);
+    if (!lp_molten_available()) return lp_wallpaper_cached(w, h);
+
+    const char *tone = settings->molten_tone == LP_MOLTEN_FAITHFUL ? "faithful" : "platinum";
+    char name[80], dir[1024], path[1400];
+    snprintf(name, sizeof name, "molten-%s-%dx%d", tone, w, h);
+    cairo_surface_t *s = load_cached(name, dir, sizeof dir, path, sizeof path);
+    if (s) return s;
+    /* The still is rendered at full resolution: "spend quality on the still". */
+    s = lp_molten_render(w, h, 0.0f, LP_MOLTEN_ZOOM, settings->molten_tone);
+    if (!s) return lp_wallpaper_cached(w, h);
+    store_cached(s, dir, path);
     return s;
 }

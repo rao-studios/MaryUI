@@ -25,7 +25,7 @@ README, or when a file under `web/src/lib` or `web/src/desktop` is missing from 
 | Web | C | Status |
 |---|---|---|
 | `lib/spring.ts` | `include/maryui/lp_spring.h`, `src/core/lp_spring.c`, `tests/test_spring.c` | ✓ 4/4 cases |
-| `lib/slosh.ts` | `lp_slosh.h`, `src/core/lp_slosh.c`, `tests/test_slosh.c` | ✓ 4/4 cases (rim `omega *= 0.4`) |
+| `lib/slosh.ts` | `lp_slosh.h`, `src/core/lp_slosh.c`, `tests/test_slosh.c` | ✓ 6/6 cases (accel + shear drive, rim `omega *= 0.4`) |
 | `lib/velocity.ts` | `lp_velocity.h`, `src/core/lp_velocity.c`, `tests/test_velocity.c` | ✓ 4/4 cases (ring of 8, 80 ms window, 60 ms stale, EMA 0.5) |
 | `lib/geometry.ts` | `lp_geometry.h`, `src/core/lp_geometry.c`, `tests/test_geometry.c` | ✓ 10/10 cases |
 | `lib/motionEngine.ts` | `lp_motion.h`, `src/core/lp_motion.c` (`lp_motion_engine`, `lp_window_motion`), `tests/test_motion.c`; applied in `src/compositor/window.c` | ≈ **D1 D2 D3 D4** |
@@ -34,13 +34,16 @@ README, or when a file under `web/src/lib` or `web/src/desktop` is missing from 
 | `lib/wallpaperSvg.ts` | `src/draw/lp_wallpaper.c` (`lp_wallpaper_render`, `lp_wallpaper_cached`, vignette) | ≈ **D5** |
 | `lib/dom.ts` (`prefersReducedMotion`, `setVars`) | `lp_settings.reduced_motion` (View menu, `settings.conf`); variables are `lp_ctx` fields | ✓ no media query on Linux: the setting is the switch |
 | `lib/textStats.ts` | `lp_text_doc_word_count`, `lp_text_doc_char_count`, `lp_text_doc_line_col` in `src/components/TextArea/TextArea.c`, `tests/test_text_area.c` | ✓ words by whitespace, code points, 1-based line/column |
+| `lib/radius.ts` | `lp_radius.h`, `src/core/lp_radius.c`, `tests/test_radius.c` | ✓ 10/10 cases (the detune tolerance is float epsilon, not the web's 1e-9) |
+| `lib/moltenShader.ts` | `src/draw/lp_molten.c` (the GLSL kept verbatim, to diff against the TS) | ✓ same shader, same grades |
+| `lib/moltenRenderer.ts` | `src/draw/lp_molten.c` (offscreen EGL + GLES2, read back into Cairo) | ≈ **D12** |
 | `lib/cx.ts` | — | class-name helper; nothing to port |
 
 ## `src/desktop`
 
 | Web | C | Status |
 |---|---|---|
-| `desktop/wm/reducer.ts` | `lp_wm.h`, `src/core/lp_wm.c`, `tests/test_wm.c` | ✓ 10/10 cases: cascade 60 + 28·(i mod 8), title 28, min 240×160, zoom restores the exact rect |
+| `desktop/wm/reducer.ts` | `lp_wm.h`, `src/core/lp_wm.c`, `tests/test_wm.c` | ✓ 10/10 cases: cascade 60 + 42·(i mod 8), title 42 (`LP_SIZE_TITLEBAR_HEIGHT`), min 240×160, zoom restores the exact rect |
 | `desktop/wm/actions.ts`, `desktop/wm/types.ts` | `lp_wm_action`, `lp_window_record`, `lp_open_spec` in `lp_wm.h` | ✓ |
 | `desktop/wm/selectors.ts` | `lp_wm_focused`, `lp_wm_find` | ✓ |
 | `desktop/wm/store.ts`, `desktop/wm/useWM.ts` | `lp_desktop_dispatch` + `on_change` (the host syncs from the change mask) | ≈ no subscriptions: one host, one callback |
@@ -61,6 +64,8 @@ README, or when a file under `web/src/lib` or `web/src/desktop` is missing from 
 | `desktop/apps/GalleryApp/tabs/BubblesTab.tsx` | `gallery.c` Bubbles | ✓ |
 | `desktop/apps/GalleryApp/tabs/TokensTab.tsx` | `gallery.c` Tokens from `LP_TOKENS[]` | ✓ |
 | `desktop/apps/GalleryApp/tabs/MotionTab.tsx` | `gallery.c` Motion, mutating `lp_motion_live` | ≈ "Copy JSON patch" writes the patch to `~/.cache/maryui/tokens-patch.json` instead of the clipboard |
+| `desktop/apps/GalleryApp/tabs/DebugTab.tsx` | — | ✗ three debug toggles (crest line, merge layer, freeze liquid) with no C side; the renders and `lp-render` cover the same ground |
+| `desktop/apps/GalleryApp/tabs/CustomizeTab.tsx` | — | ✗ per-bead tint editing writes `--lp-bead-*` overrides the C bubble does not read |
 
 ## `src/hooks`
 
@@ -86,7 +91,7 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
 | Menu, MenuItem | `components/lp_menu.h` | ≈ **D7** backdrop blur |
 | TitleBar | `components/lp_title_bar.h` | ✓ title centred between 84 px insets, inactive drains |
 | TrafficLights | `components/lp_traffic_lights.h` | ✓ liquid bubbles, slosh, smear |
-| LiquidBubble | `components/lp_liquid_bubble.h` | ✓ swirl and slosh |
+| LiquidBubble | `components/lp_liquid_bubble.h` | ✓ wave, bank and slosh; `liquid_only` is the merge layer |
 | GooGroup | `components/lp_goo_group.h` | ≈ **D8** |
 | Window | `components/lp_window.h` | ✓ frame, 9-slice shadows, handles |
 | Button | `components/lp_button.h` | ✓ |
@@ -108,7 +113,7 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
 | — | `tests/test_motion.c` (engine, window motion, easing), `test_ui.c`, `test_layout.c`, `test_noise.c`, `test_smoke.c` |
 | — | `tests/test_files.c` (the filesystem model), `tests/test_finder.c` (the Finder driven headlessly: navigation, selection, rename, trash, clipboard, the popup, drag and drop), `tests/test_desktop.c` (opening paths, app commands and menus, the popup, change broadcasts, TextEdit's documents) |
 
-112 C cases in all.
+124 C cases in all.
 
 ## Deviations
 
@@ -126,17 +131,23 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   the window. In C the moving sheen and tilt repaint the title bar strip only (the lights and
   the title's band); body surfaces keep a static sheen until they repaint for another reason.
   Repainting a whole body with Cairo under pixman would not hold 60 fps at 1280×800.
-- **D5 — wallpaper drift.** The wallpaper's slow drifting highlight (`motion.drift-period`) is
-  not ported: it would be a full-screen blend every frame. The filter chain, the vignette and
-  the prerendered `wallpaper-WxH.png` cache are.
+- **D5 — wallpaper drift.** The procedural wallpaper's slow drifting highlight
+  (`motion.drift-period`) is not ported: it would be a full-screen blend every frame. The filter
+  chain, the vignette and the prerendered `wallpaper-WxH.png` cache are. The molten wallpaper
+  has its own motion; see D12.
 - **D6 — raster wallpaper.** View › Raster Wallpaper is stored in `settings.conf` and shown as
   checked, but the procedural wallpaper is still rendered (there is no `platinum.jpg` in the
   image yet).
 - **D7 — menu backdrop.** `backdrop-filter: blur(14px) saturate(1.1)` is not available to a
   scene node; the dropdown is the 94 %-alpha surface alone.
-- **D8 — liquid merge.** GooGroup's `feGaussianBlur` + `feColorMatrix` alpha contrast on blank
-  blobs (xs 1.6/20/−8, sm 3/18/−7, md 6/19/−9) is applied per group when painted; the smear
-  with `--lp-vx` is ported; the hover "reach" is static.
+- **D8 — liquid merge.** The whole filter is ported (`src/draw/lp_goo.c`): the group's blobs go
+  into an offscreen surface, `feGaussianBlur` at the size's and tension's σ, the `feColorMatrix`
+  alpha threshold, then the volume — a specular dome off the silhouette's own alpha
+  (`lp_specular_at`, shared with the wallpaper) and a shaded lower rim, merged. The blobs
+  themselves carry no lighting, as on the web. Two deviations remain: the group re-filters on
+  every paint rather than caching the silhouette between hover changes, and the per-index
+  `goo.lag` transition delay is not staged — a neighbour reaches its `goo.attract` offset in the
+  same frame the hover lands, where CSS staggers them by 26 ms each.
 - **D9 — the Terminal tile.** Spotlight lists `Terminal` as a command on both sides. In C it runs
   `LP_CMD_NEW_TERMINAL` (`spawn("foot")`) and the dock's dot lights while a client window is
   open; on the web it is a no-op — the browser has no processes.
@@ -159,6 +170,16 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   hooks, the desktop a Go menu, `LP_CMD_APP`, `lp_desktop_open_path`, a popup slot and a drag
   session; none of it is on the web, which stays the design team's component reference.
   `lp-render --finder` keeps painting the mock (`finder_mock.c`) so the renders compare.
+- **D12 — the molten wallpaper's clock.** The shader itself is the same GLSL, run in an
+  offscreen surfaceless EGL/GLES2 context and read back into a Cairo surface, so it needs no GL
+  from the scene renderer (the VM runs `WLR_RENDERER=pixman`). Two consequences. Under a
+  software rasteriser — llvmpipe in the VM — one 1280×800 frame costs about 7.5 s, so
+  `mui_desktop_molten_tick` refuses to animate and the wallpaper is the still bake alone;
+  MaryPi ships that bake at the VM's scanout size so no first boot pays for it. On real
+  hardware the flow is the web's: `molten.flow` shader-seconds per second of window motion at
+  `molten.scale`, then a full-resolution still `molten.settle-ms` after it stops, and it never
+  asks for a frame of its own — exactly like `Wallpaper.tsx`'s `step()` returning `false`. That
+  hardware path has never run: no Pi 5 has been booted.
 - **Close animation.** `lp-window-close` (scale .96 + fade over `motion.fast`, `CLOSE` after
   fast + 80 ms) runs for built-in windows. A client that unmaps is gone at once — the compositor
   has no pixels left to fade.
@@ -169,7 +190,7 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   cursor and flags `needs_frame` after every commit; a frame that would only re-commit the
   same picture (no damage, no motion, pointer still) is skipped, so an idle desktop draws
   nothing. Ambient animations (`lp_want_frame_rect`: the indeterminate progress bar's barber
-  pole and glint, the Bubbles tab's swirl) repaint their own rectangle at 30 Hz while they are
+  pole and glint, the Bubbles tab's wave) repaint their own rectangle at 30 Hz while they are
   on screen, the way a CSS animation keeps running on the web; the engine's semantics (`wake`
   once, tick while active, idle) are the web's.
 
@@ -180,17 +201,17 @@ them is the follow-up; each row names both homes.
 
 | Constant | Web | C |
 |---|---|---|
-| Goo filter (blur, alpha slope, alpha intercept) xs / sm / md | `SvgDefs.tsx` | `GooGroup.c` |
+| Goo size scale xxs .55 / xs 1.2 / sm 1.9 / md 3.75 (the blur numbers themselves are `goo.*` tokens now) | `SvgDefs.tsx` | `lp_goo.c` |
 | Wallpaper gradient stops, turbulence, blur, lighting, arithmetic | `wallpaperSvg.ts` | `lp_wallpaper.c` |
 | Brush period 512/√5, angle −atan2(1, 2), desaturation, transfer | `brushSvg.ts` | `lp_texture.c` |
 | Toolbar height 40, sidebar width 180 | `Toolbar.module.css`, `Sidebar.module.css` | `LP_TOOLBAR_H`, `LP_SIDEBAR_W` |
 | List row 22, list header 20 | `ListRow.module.css` | `LP_LIST_ROW_H`, `LP_LIST_HEADER_H` |
 | Menu min width 200, menu shadow extent 40, anchor 2 px below the bar | `Menu.module.css`, `MenuBar.tsx` | `LP_MENU_MIN_WIDTH`, `LP_MENU_SHADOW_EXTENT`, `sync_menu_chrome` |
-| Cascade 60 / 28, title 28, default window 640×440 | `reducer.ts` | `lp_wm.c` |
+| Cascade offset 60, default window 640×440 (the title bar is `size.titlebar-height` on both sides now) | `reducer.ts` | `lp_wm.c` |
 | PointerTracker: 8 samples, 80 ms window, 60 ms stale, EMA 0.5 | `velocity.ts` | `lp_velocity.h` |
 | Double click 400 ms | `TitleBar.tsx` | `DOUBLE_CLICK_MS` in `desktop.c` |
 | Finder: tile 96×88, status bar 22, path bar 22, drag threshold 4 px, type-ahead 1 s, ghost 120×84 | — (Linux only) | `finder.c`, `lp_drag.h` |
-| Spotlight: bar centre at 38 % of the desktop height, dock cell 88×84, 28 px tile icon, 8 results, shadow extent 40 | `spotlight.ts`, `Spotlight.module.css` | `LP_SPOTLIGHT_Y_FRACTION`, `LP_SPOTLIGHT_CELL_W/H`, `LP_SPOTLIGHT_MAX_RESULTS`, `LP_SPOTLIGHT_SHADOW_EXTENT` |
+| Spotlight: bar centre at 38 % of the desktop height, dock cell 88×84, 36 px tile icon, 8 results, shadow extent 40 | `spotlight.ts`, `Spotlight.module.css` | `LP_SPOTLIGHT_Y_FRACTION`, `LP_SPOTLIGHT_CELL_W/H`, `LP_SPOTLIGHT_MAX_RESULTS`, `LP_SPOTLIGHT_SHADOW_EXTENT` |
 | TextArea padding `space.2`, 10 px scrollbar lane, ⌘/Ctrl+S in TextEdit, `• ` dirty marker | `TextArea.module.css`, `TextEditApp.tsx` | `TextArea.c`, `textedit.c` |
 | CLOSE_MS = fast + 80, SHADE_MS = slow, settle tolerances of the springs | `Window.tsx`, `motionEngine.ts` | `window.c`, `lp_motion.c` |
 | Slosh → `--lp-slosh-y` factor 6 px, `--lp-slosh` sign | `motionEngine.ts` | `lp_motion.c` |

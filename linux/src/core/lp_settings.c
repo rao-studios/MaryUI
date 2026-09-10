@@ -7,7 +7,10 @@
 #include "maryui/lp_tokens.h"
 
 lp_settings lp_settings_defaults(void) {
-    return (lp_settings){ .accent = LP_ACCENT_BLUE, .goo = 1, .wallpaper = LP_WALLPAPER_PROCEDURAL, .reduced_motion = 0 };
+    /* Molten is the default, as it is on the web; it falls back on its own
+     * when the image has no EGL (lp_wallpaper_cached). */
+    return (lp_settings){ .accent = LP_ACCENT_BLUE, .goo = 1, .wallpaper = LP_WALLPAPER_MOLTEN,
+                          .molten_tone = LP_MOLTEN_PLATINUM, .reduced_motion = 0 };
 }
 
 static void config_path(char *out, size_t n, int mkdirs) {
@@ -37,7 +40,12 @@ lp_settings lp_settings_load(void) {
         if (sscanf(line, " %63[A-Za-z_] = %127s", key, value) != 2) continue;
         if (strcmp(key, "accent") == 0) s.accent = strcmp(value, "graphite") == 0 ? LP_ACCENT_GRAPHITE : LP_ACCENT_BLUE;
         else if (strcmp(key, "goo") == 0) s.goo = strcmp(value, "off") != 0 && strcmp(value, "0") != 0;
-        else if (strcmp(key, "wallpaper") == 0) s.wallpaper = strcmp(value, "raster") == 0 ? LP_WALLPAPER_RASTER : LP_WALLPAPER_PROCEDURAL;
+        else if (strcmp(key, "wallpaper") == 0)
+            s.wallpaper = strcmp(value, "raster") == 0 ? LP_WALLPAPER_RASTER
+                        : strcmp(value, "procedural") == 0 ? LP_WALLPAPER_PROCEDURAL
+                                                           : LP_WALLPAPER_MOLTEN;
+        else if (strcmp(key, "molten_tone") == 0)
+            s.molten_tone = strcmp(value, "faithful") == 0 ? LP_MOLTEN_FAITHFUL : LP_MOLTEN_PLATINUM;
         else if (strcmp(key, "reduced_motion") == 0) s.reduced_motion = strcmp(value, "on") == 0 || strcmp(value, "1") == 0;
     }
     fclose(f);
@@ -50,9 +58,10 @@ int lp_settings_save(const lp_settings *s) {
     FILE *f = fopen(path, "w");
     if (!f) return -1;
     fprintf(f, "# Liquid Platinum desktop settings (View menu). Mirrors the web's localStorage['lp-settings'].\n");
-    fprintf(f, "accent=%s\ngoo=%s\nwallpaper=%s\nreduced_motion=%s\n",
+    fprintf(f, "accent=%s\ngoo=%s\nwallpaper=%s\nmolten_tone=%s\nreduced_motion=%s\n",
         s->accent == LP_ACCENT_GRAPHITE ? "graphite" : "blue", s->goo ? "on" : "off",
-        s->wallpaper == LP_WALLPAPER_RASTER ? "raster" : "procedural", s->reduced_motion ? "on" : "off");
+        s->wallpaper == LP_WALLPAPER_RASTER ? "raster" : s->wallpaper == LP_WALLPAPER_PROCEDURAL ? "procedural" : "molten",
+        s->molten_tone == LP_MOLTEN_FAITHFUL ? "faithful" : "platinum", s->reduced_motion ? "on" : "off");
     fclose(f);
     return 0;
 }

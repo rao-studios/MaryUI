@@ -23,7 +23,8 @@ void lp_surface_paint(cairo_t *cr, lp_rect r, lp_surface_opts o, float sheen_x, 
     float brush;
     lp_surface_stops(o.variant, o.inactive, &top, &bottom, &brush);
     lp_fill_vgradient(cr, r, top, bottom, o.radius);
-    lp_draw_brush(cr, r, o.radius, brush);
+    /* Speed catches the grain: up to brush.glint more of it at full tilt. */
+    lp_draw_brush(cr, r, o.radius, brush * (1 + o.speed * LP_BRUSH_GLINT), o.grain_x, o.grain_y);
     if (o.sheen) {
         float alpha = o.sheen_alpha >= 0 ? o.sheen_alpha : (o.inactive ? LP_SHEEN_ALPHA_INACTIVE : LP_SHEEN_ALPHA);
         lp_draw_sheen(cr, r, o.radius, sheen_x, tilt_deg, alpha);
@@ -35,5 +36,8 @@ void lp_surface_paint(cairo_t *cr, lp_rect r, lp_surface_opts o, float sheen_x, 
 void lp_surface(lp_ctx *ctx, lp_rect r, lp_surface_opts opts) {
     if (ctx->pass != LP_PASS_DRAW || !ctx->cr) return;
     if (!ctx->active_window && opts.variant == LP_VARIANT_TITLEBAR) opts.inactive = 1;
+    opts.grain_x = ctx->grain_x;
+    opts.grain_y = ctx->grain_y;
+    opts.speed = ctx->speed;
     lp_surface_paint(ctx->cr, r, opts, ctx->sheen_x, ctx->tilt);
 }

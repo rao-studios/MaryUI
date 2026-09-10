@@ -16,6 +16,7 @@
 #include "maryui/components/lp_window.h"
 #include "maryui/lp_geometry.h"
 #include "maryui/lp_tokens.h"
+#include "maryui/lp_molten.h"
 #include "maryui/lp_wallpaper.h"
 #include "chrome.h"
 #include "window.h"
@@ -282,25 +283,36 @@ void mui_desktop_settings_changed(struct mui_server *server) {
     if (server->spotlight) { mui_chrome_damage_all(server->spotlight); mui_chrome_repaint(server->spotlight, mui_now_ms()); }
 }
 
+/* Hands a finished wallpaper image to the scene, scaled to fill the output. */
+static void publish_wallpaper(struct mui_output *output, cairo_surface_t *argb) {
+    struct mui_server *server = output->server;
+    if (output->wallpaper_buffer) wlr_buffer_drop(&output->wallpaper_buffer->base);
+    output->wallpaper_buffer = lp_cairo_buffer_from_surface(argb);
+    if (!output->wallpaper) output->wallpaper = wlr_scene_buffer_create(server->layer_wallpaper, NULL);
+    wlr_scene_buffer_set_buffer(output->wallpaper, &output->wallpaper_buffer->base);
+    /* A reduced-scale frame is stretched to the output; the still is 1:1. */
+    wlr_scene_buffer_set_dest_size(output->wallpaper, output->width, output->height);
+}
+
 void mui_desktop_output_ready(struct mui_output *output) {
     struct mui_server *server = output->server;
     int w = output->width, h = output->height;
     if (w <= 0 || h <= 0) return;
 
     double t0 = mui_now_ms();
-    cairo_surface_t *wp = lp_wallpaper_cached(w, h);
+    cairo_surface_t *wp = lp_wallpaper_for(w, h, server->settings);
     cairo_surface_t *argb = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, w, h);
     cairo_t *cr = cairo_create(argb);
     cairo_set_source_surface(cr, wp, 0, 0);
     cairo_paint(cr);
-    lp_wallpaper_vignette(cr, w, h);
+    /* The shader grades its own vignette, so the Cairo one only tops it up —
+     * Wallpaper.module.css drops to 0.35 under molten for the same reason. */
+    int molten = server->settings && server->settings->wallpaper == LP_WALLPAPER_MOLTEN;
+    lp_wallpaper_vignette_at(cr, w, h, molten ? 0.35f : 1.0f);
     cairo_destroy(cr);
     cairo_surface_destroy(wp);
-    if (output->wallpaper_buffer) wlr_buffer_drop(&output->wallpaper_buffer->base);
-    output->wallpaper_buffer = lp_cairo_buffer_from_surface(argb);
+    publish_wallpaper(output, argb);
     cairo_surface_destroy(argb);
-    if (!output->wallpaper) output->wallpaper = wlr_scene_buffer_create(server->layer_wallpaper, NULL);
-    wlr_scene_buffer_set_buffer(output->wallpaper, &output->wallpaper_buffer->base);
     struct wlr_box box;
     wlr_output_layout_get_box(server->output_layout, output->wlr_output, &box);
     wlr_scene_node_set_position(&output->wallpaper->node, box.x, box.y);
@@ -665,6 +677,40 @@ int mui_desktop_animate(struct mui_server *server, double now_ms) {
     int active = animate_menu(server, now_ms);
     active |= mui_spotlight_animate(server, now_ms);
     return active;
+}
+
+void mui_desktop_molten_tick(struct mui_server *server, double now_ms, float dt, int moving) {
+    if (!server->settings || server->settings->wallpaper != LP_WALLPAPER_MOLTEN) return;
+    /* Under a software rasteriser a single frame costs far more than a frame
+     * budget, so the wallpaper is baked once and never animated (the VM). */
+    if (!lp_molten_available() || lp_molten_is_software()) return;
+
+    struct mui_output *output;
+    wl_list_for_each(output, &server->outputs, link) {
+        if (output->width <= 0 || output->height <= 0) continue;
+        if (moving) {
+            /* Spend speed on the motion: molten.scale while it flows. */
+            output->molten_time += dt * LP_MOLTEN_FLOW;
+            output->molten_moved_ms = now_ms;
+            int w = (int)(output->width * LP_MOLTEN_SCALE), h = (int)(output->height * LP_MOLTEN_SCALE);
+            cairo_surface_t *s = lp_molten_render(w < 1 ? 1 : w, h < 1 ? 1 : h, output->molten_time, LP_MOLTEN_ZOOM,
+                                                  server->settings->molten_tone);
+            if (s) {
+                publish_wallpaper(output, s);
+                cairo_surface_destroy(s);
+                output->molten_reduced = 1;
+            }
+        } else if (output->molten_reduced && now_ms - output->molten_moved_ms >= LP_MOLTEN_SETTLE_MS_MS) {
+            /* And spend quality on the still, once it has stopped. */
+            cairo_surface_t *s = lp_molten_render(output->width, output->height, output->molten_time, LP_MOLTEN_ZOOM,
+                                                  server->settings->molten_tone);
+            if (s) {
+                publish_wallpaper(output, s);
+                cairo_surface_destroy(s);
+            }
+            output->molten_reduced = 0;
+        }
+    }
 }
 
 void mui_desktop_ambient_tick(struct mui_server *server) {

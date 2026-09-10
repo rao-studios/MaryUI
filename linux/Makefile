@@ -26,12 +26,20 @@ WAYLAND_PROTOCOLS ?= $(shell $(PKG_CONFIG) --variable=pkgdatadir wayland-protoco
 LIB_PKGS := cairo pangocairo fontconfig pixman-1 xkbcommon
 DESKTOP_PKGS := wlroots wayland-server
 HAVE_WLROOTS := $(shell $(PKG_CONFIG) --exists $(DESKTOP_PKGS) 2>/dev/null && echo 1)
+# The molten wallpaper renders offscreen through EGL + GLES2. Optional: without
+# it lp_molten.c compiles to stubs and the procedural wallpaper stands in.
+MOLTEN_PKGS := egl glesv2
+HAVE_EGL := $(shell $(PKG_CONFIG) --exists $(MOLTEN_PKGS) 2>/dev/null && echo 1)
 
 CFLAGS ?= -O2 -g
 CFLAGS += -std=c11 -Wall -Wextra -Wno-unused-parameter -Werror=implicit-function-declaration -fPIC
 CPPFLAGS += -Iinclude -D_POSIX_C_SOURCE=200809L -D_DEFAULT_SOURCE -DMARYUI_VERSION=\"$(VERSION)\"
 LIB_CFLAGS := $(shell $(PKG_CONFIG) --cflags $(LIB_PKGS))
 LIB_LIBS := $(shell $(PKG_CONFIG) --libs $(LIB_PKGS)) -lm
+ifeq ($(HAVE_EGL),1)
+LIB_CFLAGS += $(shell $(PKG_CONFIG) --cflags $(MOLTEN_PKGS)) -DHAVE_EGL
+LIB_LIBS += $(shell $(PKG_CONFIG) --libs $(MOLTEN_PKGS))
+endif
 DESKTOP_CFLAGS := $(shell $(PKG_CONFIG) --cflags $(DESKTOP_PKGS) 2>/dev/null) -DWLR_USE_UNSTABLE -I$(O)/protocols
 DESKTOP_LIBS := $(shell $(PKG_CONFIG) --libs $(DESKTOP_PKGS) 2>/dev/null)
 
@@ -56,11 +64,18 @@ LIB_TARGETS := $(STATIC)
 endif
 
 .PHONY: all lib desktop tools test install gen gen-check parity check-deps clean
+ifeq ($(HAVE_EGL),1)
+MOLTEN_NOTE := true
+else
+MOLTEN_NOTE := echo "make: egl/glesv2 not found; the molten wallpaper falls back to the procedural one"
+endif
 ifeq ($(HAVE_WLROOTS),1)
 all: lib tools desktop
+	@$(MOLTEN_NOTE)
 else
 all: lib tools
 	@echo "make: wlroots not found; maryui-desktop skipped (libmaryui and lp-render built)"
+	@$(MOLTEN_NOTE)
 endif
 lib: $(LIB_TARGETS)
 desktop: $(DESKTOP)
@@ -124,7 +139,7 @@ ifeq ($(UNAME),Linux)
 endif
 	cp -R include/maryui/. $(DESTDIR)$(PREFIX)/include/maryui/
 	sed -e 's|@PREFIX@|$(PREFIX)|g' -e 's|@VERSION@|$(VERSION)|g' -e 's|@LIBS@|$(LIB_LIBS)|g' maryui.pc.in > $(DESTDIR)$(PREFIX)/lib/pkgconfig/maryui.pc
-	install -m 644 README.md $(wildcard PARITY.md) $(DESTDIR)$(PREFIX)/share/maryui/
+	install -m 644 README.md LICENSE NOTICE $(wildcard PARITY.md) $(DESTDIR)$(PREFIX)/share/maryui/
 
 gen:
 	node ../web/scripts/build-tokens.mjs
@@ -141,6 +156,8 @@ parity:
 check-deps:
 	$(PKG_CONFIG) --print-errors --exists $(LIB_PKGS) && echo "libmaryui deps ok"
 	$(PKG_CONFIG) --print-errors --exists $(DESKTOP_PKGS) wayland-protocols && echo "maryui-desktop deps ok"
+	@$(PKG_CONFIG) --exists $(MOLTEN_PKGS) && echo "molten wallpaper deps ok" \
+	  || echo "molten wallpaper deps missing (egl glesv2); the procedural wallpaper stands in"
 
 clean:
 	rm -rf $(O)

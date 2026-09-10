@@ -34,9 +34,9 @@ physics is small enough to port directly: `lp_spring.c`, `lp_slosh.c`, `lp_veloc
 the vitest suites so `make test` can be read next to `npm test`. `linux/PARITY.md` tracks every web
 file, its C counterpart, and every deliberate deviation.
 
-The C desktop currently lags the web on the most recent visual pass — the taller title bar, the
-liquid corners, the moving grain and the glass-bead traffic lights are in `web/` and not yet ported.
-It picks up the new token values on its next build; its components still draw the previous lights.
+The C desktop carries the same visual pass as the web: the 42px title bar, the liquid corners, the
+moving grain, the glass-bead traffic lights, the lit merge filter and the molten wallpaper. The one
+place they part company is where the shader's clock runs — see **D12** in `linux/PARITY.md`.
 
 ## The direction
 

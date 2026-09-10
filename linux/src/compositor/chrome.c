@@ -5,6 +5,7 @@
 #include <time.h>
 
 #include "chrome.h"
+#include "maryui/lp_tokens.h"
 
 double mui_now_ms(void) {
     struct timespec ts;
@@ -28,6 +29,8 @@ void mui_chrome_init(struct mui_chrome *chrome, struct mui_server *server, struc
     chrome->ctx.settings = server->settings;
     chrome->ctx.active_window = 1;
     chrome->ctx.sheen_x = 0.5f;
+    /* A window that never moves still has corners: start them at rest. */
+    chrome->ctx.corners = lp_rest_corners(LP_RADIUS_WINDOW);
     chrome->ctx.dirty = 1;
     mui_chrome_damage_all(chrome);
 }

@@ -224,7 +224,7 @@ static void surfaces_tab(struct gallery *g, lp_ctx *ctx, lp_rect *c) {
     lp_surface(ctx, t2, (lp_surface_opts){ .variant = LP_VARIANT_WELL, .radius = LP_RADIUS_MD }); tile_label(ctx, t2, "well");
     if (ctx->pass == LP_PASS_DRAW && ctx->cr) {
         lp_fill_vgradient(ctx->cr, t3, LP_SURFACE_RAISED_TOP, LP_SURFACE_RAISED_BOTTOM, LP_RADIUS_MD);
-        lp_draw_brush(ctx->cr, t3, LP_RADIUS_MD, LP_BRUSH_OPACITY);
+        lp_draw_brush(ctx->cr, t3, LP_RADIUS_MD, LP_BRUSH_OPACITY, ctx->grain_x, ctx->grain_y);
         lp_draw_inset_shadows(ctx->cr, t3, LP_RADIUS_MD, LP_SHADOW_EMBOSS_PRESSED, LP_SHADOW_EMBOSS_PRESSED_COUNT);
     }
     tile_label(ctx, t3, "pressed");
@@ -242,7 +242,7 @@ static void mono_label(lp_ctx *ctx, lp_rect r, const char *text) {
 
 static void bubbles_tab(struct gallery *g, lp_ctx *ctx, lp_rect *c) {
     heading(ctx, c, "Liquid bubbles");
-    note(ctx, c, "Two rounded layers swirl at different periods; the window's motion tilts them. Grab this window's title bar and flick it.");
+    note(ctx, c, "Two rounded layers roll at different periods; the window's motion banks them. Grab this window's title bar and flick it.");
     static const float sizes[5] = { 12, 20, 32, 56, 88 };
     lp_rect row = LP_RECT(c->x, c->y, c->w, 88 + 2 * LP_SPACE_4);
     lp_surface(ctx, row, (lp_surface_opts){ .variant = LP_VARIANT_FLAT, .radius = LP_RADIUS_MD });

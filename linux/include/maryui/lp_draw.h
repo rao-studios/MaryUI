@@ -31,8 +31,22 @@ void lp_draw_outer_shadows(cairo_t *cr, lp_rect r, float radius, const lp_shadow
 /* Both, from one list: inset layers inside, others outside. */
 void lp_draw_box_shadow(cairo_t *cr, lp_rect r, float radius, const lp_shadow_layer *layers, int n);
 
-/* The brush tile (lp_texture.h) under mix-blend-mode: overlay at `opacity`. */
-void lp_draw_brush(cairo_t *cr, lp_rect r, float radius, float opacity);
+/* feSpecularLighting (SVG 1.1 §15.19) over an alpha height map. Both the
+ * wallpaper's metal and the liquid merge light a field this way, which is the
+ * design direction's rule: light the surface, do not paint it. */
+typedef struct lp_distant_light {
+    double hx, hy, hz;  /* the halfway vector, already normalized */
+} lp_distant_light;
+/* feDistantLight: azimuth degrees CCW from +x, elevation degrees off the plane. */
+lp_distant_light lp_distant_light_make(double azimuth_deg, double elevation_deg);
+/* The specular term at (x, y) of a w×h alpha plane, clamped to 0..1. Edges clamp. */
+double lp_specular_at(const float *alpha, int w, int h, int x, int y, double surface_scale, double ks,
+                      double exponent, lp_distant_light light);
+
+/* The brush tile (lp_texture.h) under mix-blend-mode: overlay at `opacity`.
+ * (dx, dy) slides the grain against the frame: the skin is a real thing being
+ * dragged, not a pattern painted onto a moving box. */
+void lp_draw_brush(cairo_t *cr, lp_rect r, float radius, float opacity, float dx, float dy);
 
 /* Surface.module.css .sheen: a 200%-wide band at sheen.angle, screen-blended,
  * slid by sheen_x (0..1, 0.5 = centred) and rotated by tilt degrees. */

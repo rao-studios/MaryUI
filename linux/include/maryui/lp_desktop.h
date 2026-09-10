@@ -30,6 +30,7 @@ enum lp_command {
     LP_CMD_SET_ACCENT,        /* arg: lp_accent_kind */
     LP_CMD_TOGGLE_GOO,
     LP_CMD_SET_WALLPAPER,     /* arg: lp_wallpaper_mode */
+    LP_CMD_SET_MOLTEN_TONE,   /* arg: lp_molten_tone */
     LP_CMD_TOGGLE_REDUCED_MOTION,
     LP_CMD_NEW_TERMINAL,
     LP_CMD_HELP,

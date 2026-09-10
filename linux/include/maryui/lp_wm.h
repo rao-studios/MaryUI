@@ -9,10 +9,11 @@
 
 #include <stdint.h>
 
+#include "maryui/lp_tokens.h"
 #include "maryui/lp_types.h"
 
 #define LP_WM_MAX_WINDOWS 64
-#define LP_TITLE_HEIGHT 28.0f
+#define LP_TITLE_HEIGHT LP_SIZE_TITLEBAR_HEIGHT
 #define LP_DEFAULT_MIN_SIZE ((lp_size){ 240, 160 })
 
 enum lp_window_state { LP_WIN_NORMAL, LP_WIN_SHADED, LP_WIN_ZOOMED };

@@ -182,15 +182,34 @@ static void apply_transform(struct mui_window *win, float tx, float ty, float sx
 void mui_window_apply_motion(struct mui_window *win) {
     lp_window_motion_out *o = &win->motion.out;
     lp_ctx *ctx = &win->chrome.ctx;
-    if (fabsf(ctx->sheen_x - o->sheen_x) > 0.0005f || fabsf(ctx->tilt - o->tilt_deg) > 0.005f || fabsf(ctx->vx - o->vx) > 0.005f ||
-        fabsf(ctx->slosh_deg - o->slosh_deg) > 0.01f || fabsf(ctx->slosh_y - o->slosh_y_px) > 0.01f) {
+    /* The corners live at both ends of the frame, so they damage more than the
+     * title strip. lp_window_motion only republishes them once one has actually
+     * moved a quarter-pixel, which is what keeps this from firing every frame. */
+    int corners_moved = fabsf(ctx->corners.tl - o->corners.tl) > 0.01f || fabsf(ctx->corners.tr - o->corners.tr) > 0.01f ||
+                        fabsf(ctx->corners.br - o->corners.br) > 0.01f || fabsf(ctx->corners.bl - o->corners.bl) > 0.01f;
+    if (corners_moved || fabsf(ctx->sheen_x - o->sheen_x) > 0.0005f || fabsf(ctx->tilt - o->tilt_deg) > 0.005f ||
+        fabsf(ctx->vx - o->vx) > 0.005f || fabsf(ctx->vx_lag - o->vx_lag) > 0.005f || fabsf(ctx->speed - o->speed) > 0.005f ||
+        fabsf(ctx->slosh_deg - o->slosh_deg) > 0.01f || fabsf(ctx->slosh_y - o->slosh_y_px) > 0.01f ||
+        fabsf(ctx->slosh_x - o->slosh_x_px) > 0.01f || fabsf(ctx->grain_x - o->grain_x) > 0.05f ||
+        fabsf(ctx->grain_y - o->grain_y) > 0.05f) {
         ctx->sheen_x = o->sheen_x;
         ctx->tilt = o->tilt_deg;
         ctx->vx = o->vx;
+        ctx->vx_lag = o->vx_lag;
+        ctx->speed = o->speed;
         ctx->slosh_deg = o->slosh_deg;
         ctx->slosh_y = o->slosh_y_px;
+        ctx->slosh_x = o->slosh_x_px;
+        ctx->grain_x = o->grain_x;
+        ctx->grain_y = o->grain_y;
+        ctx->corners = o->corners;
+        ctx->radius_k = o->radius_k;
         /* The title bar carries the sheen band and the lights; body surfaces keep a static sheen (PARITY.md). */
         mui_chrome_damage(&win->chrome, LP_RECT(win->margin_l, win->margin_t, win->rect.w, LP_TITLE_HEIGHT));
+        if (corners_moved && win->state != LP_WIN_SHADED) {
+            float lip = fmaxf(o->corners.bl, o->corners.br) + 1;
+            mui_chrome_damage(&win->chrome, LP_RECT(win->margin_l, win->margin_t + win->rect.h - lip, win->rect.w, lip));
+        }
         double t0 = mui_now_ms();
         mui_chrome_repaint(&win->chrome, t0);
         if (win->server->debug_frames) {
