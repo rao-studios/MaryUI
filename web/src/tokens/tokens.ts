@@ -123,6 +123,8 @@ export const tokens = {
   brush: {
     opacity: 0.34,
     lag: 14,
+    velocityRef: 900,
+    settle: "120ms",
     glint: 0.55,
     contrast: 0.66,
     freqX: 0.02,
@@ -259,7 +261,6 @@ export const tokens = {
       frequency: 2.6,
       damping: 0.35,
     },
-    grainFollow: "90ms",
     springVxLag: {
       frequency: 0.9,
       damping: 0.9,
@@ -382,6 +383,8 @@ export const tokenNames = [
   "molten-faithful-saturation",
   "brush-opacity",
   "brush-lag",
+  "brush-velocity-ref",
+  "brush-settle",
   "brush-glint",
   "brush-contrast",
   "brush-freq-x",
@@ -486,7 +489,6 @@ export const tokenNames = [
   "motion-spring-fly-damping",
   "motion-spring-radius-frequency",
   "motion-spring-radius-damping",
-  "motion-grain-follow",
   "motion-spring-vx-lag-frequency",
   "motion-spring-vx-lag-damping",
   "motion-radius-detune",

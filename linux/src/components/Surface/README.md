@@ -21,8 +21,10 @@ stops (`LP_SURFACE_*`) and, for wells and bodies, the brush opacity (`lp_surface
 ## Motion
 Everything the enclosing window does to a surface travels in `lp_surface_motion`: `sheen_x` (0..1)
 and `tilt` (deg) place the highlight band, `grain_x`/`grain_y` slide the brushed skin behind the
-frame (up to `brush.lag`, so the metal reads as a real thing being dragged rather than a pattern
-painted onto a moving box), and `speed` adds up to `brush.glint` more grain at full tilt. The
+frame — a straight proportion of speed, `-clamp(v / brush.velocity-ref) * brush.lag`, so the metal
+reads as a real thing being dragged rather than a pattern painted onto a moving box — and `speed`
+adds up to `brush.glint` more grain at full tilt. No spring and no easing: the offset tracks the
+gesture, and `brush.settle` only rate-limits it so it cannot jump when a drag ends. The
 motion engine writes all five onto the context.
 
 It is a separate argument rather than a field of `lp_surface_opts` on purpose: as an option it was

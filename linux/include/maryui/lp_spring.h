@@ -26,12 +26,4 @@ void lp_spring_snap(lp_spring *s);
 /* Within tolerance of the target and (nearly) at rest. */
 int lp_spring_settled(const lp_spring *s, float tolerance, float velocity_tolerance);
 
-/* A first-order lag: closes a fraction of the remaining gap every frame, so it
- * tracks a moving target with a constant trail and eases to rest when the
- * target stops — and, unlike a spring, it can never overshoot. Use it where
- * something should follow rather than bounce; the brushed grain is the case
- * that named it. tau_ms is the time constant: the gap is down to 37% after one,
- * and effectively closed after three. Frame-rate independent. */
-float lp_follow(float value, float target, float dt, float tau_ms);
-
 #endif

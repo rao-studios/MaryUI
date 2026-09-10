@@ -24,7 +24,7 @@ README, or when a file under `web/src/lib` or `web/src/desktop` is missing from 
 
 | Web | C | Status |
 |---|---|---|
-| `lib/spring.ts` | `include/maryui/lp_spring.h`, `src/core/lp_spring.c`, `tests/test_spring.c` | ✓ 6/6 cases (the spring, plus `follow` — the non-overshooting lag the grain uses) |
+| `lib/spring.ts` | `include/maryui/lp_spring.h`, `src/core/lp_spring.c`, `tests/test_spring.c` | ✓ 4/4 cases |
 | `lib/slosh.ts` | `lp_slosh.h`, `src/core/lp_slosh.c`, `tests/test_slosh.c` | ✓ 6/6 cases (accel + shear drive, rim `omega *= 0.4`) |
 | `lib/velocity.ts` | `lp_velocity.h`, `src/core/lp_velocity.c`, `tests/test_velocity.c` | ✓ 4/4 cases (ring of 8, 80 ms window, 60 ms stale, EMA 0.5) |
 | `lib/geometry.ts` | `lp_geometry.h`, `src/core/lp_geometry.c`, `tests/test_geometry.c` | ✓ 10/10 cases |
@@ -113,7 +113,7 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
 | — | `tests/test_motion.c` (engine, window motion, easing), `test_ui.c`, `test_layout.c`, `test_noise.c`, `test_smoke.c` |
 | — | `tests/test_files.c` (the filesystem model), `tests/test_finder.c` (the Finder driven headlessly: navigation, selection, rename, trash, clipboard, the popup, drag and drop), `tests/test_desktop.c` (opening paths, app commands and menus, the popup, change broadcasts, TextEdit's documents) |
 
-126 C cases in all.
+124 C cases in all.
 
 ## Deviations
 

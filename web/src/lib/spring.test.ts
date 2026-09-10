@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createSpring, follow, isSettled, snapSpring, stepSpring } from './spring'
+import { createSpring, isSettled, snapSpring, stepSpring } from './spring'
 
 function run(s: ReturnType<typeof createSpring>, seconds: number, p: { frequency: number; damping: number }) {
   const dt = 1 / 120
@@ -41,25 +41,4 @@ describe('spring', () => {
     expect(s.velocity).toBe(0)
   })
 
-  it('follows without ever overshooting, unlike a spring', () => {
-    // The grain's case: a spring with this settle time springs back past the
-    // target when the drag stops, which reads as elastic rather than dragged.
-    let v = 0
-    let maxV = 0
-    for (let i = 0; i < 240; i++) {
-      v = follow(v, 10, 1 / 120, 90)
-      maxV = Math.max(maxV, v)
-    }
-    expect(maxV).toBeLessThanOrEqual(10)
-    expect(v).toBeCloseTo(10, 4)
-  })
-
-  it('closes 63% of the gap in one time constant', () => {
-    // One tau at a time, so the exponential is checked rather than assumed.
-    const v = follow(0, 1, 0.09, 90)
-    expect(v).toBeCloseTo(1 - Math.exp(-1), 6)
-    // And it is frame-rate independent: two half steps equal one whole one.
-    const half = follow(follow(0, 1, 0.045, 90), 1, 0.045, 90)
-    expect(half).toBeCloseTo(v, 12)
-  })
 })

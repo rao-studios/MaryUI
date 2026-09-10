@@ -41,32 +41,10 @@ LP_TEST(snaps_without_residual_velocity) {
     LP_ASSERT_EQ(s.velocity, 0);
 }
 
-LP_TEST(follows_without_ever_overshooting_unlike_a_spring) {
-    /* The grain's case: a spring with this settle time springs back past the
-     * target when the drag stops, which reads as elastic rather than dragged. */
-    float v = 0, max_v = 0;
-    for (int i = 0; i < 240; i++) {
-        v = lp_follow(v, 10, 1.0f / 120, 90);
-        if (v > max_v) max_v = v;
-    }
-    LP_ASSERT(max_v <= 10.0f);
-    LP_ASSERT_NEAR(v, 10, 1e-4);
-}
-
-LP_TEST(closes_63_percent_of_the_gap_in_one_time_constant) {
-    float v = lp_follow(0, 1, 0.09f, 90);
-    LP_ASSERT_NEAR(v, 1 - expf(-1.0f), 1e-6);
-    /* Frame-rate independent: two half steps equal one whole one. */
-    float half = lp_follow(lp_follow(0, 1, 0.045f, 90), 1, 0.045f, 90);
-    LP_ASSERT_NEAR(half, v, 1e-6);
-}
-
 int main(void) {
     LP_RUN(converges_to_its_target);
     LP_RUN(overshoots_when_underdamped_and_not_when_critically_damped);
     LP_RUN(stays_stable_at_a_30_fps_step_for_the_fastest_system_spring);
     LP_RUN(snaps_without_residual_velocity);
-    LP_RUN(follows_without_ever_overshooting_unlike_a_spring);
-    LP_RUN(closes_63_percent_of_the_gap_in_one_time_constant);
     LP_TEST_MAIN_END();
 }

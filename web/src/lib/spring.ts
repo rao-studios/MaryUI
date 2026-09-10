@@ -45,22 +45,3 @@ export function snapSpring(s: Spring): Spring {
 export function isSettled(s: Spring, tolerance = 0.001, velocityTolerance = 0.01): boolean {
   return Math.abs(s.value - s.target) < tolerance && Math.abs(s.velocity) < velocityTolerance
 }
-
-/**
- * A first-order lag: closes a fraction of the remaining gap every frame, so it
- * tracks a moving target with a constant trail and eases to rest when the
- * target stops — and, unlike a spring, it can never overshoot.
- *
- * Use it where something should *follow* rather than *bounce*. The brushed
- * grain is the case that named it: on a spring it sprang back past the frame
- * when a drag stopped, which read as the metal being on elastic rather than
- * being dragged. `tauMs` is the time constant — the gap is down to 37% after
- * one, and effectively closed after three.
- *
- * Frame-rate independent: the exponential is evaluated against real dt rather
- * than assuming a fixed step.
- */
-export function follow(value: number, target: number, dt: number, tauMs: number): number {
-  if (tauMs <= 0) return target
-  return target + (value - target) * Math.exp((-dt * 1000) / tauMs)
-}

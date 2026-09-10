@@ -92,6 +92,8 @@
   --lp-molten-faithful-saturation: -0.4;
   --lp-brush-opacity: 0.34;
   --lp-brush-lag: 14;
+  --lp-brush-velocity-ref: 900;
+  --lp-brush-settle: 120ms;
   --lp-brush-glint: 0.55;
   --lp-brush-contrast: 0.66;
   --lp-brush-freq-x: 0.02;
@@ -196,7 +198,6 @@
   --lp-motion-spring-fly-damping: 0.8;
   --lp-motion-spring-radius-frequency: 2.6;
   --lp-motion-spring-radius-damping: 0.35;
-  --lp-motion-grain-follow: 90ms;
   --lp-motion-spring-vx-lag-frequency: 0.9;
   --lp-motion-spring-vx-lag-damping: 0.9;
   --lp-motion-radius-detune: 0.08;

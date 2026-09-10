@@ -19,7 +19,7 @@ lp_motion_params lp_motion_params_from_tokens(void) {
         .velocity_ref = LP_MOTION_VELOCITY_REF, .light_x = LP_SHEEN_LIGHT_X,
         .radius_detune = LP_MOTION_RADIUS_DETUNE, .corner_impulse = LP_RADIUS_FLEX_IMPULSE,
         .slosh_velocity_ref = LP_MOTION_SLOSH_VELOCITY_REF, .grain_lag = LP_BRUSH_LAG,
-        .grain_follow_ms = LP_MOTION_GRAIN_FOLLOW_MS,
+        .grain_velocity_ref = LP_BRUSH_VELOCITY_REF, .grain_settle_ms = LP_BRUSH_SETTLE_MS,
     };
 }
 
@@ -34,7 +34,7 @@ lp_motion_params lp_motion_live = {
     .velocity_ref = LP_MOTION_VELOCITY_REF, .light_x = LP_SHEEN_LIGHT_X,
     .radius_detune = LP_MOTION_RADIUS_DETUNE, .corner_impulse = LP_RADIUS_FLEX_IMPULSE,
     .slosh_velocity_ref = LP_MOTION_SLOSH_VELOCITY_REF, .grain_lag = LP_BRUSH_LAG,
-    .grain_follow_ms = LP_MOTION_GRAIN_FOLLOW_MS,
+    .grain_velocity_ref = LP_BRUSH_VELOCITY_REF, .grain_settle_ms = LP_BRUSH_SETTLE_MS,
 };
 
 void lp_motion_reset_params(void) { lp_motion_live = lp_motion_params_from_tokens(); }
@@ -194,10 +194,6 @@ void lp_window_motion_move_drag(lp_window_motion *m, float dx, float dy, double 
 }
 
 void lp_window_motion_end_drag(lp_window_motion *m) {
-    /* The frame is about to jump to its committed position while the delta drops
-     * to zero. Carry the grain's lag across with it, or the skin would snap. */
-    m->grain_x -= m->drag_dx;
-    m->grain_y -= m->drag_dy;
     m->dragging = 0;
     m->drag_dx = m->drag_dy = 0;
     lp_pointer_tracker_reset(&m->tracker);
@@ -287,8 +283,7 @@ int lp_window_motion_step(lp_window_motion *m, float dt, double now_ms, lp_rect 
         m->slosh = lp_slosh_make();
         m->slosh_y = lp_slosh_make();
         for (int i = 0; i < LP_CORNER_COUNT; i++) lp_spring_snap(&m->corners[i]);
-        m->grain_x = m->drag_dx;
-        m->grain_y = m->drag_dy;
+        m->grain_x = m->grain_y = 0;
         lp_spring_snap(&m->vx_lag);
         lp_spring_snap(&m->vy_lag);
         m->flying = 0;
@@ -314,11 +309,15 @@ int lp_window_motion_step(lp_window_motion *m, float dt, double now_ms, lp_rect 
             lp_spring_params cp = { lp_detuned_frequency(p->radius.frequency, i, p->radius_detune), p->radius.damping };
             lp_spring_step(&m->corners[i], dt, cp);
         }
-        /* The grain chases the frame's own translation: while a drag moves it
-         * trails by a constant amount, and when the drag stops it glides home.
-         * A spring here sprang back past the frame, which read as elastic. */
-        m->grain_x = lp_follow(m->grain_x, m->drag_dx, dt, p->grain_follow_ms);
-        m->grain_y = lp_follow(m->grain_y, m->drag_dy, dt, p->grain_follow_ms);
+        /* The grain's offset is a straight proportion of how fast the window is
+         * moving — no spring, no easing, so it tracks the gesture rather than
+         * reacting to it. The only smoothing is a speed limit, which keeps the
+         * offset from jumping when a drag ends. */
+        float want_x = -clampf(s.vx / fmaxf(p->grain_velocity_ref, 1), -1, 1) * p->grain_lag;
+        float want_y = -clampf(s.vy / fmaxf(p->grain_velocity_ref, 1), -1, 1) * p->grain_lag;
+        float step = p->grain_lag / fmaxf(p->grain_settle_ms / 1000.0f, 1e-4f) * dt;
+        m->grain_x += clampf(want_x - m->grain_x, -step, step);
+        m->grain_y += clampf(want_y - m->grain_y, -step, step);
         lp_spring_step(&m->vx_lag, dt, p->vx_lag);
         lp_spring_step(&m->vy_lag, dt, p->vx_lag);
     }
@@ -333,8 +332,8 @@ int lp_window_motion_step(lp_window_motion *m, float dt, double now_ms, lp_rect 
     m->out.slosh_y_px = m->slosh_y.theta * LP_MOTION_SLOSH_LIFT;
     m->out.vx_lag = m->vx_lag.value;
     m->out.speed = lp_liquidity(seen_vx, seen_vy, p->velocity_ref, 1.0f);
-    m->out.grain_x = clampf(m->grain_x - m->drag_dx, -p->grain_lag, p->grain_lag);
-    m->out.grain_y = clampf(m->grain_y - m->drag_dy, -p->grain_lag, p->grain_lag);
+    m->out.grain_x = m->grain_x;
+    m->out.grain_y = m->grain_y;
     write_corners(m, p);
     m->last_vx = n;
 
@@ -352,7 +351,7 @@ int lp_window_motion_step(lp_window_motion *m, float dt, double now_ms, lp_rect 
                          lp_spring_settled(&m->sy, 0.0005f, 0.005f);
     int settled = !m->dragging && !m->flying && !m->resizing && deform_settled &&
                   lp_spring_settled(&m->tilt, 0.005f, 0.05f) && lp_spring_settled(&m->sheen, 0.0005f, 0.005f) &&
-                  fabsf(m->grain_x - m->drag_dx) < 0.05f && fabsf(m->grain_y - m->drag_dy) < 0.05f &&
+                  fabsf(m->grain_x) < 0.05f && fabsf(m->grain_y) < 0.05f &&
                   lp_spring_settled(&m->vx_lag, 0.002f, 0.02f) && lp_spring_settled(&m->vy_lag, 0.002f, 0.02f) &&
                   corners_settled(m) &&
                   lp_slosh_settled(m->slosh, LP_SLOSH_TOLERANCE, LP_SLOSH_VELOCITY_TOLERANCE) &&
