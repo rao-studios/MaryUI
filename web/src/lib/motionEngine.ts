@@ -16,7 +16,7 @@
  * the Gallery's Motion tab can retune the feel live.
  */
 
-import { createSpring, isSettled, snapSpring, stepSpring, type SpringParams } from './spring'
+import { createSpring, follow, isSettled, snapSpring, stepSpring, type SpringParams } from './spring'
 import { createSlosh, isSloshSettled, stepSlosh, type SloshParams, type SloshState } from './slosh'
 import { PointerTracker } from './velocity'
 import { CORNER_KEYS, cornerTargets, detunedFrequency, liquidity, type Corners, type RadiusParams } from './radius'
@@ -33,8 +33,9 @@ export interface MotionParams {
   fly: SpringParams
   /** One spring for all four corners; each corner detunes its frequency off this. */
   radius: SpringParams
-  /** The lag spring behind the brushed grain. */
-  grain: SpringParams
+  /** Time constant (ms) of the grain's lag behind the frame. Not a spring: it
+   *  must never overshoot, or the metal skin bounces when a drag stops. */
+  grainFollow: number
   /** A slow follower of vx; the difference is what smears the goo. */
   vxLag: SpringParams
   slosh: SloshParams
@@ -64,7 +65,7 @@ export function motionParamsFromTokens(): MotionParams {
     jelly: { ...m.springJelly },
     fly: { ...m.springFly },
     radius: { ...m.springRadius },
-    grain: { ...m.springGrain },
+    grainFollow: parseFloat(m.grainFollow),
     vxLag: { ...m.springVxLag },
     slosh: {
       frequencyHz: m.sloshFrequency,
@@ -171,8 +172,9 @@ export class WindowMotion implements MotionTarget {
   private sloshY: SloshState = createSlosh()
   /** One spring per corner, in CORNER_KEYS order, each detuned off `params.radius`. */
   private corners = CORNER_KEYS.map(() => createSpring(parseFloat(tokens.radius.window)))
-  private grainX = createSpring(0)
-  private grainY = createSpring(0)
+  /** Plain followers, not springs — see `follow` in ./spring. */
+  private grainX = 0
+  private grainY = 0
   private vxLag = createSpring(0)
   private vyLag = createSpring(0)
   private wroteCorners: Corners | null = null
@@ -227,8 +229,8 @@ export class WindowMotion implements MotionTarget {
   endDrag(): void {
     // The frame is about to jump to its committed position while the delta drops
     // to zero. Carry the grain's lag across with it, or the skin would snap.
-    this.grainX.value -= this.dragDx
-    this.grainY.value -= this.dragDy
+    this.grainX -= this.dragDx
+    this.grainY -= this.dragDy
     this.dragging = false
     this.dragDx = 0
     this.dragDy = 0
@@ -321,8 +323,7 @@ export class WindowMotion implements MotionTarget {
     })
     this.vxLag.target = n
     this.vyLag.target = ny
-    this.grainX.target = this.dragDx
-    this.grainY.target = this.dragDy
+
 
     if (reduced) {
       snapSpring(this.sheen)
@@ -337,8 +338,8 @@ export class WindowMotion implements MotionTarget {
       this.slosh = createSlosh()
       this.sloshY = createSlosh()
       for (const c of this.corners) snapSpring(c)
-      snapSpring(this.grainX)
-      snapSpring(this.grainY)
+      this.grainX = this.dragDx
+      this.grainY = this.dragDy
       snapSpring(this.vxLag)
       snapSpring(this.vyLag)
       this.flying = false
@@ -361,14 +362,16 @@ export class WindowMotion implements MotionTarget {
       this.corners.forEach((c, i) => {
         stepSpring(c, dt, { frequency: detunedFrequency(p.radius.frequency, i, p.radiusDetune), damping: p.radius.damping })
       })
-      stepSpring(this.grainX, dt, p.grain)
-      stepSpring(this.grainY, dt, p.grain)
+      // The grain chases the frame's own translation, so while a drag is moving
+      // it trails by a constant amount and when the drag stops it glides home.
+      this.grainX = follow(this.grainX, this.dragDx, dt, p.grainFollow)
+      this.grainY = follow(this.grainY, this.dragDy, dt, p.grainFollow)
       stepSpring(this.vxLag, dt, p.vxLag)
       stepSpring(this.vyLag, dt, p.vxLag)
     }
 
-    const gx = clamp(this.grainX.value - this.dragDx, -p.grainLag, p.grainLag)
-    const gy = clamp(this.grainY.value - this.dragDy, -p.grainLag, p.grainLag)
+    const gx = clamp(this.grainX - this.dragDx, -p.grainLag, p.grainLag)
+    const gy = clamp(this.grainY - this.dragDy, -p.grainLag, p.grainLag)
 
     setVars(el.frame, {
       '--lp-sheen-x': this.sheen.value.toFixed(4),
@@ -408,8 +411,8 @@ export class WindowMotion implements MotionTarget {
       isSettled(this.tilt, 0.005, 0.05) &&
       isSettled(this.sheen, 0.0005, 0.005) &&
       this.corners.every((c) => isSettled(c, 0.02, 0.2)) &&
-      isSettled(this.grainX, 0.05, 0.5) &&
-      isSettled(this.grainY, 0.05, 0.5) &&
+      Math.abs(this.grainX - this.dragDx) < 0.05 &&
+      Math.abs(this.grainY - this.dragDy) < 0.05 &&
       isSettled(this.vxLag, 0.002, 0.02) &&
       isSettled(this.vyLag, 0.002, 0.02) &&
       isSloshSettled(this.slosh) &&

@@ -22,3 +22,8 @@ void lp_spring_snap(lp_spring *s) {
 int lp_spring_settled(const lp_spring *s, float tolerance, float velocity_tolerance) {
     return fabsf(s->value - s->target) < tolerance && fabsf(s->velocity) < velocity_tolerance;
 }
+
+float lp_follow(float value, float target, float dt, float tau_ms) {
+    if (tau_ms <= 0) return target;
+    return target + (value - target) * expf(-dt * 1000.0f / tau_ms);
+}

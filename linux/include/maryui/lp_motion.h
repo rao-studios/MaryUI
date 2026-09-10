@@ -21,7 +21,7 @@
 /* MARK: - Parameters */
 
 typedef struct lp_motion_params {
-    lp_spring_params sheen, tilt, jelly, fly, radius, grain, vx_lag;
+    lp_spring_params sheen, tilt, jelly, fly, radius, vx_lag;
     lp_slosh_params slosh;
     lp_radius_params corners;
     float jelly_max_scale, jelly_max_skew, tilt_max, velocity_ref;
@@ -30,6 +30,7 @@ typedef struct lp_motion_params {
     float corner_impulse;  /* px/s kicked into each corner spring on grab and drop */
     float slosh_velocity_ref;  /* speed (px/s) that counts as fully sheared, for the liquid */
     float grain_lag;       /* max px the grain slides behind the frame */
+    float grain_follow_ms; /* time constant of the grain's lag; a lag, not a spring, so it never overshoots */
 } lp_motion_params;
 
 lp_motion_params lp_motion_params_from_tokens(void);
@@ -94,7 +95,8 @@ typedef struct lp_window_motion_out {
 typedef struct lp_window_motion {
     lp_pointer_tracker tracker;
     lp_spring sheen, tilt, skew, sx, sy, fly_x, fly_y, fly_sx, fly_sy;
-    lp_spring corners[LP_CORNER_COUNT], grain_x, grain_y, vx_lag, vy_lag;
+    lp_spring corners[LP_CORNER_COUNT], vx_lag, vy_lag;
+    float grain_x, grain_y;  /* followers (lp_follow), not springs: the skin must not bounce */
     lp_slosh_state slosh, slosh_y;
     int dragging, resizing, flying;
     float drag_dx, drag_dy;

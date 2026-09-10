@@ -18,7 +18,7 @@ every web file, its C counterpart, and every deliberate deviation.
 ```sh
 make check-deps        # cairo pangocairo fontconfig pixman-1 xkbcommon, wlroots wayland-server wayland-protocols, egl glesv2
 make                   # build/libmaryui.a (+ .so), build/lp-render, build/lp-input, build/maryui-desktop
-make test              # tests/test_*.c (124 cases)
+make test              # tests/test_*.c (126 cases)
 make parity            # tools/parity-check.sh: every web component and ported file has its C twin
 make gen-check         # the generated headers match tokens.json and icons.json
 make install DESTDIR=/tmp/root PREFIX=/usr

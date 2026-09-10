@@ -10,7 +10,7 @@
 lp_motion_params lp_motion_params_from_tokens(void) {
     return (lp_motion_params){
         .sheen = LP_MOTION_SPRING_SHEEN, .tilt = LP_MOTION_SPRING_TILT, .jelly = LP_MOTION_SPRING_JELLY, .fly = LP_MOTION_SPRING_FLY,
-        .radius = LP_MOTION_SPRING_RADIUS, .grain = LP_MOTION_SPRING_GRAIN, .vx_lag = LP_MOTION_SPRING_VX_LAG,
+        .radius = LP_MOTION_SPRING_RADIUS, .vx_lag = LP_MOTION_SPRING_VX_LAG,
         .slosh = { LP_MOTION_SLOSH_FREQUENCY, LP_MOTION_SLOSH_DAMPING, LP_MOTION_SLOSH_GAIN, LP_MOTION_SLOSH_SHEAR_GAIN,
                    LP_MOTION_SLOSH_SHEAR_GAMMA, LP_MOTION_SLOSH_MAX, LP_MOTION_SLOSH_MAX_ACCEL },
         .corners = { LP_RADIUS_WINDOW, LP_RADIUS_WINDOW_MIN, LP_RADIUS_WINDOW_MAX, LP_RADIUS_FLEX_SPREAD,
@@ -19,12 +19,13 @@ lp_motion_params lp_motion_params_from_tokens(void) {
         .velocity_ref = LP_MOTION_VELOCITY_REF, .light_x = LP_SHEEN_LIGHT_X,
         .radius_detune = LP_MOTION_RADIUS_DETUNE, .corner_impulse = LP_RADIUS_FLEX_IMPULSE,
         .slosh_velocity_ref = LP_MOTION_SLOSH_VELOCITY_REF, .grain_lag = LP_BRUSH_LAG,
+        .grain_follow_ms = LP_MOTION_GRAIN_FOLLOW_MS,
     };
 }
 
 lp_motion_params lp_motion_live = {
     .sheen = LP_MOTION_SPRING_SHEEN, .tilt = LP_MOTION_SPRING_TILT, .jelly = LP_MOTION_SPRING_JELLY, .fly = LP_MOTION_SPRING_FLY,
-    .radius = LP_MOTION_SPRING_RADIUS, .grain = LP_MOTION_SPRING_GRAIN, .vx_lag = LP_MOTION_SPRING_VX_LAG,
+    .radius = LP_MOTION_SPRING_RADIUS, .vx_lag = LP_MOTION_SPRING_VX_LAG,
     .slosh = { LP_MOTION_SLOSH_FREQUENCY, LP_MOTION_SLOSH_DAMPING, LP_MOTION_SLOSH_GAIN, LP_MOTION_SLOSH_SHEAR_GAIN,
                LP_MOTION_SLOSH_SHEAR_GAMMA, LP_MOTION_SLOSH_MAX, LP_MOTION_SLOSH_MAX_ACCEL },
     .corners = { LP_RADIUS_WINDOW, LP_RADIUS_WINDOW_MIN, LP_RADIUS_WINDOW_MAX, LP_RADIUS_FLEX_SPREAD,
@@ -33,6 +34,7 @@ lp_motion_params lp_motion_live = {
     .velocity_ref = LP_MOTION_VELOCITY_REF, .light_x = LP_SHEEN_LIGHT_X,
     .radius_detune = LP_MOTION_RADIUS_DETUNE, .corner_impulse = LP_RADIUS_FLEX_IMPULSE,
     .slosh_velocity_ref = LP_MOTION_SLOSH_VELOCITY_REF, .grain_lag = LP_BRUSH_LAG,
+    .grain_follow_ms = LP_MOTION_GRAIN_FOLLOW_MS,
 };
 
 void lp_motion_reset_params(void) { lp_motion_live = lp_motion_params_from_tokens(); }
@@ -138,8 +140,7 @@ void lp_window_motion_init(lp_window_motion *m) {
     m->fly_sx = lp_spring_make(1, 1);
     m->fly_sy = lp_spring_make(1, 1);
     for (int i = 0; i < LP_CORNER_COUNT; i++) m->corners[i] = lp_spring_make(LP_RADIUS_WINDOW, LP_RADIUS_WINDOW);
-    m->grain_x = lp_spring_make(0, 0);
-    m->grain_y = lp_spring_make(0, 0);
+    m->grain_x = m->grain_y = 0;
     m->vx_lag = lp_spring_make(0, 0);
     m->vy_lag = lp_spring_make(0, 0);
     m->slosh = lp_slosh_make();
@@ -195,8 +196,8 @@ void lp_window_motion_move_drag(lp_window_motion *m, float dx, float dy, double 
 void lp_window_motion_end_drag(lp_window_motion *m) {
     /* The frame is about to jump to its committed position while the delta drops
      * to zero. Carry the grain's lag across with it, or the skin would snap. */
-    m->grain_x.value -= m->drag_dx;
-    m->grain_y.value -= m->drag_dy;
+    m->grain_x -= m->drag_dx;
+    m->grain_y -= m->drag_dy;
     m->dragging = 0;
     m->drag_dx = m->drag_dy = 0;
     lp_pointer_tracker_reset(&m->tracker);
@@ -272,8 +273,6 @@ int lp_window_motion_step(lp_window_motion *m, float dt, double now_ms, lp_rect 
     float ny = clampf(s.vy / p->velocity_ref, -1, 1);
     m->vx_lag.target = n;
     m->vy_lag.target = ny;
-    m->grain_x.target = m->drag_dx;
-    m->grain_y.target = m->drag_dy;
 
     if (reduced) {
         lp_spring_snap(&m->sheen);
@@ -288,8 +287,8 @@ int lp_window_motion_step(lp_window_motion *m, float dt, double now_ms, lp_rect 
         m->slosh = lp_slosh_make();
         m->slosh_y = lp_slosh_make();
         for (int i = 0; i < LP_CORNER_COUNT; i++) lp_spring_snap(&m->corners[i]);
-        lp_spring_snap(&m->grain_x);
-        lp_spring_snap(&m->grain_y);
+        m->grain_x = m->drag_dx;
+        m->grain_y = m->drag_dy;
         lp_spring_snap(&m->vx_lag);
         lp_spring_snap(&m->vy_lag);
         m->flying = 0;
@@ -315,8 +314,11 @@ int lp_window_motion_step(lp_window_motion *m, float dt, double now_ms, lp_rect 
             lp_spring_params cp = { lp_detuned_frequency(p->radius.frequency, i, p->radius_detune), p->radius.damping };
             lp_spring_step(&m->corners[i], dt, cp);
         }
-        lp_spring_step(&m->grain_x, dt, p->grain);
-        lp_spring_step(&m->grain_y, dt, p->grain);
+        /* The grain chases the frame's own translation: while a drag moves it
+         * trails by a constant amount, and when the drag stops it glides home.
+         * A spring here sprang back past the frame, which read as elastic. */
+        m->grain_x = lp_follow(m->grain_x, m->drag_dx, dt, p->grain_follow_ms);
+        m->grain_y = lp_follow(m->grain_y, m->drag_dy, dt, p->grain_follow_ms);
         lp_spring_step(&m->vx_lag, dt, p->vx_lag);
         lp_spring_step(&m->vy_lag, dt, p->vx_lag);
     }
@@ -331,8 +333,8 @@ int lp_window_motion_step(lp_window_motion *m, float dt, double now_ms, lp_rect 
     m->out.slosh_y_px = m->slosh_y.theta * LP_MOTION_SLOSH_LIFT;
     m->out.vx_lag = m->vx_lag.value;
     m->out.speed = lp_liquidity(seen_vx, seen_vy, p->velocity_ref, 1.0f);
-    m->out.grain_x = clampf(m->grain_x.value - m->drag_dx, -p->grain_lag, p->grain_lag);
-    m->out.grain_y = clampf(m->grain_y.value - m->drag_dy, -p->grain_lag, p->grain_lag);
+    m->out.grain_x = clampf(m->grain_x - m->drag_dx, -p->grain_lag, p->grain_lag);
+    m->out.grain_y = clampf(m->grain_y - m->drag_dy, -p->grain_lag, p->grain_lag);
     write_corners(m, p);
     m->last_vx = n;
 
@@ -350,7 +352,7 @@ int lp_window_motion_step(lp_window_motion *m, float dt, double now_ms, lp_rect 
                          lp_spring_settled(&m->sy, 0.0005f, 0.005f);
     int settled = !m->dragging && !m->flying && !m->resizing && deform_settled &&
                   lp_spring_settled(&m->tilt, 0.005f, 0.05f) && lp_spring_settled(&m->sheen, 0.0005f, 0.005f) &&
-                  lp_spring_settled(&m->grain_x, 0.05f, 0.5f) && lp_spring_settled(&m->grain_y, 0.05f, 0.5f) &&
+                  fabsf(m->grain_x - m->drag_dx) < 0.05f && fabsf(m->grain_y - m->drag_dy) < 0.05f &&
                   lp_spring_settled(&m->vx_lag, 0.002f, 0.02f) && lp_spring_settled(&m->vy_lag, 0.002f, 0.02f) &&
                   corners_settled(m) &&
                   lp_slosh_settled(m->slosh, LP_SLOSH_TOLERANCE, LP_SLOSH_VELOCITY_TOLERANCE) &&

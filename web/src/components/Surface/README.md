@@ -18,7 +18,7 @@ Each variant only swaps the two gradient stops (`surface.*-top/-bottom` tokens) 
 ## Motion
 Consumes `--lp-sheen-x` (0..1) and `--lp-tilt` (deg) written by the motion engine on the nearest window frame. Static everywhere else.
 
-The grain moves too: the engine runs a heavily damped lag spring behind the drag, so the metal skin trails the frame by up to `brush.lag` px and springs back — the hairline scratches visibly slide under the light as a window is flung. `brush.glint` lifts the grain's opacity with `--lp-speed` so the scratches catch the light while moving. Travel is clamped well inside the overhang and the tile is seamless, so no edge ever enters the surface.
+The grain moves too: the engine runs a first-order lag behind the drag (`motion.grain-follow`), so the metal skin trails the frame by up to `brush.lag` px while it moves and glides back when it stops — the hairline scratches visibly slide under the light as a window is flung. It is a lag rather than a spring on purpose: a spring sprang the grain back past the frame when a drag stopped, and the metal read as elastic instead of dragged. `brush.glint` lifts the grain's opacity with `--lp-speed` so the scratches catch the light while moving. Travel is clamped well inside the overhang and the tile is seamless, so no edge ever enters the surface.
 
 ## Sketch notes
 One symbol per variant; the sheen is a separate layer so it can be toggled. Export the brush tile once (see `src/lib/textures.ts`) as an image fill with Overlay blending.

@@ -259,10 +259,7 @@ export const tokens = {
       frequency: 2.6,
       damping: 0.35,
     },
-    springGrain: {
-      frequency: 1.1,
-      damping: 0.5,
-    },
+    grainFollow: "90ms",
     springVxLag: {
       frequency: 0.9,
       damping: 0.9,
@@ -489,8 +486,7 @@ export const tokenNames = [
   "motion-spring-fly-damping",
   "motion-spring-radius-frequency",
   "motion-spring-radius-damping",
-  "motion-spring-grain-frequency",
-  "motion-spring-grain-damping",
+  "motion-grain-follow",
   "motion-spring-vx-lag-frequency",
   "motion-spring-vx-lag-damping",
   "motion-radius-detune",

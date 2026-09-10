@@ -77,8 +77,7 @@ export function MotionTab() {
     { label: 'Corner damping', min: 0.1, max: 1.2, step: 0.02, get: () => p.radius.damping, set: (v) => (p.radius.damping = v), path: 'motion.spring-radius.damping' },
     { label: 'Corner detune', min: 0, max: 0.3, step: 0.01, get: () => p.radiusDetune, set: (v) => (p.radiusDetune = v), path: 'motion.radius-detune' },
     { label: 'Grain lag (px)', min: 0, max: 40, step: 1, get: () => p.grainLag, set: (v) => (p.grainLag = v), path: 'brush.lag' },
-    { label: 'Grain frequency (Hz)', min: 0.3, max: 4, step: 0.1, get: () => p.grain.frequency, set: (v) => (p.grain.frequency = v), path: 'motion.spring-grain.frequency' },
-    { label: 'Grain damping', min: 0.1, max: 1.2, step: 0.05, get: () => p.grain.damping, set: (v) => (p.grain.damping = v), path: 'motion.spring-grain.damping' },
+    { label: 'Grain follow (ms)', min: 0, max: 400, step: 10, get: () => p.grainFollow, set: (v) => (p.grainFollow = v), path: 'motion.grain-follow' },
     { label: 'Smear lag frequency (Hz)', min: 0.2, max: 4, step: 0.1, get: () => p.vxLag.frequency, set: (v) => (p.vxLag.frequency = v), path: 'motion.spring-vx-lag.frequency' },
   ]
 
