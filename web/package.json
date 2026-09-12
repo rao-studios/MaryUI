@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "description": "Liquid Platinum \u2014 Rao's desktop-first design system and simulated desktop.",
-  "license": "Apache-2.0",
+  "license": "GPL-3.0-or-later",
   "scripts": {
     "dev": "node scripts/build-tokens.mjs && vite",
     "build": "node scripts/build-tokens.mjs && tsc -b --noEmit && vite build",

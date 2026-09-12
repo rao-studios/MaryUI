@@ -109,4 +109,4 @@ engine and the designer read the same numbers. The Blue/Graphite accent mapping 
   surface that can run a fragment shader. What it is *for* is written up in
   [`../docs/design-direction.md`](../docs/design-direction.md).
 
-Apache-2.0.
+GPL-3.0-or-later.

@@ -87,4 +87,4 @@ ambient wave.
 model for adding another. The physics in `web/src/lib/spring.ts`, `slosh.ts` and `radius.ts` are a
 dozen lines each and port directly. See [Taking it elsewhere](web/README.md#taking-it-elsewhere).
 
-Apache-2.0. See [`web/LICENSE`](web/LICENSE).
+GPL-3.0-or-later. See [`web/LICENSE`](web/LICENSE).

@@ -85,17 +85,17 @@ tools/lp-render.c   headless PNG renders for parity checks (--all DIR renders ev
 tools/lp-input.c    a uinput pointer + keyboard for scripted tests inside a VM
 tests/              C tests; case names mirror the vitest suites
 PARITY.md           web file → C file, status, deviations, constants not yet in tokens.json
-LICENSE NOTICE      Apache-2.0, and the attribution the wallpaper's shader still needs
+LICENSE NOTICE      GPL-3.0-or-later, and the attribution the wallpaper's shader still needs
 ```
 
 ## Licence
 
-Apache-2.0, like the web: `LICENSE` here, `../web/LICENSE` there, and both are installed to
+GPL-3.0-or-later, like the web: `LICENSE` here, `../web/LICENSE` there, and both are installed to
 `$PREFIX/share/maryui/` with the library.
 
 One caveat is recorded in `NOTICE`: the molten wallpaper's GLSL is derived from a shader by
 Mårten Rånge published on Shadertoy, whose terms have not been established. Shadertoy's default
-is CC BY-NC-SA 3.0, which Apache-2.0 cannot absorb, so that needs settling before the shader
+is CC BY-NC-SA 3.0, which the GPL cannot absorb, so that needs settling before the shader
 ships under this licence.
 
 ## Performance notes
