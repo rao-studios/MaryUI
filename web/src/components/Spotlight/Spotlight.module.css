@@ -167,7 +167,8 @@
 .cmdDropdown {
   margin: 0 var(--lp-space-2) var(--lp-space-2);
   padding: var(--lp-space-1);
-  border-radius: var(--lp-radius-md);
+  /* Concentric with the panel: radius.spotlight less the 16px this sits in. */
+  border-radius: calc(var(--lp-radius-spotlight-menu) * (var(--lp-radius-flex-base) + var(--lp-radius-flex-span) * var(--lp-radius-k)));
   background: var(--lp-surface-menu);
   backdrop-filter: blur(14px) saturate(1.1);
   -webkit-backdrop-filter: blur(14px) saturate(1.1);
@@ -176,7 +177,8 @@
 
 .results {
   margin: var(--lp-space-1) 0;
-  border-radius: var(--lp-radius-sm);
+  /* Concentric with the panel's bottom corners: radius.spotlight less the 12px below this. */
+  border-radius: calc(var(--lp-radius-spotlight-results) * (var(--lp-radius-flex-base) + var(--lp-radius-flex-span) * var(--lp-radius-k)));
   overflow: hidden;
   background: var(--lp-surface-well);
   box-shadow: var(--lp-shadow-emboss-well);

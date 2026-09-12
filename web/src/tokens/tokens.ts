@@ -276,6 +276,8 @@ export const tokens = {
     windowMin: "8px",
     windowMax: "16px",
     spotlight: "30px",
+    spotlightMenu: "14px",
+    spotlightResults: "18px",
     pill: "999px",
   },
   radiusFlex: {
@@ -611,6 +613,8 @@ export const tokenNames = [
   "radius-window-min",
   "radius-window-max",
   "radius-spotlight",
+  "radius-spotlight-menu",
+  "radius-spotlight-results",
   "radius-pill",
   "radius-flex-spread",
   "radius-flex-velocity-ref",

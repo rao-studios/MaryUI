@@ -6,7 +6,7 @@ typing filters apps, commands and open windows; Enter launches. There is no stan
 Edit / View / Window / Help live here, as pills under the dock (`desktop/menus.ts` builds the models).
 
 ## Anatomy
-A `flat` Surface, `--lp-size-spotlight-width` (560px) wide, `--lp-radius-lg`, padding `--lp-space-2`,
+A `flat` Surface, `--lp-size-spotlight-width` (560px) wide, `--lp-radius-spotlight` (30px), padding `--lp-space-2`,
 `--lp-shadow-menu` and `backdrop-filter: blur(14px) saturate(1.1)` (blur, never refraction), a static sheen.
 Inside, top to bottom: the **bar** — a `round` `large` TextField `--lp-size-spotlight-bar-height` (44px) tall
 with a 16px `search` icon, `--lp-text-lg`, the placeholder “Say “Hey Mary” or type something…” and the accent
@@ -49,7 +49,9 @@ and portals the panel to `<body>` at `--lp-z-spotlight`. `menus: MenuModel[]` an
 `--lp-motion-ease-out`; none under reduced motion. Launching hands off to the window manager's own springs.
 
 ## Tokens
-`--lp-size-spotlight-width/-bar-height/-tile`, `--lp-z-spotlight`, `--lp-radius-lg/-md/-sm/-pill`,
+`--lp-size-spotlight-width/-bar-height/-tile`, `--lp-z-spotlight`,
+`--lp-radius-spotlight/-spotlight-menu/-spotlight-results/-sm/-pill` (the nested two are the panel's radius less
+their inset, so every corner in the panel follows the outer one),
 `--lp-surface-well`, `--lp-surface-menu`, `--lp-shadow-menu`, `--lp-shadow-emboss-raised/-well`,
 `--lp-edge-divider`, `--lp-accent-*`, `--lp-ink-*`, `--lp-text-lg/-xs/-sm`.
 

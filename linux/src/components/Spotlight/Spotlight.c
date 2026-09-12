@@ -27,6 +27,16 @@ int lp_spotlight_query_is_blank(const char *query) {
     return 1;
 }
 
+/* The panel's padding above the bar and below everything else, plus the gap
+ * between the bar and the divider — the web's `.panel` padding and `.divider`
+ * margin-top. The bottom padding is what makes the nested corners concentric:
+ * the open menu sits two paddings in, the results well one padding and a
+ * LIST_PAD, exactly what radius.spotlight-menu / -results subtract. */
+#define PANEL_V_PAD (3 * LP_SPOTLIGHT_PAD)
+/* The commands section's inset from the panel edge: the panel's padding plus
+ * the margin .cmdDivider, .cmdPills and .cmdDropdown each carry. */
+#define CMD_INSET (2 * LP_SPOTLIGHT_PAD)
+
 static float width_of(const lp_spotlight_view *v) { return v->width > 0 ? v->width : LP_SIZE_SPOTLIGHT_WIDTH; }
 static float dock_height(void) { return 1 + LP_SPOTLIGHT_PAD + LP_SPOTLIGHT_CELL_H + LP_SPOTLIGHT_PAD; }
 static float results_height(int count) { return count > 0 ? 1 + 2 * LIST_PAD + count * LP_LIST_ROW_H : 1 + EMPTY_H; }
@@ -75,7 +85,7 @@ static int pill_layout(cairo_t *cr, const lp_spotlight_view *v, lp_rect box, lp_
  * menu's entries. `open` is -1 to measure the section with nothing expanded. */
 static float commands_height(const lp_spotlight_view *v, float width, int open) {
     if (!has_commands(v)) return 0;
-    lp_rect box = LP_RECT(0, 0, width - 2 * LP_SPOTLIGHT_PAD, 0);
+    lp_rect box = LP_RECT(0, 0, width - 2 * CMD_INSET, 0);
     float h = 1;                                     /* .cmdDivider */
     if (v->context_name) h += LP_SPOTLIGHT_CMD_HEADER_H;
     int rows = pill_layout(NULL, v, box, NULL);
@@ -87,7 +97,7 @@ static float commands_height(const lp_spotlight_view *v, float width, int open) 
 lp_size lp_spotlight_measure(const lp_spotlight_view *v) {
     int dock = lp_spotlight_query_is_blank(v->query ? v->query->text : "");
     float w = width_of(v);
-    float h = 2 * LP_SPOTLIGHT_PAD + LP_SIZE_SPOTLIGHT_BAR_HEIGHT + (dock ? dock_height() : results_height(v->count));
+    float h = PANEL_V_PAD + LP_SIZE_SPOTLIGHT_BAR_HEIGHT + (dock ? dock_height() : results_height(v->count));
     if (dock) h += commands_height(v, w, open_menu_of(v));
     if (v->max_h > 0 && h > v->max_h) h = v->max_h;
     return (lp_size){ w, h };
@@ -97,7 +107,7 @@ lp_size lp_spotlight_max_size(const lp_spotlight_view *v) {
     float w = width_of(v);
     float dock = dock_height() + commands_height(v, w, -1);
     float results = results_height(LP_SPOTLIGHT_MAX_RESULTS);
-    return (lp_size){ w, 2 * LP_SPOTLIGHT_PAD + LP_SIZE_SPOTLIGHT_BAR_HEIGHT + (dock > results ? dock : results) };
+    return (lp_size){ w, PANEL_V_PAD + LP_SIZE_SPOTLIGHT_BAR_HEIGHT + (dock > results ? dock : results) };
 }
 
 static void tile(lp_ctx *ctx, lp_id id, lp_rect cell, const lp_spotlight_item *it, int selected, lp_spotlight_result *res, int index) {
@@ -141,7 +151,7 @@ static void commands(lp_ctx *ctx, const lp_spotlight_view *v, lp_rect panel, flo
     int draw = ctx->pass == LP_PASS_DRAW && ctx->cr;
     cairo_t *cr = ctx->cr;
     lp_accent accent = lp_settings_accent(ctx->settings);
-    float inner_x = panel.x + LP_SPOTLIGHT_PAD, inner_w = panel.w - 2 * LP_SPOTLIGHT_PAD;
+    float inner_x = panel.x + CMD_INSET, inner_w = panel.w - 2 * CMD_INSET;
     int open = open_menu_of(v);
 
     if (draw) lp_fill_solid(cr, LP_RECT(inner_x, y, inner_w, 1), LP_EDGE_DIVIDER, 0);
@@ -152,7 +162,7 @@ static void commands(lp_ctx *ctx, const lp_spotlight_view *v, lp_rect panel, flo
             lp_text_style ts = lp_text_style_default();
             ts.size_px = LP_TEXT_XS;
             ts.color = LP_INK_TERTIARY;
-            lp_rect line = LP_RECT(panel.x + LP_SPACE_3, y + LP_SPACE_2, inner_w, 14);
+            lp_rect line = LP_RECT(panel.x + LP_SPOTLIGHT_PAD + LP_SPACE_3, y + LP_SPACE_2, inner_w, 14);
             lp_icon_draw(cr, v->context_icon, line.x, line.y + 1, 12, 1.6f, LP_INK_TERTIARY);
             float tx = line.x + 12 + LP_SPACE_1;
             float tw = lp_text_measure(cr, "Searching ", &ts).w;
@@ -161,7 +171,7 @@ static void commands(lp_ctx *ctx, const lp_spotlight_view *v, lp_rect panel, flo
             ns.color = LP_INK_SECONDARY;
             ns.weight = LP_TEXT_WEIGHT_MEDIUM;
             ns.ellipsize = 1;
-            lp_text_draw(cr, v->context_name, LP_RECT(tx + tw, line.y, panel.x + panel.w - LP_SPACE_3 - (tx + tw), line.h), &ns, LP_ALIGN_START);
+            lp_text_draw(cr, v->context_name, LP_RECT(tx + tw, line.y, panel.x + panel.w - LP_SPOTLIGHT_PAD - LP_SPACE_3 - (tx + tw), line.h), &ns, LP_ALIGN_START);
         }
         y += LP_SPOTLIGHT_CMD_HEADER_H;
     }
@@ -195,12 +205,13 @@ static void commands(lp_ctx *ctx, const lp_spotlight_view *v, lp_rect panel, flo
     if (open < 0) return;
     /* The entries, inline. Unlike the old floating menu this carries shadow.menu
      * but no emboss: the panel around it is the surface (the web's .cmdDropdown). */
-    float avail = panel.y + panel.h - LP_SPOTLIGHT_PAD - y;
+    float avail = panel.y + panel.h - 2 * LP_SPOTLIGHT_PAD - y;   /* its margin, then the panel's padding */
     lp_size ds = lp_menu_list_measure(cr, &v->menus[open]);
     float dh = ds.h < avail ? ds.h : avail;
     if (dh <= 2 * LP_SPACE_1) return;
     lp_rect drop = LP_RECT(inner_x, y, inner_w, dh);
-    float radius = lp_radius_flex(ctx, LP_RADIUS_MD);
+    /* Concentric with the panel's corners: radius.spotlight less CMD_INSET. */
+    float radius = lp_radius_flex(ctx, LP_RADIUS_SPOTLIGHT_MENU);
     if (draw) {
         lp_draw_shadow_9slice(cr, drop, radius, LP_SHADOW_MENU, LP_SHADOW_MENU_COUNT);
         lp_fill_solid(cr, drop, LP_SURFACE_MENU, radius);
@@ -227,7 +238,7 @@ void lp_spotlight_panel(lp_ctx *ctx, float x, float y, const lp_spotlight_view *
     lp_id base = LP_ID("spotlight");
 
     if (draw) {
-        float shell_radius = lp_radius_flex(ctx, LP_RADIUS_LG);
+        float shell_radius = lp_radius_flex(ctx, LP_RADIUS_SPOTLIGHT);
         lp_draw_shadow_9slice(cr, panel, shell_radius, LP_SHADOW_MENU, LP_SHADOW_MENU_COUNT);
         lp_surface_paint(cr, panel, (lp_surface_opts){ .variant = LP_VARIANT_FLAT, .radius = shell_radius, .sheen = 1, .sheen_alpha = -1 },
             (lp_surface_motion){ .sheen_x = 0.5f });
@@ -259,7 +270,9 @@ void lp_spotlight_panel(lp_ctx *ctx, float x, float y, const lp_spotlight_view *
         if (has_commands(v)) commands(ctx, v, panel, cy + LP_SPOTLIGHT_PAD + LP_SPOTLIGHT_CELL_H + LP_SPOTLIGHT_PAD, base, &res);
     } else if (v->count > 0) {
         lp_rect list = LP_RECT(panel.x + LP_SPOTLIGHT_PAD, cy + LIST_PAD, panel.w - 2 * LP_SPOTLIGHT_PAD, v->count * LP_LIST_ROW_H);
-        if (draw) { cairo_save(cr); lp_path_rrect(cr, list, LP_RADIUS_SM); cairo_clip(cr); lp_fill_solid(cr, list, LP_SURFACE_WELL, 0); }
+        /* Concentric with the panel's bottom corners (radius.spotlight-results). */
+        float list_radius = lp_radius_flex(ctx, LP_RADIUS_SPOTLIGHT_RESULTS);
+        if (draw) { cairo_save(cr); lp_path_rrect(cr, list, list_radius); cairo_clip(cr); lp_fill_solid(cr, list, LP_SURFACE_WELL, 0); }
         for (int i = 0; i < v->count; i++) {
             const lp_spotlight_item *it = &v->items[i];
             const char *cols[1] = { it->subtitle };
@@ -267,7 +280,7 @@ void lp_spotlight_panel(lp_ctx *ctx, float x, float y, const lp_spotlight_view *
             if (lp_list_row(ctx, lp_id_index(base, 200 + i), row, it->icon, it->title, cols, 1, v->selection == i, (i % 2) == 1)) res.activated = i;
             if (ctx->pass == LP_PASS_EVENT && lp_hit(ctx, row)) res.hovered = i;
         }
-        if (draw) { cairo_restore(cr); lp_draw_inset_shadows(cr, list, LP_RADIUS_SM, LP_SHADOW_EMBOSS_WELL, LP_SHADOW_EMBOSS_WELL_COUNT); }
+        if (draw) { cairo_restore(cr); lp_draw_inset_shadows(cr, list, list_radius, LP_SHADOW_EMBOSS_WELL, LP_SHADOW_EMBOSS_WELL_COUNT); }
     } else if (draw) {
         lp_text_style st = lp_text_style_default();
         st.size_px = LP_TEXT_SM;

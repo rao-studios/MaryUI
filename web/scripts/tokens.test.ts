@@ -145,6 +145,14 @@ describe('the real tokens.json', () => {
       Number.parseFloat(out.tokens.find((t: { path: string[] }) => t.path.join('.') === path).value)
     const field = px('size.spotlight-bar-height') / 2
     expect(px('radius.spotlight')).toBe(field + px('space.2'))
+    // The same rule inward: a container nested in the panel takes the panel's
+    // radius less its inset, so its corner follows the panel's instead of
+    // sitting in it at an unrelated curve. The open menu sits the panel's
+    // padding plus its own margin in (.cmdDropdown); the results well sits the
+    // padding in at the sides and the padding plus its margin at the bottom
+    // (.results), and takes the larger of the two so it stays inside.
+    expect(px('radius.spotlight-menu')).toBe(px('radius.spotlight') - 2 * px('space.2'))
+    expect(px('radius.spotlight-results')).toBe(px('radius.spotlight') - px('space.2') - px('space.1'))
   })
 
   it('keeps the object tier under a prefix of its own', () => {

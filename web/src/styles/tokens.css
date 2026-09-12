@@ -211,6 +211,8 @@
   --lp-radius-window-min: 8px;
   --lp-radius-window-max: 16px;
   --lp-radius-spotlight: 30px;
+  --lp-radius-spotlight-menu: 14px;
+  --lp-radius-spotlight-results: 18px;
   --lp-radius-pill: 999px;
   --lp-radius-flex-spread: 6;
   --lp-radius-flex-velocity-ref: 1100;

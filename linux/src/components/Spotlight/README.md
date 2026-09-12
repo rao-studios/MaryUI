@@ -6,8 +6,12 @@ Enter launches. There is no menu bar: Rao / File / Edit / View / Go / Window / H
 (`lp_desktop_build_menus` builds them). Mirrors `web/src/components/Spotlight`.
 
 ## Anatomy
-A `flat` Surface, `size.spotlight-width` (560) wide, `radius.lg`, padding `space.2`, `shadow.menu` under a static
-sheen. Inside, top to bottom: the **bar** — a `round`, `large` TextField `size.spotlight-bar-height` (44) tall with a
+A `flat` Surface, `size.spotlight-width` (560) wide, `radius.spotlight` (30), padding `space.2`, `shadow.menu` under
+a static sheen. Every corner inside follows the panel's: the pill-shaped bar is concentric with it by construction,
+and the open menu (`radius.spotlight-menu`, 14, 16px in) and the results well (`radius.spotlight-results`, 18, 12px
+up from the bottom) take the panel's radius less their inset. The panel keeps `space.2` below its contents and the
+commands section keeps a further `space.2` in from each side, as the web's `.panel` / `.cmdPills` / `.cmdDropdown`
+do — that inset is what those two radii subtract. Inside, top to bottom: the **bar** — a `round`, `large` TextField `size.spotlight-bar-height` (44) tall with a
 16px `search` icon, `text.lg`, the placeholder “Say “Hey Mary” or type something…” and the accent focus ring while
 the panel is up; a hairline `edge.divider`; then either the **dock** (one centred row of 88×84 cells: a 56px
 `platinum.0 → platinum.3` plate at `radius.md` with `emboss-raised`, a 28px `ink.secondary` icon, a `text.xs` label
@@ -16,7 +20,7 @@ and a 4px `accent.base` dot under running apps) or the **results** (up to 8 List
 With the dock showing, a second hairline introduces the **commands**: a `Searching <app>` line (`text.xs`,
 `ink.tertiary`, the app's name in `ink.secondary`) naming the focused window's app, then a wrapping row of 24px
 **pills** at `radius.pill` — the 14px flat Monogram, then one per menu — and, under the open one, its entries drawn
-by `lp_menu_list` inside a `surface.menu` panel at `radius.md` with `shadow.menu`. Unlike the old floating menu that
+by `lp_menu_list` inside a `surface.menu` panel at `radius.spotlight-menu` with `shadow.menu`. Unlike the old floating menu that
 panel carries no `emboss-raised`: the web's `.cmdDropdown` asks for the shadow alone.
 
 ## States
@@ -44,7 +48,8 @@ same limit.
 tween); none under reduced motion.
 
 ## Tokens
-`size.spotlight-width`, `size.spotlight-bar-height`, `size.spotlight-tile`, `z.spotlight`, `radius.lg/-md/-sm/-pill`,
+`size.spotlight-width`, `size.spotlight-bar-height`, `size.spotlight-tile`, `z.spotlight`,
+`radius.spotlight/-spotlight-menu/-spotlight-results/-sm/-pill`,
 `surface.well`, `surface.menu`, `shadow.menu`, `shadow.emboss-raised/-well`, `edge.divider`, `accent.*`, `ink.*`,
 `text.lg/-sm/-xs`.
 
