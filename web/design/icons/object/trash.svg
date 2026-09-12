@@ -1,28 +1,28 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="128" height="128">
   <title>trash</title>
   <defs>
-    <clipPath id="clip-body"><path d="M7.8 11.2h16.4l-1.5 15.3a2 2 0 0 1-2 1.8h-9.4a2 2 0 0 1-2-1.8Z"/></clipPath>
-    <linearGradient id="grad-body" x1="0" y1="0" x2="0.85" y2="1">
+    <clipPath id="trash-clip-body"><path d="M7.8 11.2h16.4l-1.5 15.3a2 2 0 0 1-2 1.8h-9.4a2 2 0 0 1-2-1.8Z"/></clipPath>
+    <linearGradient id="trash-grad-body" x1="0" y1="0" x2="0.85" y2="1">
       <stop offset="0" stop-color="#d3d6db"/>
       <stop offset="1" stop-color="#91969e"/>
     </linearGradient>
-    <clipPath id="clip-rim"><path d="M6 8h20a1.6 1.6 0 0 1 0 3.2H6A1.6 1.6 0 0 1 6 8Z"/></clipPath>
-    <linearGradient id="grad-rim" x1="0" y1="0" x2="0.85" y2="1">
+    <clipPath id="trash-clip-rim"><path d="M6 8h20a1.6 1.6 0 0 1 0 3.2H6A1.6 1.6 0 0 1 6 8Z"/></clipPath>
+    <linearGradient id="trash-grad-rim" x1="0" y1="0" x2="0.85" y2="1">
       <stop offset="0" stop-color="#e9ebee"/>
       <stop offset="1" stop-color="#b9bdc6"/>
     </linearGradient>
-    <clipPath id="clip-silhouette"><path d="M7.8 11.2h16.4l-1.5 15.3a2 2 0 0 1-2 1.8h-9.4a2 2 0 0 1-2-1.8Z"/></clipPath>
-    <linearGradient id="grad-key" x1="0" y1="0" x2="0.9" y2="1">
+    <clipPath id="trash-clip-silhouette"><path d="M7.8 11.2h16.4l-1.5 15.3a2 2 0 0 1-2 1.8h-9.4a2 2 0 0 1-2-1.8Z"/></clipPath>
+    <linearGradient id="trash-grad-key" x1="0" y1="0" x2="0.9" y2="1">
       <stop offset="0" stop-color="#ffffff" stop-opacity="0.62"/>
       <stop offset="0.3" stop-color="#ffffff" stop-opacity="0.2"/>
       <stop offset="0.6" stop-color="#ffffff" stop-opacity="0"/>
     </linearGradient>
   </defs>
   <g id="trash">
-    <g id="body-platinum-front" clip-path="url(#clip-body)"><title>body · platinum/front</title><path d="M7.8 11.2h16.4l-1.5 15.3a2 2 0 0 1-2 1.8h-9.4a2 2 0 0 1-2-1.8Z" fill="url(#grad-body)"/><path d="M7.8 11.2h16.4l-1.5 15.3a2 2 0 0 1-2 1.8h-9.4a2 2 0 0 1-2-1.8Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M7.8 11.2h16.4l-1.5 15.3a2 2 0 0 1-2 1.8h-9.4a2 2 0 0 1-2-1.8Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
-    <g id="rim-platinum-top" clip-path="url(#clip-rim)"><title>rim · platinum/top</title><path d="M6 8h20a1.6 1.6 0 0 1 0 3.2H6A1.6 1.6 0 0 1 6 8Z" fill="url(#grad-rim)"/><path d="M6 8h20a1.6 1.6 0 0 1 0 3.2H6A1.6 1.6 0 0 1 6 8Z" fill="#ffffff" opacity="0.064"/><path d="M6 8h20a1.6 1.6 0 0 1 0 3.2H6A1.6 1.6 0 0 1 6 8Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M6 8h20a1.6 1.6 0 0 1 0 3.2H6A1.6 1.6 0 0 1 6 8Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
+    <g id="body-platinum-front" clip-path="url(#trash-clip-body)"><title>body · platinum/front</title><path d="M7.8 11.2h16.4l-1.5 15.3a2 2 0 0 1-2 1.8h-9.4a2 2 0 0 1-2-1.8Z" fill="url(#trash-grad-body)"/><path d="M7.8 11.2h16.4l-1.5 15.3a2 2 0 0 1-2 1.8h-9.4a2 2 0 0 1-2-1.8Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M7.8 11.2h16.4l-1.5 15.3a2 2 0 0 1-2 1.8h-9.4a2 2 0 0 1-2-1.8Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
+    <g id="rim-platinum-top" clip-path="url(#trash-clip-rim)"><title>rim · platinum/top</title><path d="M6 8h20a1.6 1.6 0 0 1 0 3.2H6A1.6 1.6 0 0 1 6 8Z" fill="url(#trash-grad-rim)"/><path d="M6 8h20a1.6 1.6 0 0 1 0 3.2H6A1.6 1.6 0 0 1 6 8Z" fill="#ffffff" opacity="0.064"/><path d="M6 8h20a1.6 1.6 0 0 1 0 3.2H6A1.6 1.6 0 0 1 6 8Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M6 8h20a1.6 1.6 0 0 1 0 3.2H6A1.6 1.6 0 0 1 6 8Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
     <g id="mesh-edge-hairline"><title>mesh · edge/hairline</title><path d="M12 13.2l-.6 12.4M16 13.2v12.4M20 13.2l.6 12.4" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="1" stroke-linecap="round" transform="translate(0 0.85)"/><path d="M12 13.2l-.6 12.4M16 13.2v12.4M20 13.2l.6 12.4" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1" stroke-linecap="round"/></g>
-    <g id="key-sheen-color" clip-path="url(#clip-silhouette)" opacity="0.55" style="mix-blend-mode:screen"><title>key · sheen/color</title><path d="M7.8 11.2h16.4l-1.5 15.3a2 2 0 0 1-2 1.8h-9.4a2 2 0 0 1-2-1.8Z" fill="url(#grad-key)"/></g>
+    <g id="key-sheen-color" clip-path="url(#trash-clip-silhouette)" opacity="0.55" style="mix-blend-mode:screen"><title>key · sheen/color</title><path d="M7.8 11.2h16.4l-1.5 15.3a2 2 0 0 1-2 1.8h-9.4a2 2 0 0 1-2-1.8Z" fill="url(#trash-grad-key)"/></g>
     <path id="keyline-edge-hairline" d="M7.8 11.2h16.4l-1.5 15.3a2 2 0 0 1-2 1.8h-9.4a2 2 0 0 1-2-1.8Z" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1"/>
   </g>
 </svg>

@@ -101,6 +101,8 @@ export function objectSvg(name, def) {
   const material = (part) => part.material ?? def.material
   const sil = def.parts.find((p) => p.id === def.silhouette) ?? def.parts[0]
   const toneStep = token('object.tone-step')
+  /* Referenced ids are scoped to the object: the Sketch sheet inlines every object into one page. */
+  const ns = (id) => `${slug(name)}-${id}`
 
   for (const part of def.parts) {
     const role = part.role ?? 'body'
@@ -120,7 +122,7 @@ export function objectSvg(name, def) {
 
     const m = material(part)
     const facet = part.facet ?? 'flat'
-    const clip = `clip-${slug(part.id)}`
+    const clip = ns(`clip-${slug(part.id)}`)
     defs.push(`    <clipPath id="${clip}"><path d="${part.d}"/></clipPath>`)
 
     let fill
@@ -130,7 +132,7 @@ export function objectSvg(name, def) {
       label = `${part.id} · ${part.tint}`
     } else {
       const [from, to] = facetStops(m, facet)
-      const gid = `grad-${slug(part.id)}`
+      const gid = ns(`grad-${slug(part.id)}`)
       defs.push(
         `    <linearGradient id="${gid}" x1="0" y1="0" x2="0.85" y2="1">\n` +
           `      <stop offset="0" stop-color="${from}"/>\n` +
@@ -161,8 +163,8 @@ export function objectSvg(name, def) {
   /* The broad key, over the silhouette, scaled by how specular the material is. */
   const gloss = token(`object.material.${def.material}.gloss`) ?? 1
   defs.push(
-    `    <clipPath id="clip-silhouette"><path d="${sil.d}"/></clipPath>`,
-    `    <linearGradient id="grad-key" x1="0" y1="0" x2="0.9" y2="1">\n` +
+    `    <clipPath id="${ns('clip-silhouette')}"><path d="${sil.d}"/></clipPath>`,
+    `    <linearGradient id="${ns('grad-key')}" x1="0" y1="0" x2="0.9" y2="1">\n` +
       [
         [0, token('object.key-alpha')],
         [token('object.key-mid-at'), token('object.key-mid')],
@@ -173,13 +175,13 @@ export function objectSvg(name, def) {
       `\n    </linearGradient>`,
   )
   layers.push(
-    `    <g id="key-sheen-color" clip-path="url(#clip-silhouette)" opacity="${gloss}" style="mix-blend-mode:screen">` +
-      `<title>key · sheen/color</title><path d="${sil.d}" fill="url(#grad-key)"/></g>`,
+    `    <g id="key-sheen-color" clip-path="url(#${ns('clip-silhouette')})" opacity="${gloss}" style="mix-blend-mode:screen">` +
+      `<title>key · sheen/color</title><path d="${sil.d}" fill="url(#${ns('grad-key')})"/></g>`,
   )
 
   if (def.finish === 'glossy') {
     defs.push(
-      `    <linearGradient id="grad-gloss" x1="0" y1="0" x2="0" y2="1">\n` +
+      `    <linearGradient id="${ns('grad-gloss')}" x1="0" y1="0" x2="0" y2="1">\n` +
         [
           [0, token('object.gloss-alpha')],
           [token('object.gloss-break'), token('object.gloss-shoulder')],
@@ -192,8 +194,8 @@ export function objectSvg(name, def) {
         `\n    </linearGradient>`,
     )
     layers.push(
-      `    <g id="gloss-sheen-color" clip-path="url(#clip-silhouette)" style="mix-blend-mode:screen">` +
-        `<title>gloss · sheen/color</title><path d="${sil.d}" fill="url(#grad-gloss)"/></g>`,
+      `    <g id="gloss-sheen-color" clip-path="url(#${ns('clip-silhouette')})" style="mix-blend-mode:screen">` +
+        `<title>gloss · sheen/color</title><path d="${sil.d}" fill="url(#${ns('grad-gloss')})"/></g>`,
     )
   }
 

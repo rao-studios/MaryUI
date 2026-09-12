@@ -1,22 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="128" height="128">
   <title>info</title>
   <defs>
-    <clipPath id="clip-disc"><path d="M16 2.5a13.5 13.5 0 1 0 0 27 13.5 13.5 0 0 0 0-27Z"/></clipPath>
-    <linearGradient id="grad-disc" x1="0" y1="0" x2="0.85" y2="1">
+    <clipPath id="info-clip-disc"><path d="M16 2.5a13.5 13.5 0 1 0 0 27 13.5 13.5 0 0 0 0-27Z"/></clipPath>
+    <linearGradient id="info-grad-disc" x1="0" y1="0" x2="0.85" y2="1">
       <stop offset="0" stop-color="#5690df"/>
       <stop offset="1" stop-color="#2f67ba"/>
     </linearGradient>
-    <clipPath id="clip-silhouette"><path d="M16 2.5a13.5 13.5 0 1 0 0 27 13.5 13.5 0 0 0 0-27Z"/></clipPath>
-    <linearGradient id="grad-key" x1="0" y1="0" x2="0.9" y2="1">
+    <clipPath id="info-clip-silhouette"><path d="M16 2.5a13.5 13.5 0 1 0 0 27 13.5 13.5 0 0 0 0-27Z"/></clipPath>
+    <linearGradient id="info-grad-key" x1="0" y1="0" x2="0.9" y2="1">
       <stop offset="0" stop-color="#ffffff" stop-opacity="0.62"/>
       <stop offset="0.3" stop-color="#ffffff" stop-opacity="0.2"/>
       <stop offset="0.6" stop-color="#ffffff" stop-opacity="0"/>
     </linearGradient>
   </defs>
   <g id="info">
-    <g id="disc-accent-top" clip-path="url(#clip-disc)"><title>disc · accent/top</title><path d="M16 2.5a13.5 13.5 0 1 0 0 27 13.5 13.5 0 0 0 0-27Z" fill="url(#grad-disc)"/><path d="M16 2.5a13.5 13.5 0 1 0 0 27 13.5 13.5 0 0 0 0-27Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M16 2.5a13.5 13.5 0 1 0 0 27 13.5 13.5 0 0 0 0-27Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
+    <g id="disc-accent-top" clip-path="url(#info-clip-disc)"><title>disc · accent/top</title><path d="M16 2.5a13.5 13.5 0 1 0 0 27 13.5 13.5 0 0 0 0-27Z" fill="url(#info-grad-disc)"/><path d="M16 2.5a13.5 13.5 0 1 0 0 27 13.5 13.5 0 0 0 0-27Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M16 2.5a13.5 13.5 0 1 0 0 27 13.5 13.5 0 0 0 0-27Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
     <g id="mark-ink-on-accent"><title>mark · ink.on-accent</title><path d="M16 14.5v8.5M16 9.6h.01" fill="none" stroke="#ffffff" stroke-width="1.4" stroke-linecap="round"/></g>
-    <g id="key-sheen-color" clip-path="url(#clip-silhouette)" opacity="0.75" style="mix-blend-mode:screen"><title>key · sheen/color</title><path d="M16 2.5a13.5 13.5 0 1 0 0 27 13.5 13.5 0 0 0 0-27Z" fill="url(#grad-key)"/></g>
+    <g id="key-sheen-color" clip-path="url(#info-clip-silhouette)" opacity="0.75" style="mix-blend-mode:screen"><title>key · sheen/color</title><path d="M16 2.5a13.5 13.5 0 1 0 0 27 13.5 13.5 0 0 0 0-27Z" fill="url(#info-grad-key)"/></g>
     <path id="keyline-edge-hairline" d="M16 2.5a13.5 13.5 0 1 0 0 27 13.5 13.5 0 0 0 0-27Z" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1"/>
   </g>
 </svg>

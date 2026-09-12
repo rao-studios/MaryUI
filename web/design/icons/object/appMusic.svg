@@ -1,20 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="128" height="128">
   <title>appMusic</title>
   <defs>
-    <clipPath id="clip-tile"><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z"/></clipPath>
-    <linearGradient id="grad-tile" x1="0" y1="0" x2="0.85" y2="1">
+    <clipPath id="appMusic-clip-tile"><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z"/></clipPath>
+    <linearGradient id="appMusic-grad-tile" x1="0" y1="0" x2="0.85" y2="1">
       <stop offset="0" stop-color="#f38378"/>
       <stop offset="1" stop-color="#bc483d"/>
     </linearGradient>
-    <clipPath id="clip-heads"><path d="M8.12 24.18A3.0 2.3 -20.0 1 1 13.76 22.13A3.0 2.3 -20.0 1 1 8.12 24.18ZM17.12 22.38A3.0 2.3 -20.0 1 1 22.76 20.33A3.0 2.3 -20.0 1 1 17.12 22.38Z"/></clipPath>
-    <clipPath id="clip-beam"><path d="M13.49 23.15V8.25L23.99 6.45V21.35H22.49V9.31L14.99 10.6V23.15Z"/></clipPath>
-    <clipPath id="clip-silhouette"><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z"/></clipPath>
-    <linearGradient id="grad-key" x1="0" y1="0" x2="0.9" y2="1">
+    <clipPath id="appMusic-clip-heads"><path d="M8.12 24.18A3.0 2.3 -20.0 1 1 13.76 22.13A3.0 2.3 -20.0 1 1 8.12 24.18ZM17.12 22.38A3.0 2.3 -20.0 1 1 22.76 20.33A3.0 2.3 -20.0 1 1 17.12 22.38Z"/></clipPath>
+    <clipPath id="appMusic-clip-beam"><path d="M13.49 23.15V8.25L23.99 6.45V21.35H22.49V9.31L14.99 10.6V23.15Z"/></clipPath>
+    <clipPath id="appMusic-clip-silhouette"><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z"/></clipPath>
+    <linearGradient id="appMusic-grad-key" x1="0" y1="0" x2="0.9" y2="1">
       <stop offset="0" stop-color="#ffffff" stop-opacity="0.62"/>
       <stop offset="0.3" stop-color="#ffffff" stop-opacity="0.2"/>
       <stop offset="0.6" stop-color="#ffffff" stop-opacity="0"/>
     </linearGradient>
-    <linearGradient id="grad-gloss" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="appMusic-grad-gloss" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#ffffff" stop-opacity="0.45"/>
       <stop offset="0.42" stop-color="#ffffff" stop-opacity="0.16"/>
       <stop offset="0.421" stop-color="#ffffff" stop-opacity="0"/>
@@ -23,11 +23,11 @@
     </linearGradient>
   </defs>
   <g id="appMusic">
-    <g id="tile-ruby-top" clip-path="url(#clip-tile)"><title>tile · ruby/top</title><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="url(#grad-tile)"/><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
-    <g id="heads-ink-on-accent" clip-path="url(#clip-heads)"><title>heads · ink.on-accent</title><path d="M8.12 24.18A3.0 2.3 -20.0 1 1 13.76 22.13A3.0 2.3 -20.0 1 1 8.12 24.18ZM17.12 22.38A3.0 2.3 -20.0 1 1 22.76 20.33A3.0 2.3 -20.0 1 1 17.12 22.38Z" fill="#ffffff"/></g>
-    <g id="beam-ink-on-accent" clip-path="url(#clip-beam)"><title>beam · ink.on-accent</title><path d="M13.49 23.15V8.25L23.99 6.45V21.35H22.49V9.31L14.99 10.6V23.15Z" fill="#ffffff"/></g>
-    <g id="key-sheen-color" clip-path="url(#clip-silhouette)" opacity="0.9" style="mix-blend-mode:screen"><title>key · sheen/color</title><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="url(#grad-key)"/></g>
-    <g id="gloss-sheen-color" clip-path="url(#clip-silhouette)" style="mix-blend-mode:screen"><title>gloss · sheen/color</title><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="url(#grad-gloss)"/></g>
+    <g id="tile-ruby-top" clip-path="url(#appMusic-clip-tile)"><title>tile · ruby/top</title><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="url(#appMusic-grad-tile)"/><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
+    <g id="heads-ink-on-accent" clip-path="url(#appMusic-clip-heads)"><title>heads · ink.on-accent</title><path d="M8.12 24.18A3.0 2.3 -20.0 1 1 13.76 22.13A3.0 2.3 -20.0 1 1 8.12 24.18ZM17.12 22.38A3.0 2.3 -20.0 1 1 22.76 20.33A3.0 2.3 -20.0 1 1 17.12 22.38Z" fill="#ffffff"/></g>
+    <g id="beam-ink-on-accent" clip-path="url(#appMusic-clip-beam)"><title>beam · ink.on-accent</title><path d="M13.49 23.15V8.25L23.99 6.45V21.35H22.49V9.31L14.99 10.6V23.15Z" fill="#ffffff"/></g>
+    <g id="key-sheen-color" clip-path="url(#appMusic-clip-silhouette)" opacity="0.9" style="mix-blend-mode:screen"><title>key · sheen/color</title><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="url(#appMusic-grad-key)"/></g>
+    <g id="gloss-sheen-color" clip-path="url(#appMusic-clip-silhouette)" style="mix-blend-mode:screen"><title>gloss · sheen/color</title><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="url(#appMusic-grad-gloss)"/></g>
     <path id="keyline-edge-hairline" d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1"/>
   </g>
 </svg>

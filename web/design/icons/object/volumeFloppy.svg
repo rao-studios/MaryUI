@@ -1,40 +1,40 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="128" height="128">
   <title>volumeFloppy</title>
   <defs>
-    <clipPath id="clip-body"><path d="M5 3h22a2 2 0 0 1 2 2v22a2 2 0 0 1 -2 2h-22a2 2 0 0 1 -2 -2v-22a2 2 0 0 1 2 -2Z"/></clipPath>
-    <linearGradient id="grad-body" x1="0" y1="0" x2="0.85" y2="1">
+    <clipPath id="volumeFloppy-clip-body"><path d="M5 3h22a2 2 0 0 1 2 2v22a2 2 0 0 1 -2 2h-22a2 2 0 0 1 -2 -2v-22a2 2 0 0 1 2 -2Z"/></clipPath>
+    <linearGradient id="volumeFloppy-grad-body" x1="0" y1="0" x2="0.85" y2="1">
       <stop offset="0" stop-color="#e9ebee"/>
       <stop offset="1" stop-color="#b9bdc6"/>
     </linearGradient>
-    <clipPath id="clip-shutter"><path d="M10.8 3.6h10.4a0.8 0.8 0 0 1 0.8 0.8v7.4a0.8 0.8 0 0 1 -0.8 0.8h-10.4a0.8 0.8 0 0 1 -0.8 -0.8v-7.4a0.8 0.8 0 0 1 0.8 -0.8Z"/></clipPath>
-    <linearGradient id="grad-shutter" x1="0" y1="0" x2="0.85" y2="1">
+    <clipPath id="volumeFloppy-clip-shutter"><path d="M10.8 3.6h10.4a0.8 0.8 0 0 1 0.8 0.8v7.4a0.8 0.8 0 0 1 -0.8 0.8h-10.4a0.8 0.8 0 0 1 -0.8 -0.8v-7.4a0.8 0.8 0 0 1 0.8 -0.8Z"/></clipPath>
+    <linearGradient id="volumeFloppy-grad-shutter" x1="0" y1="0" x2="0.85" y2="1">
       <stop offset="0" stop-color="#7f848f"/>
       <stop offset="1" stop-color="#3c4047"/>
     </linearGradient>
-    <clipPath id="clip-notch"><path d="M17 4.4h3.2a0.6 0.6 0 0 1 0.6 0.6v6.2a0.6 0.6 0 0 1 -0.6 0.6h-3.2a0.6 0.6 0 0 1 -0.6 -0.6v-6.2a0.6 0.6 0 0 1 0.6 -0.6Z"/></clipPath>
-    <linearGradient id="grad-notch" x1="0" y1="0" x2="0.85" y2="1">
+    <clipPath id="volumeFloppy-clip-notch"><path d="M17 4.4h3.2a0.6 0.6 0 0 1 0.6 0.6v6.2a0.6 0.6 0 0 1 -0.6 0.6h-3.2a0.6 0.6 0 0 1 -0.6 -0.6v-6.2a0.6 0.6 0 0 1 0.6 -0.6Z"/></clipPath>
+    <linearGradient id="volumeFloppy-grad-notch" x1="0" y1="0" x2="0.85" y2="1">
       <stop offset="0" stop-color="#a6abb4"/>
       <stop offset="1" stop-color="#676a70"/>
     </linearGradient>
-    <clipPath id="clip-label"><path d="M8 16h16a1 1 0 0 1 1 1v8a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1v-8a1 1 0 0 1 1 -1Z"/></clipPath>
-    <linearGradient id="grad-label" x1="0" y1="0" x2="0.85" y2="1">
+    <clipPath id="volumeFloppy-clip-label"><path d="M8 16h16a1 1 0 0 1 1 1v8a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1v-8a1 1 0 0 1 1 -1Z"/></clipPath>
+    <linearGradient id="volumeFloppy-grad-label" x1="0" y1="0" x2="0.85" y2="1">
       <stop offset="0" stop-color="#f6f7f8"/>
       <stop offset="1" stop-color="#e0e3e7"/>
     </linearGradient>
-    <clipPath id="clip-silhouette"><path d="M5 3h22a2 2 0 0 1 2 2v22a2 2 0 0 1 -2 2h-22a2 2 0 0 1 -2 -2v-22a2 2 0 0 1 2 -2Z"/></clipPath>
-    <linearGradient id="grad-key" x1="0" y1="0" x2="0.9" y2="1">
+    <clipPath id="volumeFloppy-clip-silhouette"><path d="M5 3h22a2 2 0 0 1 2 2v22a2 2 0 0 1 -2 2h-22a2 2 0 0 1 -2 -2v-22a2 2 0 0 1 2 -2Z"/></clipPath>
+    <linearGradient id="volumeFloppy-grad-key" x1="0" y1="0" x2="0.9" y2="1">
       <stop offset="0" stop-color="#ffffff" stop-opacity="0.62"/>
       <stop offset="0.3" stop-color="#ffffff" stop-opacity="0.2"/>
       <stop offset="0.6" stop-color="#ffffff" stop-opacity="0"/>
     </linearGradient>
   </defs>
   <g id="volumeFloppy">
-    <g id="body-platinum-top" clip-path="url(#clip-body)"><title>body · platinum/top</title><path d="M5 3h22a2 2 0 0 1 2 2v22a2 2 0 0 1 -2 2h-22a2 2 0 0 1 -2 -2v-22a2 2 0 0 1 2 -2Z" fill="url(#grad-body)"/><path d="M5 3h22a2 2 0 0 1 2 2v22a2 2 0 0 1 -2 2h-22a2 2 0 0 1 -2 -2v-22a2 2 0 0 1 2 -2Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M5 3h22a2 2 0 0 1 2 2v22a2 2 0 0 1 -2 2h-22a2 2 0 0 1 -2 -2v-22a2 2 0 0 1 2 -2Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
-    <g id="shutter-graphite-top" clip-path="url(#clip-shutter)"><title>shutter · graphite/top</title><path d="M10.8 3.6h10.4a0.8 0.8 0 0 1 0.8 0.8v7.4a0.8 0.8 0 0 1 -0.8 0.8h-10.4a0.8 0.8 0 0 1 -0.8 -0.8v-7.4a0.8 0.8 0 0 1 0.8 -0.8Z" fill="url(#grad-shutter)"/><path d="M10.8 3.6h10.4a0.8 0.8 0 0 1 0.8 0.8v7.4a0.8 0.8 0 0 1 -0.8 0.8h-10.4a0.8 0.8 0 0 1 -0.8 -0.8v-7.4a0.8 0.8 0 0 1 0.8 -0.8Z" fill="#ffffff" opacity="0.056"/><path d="M10.8 3.6h10.4a0.8 0.8 0 0 1 0.8 0.8v7.4a0.8 0.8 0 0 1 -0.8 0.8h-10.4a0.8 0.8 0 0 1 -0.8 -0.8v-7.4a0.8 0.8 0 0 1 0.8 -0.8Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M10.8 3.6h10.4a0.8 0.8 0 0 1 0.8 0.8v7.4a0.8 0.8 0 0 1 -0.8 0.8h-10.4a0.8 0.8 0 0 1 -0.8 -0.8v-7.4a0.8 0.8 0 0 1 0.8 -0.8Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
-    <g id="notch-platinum-under" clip-path="url(#clip-notch)"><title>notch · platinum/under</title><path d="M17 4.4h3.2a0.6 0.6 0 0 1 0.6 0.6v6.2a0.6 0.6 0 0 1 -0.6 0.6h-3.2a0.6 0.6 0 0 1 -0.6 -0.6v-6.2a0.6 0.6 0 0 1 0.6 -0.6Z" fill="url(#grad-notch)"/><path d="M17 4.4h3.2a0.6 0.6 0 0 1 0.6 0.6v6.2a0.6 0.6 0 0 1 -0.6 0.6h-3.2a0.6 0.6 0 0 1 -0.6 -0.6v-6.2a0.6 0.6 0 0 1 0.6 -0.6Z" fill="#000000" opacity="0.128"/><path d="M17 4.4h3.2a0.6 0.6 0 0 1 0.6 0.6v6.2a0.6 0.6 0 0 1 -0.6 0.6h-3.2a0.6 0.6 0 0 1 -0.6 -0.6v-6.2a0.6 0.6 0 0 1 0.6 -0.6Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(-0.8 -0.8)"/><path d="M17 4.4h3.2a0.6 0.6 0 0 1 0.6 0.6v6.2a0.6 0.6 0 0 1 -0.6 0.6h-3.2a0.6 0.6 0 0 1 -0.6 -0.6v-6.2a0.6 0.6 0 0 1 0.6 -0.6Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(0.8 0.8)"/></g>
-    <g id="label-paper-flat" clip-path="url(#clip-label)"><title>label · paper/flat</title><path d="M8 16h16a1 1 0 0 1 1 1v8a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1v-8a1 1 0 0 1 1 -1Z" fill="url(#grad-label)"/><path d="M8 16h16a1 1 0 0 1 1 1v8a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1v-8a1 1 0 0 1 1 -1Z" fill="#ffffff" opacity="0.080"/><path d="M8 16h16a1 1 0 0 1 1 1v8a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1v-8a1 1 0 0 1 1 -1Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M8 16h16a1 1 0 0 1 1 1v8a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1v-8a1 1 0 0 1 1 -1Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
+    <g id="body-platinum-top" clip-path="url(#volumeFloppy-clip-body)"><title>body · platinum/top</title><path d="M5 3h22a2 2 0 0 1 2 2v22a2 2 0 0 1 -2 2h-22a2 2 0 0 1 -2 -2v-22a2 2 0 0 1 2 -2Z" fill="url(#volumeFloppy-grad-body)"/><path d="M5 3h22a2 2 0 0 1 2 2v22a2 2 0 0 1 -2 2h-22a2 2 0 0 1 -2 -2v-22a2 2 0 0 1 2 -2Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M5 3h22a2 2 0 0 1 2 2v22a2 2 0 0 1 -2 2h-22a2 2 0 0 1 -2 -2v-22a2 2 0 0 1 2 -2Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
+    <g id="shutter-graphite-top" clip-path="url(#volumeFloppy-clip-shutter)"><title>shutter · graphite/top</title><path d="M10.8 3.6h10.4a0.8 0.8 0 0 1 0.8 0.8v7.4a0.8 0.8 0 0 1 -0.8 0.8h-10.4a0.8 0.8 0 0 1 -0.8 -0.8v-7.4a0.8 0.8 0 0 1 0.8 -0.8Z" fill="url(#volumeFloppy-grad-shutter)"/><path d="M10.8 3.6h10.4a0.8 0.8 0 0 1 0.8 0.8v7.4a0.8 0.8 0 0 1 -0.8 0.8h-10.4a0.8 0.8 0 0 1 -0.8 -0.8v-7.4a0.8 0.8 0 0 1 0.8 -0.8Z" fill="#ffffff" opacity="0.056"/><path d="M10.8 3.6h10.4a0.8 0.8 0 0 1 0.8 0.8v7.4a0.8 0.8 0 0 1 -0.8 0.8h-10.4a0.8 0.8 0 0 1 -0.8 -0.8v-7.4a0.8 0.8 0 0 1 0.8 -0.8Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M10.8 3.6h10.4a0.8 0.8 0 0 1 0.8 0.8v7.4a0.8 0.8 0 0 1 -0.8 0.8h-10.4a0.8 0.8 0 0 1 -0.8 -0.8v-7.4a0.8 0.8 0 0 1 0.8 -0.8Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
+    <g id="notch-platinum-under" clip-path="url(#volumeFloppy-clip-notch)"><title>notch · platinum/under</title><path d="M17 4.4h3.2a0.6 0.6 0 0 1 0.6 0.6v6.2a0.6 0.6 0 0 1 -0.6 0.6h-3.2a0.6 0.6 0 0 1 -0.6 -0.6v-6.2a0.6 0.6 0 0 1 0.6 -0.6Z" fill="url(#volumeFloppy-grad-notch)"/><path d="M17 4.4h3.2a0.6 0.6 0 0 1 0.6 0.6v6.2a0.6 0.6 0 0 1 -0.6 0.6h-3.2a0.6 0.6 0 0 1 -0.6 -0.6v-6.2a0.6 0.6 0 0 1 0.6 -0.6Z" fill="#000000" opacity="0.128"/><path d="M17 4.4h3.2a0.6 0.6 0 0 1 0.6 0.6v6.2a0.6 0.6 0 0 1 -0.6 0.6h-3.2a0.6 0.6 0 0 1 -0.6 -0.6v-6.2a0.6 0.6 0 0 1 0.6 -0.6Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(-0.8 -0.8)"/><path d="M17 4.4h3.2a0.6 0.6 0 0 1 0.6 0.6v6.2a0.6 0.6 0 0 1 -0.6 0.6h-3.2a0.6 0.6 0 0 1 -0.6 -0.6v-6.2a0.6 0.6 0 0 1 0.6 -0.6Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(0.8 0.8)"/></g>
+    <g id="label-paper-flat" clip-path="url(#volumeFloppy-clip-label)"><title>label · paper/flat</title><path d="M8 16h16a1 1 0 0 1 1 1v8a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1v-8a1 1 0 0 1 1 -1Z" fill="url(#volumeFloppy-grad-label)"/><path d="M8 16h16a1 1 0 0 1 1 1v8a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1v-8a1 1 0 0 1 1 -1Z" fill="#ffffff" opacity="0.080"/><path d="M8 16h16a1 1 0 0 1 1 1v8a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1v-8a1 1 0 0 1 1 -1Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M8 16h16a1 1 0 0 1 1 1v8a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1v-8a1 1 0 0 1 1 -1Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
     <g id="lines-edge-hairline"><title>lines · edge/hairline</title><path d="M9.5 19h13M9.5 22h9" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="1" stroke-linecap="round" transform="translate(0 0.85)"/><path d="M9.5 19h13M9.5 22h9" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1" stroke-linecap="round"/></g>
-    <g id="key-sheen-color" clip-path="url(#clip-silhouette)" opacity="0.55" style="mix-blend-mode:screen"><title>key · sheen/color</title><path d="M5 3h22a2 2 0 0 1 2 2v22a2 2 0 0 1 -2 2h-22a2 2 0 0 1 -2 -2v-22a2 2 0 0 1 2 -2Z" fill="url(#grad-key)"/></g>
+    <g id="key-sheen-color" clip-path="url(#volumeFloppy-clip-silhouette)" opacity="0.55" style="mix-blend-mode:screen"><title>key · sheen/color</title><path d="M5 3h22a2 2 0 0 1 2 2v22a2 2 0 0 1 -2 2h-22a2 2 0 0 1 -2 -2v-22a2 2 0 0 1 2 -2Z" fill="url(#volumeFloppy-grad-key)"/></g>
     <path id="keyline-edge-hairline" d="M5 3h22a2 2 0 0 1 2 2v22a2 2 0 0 1 -2 2h-22a2 2 0 0 1 -2 -2v-22a2 2 0 0 1 2 -2Z" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1"/>
   </g>
 </svg>

@@ -1,28 +1,28 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="128" height="128">
   <title>folderOpen</title>
   <defs>
-    <clipPath id="clip-back"><path d="M2 9a2.5 2.5 0 0 1 2.5-2.5h8.2l3 3H26a2.5 2.5 0 0 1 2.5 2.5v3.5H8.5L4 26.9H4.5A2.5 2.5 0 0 1 2 24.4Z"/></clipPath>
-    <linearGradient id="grad-back" x1="0" y1="0" x2="0.85" y2="1">
+    <clipPath id="folderOpen-clip-back"><path d="M2 9a2.5 2.5 0 0 1 2.5-2.5h8.2l3 3H26a2.5 2.5 0 0 1 2.5 2.5v3.5H8.5L4 26.9H4.5A2.5 2.5 0 0 1 2 24.4Z"/></clipPath>
+    <linearGradient id="folderOpen-grad-back" x1="0" y1="0" x2="0.85" y2="1">
       <stop offset="0" stop-color="#b7c8dc"/>
       <stop offset="1" stop-color="#8195b1"/>
     </linearGradient>
-    <clipPath id="clip-front"><path d="M9.4 14.6h21.1a1.4 1.4 0 0 1 1.32 1.86l-3.4 9.6A2.5 2.5 0 0 1 26.05 27.7H3.2a1.4 1.4 0 0 1-1.32-1.86l3.4-9.6a2.5 2.5 0 0 1 2.36-1.66Z"/></clipPath>
-    <linearGradient id="grad-front" x1="0" y1="0" x2="0.85" y2="1">
+    <clipPath id="folderOpen-clip-front"><path d="M9.4 14.6h21.1a1.4 1.4 0 0 1 1.32 1.86l-3.4 9.6A2.5 2.5 0 0 1 26.05 27.7H3.2a1.4 1.4 0 0 1-1.32-1.86l3.4-9.6a2.5 2.5 0 0 1 2.36-1.66Z"/></clipPath>
+    <linearGradient id="folderOpen-grad-front" x1="0" y1="0" x2="0.85" y2="1">
       <stop offset="0" stop-color="#9aadc6"/>
       <stop offset="1" stop-color="#62738c"/>
     </linearGradient>
-    <clipPath id="clip-silhouette"><path d="M2 9a2.5 2.5 0 0 1 2.5-2.5h8.2l3 3H26a2.5 2.5 0 0 1 2.5 2.5v3.5H8.5L4 26.9H4.5A2.5 2.5 0 0 1 2 24.4Z"/></clipPath>
-    <linearGradient id="grad-key" x1="0" y1="0" x2="0.9" y2="1">
+    <clipPath id="folderOpen-clip-silhouette"><path d="M2 9a2.5 2.5 0 0 1 2.5-2.5h8.2l3 3H26a2.5 2.5 0 0 1 2.5 2.5v3.5H8.5L4 26.9H4.5A2.5 2.5 0 0 1 2 24.4Z"/></clipPath>
+    <linearGradient id="folderOpen-grad-key" x1="0" y1="0" x2="0.9" y2="1">
       <stop offset="0" stop-color="#ffffff" stop-opacity="0.62"/>
       <stop offset="0.3" stop-color="#ffffff" stop-opacity="0.2"/>
       <stop offset="0.6" stop-color="#ffffff" stop-opacity="0"/>
     </linearGradient>
   </defs>
   <g id="folderOpen">
-    <g id="back-folder-top" clip-path="url(#clip-back)"><title>back · folder/top</title><path d="M2 9a2.5 2.5 0 0 1 2.5-2.5h8.2l3 3H26a2.5 2.5 0 0 1 2.5 2.5v3.5H8.5L4 26.9H4.5A2.5 2.5 0 0 1 2 24.4Z" fill="url(#grad-back)"/><path d="M2 9a2.5 2.5 0 0 1 2.5-2.5h8.2l3 3H26a2.5 2.5 0 0 1 2.5 2.5v3.5H8.5L4 26.9H4.5A2.5 2.5 0 0 1 2 24.4Z" fill="#000000" opacity="0.064"/><path d="M2 9a2.5 2.5 0 0 1 2.5-2.5h8.2l3 3H26a2.5 2.5 0 0 1 2.5 2.5v3.5H8.5L4 26.9H4.5A2.5 2.5 0 0 1 2 24.4Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M2 9a2.5 2.5 0 0 1 2.5-2.5h8.2l3 3H26a2.5 2.5 0 0 1 2.5 2.5v3.5H8.5L4 26.9H4.5A2.5 2.5 0 0 1 2 24.4Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
-    <g id="front-folder-front" clip-path="url(#clip-front)"><title>front · folder/front</title><path d="M9.4 14.6h21.1a1.4 1.4 0 0 1 1.32 1.86l-3.4 9.6A2.5 2.5 0 0 1 26.05 27.7H3.2a1.4 1.4 0 0 1-1.32-1.86l3.4-9.6a2.5 2.5 0 0 1 2.36-1.66Z" fill="url(#grad-front)"/><path d="M9.4 14.6h21.1a1.4 1.4 0 0 1 1.32 1.86l-3.4 9.6A2.5 2.5 0 0 1 26.05 27.7H3.2a1.4 1.4 0 0 1-1.32-1.86l3.4-9.6a2.5 2.5 0 0 1 2.36-1.66Z" fill="#ffffff" opacity="0.080"/><path d="M9.4 14.6h21.1a1.4 1.4 0 0 1 1.32 1.86l-3.4 9.6A2.5 2.5 0 0 1 26.05 27.7H3.2a1.4 1.4 0 0 1-1.32-1.86l3.4-9.6a2.5 2.5 0 0 1 2.36-1.66Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M9.4 14.6h21.1a1.4 1.4 0 0 1 1.32 1.86l-3.4 9.6A2.5 2.5 0 0 1 26.05 27.7H3.2a1.4 1.4 0 0 1-1.32-1.86l3.4-9.6a2.5 2.5 0 0 1 2.36-1.66Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
+    <g id="back-folder-top" clip-path="url(#folderOpen-clip-back)"><title>back · folder/top</title><path d="M2 9a2.5 2.5 0 0 1 2.5-2.5h8.2l3 3H26a2.5 2.5 0 0 1 2.5 2.5v3.5H8.5L4 26.9H4.5A2.5 2.5 0 0 1 2 24.4Z" fill="url(#folderOpen-grad-back)"/><path d="M2 9a2.5 2.5 0 0 1 2.5-2.5h8.2l3 3H26a2.5 2.5 0 0 1 2.5 2.5v3.5H8.5L4 26.9H4.5A2.5 2.5 0 0 1 2 24.4Z" fill="#000000" opacity="0.064"/><path d="M2 9a2.5 2.5 0 0 1 2.5-2.5h8.2l3 3H26a2.5 2.5 0 0 1 2.5 2.5v3.5H8.5L4 26.9H4.5A2.5 2.5 0 0 1 2 24.4Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M2 9a2.5 2.5 0 0 1 2.5-2.5h8.2l3 3H26a2.5 2.5 0 0 1 2.5 2.5v3.5H8.5L4 26.9H4.5A2.5 2.5 0 0 1 2 24.4Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
+    <g id="front-folder-front" clip-path="url(#folderOpen-clip-front)"><title>front · folder/front</title><path d="M9.4 14.6h21.1a1.4 1.4 0 0 1 1.32 1.86l-3.4 9.6A2.5 2.5 0 0 1 26.05 27.7H3.2a1.4 1.4 0 0 1-1.32-1.86l3.4-9.6a2.5 2.5 0 0 1 2.36-1.66Z" fill="url(#folderOpen-grad-front)"/><path d="M9.4 14.6h21.1a1.4 1.4 0 0 1 1.32 1.86l-3.4 9.6A2.5 2.5 0 0 1 26.05 27.7H3.2a1.4 1.4 0 0 1-1.32-1.86l3.4-9.6a2.5 2.5 0 0 1 2.36-1.66Z" fill="#ffffff" opacity="0.080"/><path d="M9.4 14.6h21.1a1.4 1.4 0 0 1 1.32 1.86l-3.4 9.6A2.5 2.5 0 0 1 26.05 27.7H3.2a1.4 1.4 0 0 1-1.32-1.86l3.4-9.6a2.5 2.5 0 0 1 2.36-1.66Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M9.4 14.6h21.1a1.4 1.4 0 0 1 1.32 1.86l-3.4 9.6A2.5 2.5 0 0 1 26.05 27.7H3.2a1.4 1.4 0 0 1-1.32-1.86l3.4-9.6a2.5 2.5 0 0 1 2.36-1.66Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
     <g id="seam-edge-hairline"><title>seam · edge/hairline</title><path d="M8.9 15.4h21.4" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="1" stroke-linecap="round" transform="translate(0 0.85)"/><path d="M8.9 15.4h21.4" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1" stroke-linecap="round"/></g>
-    <g id="key-sheen-color" clip-path="url(#clip-silhouette)" opacity="0.3" style="mix-blend-mode:screen"><title>key · sheen/color</title><path d="M2 9a2.5 2.5 0 0 1 2.5-2.5h8.2l3 3H26a2.5 2.5 0 0 1 2.5 2.5v3.5H8.5L4 26.9H4.5A2.5 2.5 0 0 1 2 24.4Z" fill="url(#grad-key)"/></g>
+    <g id="key-sheen-color" clip-path="url(#folderOpen-clip-silhouette)" opacity="0.3" style="mix-blend-mode:screen"><title>key · sheen/color</title><path d="M2 9a2.5 2.5 0 0 1 2.5-2.5h8.2l3 3H26a2.5 2.5 0 0 1 2.5 2.5v3.5H8.5L4 26.9H4.5A2.5 2.5 0 0 1 2 24.4Z" fill="url(#folderOpen-grad-key)"/></g>
     <path id="keyline-edge-hairline" d="M2 9a2.5 2.5 0 0 1 2.5-2.5h8.2l3 3H26a2.5 2.5 0 0 1 2.5 2.5v3.5H8.5L4 26.9H4.5A2.5 2.5 0 0 1 2 24.4Z" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1"/>
   </g>
 </svg>

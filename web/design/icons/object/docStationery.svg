@@ -1,34 +1,34 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="128" height="128">
   <title>docStationery</title>
   <defs>
-    <clipPath id="clip-under"><path d="M9.5 6.5a1.5 1.5 0 0 1 1.5-1.5h11L28.5 12V29a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 9.5 29Z"/></clipPath>
-    <linearGradient id="grad-under" x1="0" y1="0" x2="0.85" y2="1">
+    <clipPath id="docStationery-clip-under"><path d="M9.5 6.5a1.5 1.5 0 0 1 1.5-1.5h11L28.5 12V29a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 9.5 29Z"/></clipPath>
+    <linearGradient id="docStationery-grad-under" x1="0" y1="0" x2="0.85" y2="1">
       <stop offset="0" stop-color="#d0d3d9"/>
       <stop offset="1" stop-color="#818387"/>
     </linearGradient>
-    <clipPath id="clip-sheet"><path d="M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z"/></clipPath>
-    <linearGradient id="grad-sheet" x1="0" y1="0" x2="0.85" y2="1">
+    <clipPath id="docStationery-clip-sheet"><path d="M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z"/></clipPath>
+    <linearGradient id="docStationery-grad-sheet" x1="0" y1="0" x2="0.85" y2="1">
       <stop offset="0" stop-color="#f6f7f8"/>
       <stop offset="1" stop-color="#e0e3e7"/>
     </linearGradient>
-    <clipPath id="clip-fold"><path d="M19.5 2.5 26 9.5h-5a1.5 1.5 0 0 1-1.5-1.5Z"/></clipPath>
-    <linearGradient id="grad-fold" x1="0" y1="0" x2="0.85" y2="1">
+    <clipPath id="docStationery-clip-fold"><path d="M19.5 2.5 26 9.5h-5a1.5 1.5 0 0 1-1.5-1.5Z"/></clipPath>
+    <linearGradient id="docStationery-grad-fold" x1="0" y1="0" x2="0.85" y2="1">
       <stop offset="0" stop-color="#d0d3d9"/>
       <stop offset="1" stop-color="#818387"/>
     </linearGradient>
-    <clipPath id="clip-silhouette"><path d="M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z"/></clipPath>
-    <linearGradient id="grad-key" x1="0" y1="0" x2="0.9" y2="1">
+    <clipPath id="docStationery-clip-silhouette"><path d="M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z"/></clipPath>
+    <linearGradient id="docStationery-grad-key" x1="0" y1="0" x2="0.9" y2="1">
       <stop offset="0" stop-color="#ffffff" stop-opacity="0.62"/>
       <stop offset="0.3" stop-color="#ffffff" stop-opacity="0.2"/>
       <stop offset="0.6" stop-color="#ffffff" stop-opacity="0"/>
     </linearGradient>
   </defs>
   <g id="docStationery">
-    <g id="under-paper-under" clip-path="url(#clip-under)"><title>under · paper/under</title><path d="M9.5 6.5a1.5 1.5 0 0 1 1.5-1.5h11L28.5 12V29a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 9.5 29Z" fill="url(#grad-under)"/><path d="M9.5 6.5a1.5 1.5 0 0 1 1.5-1.5h11L28.5 12V29a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 9.5 29Z" fill="#000000" opacity="0.056"/></g>
-    <g id="sheet-paper-flat" clip-path="url(#clip-sheet)"><title>sheet · paper/flat</title><path d="M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z" fill="url(#grad-sheet)"/><path d="M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z" fill="#ffffff" opacity="0.016"/><path d="M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
-    <g id="fold-paper-under" clip-path="url(#clip-fold)"><title>fold · paper/under</title><path d="M19.5 2.5 26 9.5h-5a1.5 1.5 0 0 1-1.5-1.5Z" fill="url(#grad-fold)"/><path d="M19.5 2.5 26 9.5h-5a1.5 1.5 0 0 1-1.5-1.5Z" fill="#000000" opacity="0.080"/></g>
+    <g id="under-paper-under" clip-path="url(#docStationery-clip-under)"><title>under · paper/under</title><path d="M9.5 6.5a1.5 1.5 0 0 1 1.5-1.5h11L28.5 12V29a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 9.5 29Z" fill="url(#docStationery-grad-under)"/><path d="M9.5 6.5a1.5 1.5 0 0 1 1.5-1.5h11L28.5 12V29a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 9.5 29Z" fill="#000000" opacity="0.056"/></g>
+    <g id="sheet-paper-flat" clip-path="url(#docStationery-clip-sheet)"><title>sheet · paper/flat</title><path d="M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z" fill="url(#docStationery-grad-sheet)"/><path d="M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z" fill="#ffffff" opacity="0.016"/><path d="M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
+    <g id="fold-paper-under" clip-path="url(#docStationery-clip-fold)"><title>fold · paper/under</title><path d="M19.5 2.5 26 9.5h-5a1.5 1.5 0 0 1-1.5-1.5Z" fill="url(#docStationery-grad-fold)"/><path d="M19.5 2.5 26 9.5h-5a1.5 1.5 0 0 1-1.5-1.5Z" fill="#000000" opacity="0.080"/></g>
     <g id="mark-edge-hairline"><title>mark · edge/hairline</title><path d="M16.5 16.8v5.6M13.7 19.6h5.6" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="1" stroke-linecap="round" transform="translate(0 0.85)"/><path d="M16.5 16.8v5.6M13.7 19.6h5.6" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1" stroke-linecap="round"/></g>
-    <g id="key-sheen-color" clip-path="url(#clip-silhouette)" opacity="0.2" style="mix-blend-mode:screen"><title>key · sheen/color</title><path d="M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z" fill="url(#grad-key)"/></g>
+    <g id="key-sheen-color" clip-path="url(#docStationery-clip-silhouette)" opacity="0.2" style="mix-blend-mode:screen"><title>key · sheen/color</title><path d="M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z" fill="url(#docStationery-grad-key)"/></g>
     <path id="keyline-edge-hairline" d="M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1"/>
   </g>
 </svg>

@@ -1,23 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="128" height="128">
   <title>netGlobe</title>
   <defs>
-    <clipPath id="clip-sphere"><path d="M2.5 16a13.5 13.5 0 1 0 27 0a13.5 13.5 0 1 0 -27 0Z"/></clipPath>
-    <linearGradient id="grad-sphere" x1="0" y1="0" x2="0.85" y2="1">
+    <clipPath id="netGlobe-clip-sphere"><path d="M2.5 16a13.5 13.5 0 1 0 27 0a13.5 13.5 0 1 0 -27 0Z"/></clipPath>
+    <linearGradient id="netGlobe-grad-sphere" x1="0" y1="0" x2="0.85" y2="1">
       <stop offset="0" stop-color="#deeaf8"/>
       <stop offset="1" stop-color="#94b0d2"/>
     </linearGradient>
-    <clipPath id="clip-silhouette"><path d="M2.5 16a13.5 13.5 0 1 0 27 0a13.5 13.5 0 1 0 -27 0Z"/></clipPath>
-    <linearGradient id="grad-key" x1="0" y1="0" x2="0.9" y2="1">
+    <clipPath id="netGlobe-clip-silhouette"><path d="M2.5 16a13.5 13.5 0 1 0 27 0a13.5 13.5 0 1 0 -27 0Z"/></clipPath>
+    <linearGradient id="netGlobe-grad-key" x1="0" y1="0" x2="0.9" y2="1">
       <stop offset="0" stop-color="#ffffff" stop-opacity="0.62"/>
       <stop offset="0.3" stop-color="#ffffff" stop-opacity="0.2"/>
       <stop offset="0.6" stop-color="#ffffff" stop-opacity="0"/>
     </linearGradient>
   </defs>
   <g id="netGlobe">
-    <g id="sphere-glass-top" clip-path="url(#clip-sphere)"><title>sphere · glass/top</title><path d="M2.5 16a13.5 13.5 0 1 0 27 0a13.5 13.5 0 1 0 -27 0Z" fill="url(#grad-sphere)"/><path d="M2.5 16a13.5 13.5 0 1 0 27 0a13.5 13.5 0 1 0 -27 0Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M2.5 16a13.5 13.5 0 1 0 27 0a13.5 13.5 0 1 0 -27 0Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
+    <g id="sphere-glass-top" clip-path="url(#netGlobe-clip-sphere)"><title>sphere · glass/top</title><path d="M2.5 16a13.5 13.5 0 1 0 27 0a13.5 13.5 0 1 0 -27 0Z" fill="url(#netGlobe-grad-sphere)"/><path d="M2.5 16a13.5 13.5 0 1 0 27 0a13.5 13.5 0 1 0 -27 0Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M2.5 16a13.5 13.5 0 1 0 27 0a13.5 13.5 0 1 0 -27 0Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
     <g id="meridian-edge-hairline"><title>meridian · edge/hairline</title><path d="M16 2.6c4 3.6 6.2 8.2 6.2 13.4S20 25.8 16 29.4c-4-3.6-6.2-8.2-6.2-13.4S12 6.2 16 2.6Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="1" stroke-linecap="round" transform="translate(0 0.85)"/><path d="M16 2.6c4 3.6 6.2 8.2 6.2 13.4S20 25.8 16 29.4c-4-3.6-6.2-8.2-6.2-13.4S12 6.2 16 2.6Z" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1" stroke-linecap="round"/></g>
     <g id="equator-edge-hairline"><title>equator · edge/hairline</title><path d="M2.8 16h26.4" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="1" stroke-linecap="round" transform="translate(0 0.85)"/><path d="M2.8 16h26.4" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1" stroke-linecap="round"/></g>
-    <g id="key-sheen-color" clip-path="url(#clip-silhouette)" opacity="1" style="mix-blend-mode:screen"><title>key · sheen/color</title><path d="M2.5 16a13.5 13.5 0 1 0 27 0a13.5 13.5 0 1 0 -27 0Z" fill="url(#grad-key)"/></g>
+    <g id="key-sheen-color" clip-path="url(#netGlobe-clip-silhouette)" opacity="1" style="mix-blend-mode:screen"><title>key · sheen/color</title><path d="M2.5 16a13.5 13.5 0 1 0 27 0a13.5 13.5 0 1 0 -27 0Z" fill="url(#netGlobe-grad-key)"/></g>
     <path id="keyline-edge-hairline" d="M2.5 16a13.5 13.5 0 1 0 27 0a13.5 13.5 0 1 0 -27 0Z" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1"/>
   </g>
 </svg>

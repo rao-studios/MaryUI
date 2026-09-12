@@ -42,4 +42,18 @@ describe('the .svg exporter', () => {
   it('bakes folders to the shipped appearance', () => {
     expect(exporter.BAKED.folder).toBe(tokens.object.folderAppearance)
   })
+
+  it('scopes every referenced id to its object, so a page of them can share one document', () => {
+    /* The Sketch contact sheet inlines all of them; an unscoped id resolves to the first object that declared it. */
+    const seen = new Map<string, string>()
+    for (const name of exporter.objectNames as string[]) {
+      const svg: string = exporter.objectSvg(name, exporter.objects[name])
+      const defs = [...svg.matchAll(/<(?:clipPath|linearGradient)\s+id="([^"]+)"/g)].map((m) => m[1])
+      for (const [, ref] of svg.matchAll(/url\(#([^)]+)\)/g)) expect(defs, `${name} → #${ref}`).toContain(ref)
+      for (const id of defs) {
+        expect(seen.get(id), `#${id} in ${name}`).toBeUndefined()
+        seen.set(id, name)
+      }
+    }
+  })
 })
