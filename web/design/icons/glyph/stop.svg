@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="96" height="96">
+  <title>stop</title>
+  <g id="stop" fill="none" stroke="#4a4e57" stroke-width="1.7"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path id="stop-0" d="M8.5 3h7L21 8.5v7L15.5 21h-7L3 15.5v-7z"/>
+    <path id="stop-1" d="M12 8v5"/>
+    <path id="stop-2" d="M12 16h.01"/>
+  </g>
+</svg>

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="96" height="96">
+  <title>previous</title>
+  <g id="previous" fill="none" stroke="#4a4e57" stroke-width="1.7"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path id="previous-0" d="M17 5l-9 7 9 7z"/>
+    <path id="previous-1" d="M6 5v14"/>
+  </g>
+</svg>

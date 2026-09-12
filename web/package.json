@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Liquid Platinum — Rao's desktop-first design system and simulated desktop.",
+  "description": "Liquid Platinum \u2014 Rao's desktop-first design system and simulated desktop.",
   "license": "Apache-2.0",
   "scripts": {
     "dev": "node scripts/build-tokens.mjs && vite",
@@ -13,7 +13,8 @@
     "tokens": "node scripts/build-tokens.mjs",
     "sketch": "node --disable-warning=ExperimentalWarning scripts/build-sketch.mjs",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "icons": "node scripts/build-icon-svgs.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",

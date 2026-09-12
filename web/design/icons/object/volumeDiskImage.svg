@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="128" height="128">
+  <title>volumeDiskImage</title>
+  <defs>
+    <clipPath id="clip-body"><path d="M3 9h26a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-26a2 2 0 0 1 -2 -2v-10a2 2 0 0 1 2 -2Z"/></clipPath>
+    <linearGradient id="grad-body" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#deeaf8"/>
+      <stop offset="1" stop-color="#94b0d2"/>
+    </linearGradient>
+    <clipPath id="clip-led"><path d="M24.8 16a1.2 1.2 0 1 0 2.4 0a1.2 1.2 0 1 0 -2.4 0Z"/></clipPath>
+    <clipPath id="clip-silhouette"><path d="M3 9h26a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-26a2 2 0 0 1 -2 -2v-10a2 2 0 0 1 2 -2Z"/></clipPath>
+    <linearGradient id="grad-key" x1="0" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.62"/>
+      <stop offset="0.3" stop-color="#ffffff" stop-opacity="0.2"/>
+      <stop offset="0.6" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <g id="volumeDiskImage">
+    <g id="body-glass-top" clip-path="url(#clip-body)"><title>body · glass/top</title><path d="M3 9h26a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-26a2 2 0 0 1 -2 -2v-10a2 2 0 0 1 2 -2Z" fill="url(#grad-body)"/><path d="M3 9h26a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-26a2 2 0 0 1 -2 -2v-10a2 2 0 0 1 2 -2Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M3 9h26a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-26a2 2 0 0 1 -2 -2v-10a2 2 0 0 1 2 -2Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
+    <g id="seam-edge-hairline"><title>seam · edge/hairline</title><path d="M4 16h13" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="1" stroke-linecap="round" transform="translate(0 0.85)"/><path d="M4 16h13" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1" stroke-linecap="round"/></g>
+    <g id="led-accent-blue-base" clip-path="url(#clip-led)"><title>led · accent.blue.base</title><path d="M24.8 16a1.2 1.2 0 1 0 2.4 0a1.2 1.2 0 1 0 -2.4 0Z" fill="#3b7dd8"/></g>
+    <g id="key-sheen-color" clip-path="url(#clip-silhouette)" opacity="1" style="mix-blend-mode:screen"><title>key · sheen/color</title><path d="M3 9h26a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-26a2 2 0 0 1 -2 -2v-10a2 2 0 0 1 2 -2Z" fill="url(#grad-key)"/></g>
+    <path id="keyline-edge-hairline" d="M3 9h26a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-26a2 2 0 0 1 -2 -2v-10a2 2 0 0 1 2 -2Z" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1"/>
+  </g>
+</svg>

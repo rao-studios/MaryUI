@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="96" height="96">
+  <title>listNumber</title>
+  <g id="listNumber" fill="none" stroke="#4a4e57" stroke-width="1.7"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path id="listNumber-0" d="M4 6h1.5v4M4 15h2l-2 3h2"/>
+    <path id="listNumber-1" d="M9 8h11M9 17h11"/>
+  </g>
+</svg>

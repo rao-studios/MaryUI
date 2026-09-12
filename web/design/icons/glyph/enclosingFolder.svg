@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="96" height="96">
+  <title>enclosingFolder</title>
+  <g id="enclosingFolder" fill="none" stroke="#4a4e57" stroke-width="1.7"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path id="enclosingFolder-0" d="M12 19V6"/>
+    <path id="enclosingFolder-1" d="M6 11l6-5 6 5"/>
+    <path id="enclosingFolder-2" d="M4 21h16"/>
+  </g>
+</svg>

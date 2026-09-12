@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="96" height="96">
+  <title>unlock</title>
+  <g id="unlock" fill="none" stroke="#4a4e57" stroke-width="1.7"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path id="unlock-0" d="M5 11h14v10H5z"/>
+    <path id="unlock-1" d="M8 11V7a4 4 0 0 1 7.5-2"/>
+  </g>
+</svg>

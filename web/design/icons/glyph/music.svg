@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="96" height="96">
+  <title>music</title>
+  <g id="music" fill="none" stroke="#4a4e57" stroke-width="1.7"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path id="music-0" d="M9 18V5l10-2v13"/>
+    <path id="music-1" d="M6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+    <path id="music-2" d="M16 19a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+  </g>
+</svg>

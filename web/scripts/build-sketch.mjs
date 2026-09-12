@@ -49,6 +49,8 @@ for (const t of tokens) {
 const col = (name) => S.color(val(name), swatches.get(name)?.do_objectID)
 const mix = (a, b, t) => ({ _class: 'color', alpha: a.alpha, red: a.red + (b.red - a.red) * t, green: a.green + (b.green - a.green) * t, blue: a.blue + (b.blue - a.blue) * t })
 
+import { GLYPH_VIEWBOX, VIEWBOX as OBJ_VIEWBOX, glyphSvg, glyphs, objectNames, objectSvg, objects } from './icon-svg-lib.mjs'
+
 // MARK: - Assets
 
 function chromePath() {
@@ -829,10 +831,108 @@ const desktopLayers = []
 }
 const desktopBoard = S.artboard('Desktop', f(0, 0, 1440, 900), desktopLayers, { background: col('platinum.6') })
 
+// MARK: - Icons
+
+const ICONS_REF = 'icons.png'
+const ICONS_W = 1440
+
+/**
+ * A contact sheet of every mark, rendered through the browser at 2x rather
+ * than reconstructed in Sketch shapes. That is deliberate: it captures the real
+ * overlay and screen blending the recipe depends on, which an SVG import into
+ * Sketch would not reproduce. The editable vectors live beside it as
+ * design/icons/*.svg — this artboard is the reference, not the source.
+ */
+function iconsSheetHtml(wallpaperDataUri) {
+  const cell = (svg, name, w, labels) =>
+    `<div style="width:${w}px;text-align:center">` +
+    `<div style="height:${w - 20}px;display:flex;align-items:center;justify-content:center">${svg}</div>` +
+    (labels ? `<div style="font:9px ui-monospace,Menlo,monospace;color:${val('ink.tertiary')};margin-top:4px;word-break:break-all">${name}</div>` : '') +
+    `</div>`
+
+  const sized = (svg, px) => svg.replace(/width="\d+" height="\d+"/, `width="${px}" height="${px}"`)
+  const objectCells = objectNames
+    .map((n) => cell(sized(objectSvg(n, objects[n]), 52), n, 88, true))
+    .join('')
+  const glyphCells = Object.entries(glyphs)
+    .map(([n, paths]) => cell(sized(glyphSvg(n, paths), 24), n, 74, true))
+    .join('')
+  const wallStrip = ['folder', 'appMusic', 'appCalendar', 'appCalculator', 'drive', 'trash', 'document', 'volumeOptical']
+    .map((n) => sized(objectSvg(n, objects[n]), 96))
+    .join('')
+
+  const head = (t) =>
+    `<div style="font:600 12px -apple-system,Helvetica,sans-serif;letter-spacing:.09em;text-transform:uppercase;color:${val('ink.tertiary')};margin:0 0 12px">${t}</div>`
+
+  return `<!doctype html><html><body style="margin:0;width:${ICONS_W}px;background:${val('surface.body')};font-family:-apple-system,Helvetica,sans-serif">
+    <div style="padding:28px 32px">
+      ${head(`Object tier &middot; ${objectNames.length} lit objects, ${OBJ_VIEWBOX} grid`)}
+      <div style="display:flex;flex-wrap:wrap;gap:16px 4px">${objectCells}</div>
+    </div>
+    <div style="padding:12px 32px 28px">
+      ${head('On the molten desk')}
+      <div style="display:flex;gap:26px;align-items:center;padding:24px 28px;border-radius:10px;${wallpaperDataUri ? `background-image:url('${wallpaperDataUri}');background-size:cover;background-position:center` : `background:${val('platinum.6')}`}">${wallStrip}</div>
+    </div>
+    <div style="padding:0 32px 32px">
+      ${head(`Glyph tier &middot; ${Object.keys(glyphs).length} control marks, ${GLYPH_VIEWBOX} grid, stroked`)}
+      <div style="display:flex;flex-wrap:wrap;gap:14px 4px">${glyphCells}</div>
+    </div>
+  </body></html>`
+}
+
+let iconsPng = null
+let iconsH = 1200
+{
+  const chrome = chromePath()
+  if (chrome) {
+    const wallpaperUri = wallpaperPng ? `data:image/png;base64,${wallpaperPng.toString('base64')}` : null
+    const html = iconsSheetHtml(wallpaperUri)
+    /* Measure first: the sheet's height follows however many marks there are. */
+    iconsH = Math.max(900, sheetHeight(html, chrome))
+    iconsPng = renderWithChrome(chrome, html, ICONS_W, iconsH, 2)
+  }
+}
+
+/**
+ * The sheet's height depends on how many marks there are, so measure rather
+ * than guess. Chrome writes display warnings to stderr and can exit non-zero
+ * even when --dump-dom succeeded, so this never fails the build: a bad read
+ * just falls back to a height with room to spare.
+ */
+function sheetHeight(html, chrome) {
+  const dir = mkdtempSync(join(tmpdir(), 'lp-iconsheet-'))
+  const file = join(dir, 'page.html')
+  writeFileSync(file, html + `<script>window.onload=()=>{document.title='H'+document.documentElement.scrollHeight}</script>`)
+  let out = ''
+  try {
+    out = execFileSync(
+      chrome,
+      ['--headless=new', '--disable-gpu', '--hide-scrollbars', `--window-size=${ICONS_W},400`, '--virtual-time-budget=4000', '--dump-dom', `file://${file}`],
+      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 60_000 },
+    )
+  } catch (err) {
+    /* Chrome reports a display failure and exits non-zero even when the dump
+     * succeeded, so the output on the error is still the page. */
+    out = typeof err?.stdout === 'string' ? err.stdout : ''
+  }
+  const m = /<title>H(\d+)<\/title>/.exec(out)
+  return m ? Number(m[1]) : 2200
+}
+
+const iconsLayers = []
+{
+  if (iconsPng) iconsLayers.push(S.bitmap('contact sheet', f(0, 0, ICONS_W, iconsH), ICONS_REF))
+  iconsLayers.push(label('note', f(32, iconsH - 30, 1200, 18),
+    'Reference render. The editable vectors are design/icons/*.svg — drag one in and Sketch converts it to paths.',
+    { size: 11, color: 'ink.tertiary', align: 0, emboss: false }))
+}
+const iconsBoard = S.artboard('Icons', f(0, 0, ICONS_W, iconsH), iconsLayers, { background: col('surface.body') })
+
 const boardsPage = S.page('Liquid Platinum', [
   Object.assign(desktopBoard, { frame: S.rect(0, 0, 1440, 900) }),
   Object.assign(componentsBoard, { frame: S.rect(1520, 0, 1440, componentsH) }),
   Object.assign(tokensBoard, { frame: S.rect(3040, 0, 1440, tokensH) }),
+  Object.assign(iconsBoard, { frame: S.rect(4560, 0, ICONS_W, iconsH) }),
 ])
 
 // MARK: - Write
@@ -847,7 +947,8 @@ const entries = [
   { name: `images/${BRUSH_REF}`, data: brushPng },
 ]
 if (wallpaperPng) entries.push({ name: `images/${WALLPAPER_REF}`, data: wallpaperPng })
+if (iconsPng) entries.push({ name: `images/${ICONS_REF}`, data: iconsPng })
 
 mkdirSync(dirname(OUT), { recursive: true })
 writeFileSync(OUT, S.zip(entries))
-console.log(`sketch: ${masters.length} symbols, ${swatches.size} color variables, brush ${BRUSH} → ${OUT.replace(repo + '/', '')}`)
+console.log(`sketch: ${masters.length} symbols, ${swatches.size} color variables, ${objectNames.length} objects + ${Object.keys(glyphs).length} glyphs, brush ${BRUSH} → ${OUT.replace(repo + '/', '')}`)

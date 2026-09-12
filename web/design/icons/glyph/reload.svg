@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="96" height="96">
+  <title>reload</title>
+  <g id="reload" fill="none" stroke="#4a4e57" stroke-width="1.7"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path id="reload-0" d="M20 12a8 8 0 1 1-2.6-5.9"/>
+    <path id="reload-1" d="M20 4v5h-5"/>
+  </g>
+</svg>

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="96" height="96">
+  <title>search</title>
+  <g id="search" fill="none" stroke="#4a4e57" stroke-width="1.7"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path id="search-0" d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14z"/>
+    <path id="search-1" d="M16 16l5 5"/>
+  </g>
+</svg>

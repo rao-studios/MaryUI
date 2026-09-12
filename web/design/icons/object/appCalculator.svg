@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="128" height="128">
+  <title>appCalculator</title>
+  <defs>
+    <clipPath id="clip-tile"><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z"/></clipPath>
+    <linearGradient id="grad-tile" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#7f848f"/>
+      <stop offset="1" stop-color="#3c4047"/>
+    </linearGradient>
+    <clipPath id="clip-screen"><path d="M7.2 6.4h17.6a1.6 1.6 0 0 1 1.6 1.6v4.4a1.6 1.6 0 0 1-1.6 1.6H7.2A1.6 1.6 0 0 1 5.6 12.4V8a1.6 1.6 0 0 1 1.6-1.6Z"/></clipPath>
+    <linearGradient id="grad-screen" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#292c32"/>
+      <stop offset="1" stop-color="#1a1b1f"/>
+    </linearGradient>
+    <clipPath id="clip-keys"><path d="M8.0 15.9h1.2a1.1 1.1 0 0 1 1.1 1.1v1.2a1.1 1.1 0 0 1 -1.1 1.1h-1.2a1.1 1.1 0 0 1 -1.1 -1.1v-1.2a1.1 1.1 0 0 1 1.1 -1.1Z M13.5 15.9h1.2a1.1 1.1 0 0 1 1.1 1.1v1.2a1.1 1.1 0 0 1 -1.1 1.1h-1.2a1.1 1.1 0 0 1 -1.1 -1.1v-1.2a1.1 1.1 0 0 1 1.1 -1.1Z M19.0 15.9h1.2a1.1 1.1 0 0 1 1.1 1.1v1.2a1.1 1.1 0 0 1 -1.1 1.1h-1.2a1.1 1.1 0 0 1 -1.1 -1.1v-1.2a1.1 1.1 0 0 1 1.1 -1.1Z M8.0 20.4h1.2a1.1 1.1 0 0 1 1.1 1.1v1.2a1.1 1.1 0 0 1 -1.1 1.1h-1.2a1.1 1.1 0 0 1 -1.1 -1.1v-1.2a1.1 1.1 0 0 1 1.1 -1.1Z M13.5 20.4h1.2a1.1 1.1 0 0 1 1.1 1.1v1.2a1.1 1.1 0 0 1 -1.1 1.1h-1.2a1.1 1.1 0 0 1 -1.1 -1.1v-1.2a1.1 1.1 0 0 1 1.1 -1.1Z M19.0 20.4h1.2a1.1 1.1 0 0 1 1.1 1.1v1.2a1.1 1.1 0 0 1 -1.1 1.1h-1.2a1.1 1.1 0 0 1 -1.1 -1.1v-1.2a1.1 1.1 0 0 1 1.1 -1.1Z M8.0 24.9h1.2a1.1 1.1 0 0 1 1.1 1.1v1.2a1.1 1.1 0 0 1 -1.1 1.1h-1.2a1.1 1.1 0 0 1 -1.1 -1.1v-1.2a1.1 1.1 0 0 1 1.1 -1.1Z M13.5 24.9h1.2a1.1 1.1 0 0 1 1.1 1.1v1.2a1.1 1.1 0 0 1 -1.1 1.1h-1.2a1.1 1.1 0 0 1 -1.1 -1.1v-1.2a1.1 1.1 0 0 1 1.1 -1.1Z M19.0 24.9h1.2a1.1 1.1 0 0 1 1.1 1.1v1.2a1.1 1.1 0 0 1 -1.1 1.1h-1.2a1.1 1.1 0 0 1 -1.1 -1.1v-1.2a1.1 1.1 0 0 1 1.1 -1.1Z"/></clipPath>
+    <clipPath id="clip-ops"><path d="M24.5 15.9h1.2a1.1 1.1 0 0 1 1.1 1.1v1.2a1.1 1.1 0 0 1 -1.1 1.1h-1.2a1.1 1.1 0 0 1 -1.1 -1.1v-1.2a1.1 1.1 0 0 1 1.1 -1.1Z M24.5 20.4h1.2a1.1 1.1 0 0 1 1.1 1.1v1.2a1.1 1.1 0 0 1 -1.1 1.1h-1.2a1.1 1.1 0 0 1 -1.1 -1.1v-1.2a1.1 1.1 0 0 1 1.1 -1.1Z M24.5 24.9h1.2a1.1 1.1 0 0 1 1.1 1.1v1.2a1.1 1.1 0 0 1 -1.1 1.1h-1.2a1.1 1.1 0 0 1 -1.1 -1.1v-1.2a1.1 1.1 0 0 1 1.1 -1.1Z"/></clipPath>
+    <clipPath id="clip-silhouette"><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z"/></clipPath>
+    <linearGradient id="grad-key" x1="0" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.62"/>
+      <stop offset="0.3" stop-color="#ffffff" stop-opacity="0.2"/>
+      <stop offset="0.6" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="grad-gloss" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.45"/>
+      <stop offset="0.42" stop-color="#ffffff" stop-opacity="0.16"/>
+      <stop offset="0.421" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="0.82" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.22"/>
+    </linearGradient>
+  </defs>
+  <g id="appCalculator">
+    <g id="tile-graphite-top" clip-path="url(#clip-tile)"><title>tile · graphite/top</title><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="url(#grad-tile)"/><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
+    <g id="screen-graphite-under" clip-path="url(#clip-screen)"><title>screen · graphite/under</title><path d="M7.2 6.4h17.6a1.6 1.6 0 0 1 1.6 1.6v4.4a1.6 1.6 0 0 1-1.6 1.6H7.2A1.6 1.6 0 0 1 5.6 12.4V8a1.6 1.6 0 0 1 1.6-1.6Z" fill="url(#grad-screen)"/><path d="M7.2 6.4h17.6a1.6 1.6 0 0 1 1.6 1.6v4.4a1.6 1.6 0 0 1-1.6 1.6H7.2A1.6 1.6 0 0 1 5.6 12.4V8a1.6 1.6 0 0 1 1.6-1.6Z" fill="#000000" opacity="0.136"/><path d="M7.2 6.4h17.6a1.6 1.6 0 0 1 1.6 1.6v4.4a1.6 1.6 0 0 1-1.6 1.6H7.2A1.6 1.6 0 0 1 5.6 12.4V8a1.6 1.6 0 0 1 1.6-1.6Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(-0.8 -0.8)"/><path d="M7.2 6.4h17.6a1.6 1.6 0 0 1 1.6 1.6v4.4a1.6 1.6 0 0 1-1.6 1.6H7.2A1.6 1.6 0 0 1 5.6 12.4V8a1.6 1.6 0 0 1 1.6-1.6Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(0.8 0.8)"/></g>
+    <g id="readout-traffic-zoom-light"><title>readout · traffic.zoom.light</title><path d="M15.6 10.2h8.4" fill="none" stroke="#bdf2b3" stroke-width="1.4" stroke-linecap="round"/></g>
+    <g id="keys-platinum-3" clip-path="url(#clip-keys)"><title>keys · platinum.3</title><path d="M8.0 15.9h1.2a1.1 1.1 0 0 1 1.1 1.1v1.2a1.1 1.1 0 0 1 -1.1 1.1h-1.2a1.1 1.1 0 0 1 -1.1 -1.1v-1.2a1.1 1.1 0 0 1 1.1 -1.1Z M13.5 15.9h1.2a1.1 1.1 0 0 1 1.1 1.1v1.2a1.1 1.1 0 0 1 -1.1 1.1h-1.2a1.1 1.1 0 0 1 -1.1 -1.1v-1.2a1.1 1.1 0 0 1 1.1 -1.1Z M19.0 15.9h1.2a1.1 1.1 0 0 1 1.1 1.1v1.2a1.1 1.1 0 0 1 -1.1 1.1h-1.2a1.1 1.1 0 0 1 -1.1 -1.1v-1.2a1.1 1.1 0 0 1 1.1 -1.1Z M8.0 20.4h1.2a1.1 1.1 0 0 1 1.1 1.1v1.2a1.1 1.1 0 0 1 -1.1 1.1h-1.2a1.1 1.1 0 0 1 -1.1 -1.1v-1.2a1.1 1.1 0 0 1 1.1 -1.1Z M13.5 20.4h1.2a1.1 1.1 0 0 1 1.1 1.1v1.2a1.1 1.1 0 0 1 -1.1 1.1h-1.2a1.1 1.1 0 0 1 -1.1 -1.1v-1.2a1.1 1.1 0 0 1 1.1 -1.1Z M19.0 20.4h1.2a1.1 1.1 0 0 1 1.1 1.1v1.2a1.1 1.1 0 0 1 -1.1 1.1h-1.2a1.1 1.1 0 0 1 -1.1 -1.1v-1.2a1.1 1.1 0 0 1 1.1 -1.1Z M8.0 24.9h1.2a1.1 1.1 0 0 1 1.1 1.1v1.2a1.1 1.1 0 0 1 -1.1 1.1h-1.2a1.1 1.1 0 0 1 -1.1 -1.1v-1.2a1.1 1.1 0 0 1 1.1 -1.1Z M13.5 24.9h1.2a1.1 1.1 0 0 1 1.1 1.1v1.2a1.1 1.1 0 0 1 -1.1 1.1h-1.2a1.1 1.1 0 0 1 -1.1 -1.1v-1.2a1.1 1.1 0 0 1 1.1 -1.1Z M19.0 24.9h1.2a1.1 1.1 0 0 1 1.1 1.1v1.2a1.1 1.1 0 0 1 -1.1 1.1h-1.2a1.1 1.1 0 0 1 -1.1 -1.1v-1.2a1.1 1.1 0 0 1 1.1 -1.1Z" fill="#d4d7dd"/></g>
+    <g id="ops-traffic-minimize-base" clip-path="url(#clip-ops)"><title>ops · traffic.minimize.base</title><path d="M24.5 15.9h1.2a1.1 1.1 0 0 1 1.1 1.1v1.2a1.1 1.1 0 0 1 -1.1 1.1h-1.2a1.1 1.1 0 0 1 -1.1 -1.1v-1.2a1.1 1.1 0 0 1 1.1 -1.1Z M24.5 20.4h1.2a1.1 1.1 0 0 1 1.1 1.1v1.2a1.1 1.1 0 0 1 -1.1 1.1h-1.2a1.1 1.1 0 0 1 -1.1 -1.1v-1.2a1.1 1.1 0 0 1 1.1 -1.1Z M24.5 24.9h1.2a1.1 1.1 0 0 1 1.1 1.1v1.2a1.1 1.1 0 0 1 -1.1 1.1h-1.2a1.1 1.1 0 0 1 -1.1 -1.1v-1.2a1.1 1.1 0 0 1 1.1 -1.1Z" fill="#f2bd4f"/></g>
+    <g id="key-sheen-color" clip-path="url(#clip-silhouette)" opacity="0.6" style="mix-blend-mode:screen"><title>key · sheen/color</title><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="url(#grad-key)"/></g>
+    <g id="gloss-sheen-color" clip-path="url(#clip-silhouette)" style="mix-blend-mode:screen"><title>gloss · sheen/color</title><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="url(#grad-gloss)"/></g>
+    <path id="keyline-edge-hairline" d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1"/>
+  </g>
+</svg>

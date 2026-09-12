@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="96" height="96">
+  <title>warning</title>
+  <g id="warning" fill="none" stroke="#4a4e57" stroke-width="1.7"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path id="warning-0" d="M12 4l9 16H3z"/>
+    <path id="warning-1" d="M12 10v5"/>
+    <path id="warning-2" d="M12 18h.01"/>
+  </g>
+</svg>

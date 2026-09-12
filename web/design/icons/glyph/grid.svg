@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="96" height="96">
+  <title>grid</title>
+  <g id="grid" fill="none" stroke="#4a4e57" stroke-width="1.7"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path id="grid-0" d="M4 4h6v6H4z"/>
+    <path id="grid-1" d="M14 4h6v6h-6z"/>
+    <path id="grid-2" d="M4 14h6v6H4z"/>
+    <path id="grid-3" d="M14 14h6v6h-6z"/>
+  </g>
+</svg>

@@ -39,19 +39,24 @@
  * data-folders re-roots the appearance for its own subtree — which is what lets
  * the Gallery show both at once. The desktop still sets it on <html>, where the
  * later rule wins on equal specificity.
+ *
+ * Bare :root carries SLATE, matching object.folder-appearance and the shipped
+ * setting. It used to carry manila, so a first load with nothing in
+ * localStorage painted warm folders and then flipped once React applied
+ * settings — the attribute is only present from the second load onward.
  */
 
 :root,
-[data-folders='manila'] {
-  --lp-object-folder-hi: var(--lp-object-material-manila-hi);
-  --lp-object-folder-mid: var(--lp-object-material-manila-mid);
-  --lp-object-folder-lo: var(--lp-object-material-manila-lo);
-}
-
 [data-folders='slate'] {
   --lp-object-folder-hi: var(--lp-object-material-slate-hi);
   --lp-object-folder-mid: var(--lp-object-material-slate-mid);
   --lp-object-folder-lo: var(--lp-object-material-slate-lo);
+}
+
+[data-folders='manila'] {
+  --lp-object-folder-hi: var(--lp-object-material-manila-hi);
+  --lp-object-folder-mid: var(--lp-object-material-manila-mid);
+  --lp-object-folder-lo: var(--lp-object-material-manila-lo);
 }
 
 /* MARK: - Motion defaults (the engine overrides these per window) */

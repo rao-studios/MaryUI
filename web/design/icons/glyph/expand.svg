@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="96" height="96">
+  <title>expand</title>
+  <g id="expand" fill="none" stroke="#4a4e57" stroke-width="1.7"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path id="expand-0" d="M4 10V4h6"/>
+    <path id="expand-1" d="M20 14v6h-6"/>
+    <path id="expand-2" d="M4 4l7 7"/>
+    <path id="expand-3" d="M20 20l-7-7"/>
+  </g>
+</svg>

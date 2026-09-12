@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="96" height="96">
+  <title>close</title>
+  <g id="close" fill="none" stroke="#4a4e57" stroke-width="1.7"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path id="close-0" d="M6 6l12 12"/>
+    <path id="close-1" d="M18 6L6 18"/>
+  </g>
+</svg>

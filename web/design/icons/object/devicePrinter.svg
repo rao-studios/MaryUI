@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="128" height="128">
+  <title>devicePrinter</title>
+  <defs>
+    <clipPath id="clip-sheet"><path d="M9.5 2.5h13a1 1 0 0 1 1 1v7a1 1 0 0 1 -1 1h-13a1 1 0 0 1 -1 -1v-7a1 1 0 0 1 1 -1Z"/></clipPath>
+    <linearGradient id="grad-sheet" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#f6f7f8"/>
+      <stop offset="1" stop-color="#e0e3e7"/>
+    </linearGradient>
+    <clipPath id="clip-body"><path d="M4.4 11h23.2a2.4 2.4 0 0 1 2.4 2.4v9.2a2.4 2.4 0 0 1 -2.4 2.4h-23.2a2.4 2.4 0 0 1 -2.4 -2.4v-9.2a2.4 2.4 0 0 1 2.4 -2.4Z"/></clipPath>
+    <linearGradient id="grad-body" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#e9ebee"/>
+      <stop offset="1" stop-color="#b9bdc6"/>
+    </linearGradient>
+    <clipPath id="clip-slot"><path d="M7.3 14h17.4a1.3 1.3 0 0 1 1.3 1.3v0a1.3 1.3 0 0 1 -1.3 1.3h-17.4a1.3 1.3 0 0 1 -1.3 -1.3v0a1.3 1.3 0 0 1 1.3 -1.3Z"/></clipPath>
+    <linearGradient id="grad-slot" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#a6abb4"/>
+      <stop offset="1" stop-color="#676a70"/>
+    </linearGradient>
+    <clipPath id="clip-tray"><path d="M7.7 25h16.6a1.2 1.2 0 0 1 1.2 1.2v1.6a1.2 1.2 0 0 1 -1.2 1.2h-16.6a1.2 1.2 0 0 1 -1.2 -1.2v-1.6a1.2 1.2 0 0 1 1.2 -1.2Z"/></clipPath>
+    <linearGradient id="grad-tray" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#d3d6db"/>
+      <stop offset="1" stop-color="#91969e"/>
+    </linearGradient>
+    <clipPath id="clip-silhouette"><path d="M4.4 11h23.2a2.4 2.4 0 0 1 2.4 2.4v9.2a2.4 2.4 0 0 1 -2.4 2.4h-23.2a2.4 2.4 0 0 1 -2.4 -2.4v-9.2a2.4 2.4 0 0 1 2.4 -2.4Z"/></clipPath>
+    <linearGradient id="grad-key" x1="0" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.62"/>
+      <stop offset="0.3" stop-color="#ffffff" stop-opacity="0.2"/>
+      <stop offset="0.6" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <g id="devicePrinter">
+    <g id="sheet-paper-flat" clip-path="url(#clip-sheet)"><title>sheet · paper/flat</title><path d="M9.5 2.5h13a1 1 0 0 1 1 1v7a1 1 0 0 1 -1 1h-13a1 1 0 0 1 -1 -1v-7a1 1 0 0 1 1 -1Z" fill="url(#grad-sheet)"/><path d="M9.5 2.5h13a1 1 0 0 1 1 1v7a1 1 0 0 1 -1 1h-13a1 1 0 0 1 -1 -1v-7a1 1 0 0 1 1 -1Z" fill="#ffffff" opacity="0.080"/><path d="M9.5 2.5h13a1 1 0 0 1 1 1v7a1 1 0 0 1 -1 1h-13a1 1 0 0 1 -1 -1v-7a1 1 0 0 1 1 -1Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M9.5 2.5h13a1 1 0 0 1 1 1v7a1 1 0 0 1 -1 1h-13a1 1 0 0 1 -1 -1v-7a1 1 0 0 1 1 -1Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
+    <g id="body-platinum-top" clip-path="url(#clip-body)"><title>body · platinum/top</title><path d="M4.4 11h23.2a2.4 2.4 0 0 1 2.4 2.4v9.2a2.4 2.4 0 0 1 -2.4 2.4h-23.2a2.4 2.4 0 0 1 -2.4 -2.4v-9.2a2.4 2.4 0 0 1 2.4 -2.4Z" fill="url(#grad-body)"/><path d="M4.4 11h23.2a2.4 2.4 0 0 1 2.4 2.4v9.2a2.4 2.4 0 0 1 -2.4 2.4h-23.2a2.4 2.4 0 0 1 -2.4 -2.4v-9.2a2.4 2.4 0 0 1 2.4 -2.4Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M4.4 11h23.2a2.4 2.4 0 0 1 2.4 2.4v9.2a2.4 2.4 0 0 1 -2.4 2.4h-23.2a2.4 2.4 0 0 1 -2.4 -2.4v-9.2a2.4 2.4 0 0 1 2.4 -2.4Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
+    <g id="slot-platinum-under" clip-path="url(#clip-slot)"><title>slot · platinum/under</title><path d="M7.3 14h17.4a1.3 1.3 0 0 1 1.3 1.3v0a1.3 1.3 0 0 1 -1.3 1.3h-17.4a1.3 1.3 0 0 1 -1.3 -1.3v0a1.3 1.3 0 0 1 1.3 -1.3Z" fill="url(#grad-slot)"/><path d="M7.3 14h17.4a1.3 1.3 0 0 1 1.3 1.3v0a1.3 1.3 0 0 1 -1.3 1.3h-17.4a1.3 1.3 0 0 1 -1.3 -1.3v0a1.3 1.3 0 0 1 1.3 -1.3Z" fill="#000000" opacity="0.128"/><path d="M7.3 14h17.4a1.3 1.3 0 0 1 1.3 1.3v0a1.3 1.3 0 0 1 -1.3 1.3h-17.4a1.3 1.3 0 0 1 -1.3 -1.3v0a1.3 1.3 0 0 1 1.3 -1.3Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(-0.8 -0.8)"/><path d="M7.3 14h17.4a1.3 1.3 0 0 1 1.3 1.3v0a1.3 1.3 0 0 1 -1.3 1.3h-17.4a1.3 1.3 0 0 1 -1.3 -1.3v0a1.3 1.3 0 0 1 1.3 -1.3Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(0.8 0.8)"/></g>
+    <g id="tray-platinum-front" clip-path="url(#clip-tray)"><title>tray · platinum/front</title><path d="M7.7 25h16.6a1.2 1.2 0 0 1 1.2 1.2v1.6a1.2 1.2 0 0 1 -1.2 1.2h-16.6a1.2 1.2 0 0 1 -1.2 -1.2v-1.6a1.2 1.2 0 0 1 1.2 -1.2Z" fill="url(#grad-tray)"/><path d="M7.7 25h16.6a1.2 1.2 0 0 1 1.2 1.2v1.6a1.2 1.2 0 0 1 -1.2 1.2h-16.6a1.2 1.2 0 0 1 -1.2 -1.2v-1.6a1.2 1.2 0 0 1 1.2 -1.2Z" fill="#000000" opacity="0.040"/></g>
+    <g id="rules-edge-hairline"><title>rules · edge/hairline</title><path d="M11 5.5h10M11 8.5h7" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="1" stroke-linecap="round" transform="translate(0 0.85)"/><path d="M11 5.5h10M11 8.5h7" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1" stroke-linecap="round"/></g>
+    <g id="key-sheen-color" clip-path="url(#clip-silhouette)" opacity="0.55" style="mix-blend-mode:screen"><title>key · sheen/color</title><path d="M4.4 11h23.2a2.4 2.4 0 0 1 2.4 2.4v9.2a2.4 2.4 0 0 1 -2.4 2.4h-23.2a2.4 2.4 0 0 1 -2.4 -2.4v-9.2a2.4 2.4 0 0 1 2.4 -2.4Z" fill="url(#grad-key)"/></g>
+    <path id="keyline-edge-hairline" d="M4.4 11h23.2a2.4 2.4 0 0 1 2.4 2.4v9.2a2.4 2.4 0 0 1 -2.4 2.4h-23.2a2.4 2.4 0 0 1 -2.4 -2.4v-9.2a2.4 2.4 0 0 1 2.4 -2.4Z" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1"/>
+  </g>
+</svg>

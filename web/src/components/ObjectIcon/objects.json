@@ -443,5 +443,1684 @@
         "d": "M24.5 15.9h1.2a1.1 1.1 0 0 1 1.1 1.1v1.2a1.1 1.1 0 0 1 -1.1 1.1h-1.2a1.1 1.1 0 0 1 -1.1 -1.1v-1.2a1.1 1.1 0 0 1 1.1 -1.1Z M24.5 20.4h1.2a1.1 1.1 0 0 1 1.1 1.1v1.2a1.1 1.1 0 0 1 -1.1 1.1h-1.2a1.1 1.1 0 0 1 -1.1 -1.1v-1.2a1.1 1.1 0 0 1 1.1 -1.1Z M24.5 24.9h1.2a1.1 1.1 0 0 1 1.1 1.1v1.2a1.1 1.1 0 0 1 -1.1 1.1h-1.2a1.1 1.1 0 0 1 -1.1 -1.1v-1.2a1.1 1.1 0 0 1 1.1 -1.1Z"
       }
     ]
+  },
+  "folderHome": {
+    "material": "folder",
+    "glyph": "folder",
+    "silhouette": "back",
+    "parts": [
+      {
+        "id": "back",
+        "facet": "top",
+        "tone": -0.35,
+        "bevel": "raised",
+        "d": "M2 9a2.5 2.5 0 0 1 2.5-2.5h8.2l3 3H27.5A2.5 2.5 0 0 1 30 12v12.5a2.5 2.5 0 0 1-2.5 2.5h-23A2.5 2.5 0 0 1 2 24.5Z"
+      },
+      {
+        "id": "front",
+        "facet": "front",
+        "tone": 0.45,
+        "bevel": "raised",
+        "d": "M2 13h28v11.5a2.5 2.5 0 0 1-2.5 2.5h-23A2.5 2.5 0 0 1 2 24.5Z"
+      },
+      {
+        "id": "seam",
+        "role": "crease",
+        "min": 24,
+        "d": "M2.8 13h26.4"
+      },
+      {
+        "id": "mark",
+        "role": "crease",
+        "min": 22,
+        "d": "M12.4 19.8l3.6-2.8l3.6 2.8M13.2 19.4v4h5.6V19.4"
+      }
+    ]
+  },
+  "folderDocuments": {
+    "material": "folder",
+    "glyph": "folder",
+    "silhouette": "back",
+    "parts": [
+      {
+        "id": "back",
+        "facet": "top",
+        "tone": -0.35,
+        "bevel": "raised",
+        "d": "M2 9a2.5 2.5 0 0 1 2.5-2.5h8.2l3 3H27.5A2.5 2.5 0 0 1 30 12v12.5a2.5 2.5 0 0 1-2.5 2.5h-23A2.5 2.5 0 0 1 2 24.5Z"
+      },
+      {
+        "id": "front",
+        "facet": "front",
+        "tone": 0.45,
+        "bevel": "raised",
+        "d": "M2 13h28v11.5a2.5 2.5 0 0 1-2.5 2.5h-23A2.5 2.5 0 0 1 2 24.5Z"
+      },
+      {
+        "id": "seam",
+        "role": "crease",
+        "min": 24,
+        "d": "M2.8 13h26.4"
+      },
+      {
+        "id": "mark",
+        "role": "crease",
+        "min": 22,
+        "d": "M14 16.6h2.8l2 2v5.2H14zM16.8 16.6v2h2"
+      }
+    ]
+  },
+  "folderDownloads": {
+    "material": "folder",
+    "glyph": "folder",
+    "silhouette": "back",
+    "parts": [
+      {
+        "id": "back",
+        "facet": "top",
+        "tone": -0.35,
+        "bevel": "raised",
+        "d": "M2 9a2.5 2.5 0 0 1 2.5-2.5h8.2l3 3H27.5A2.5 2.5 0 0 1 30 12v12.5a2.5 2.5 0 0 1-2.5 2.5h-23A2.5 2.5 0 0 1 2 24.5Z"
+      },
+      {
+        "id": "front",
+        "facet": "front",
+        "tone": 0.45,
+        "bevel": "raised",
+        "d": "M2 13h28v11.5a2.5 2.5 0 0 1-2.5 2.5h-23A2.5 2.5 0 0 1 2 24.5Z"
+      },
+      {
+        "id": "seam",
+        "role": "crease",
+        "min": 24,
+        "d": "M2.8 13h26.4"
+      },
+      {
+        "id": "mark",
+        "role": "crease",
+        "min": 22,
+        "d": "M16 17v4.8M14 19.8l2 2l2-2M12.8 23.4h6.4"
+      }
+    ]
+  },
+  "folderDesktop": {
+    "material": "folder",
+    "glyph": "folder",
+    "silhouette": "back",
+    "parts": [
+      {
+        "id": "back",
+        "facet": "top",
+        "tone": -0.35,
+        "bevel": "raised",
+        "d": "M2 9a2.5 2.5 0 0 1 2.5-2.5h8.2l3 3H27.5A2.5 2.5 0 0 1 30 12v12.5a2.5 2.5 0 0 1-2.5 2.5h-23A2.5 2.5 0 0 1 2 24.5Z"
+      },
+      {
+        "id": "front",
+        "facet": "front",
+        "tone": 0.45,
+        "bevel": "raised",
+        "d": "M2 13h28v11.5a2.5 2.5 0 0 1-2.5 2.5h-23A2.5 2.5 0 0 1 2 24.5Z"
+      },
+      {
+        "id": "seam",
+        "role": "crease",
+        "min": 24,
+        "d": "M2.8 13h26.4"
+      },
+      {
+        "id": "mark",
+        "role": "crease",
+        "min": 22,
+        "d": "M12.4 17.4h7.2v4.4H12.4zM14.4 23.8h3.2M16 21.8v2"
+      }
+    ]
+  },
+  "folderApplications": {
+    "material": "folder",
+    "glyph": "folder",
+    "silhouette": "back",
+    "parts": [
+      {
+        "id": "back",
+        "facet": "top",
+        "tone": -0.35,
+        "bevel": "raised",
+        "d": "M2 9a2.5 2.5 0 0 1 2.5-2.5h8.2l3 3H27.5A2.5 2.5 0 0 1 30 12v12.5a2.5 2.5 0 0 1-2.5 2.5h-23A2.5 2.5 0 0 1 2 24.5Z"
+      },
+      {
+        "id": "front",
+        "facet": "front",
+        "tone": 0.45,
+        "bevel": "raised",
+        "d": "M2 13h28v11.5a2.5 2.5 0 0 1-2.5 2.5h-23A2.5 2.5 0 0 1 2 24.5Z"
+      },
+      {
+        "id": "seam",
+        "role": "crease",
+        "min": 24,
+        "d": "M2.8 13h26.4"
+      },
+      {
+        "id": "mark",
+        "role": "crease",
+        "min": 22,
+        "d": "M12.8 17h2.4v2.4H12.8zM16.8 17h2.4v2.4h-2.4zM12.8 21h2.4v2.4H12.8zM16.8 21h2.4v2.4h-2.4z"
+      }
+    ]
+  },
+  "folderUtilities": {
+    "material": "folder",
+    "glyph": "folder",
+    "silhouette": "back",
+    "parts": [
+      {
+        "id": "back",
+        "facet": "top",
+        "tone": -0.35,
+        "bevel": "raised",
+        "d": "M2 9a2.5 2.5 0 0 1 2.5-2.5h8.2l3 3H27.5A2.5 2.5 0 0 1 30 12v12.5a2.5 2.5 0 0 1-2.5 2.5h-23A2.5 2.5 0 0 1 2 24.5Z"
+      },
+      {
+        "id": "front",
+        "facet": "front",
+        "tone": 0.45,
+        "bevel": "raised",
+        "d": "M2 13h28v11.5a2.5 2.5 0 0 1-2.5 2.5h-23A2.5 2.5 0 0 1 2 24.5Z"
+      },
+      {
+        "id": "seam",
+        "role": "crease",
+        "min": 24,
+        "d": "M2.8 13h26.4"
+      },
+      {
+        "id": "mark",
+        "role": "crease",
+        "min": 22,
+        "d": "M16 18.6a1.6 1.6 0 1 0 0 3.2a1.6 1.6 0 0 0 0-3.2zM16 16.2v1.2M16 23v1.2M12 20.2h1.2M18.8 20.2h1.2M13.16 17.36l0.88 0.88M17.96 22.16l0.88 0.88M13.16 23.04l0.88-0.88M17.96 18.24l0.88-0.88"
+      }
+    ]
+  },
+  "folderSystem": {
+    "material": "platinum",
+    "glyph": "folder",
+    "silhouette": "back",
+    "parts": [
+      {
+        "id": "back",
+        "facet": "top",
+        "tone": -0.35,
+        "bevel": "raised",
+        "d": "M2 9a2.5 2.5 0 0 1 2.5-2.5h8.2l3 3H27.5A2.5 2.5 0 0 1 30 12v12.5a2.5 2.5 0 0 1-2.5 2.5h-23A2.5 2.5 0 0 1 2 24.5Z"
+      },
+      {
+        "id": "front",
+        "facet": "front",
+        "tone": 0.45,
+        "bevel": "raised",
+        "d": "M2 13h28v11.5a2.5 2.5 0 0 1-2.5 2.5h-23A2.5 2.5 0 0 1 2 24.5Z"
+      },
+      {
+        "id": "seam",
+        "role": "crease",
+        "min": 24,
+        "d": "M2.8 13h26.4"
+      },
+      {
+        "id": "mark",
+        "role": "crease",
+        "min": 22,
+        "d": "M13.2 19.8h5.6v4H13.2zM14.4 19.8V18.2a1.6 1.6 0 0 1 3.2 0v1.6"
+      }
+    ]
+  },
+  "folderShared": {
+    "material": "folder",
+    "glyph": "folder",
+    "silhouette": "back",
+    "parts": [
+      {
+        "id": "back",
+        "facet": "top",
+        "tone": -0.35,
+        "bevel": "raised",
+        "d": "M2 9a2.5 2.5 0 0 1 2.5-2.5h8.2l3 3H27.5A2.5 2.5 0 0 1 30 12v12.5a2.5 2.5 0 0 1-2.5 2.5h-23A2.5 2.5 0 0 1 2 24.5Z"
+      },
+      {
+        "id": "front",
+        "facet": "front",
+        "tone": 0.45,
+        "bevel": "raised",
+        "d": "M2 13h28v11.5a2.5 2.5 0 0 1-2.5 2.5h-23A2.5 2.5 0 0 1 2 24.5Z"
+      },
+      {
+        "id": "seam",
+        "role": "crease",
+        "min": 24,
+        "d": "M2.8 13h26.4"
+      },
+      {
+        "id": "mark",
+        "role": "crease",
+        "min": 22,
+        "d": "M16 21.4V17M14.4 18.6l1.6-1.6l1.6 1.6M13.2 21v2.4h5.6v-2.4"
+      }
+    ]
+  },
+  "folderDropBox": {
+    "material": "folder",
+    "glyph": "folder",
+    "silhouette": "back",
+    "parts": [
+      {
+        "id": "back",
+        "facet": "top",
+        "tone": -0.35,
+        "bevel": "raised",
+        "d": "M2 9a2.5 2.5 0 0 1 2.5-2.5h8.2l3 3H27.5A2.5 2.5 0 0 1 30 12v12.5a2.5 2.5 0 0 1-2.5 2.5h-23A2.5 2.5 0 0 1 2 24.5Z"
+      },
+      {
+        "id": "front",
+        "facet": "front",
+        "tone": 0.45,
+        "bevel": "raised",
+        "d": "M2 13h28v11.5a2.5 2.5 0 0 1-2.5 2.5h-23A2.5 2.5 0 0 1 2 24.5Z"
+      },
+      {
+        "id": "seam",
+        "role": "crease",
+        "min": 24,
+        "d": "M2.8 13h26.4"
+      },
+      {
+        "id": "mark",
+        "role": "crease",
+        "min": 22,
+        "d": "M12.8 20.2h6M16.4 17.8l2.4 2.4l-2.4 2.4"
+      }
+    ]
+  },
+  "folderFavourites": {
+    "material": "folder",
+    "glyph": "folder",
+    "silhouette": "back",
+    "parts": [
+      {
+        "id": "back",
+        "facet": "top",
+        "tone": -0.35,
+        "bevel": "raised",
+        "d": "M2 9a2.5 2.5 0 0 1 2.5-2.5h8.2l3 3H27.5A2.5 2.5 0 0 1 30 12v12.5a2.5 2.5 0 0 1-2.5 2.5h-23A2.5 2.5 0 0 1 2 24.5Z"
+      },
+      {
+        "id": "front",
+        "facet": "front",
+        "tone": 0.45,
+        "bevel": "raised",
+        "d": "M2 13h28v11.5a2.5 2.5 0 0 1-2.5 2.5h-23A2.5 2.5 0 0 1 2 24.5Z"
+      },
+      {
+        "id": "seam",
+        "role": "crease",
+        "min": 24,
+        "d": "M2.8 13h26.4"
+      },
+      {
+        "id": "mark",
+        "role": "crease",
+        "min": 22,
+        "d": "M16 16.6l1.12 2.36l2.48 0.32l-1.8 1.76l0.44 2.52L16 22.36l-2.24 1.2l0.44-2.52L12.4 19.28l2.48-0.32z"
+      }
+    ]
+  },
+  "folderRecent": {
+    "material": "folder",
+    "glyph": "folder",
+    "silhouette": "back",
+    "parts": [
+      {
+        "id": "back",
+        "facet": "top",
+        "tone": -0.35,
+        "bevel": "raised",
+        "d": "M2 9a2.5 2.5 0 0 1 2.5-2.5h8.2l3 3H27.5A2.5 2.5 0 0 1 30 12v12.5a2.5 2.5 0 0 1-2.5 2.5h-23A2.5 2.5 0 0 1 2 24.5Z"
+      },
+      {
+        "id": "front",
+        "facet": "front",
+        "tone": 0.45,
+        "bevel": "raised",
+        "d": "M2 13h28v11.5a2.5 2.5 0 0 1-2.5 2.5h-23A2.5 2.5 0 0 1 2 24.5Z"
+      },
+      {
+        "id": "seam",
+        "role": "crease",
+        "min": 24,
+        "d": "M2.8 13h26.4"
+      },
+      {
+        "id": "mark",
+        "role": "crease",
+        "min": 22,
+        "d": "M16 16.6a3.6 3.6 0 1 0 0 7.2a3.6 3.6 0 0 0 0-7.2zM16 18.2v2l1.4 0.8"
+      }
+    ]
+  },
+  "folderSmart": {
+    "material": "accent",
+    "glyph": "folder",
+    "silhouette": "back",
+    "parts": [
+      {
+        "id": "back",
+        "facet": "top",
+        "tone": -0.35,
+        "bevel": "raised",
+        "d": "M2 9a2.5 2.5 0 0 1 2.5-2.5h8.2l3 3H27.5A2.5 2.5 0 0 1 30 12v12.5a2.5 2.5 0 0 1-2.5 2.5h-23A2.5 2.5 0 0 1 2 24.5Z"
+      },
+      {
+        "id": "front",
+        "facet": "front",
+        "tone": 0.45,
+        "bevel": "raised",
+        "d": "M2 13h28v11.5a2.5 2.5 0 0 1-2.5 2.5h-23A2.5 2.5 0 0 1 2 24.5Z"
+      },
+      {
+        "id": "seam",
+        "role": "crease",
+        "min": 24,
+        "d": "M2.8 13h26.4"
+      },
+      {
+        "id": "mark",
+        "role": "crease",
+        "min": 22,
+        "d": "M15.6 17a2.8 2.8 0 1 0 0 5.6a2.8 2.8 0 0 0 0-5.6zM17.6 21.8l2 2"
+      }
+    ]
+  },
+  "folderBurn": {
+    "material": "folder",
+    "glyph": "folder",
+    "silhouette": "back",
+    "parts": [
+      {
+        "id": "back",
+        "facet": "top",
+        "tone": -0.35,
+        "bevel": "raised",
+        "d": "M2 9a2.5 2.5 0 0 1 2.5-2.5h8.2l3 3H27.5A2.5 2.5 0 0 1 30 12v12.5a2.5 2.5 0 0 1-2.5 2.5h-23A2.5 2.5 0 0 1 2 24.5Z"
+      },
+      {
+        "id": "front",
+        "facet": "front",
+        "tone": 0.45,
+        "bevel": "raised",
+        "d": "M2 13h28v11.5a2.5 2.5 0 0 1-2.5 2.5h-23A2.5 2.5 0 0 1 2 24.5Z"
+      },
+      {
+        "id": "seam",
+        "role": "crease",
+        "min": 24,
+        "d": "M2.8 13h26.4"
+      },
+      {
+        "id": "mark",
+        "role": "crease",
+        "min": 22,
+        "d": "M16 17a3.2 3.2 0 1 0 0 6.4a3.2 3.2 0 0 0 0-6.4zM16 19.56a0.64 0.64 0 1 0 0 1.28a0.64 0.64 0 0 0 0-1.28z"
+      }
+    ]
+  },
+  "folderOpen": {
+    "material": "folder",
+    "glyph": "folder",
+    "silhouette": "back",
+    "parts": [
+      {
+        "id": "back",
+        "facet": "top",
+        "tone": -0.4,
+        "bevel": "raised",
+        "d": "M2 9a2.5 2.5 0 0 1 2.5-2.5h8.2l3 3H26a2.5 2.5 0 0 1 2.5 2.5v3.5H8.5L4 26.9H4.5A2.5 2.5 0 0 1 2 24.4Z"
+      },
+      {
+        "id": "front",
+        "facet": "front",
+        "tone": 0.5,
+        "bevel": "raised",
+        "d": "M9.4 14.6h21.1a1.4 1.4 0 0 1 1.32 1.86l-3.4 9.6A2.5 2.5 0 0 1 26.05 27.7H3.2a1.4 1.4 0 0 1-1.32-1.86l3.4-9.6a2.5 2.5 0 0 1 2.36-1.66Z"
+      },
+      {
+        "id": "seam",
+        "role": "crease",
+        "min": 24,
+        "d": "M8.9 15.4h21.4"
+      }
+    ]
+  },
+  "docText": {
+    "material": "paper",
+    "glyph": "document",
+    "silhouette": "sheet",
+    "parts": [
+      {
+        "id": "sheet",
+        "facet": "flat",
+        "tone": 0.1,
+        "bevel": "raised",
+        "d": "M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z"
+      },
+      {
+        "id": "fold",
+        "facet": "under",
+        "tone": -0.5,
+        "bevel": "none",
+        "d": "M19.5 2.5 26 9.5h-5a1.5 1.5 0 0 1-1.5-1.5Z"
+      },
+      {
+        "id": "mark",
+        "role": "crease",
+        "min": 22,
+        "d": "M13.3 17.2h6.4M13.3 19.6h6.4M13.3 22h6.4"
+      }
+    ]
+  },
+  "docRich": {
+    "material": "paper",
+    "glyph": "document",
+    "silhouette": "sheet",
+    "parts": [
+      {
+        "id": "sheet",
+        "facet": "flat",
+        "tone": 0.1,
+        "bevel": "raised",
+        "d": "M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z"
+      },
+      {
+        "id": "fold",
+        "facet": "under",
+        "tone": -0.5,
+        "bevel": "none",
+        "d": "M19.5 2.5 26 9.5h-5a1.5 1.5 0 0 1-1.5-1.5Z"
+      },
+      {
+        "id": "mark",
+        "role": "crease",
+        "min": 22,
+        "d": "M13.3 17.2h6.4M13.3 19.2h4M13.3 21.2h5.6M13.3 23.2h3.2"
+      }
+    ]
+  },
+  "docPdf": {
+    "material": "paper",
+    "glyph": "document",
+    "silhouette": "sheet",
+    "parts": [
+      {
+        "id": "sheet",
+        "facet": "flat",
+        "tone": 0.1,
+        "bevel": "raised",
+        "d": "M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z"
+      },
+      {
+        "id": "fold",
+        "facet": "under",
+        "tone": -0.5,
+        "bevel": "none",
+        "d": "M19.5 2.5 26 9.5h-5a1.5 1.5 0 0 1-1.5-1.5Z"
+      },
+      {
+        "id": "mark",
+        "role": "crease",
+        "min": 22,
+        "d": "M13.3 17.2h6.4M13.3 19.2h6.4M13.3 21.2h6.4M13.3 23.2h6.4"
+      }
+    ]
+  },
+  "docImage": {
+    "material": "paper",
+    "glyph": "document",
+    "silhouette": "sheet",
+    "parts": [
+      {
+        "id": "sheet",
+        "facet": "flat",
+        "tone": 0.1,
+        "bevel": "raised",
+        "d": "M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z"
+      },
+      {
+        "id": "fold",
+        "facet": "under",
+        "tone": -0.5,
+        "bevel": "none",
+        "d": "M19.5 2.5 26 9.5h-5a1.5 1.5 0 0 1-1.5-1.5Z"
+      },
+      {
+        "id": "mark",
+        "role": "crease",
+        "min": 22,
+        "d": "M13.3 16.8h6.4v5.6H13.3zM13.3 21.2l2-2l1.6 1.6l1.2-1.2l1.6 1.6M17.9 18.6a0.4 0.4 0 1 0 0-0.004"
+      }
+    ]
+  },
+  "docVector": {
+    "material": "paper",
+    "glyph": "document",
+    "silhouette": "sheet",
+    "parts": [
+      {
+        "id": "sheet",
+        "facet": "flat",
+        "tone": 0.1,
+        "bevel": "raised",
+        "d": "M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z"
+      },
+      {
+        "id": "fold",
+        "facet": "under",
+        "tone": -0.5,
+        "bevel": "none",
+        "d": "M19.5 2.5 26 9.5h-5a1.5 1.5 0 0 1-1.5-1.5Z"
+      },
+      {
+        "id": "mark",
+        "role": "crease",
+        "min": 22,
+        "d": "M13.3 22.8l1.6-0.4l4.4-4.4l-1.2-1.2L13.7 21.2zM16.9 17.2l1.2 1.2"
+      }
+    ]
+  },
+  "docSheet": {
+    "material": "paper",
+    "glyph": "document",
+    "silhouette": "sheet",
+    "parts": [
+      {
+        "id": "sheet",
+        "facet": "flat",
+        "tone": 0.1,
+        "bevel": "raised",
+        "d": "M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z"
+      },
+      {
+        "id": "fold",
+        "facet": "under",
+        "tone": -0.5,
+        "bevel": "none",
+        "d": "M19.5 2.5 26 9.5h-5a1.5 1.5 0 0 1-1.5-1.5Z"
+      },
+      {
+        "id": "mark",
+        "role": "crease",
+        "min": 22,
+        "d": "M13.3 16.4h2.4v2.4H13.3zM17.3 16.4h2.4v2.4h-2.4zM13.3 20.4h2.4v2.4H13.3zM17.3 20.4h2.4v2.4h-2.4z"
+      }
+    ]
+  },
+  "docSlides": {
+    "material": "paper",
+    "glyph": "document",
+    "silhouette": "sheet",
+    "parts": [
+      {
+        "id": "sheet",
+        "facet": "flat",
+        "tone": 0.1,
+        "bevel": "raised",
+        "d": "M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z"
+      },
+      {
+        "id": "fold",
+        "facet": "under",
+        "tone": -0.5,
+        "bevel": "none",
+        "d": "M19.5 2.5 26 9.5h-5a1.5 1.5 0 0 1-1.5-1.5Z"
+      },
+      {
+        "id": "mark",
+        "role": "crease",
+        "min": 22,
+        "d": "M13.3 17.2h6.4v4H13.3zM14.1 22.4h4.8"
+      }
+    ]
+  },
+  "docAudio": {
+    "material": "paper",
+    "glyph": "document",
+    "silhouette": "sheet",
+    "parts": [
+      {
+        "id": "sheet",
+        "facet": "flat",
+        "tone": 0.1,
+        "bevel": "raised",
+        "d": "M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z"
+      },
+      {
+        "id": "fold",
+        "facet": "under",
+        "tone": -0.5,
+        "bevel": "none",
+        "d": "M19.5 2.5 26 9.5h-5a1.5 1.5 0 0 1-1.5-1.5Z"
+      },
+      {
+        "id": "mark",
+        "role": "crease",
+        "min": 22,
+        "d": "M15.3 22V16.8l4-0.8v5.2M14.1 23.2a1.2 1.2 0 1 0 0-2.4a1.2 1.2 0 0 0 0 2.4zM18.1 22.4a1.2 1.2 0 1 0 0-2.4a1.2 1.2 0 0 0 0 2.4z"
+      }
+    ]
+  },
+  "docVideo": {
+    "material": "paper",
+    "glyph": "document",
+    "silhouette": "sheet",
+    "parts": [
+      {
+        "id": "sheet",
+        "facet": "flat",
+        "tone": 0.1,
+        "bevel": "raised",
+        "d": "M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z"
+      },
+      {
+        "id": "fold",
+        "facet": "under",
+        "tone": -0.5,
+        "bevel": "none",
+        "d": "M19.5 2.5 26 9.5h-5a1.5 1.5 0 0 1-1.5-1.5Z"
+      },
+      {
+        "id": "mark",
+        "role": "crease",
+        "min": 22,
+        "d": "M14.9 16.8l4.4 2.8l-4.4 2.8z"
+      }
+    ]
+  },
+  "docArchive": {
+    "material": "paper",
+    "glyph": "document",
+    "silhouette": "sheet",
+    "parts": [
+      {
+        "id": "sheet",
+        "facet": "flat",
+        "tone": 0.1,
+        "bevel": "raised",
+        "d": "M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z"
+      },
+      {
+        "id": "fold",
+        "facet": "under",
+        "tone": -0.5,
+        "bevel": "none",
+        "d": "M19.5 2.5 26 9.5h-5a1.5 1.5 0 0 1-1.5-1.5Z"
+      },
+      {
+        "id": "mark",
+        "role": "crease",
+        "min": 22,
+        "d": "M13.7 19.2h5.6v4H13.7zM14.9 19.2V17.6a1.6 1.6 0 0 1 3.2 0v1.6"
+      }
+    ]
+  },
+  "docDiskImage": {
+    "material": "paper",
+    "glyph": "document",
+    "silhouette": "sheet",
+    "parts": [
+      {
+        "id": "sheet",
+        "facet": "flat",
+        "tone": 0.1,
+        "bevel": "raised",
+        "d": "M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z"
+      },
+      {
+        "id": "fold",
+        "facet": "under",
+        "tone": -0.5,
+        "bevel": "none",
+        "d": "M19.5 2.5 26 9.5h-5a1.5 1.5 0 0 1-1.5-1.5Z"
+      },
+      {
+        "id": "mark",
+        "role": "crease",
+        "min": 22,
+        "d": "M13.3 17.2h6.4v4.8H13.3zM13.3 20.4h6.4M18.1 21.4h0.4"
+      }
+    ]
+  },
+  "docFont": {
+    "material": "paper",
+    "glyph": "document",
+    "silhouette": "sheet",
+    "parts": [
+      {
+        "id": "sheet",
+        "facet": "flat",
+        "tone": 0.1,
+        "bevel": "raised",
+        "d": "M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z"
+      },
+      {
+        "id": "fold",
+        "facet": "under",
+        "tone": -0.5,
+        "bevel": "none",
+        "d": "M19.5 2.5 26 9.5h-5a1.5 1.5 0 0 1-1.5-1.5Z"
+      },
+      {
+        "id": "mark",
+        "role": "crease",
+        "min": 22,
+        "d": "M14.5 16.4h2.4a1.6 1.6 0 0 1 0 3.2H14.5zM14.5 19.6h2.8a1.6 1.6 0 0 1 0 3.2H14.5z"
+      }
+    ]
+  },
+  "docScript": {
+    "material": "paper",
+    "glyph": "document",
+    "silhouette": "sheet",
+    "parts": [
+      {
+        "id": "sheet",
+        "facet": "flat",
+        "tone": 0.1,
+        "bevel": "raised",
+        "d": "M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z"
+      },
+      {
+        "id": "fold",
+        "facet": "under",
+        "tone": -0.5,
+        "bevel": "none",
+        "d": "M19.5 2.5 26 9.5h-5a1.5 1.5 0 0 1-1.5-1.5Z"
+      },
+      {
+        "id": "mark",
+        "role": "crease",
+        "min": 22,
+        "d": "M14.9 17.6l-2 2l2 2M18.1 17.6l2 2l-2 2M17.3 16.4l-1.6 6.4"
+      }
+    ]
+  },
+  "docApp": {
+    "material": "paper",
+    "glyph": "document",
+    "silhouette": "sheet",
+    "parts": [
+      {
+        "id": "sheet",
+        "facet": "flat",
+        "tone": 0.1,
+        "bevel": "raised",
+        "d": "M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z"
+      },
+      {
+        "id": "fold",
+        "facet": "under",
+        "tone": -0.5,
+        "bevel": "none",
+        "d": "M19.5 2.5 26 9.5h-5a1.5 1.5 0 0 1-1.5-1.5Z"
+      },
+      {
+        "id": "mark",
+        "role": "crease",
+        "min": 22,
+        "d": "M16.5 16s2.4 2.6 2.4 4.4a2.4 2.4 0 0 1-4.8 0c0-1.8 2.4-4.4 2.4-4.4z"
+      }
+    ]
+  },
+  "docAlias": {
+    "material": "paper",
+    "glyph": "document",
+    "silhouette": "sheet",
+    "parts": [
+      {
+        "id": "sheet",
+        "facet": "flat",
+        "tone": 0.1,
+        "bevel": "raised",
+        "d": "M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z"
+      },
+      {
+        "id": "fold",
+        "facet": "under",
+        "tone": -0.5,
+        "bevel": "none",
+        "d": "M19.5 2.5 26 9.5h-5a1.5 1.5 0 0 1-1.5-1.5Z"
+      },
+      {
+        "id": "mark",
+        "role": "crease",
+        "min": 22,
+        "d": "M13.3 19.6h6M16.9 17.2l2.4 2.4l-2.4 2.4"
+      }
+    ]
+  },
+  "docClipping": {
+    "material": "paper",
+    "glyph": "document",
+    "silhouette": "sheet",
+    "parts": [
+      {
+        "id": "sheet",
+        "facet": "flat",
+        "tone": 0.1,
+        "bevel": "raised",
+        "d": "M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z"
+      },
+      {
+        "id": "fold",
+        "facet": "under",
+        "tone": -0.5,
+        "bevel": "none",
+        "d": "M19.5 2.5 26 9.5h-5a1.5 1.5 0 0 1-1.5-1.5Z"
+      },
+      {
+        "id": "mark",
+        "role": "crease",
+        "min": 22,
+        "d": "M16.5 20.4v2.8M14.9 16.4h3.2l-0.4 2.4l1.2 1.2H14.1l1.2-1.2z"
+      }
+    ]
+  },
+  "docGeneric": {
+    "material": "paper",
+    "glyph": "document",
+    "silhouette": "sheet",
+    "parts": [
+      {
+        "id": "sheet",
+        "facet": "flat",
+        "tone": 0.1,
+        "bevel": "raised",
+        "d": "M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z"
+      },
+      {
+        "id": "fold",
+        "facet": "under",
+        "tone": -0.5,
+        "bevel": "none",
+        "d": "M19.5 2.5 26 9.5h-5a1.5 1.5 0 0 1-1.5-1.5Z"
+      }
+    ]
+  },
+  "docStationery": {
+    "material": "paper",
+    "glyph": "document",
+    "silhouette": "sheet",
+    "parts": [
+      {
+        "id": "under",
+        "facet": "under",
+        "tone": -0.35,
+        "bevel": "none",
+        "d": "M9.5 6.5a1.5 1.5 0 0 1 1.5-1.5h11L28.5 12V29a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 9.5 29Z"
+      },
+      {
+        "id": "sheet",
+        "facet": "flat",
+        "tone": 0.1,
+        "bevel": "raised",
+        "d": "M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z"
+      },
+      {
+        "id": "fold",
+        "facet": "under",
+        "tone": -0.5,
+        "bevel": "none",
+        "d": "M19.5 2.5 26 9.5h-5a1.5 1.5 0 0 1-1.5-1.5Z"
+      },
+      {
+        "id": "mark",
+        "role": "crease",
+        "min": 22,
+        "d": "M16.5 16.8v5.6M13.7 19.6h5.6"
+      }
+    ]
+  },
+  "volumeInternal": {
+    "material": "platinum",
+    "glyph": "drive",
+    "silhouette": "body",
+    "parts": [
+      {
+        "id": "body",
+        "facet": "top",
+        "tone": 0,
+        "bevel": "raised",
+        "d": "M3 9h26a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-26a2 2 0 0 1 -2 -2v-10a2 2 0 0 1 2 -2Z"
+      },
+      {
+        "id": "plate",
+        "facet": "under",
+        "tone": -0.8,
+        "bevel": "well",
+        "d": "M5.2 12h13.6a1.2 1.2 0 0 1 1.2 1.2v5.6a1.2 1.2 0 0 1 -1.2 1.2h-13.6a1.2 1.2 0 0 1 -1.2 -1.2v-5.6a1.2 1.2 0 0 1 1.2 -1.2Z",
+        "min": 26
+      },
+      {
+        "id": "led",
+        "tint": "accent.blue.base",
+        "min": 24,
+        "d": "M24.8 16a1.2 1.2 0 1 0 2.4 0a1.2 1.2 0 1 0 -2.4 0Z"
+      }
+    ]
+  },
+  "volumeExternal": {
+    "material": "platinum",
+    "glyph": "drive",
+    "silhouette": "body",
+    "parts": [
+      {
+        "id": "body",
+        "facet": "top",
+        "tone": 0,
+        "bevel": "raised",
+        "d": "M3 10h22a2 2 0 0 1 2 2v9a2 2 0 0 1 -2 2h-22a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2Z"
+      },
+      {
+        "id": "seam",
+        "facet": "under",
+        "tone": -0.8,
+        "bevel": "well",
+        "d": "M5.1 13.5h11.8a1.1 1.1 0 0 1 1.1 1.1v0a1.1 1.1 0 0 1 -1.1 1.1h-11.8a1.1 1.1 0 0 1 -1.1 -1.1v0a1.1 1.1 0 0 1 1.1 -1.1Z",
+        "min": 26
+      },
+      {
+        "id": "cable",
+        "facet": "front",
+        "tone": -0.4,
+        "bevel": "none",
+        "d": "M27 15h3a1.2 1.2 0 0 1 0 2.4h-3Z",
+        "material": "graphite",
+        "min": 24
+      },
+      {
+        "id": "led",
+        "tint": "accent.blue.base",
+        "min": 26,
+        "d": "M22.3 16.2a1.1 1.1 0 1 0 2.2 0a1.1 1.1 0 1 0 -2.2 0Z"
+      }
+    ]
+  },
+  "volumeRemovable": {
+    "material": "platinum",
+    "glyph": "drive",
+    "silhouette": "body",
+    "parts": [
+      {
+        "id": "body",
+        "facet": "top",
+        "tone": 0,
+        "bevel": "raised",
+        "d": "M9.4 4h13.2a2.4 2.4 0 0 1 2.4 2.4v15.2a2.4 2.4 0 0 1 -2.4 2.4h-13.2a2.4 2.4 0 0 1 -2.4 -2.4v-15.2a2.4 2.4 0 0 1 2.4 -2.4Z"
+      },
+      {
+        "id": "plug",
+        "facet": "front",
+        "tone": -0.3,
+        "bevel": "raised",
+        "d": "M12.5 24h7a1 1 0 0 1 1 1v2.6a1 1 0 0 1 -1 1h-7a1 1 0 0 1 -1 -1v-2.6a1 1 0 0 1 1 -1Z",
+        "material": "graphite"
+      },
+      {
+        "id": "window",
+        "facet": "under",
+        "tone": -0.8,
+        "bevel": "well",
+        "d": "M11.5 8h9a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-9a1 1 0 0 1 -1 -1v-4a1 1 0 0 1 1 -1Z",
+        "min": 26
+      },
+      {
+        "id": "led",
+        "tint": "accent.blue.base",
+        "min": 26,
+        "d": "M14.8 19.4a1.2 1.2 0 1 0 2.4 0a1.2 1.2 0 1 0 -2.4 0Z"
+      }
+    ]
+  },
+  "volumeFloppy": {
+    "material": "platinum",
+    "glyph": "drive",
+    "silhouette": "body",
+    "parts": [
+      {
+        "id": "body",
+        "facet": "top",
+        "tone": 0,
+        "bevel": "raised",
+        "d": "M5 3h22a2 2 0 0 1 2 2v22a2 2 0 0 1 -2 2h-22a2 2 0 0 1 -2 -2v-22a2 2 0 0 1 2 -2Z"
+      },
+      {
+        "id": "shutter",
+        "facet": "top",
+        "tone": 0.35,
+        "bevel": "raised",
+        "d": "M10.8 3.6h10.4a0.8 0.8 0 0 1 0.8 0.8v7.4a0.8 0.8 0 0 1 -0.8 0.8h-10.4a0.8 0.8 0 0 1 -0.8 -0.8v-7.4a0.8 0.8 0 0 1 0.8 -0.8Z",
+        "material": "graphite",
+        "min": 24
+      },
+      {
+        "id": "notch",
+        "facet": "under",
+        "tone": -0.8,
+        "bevel": "well",
+        "d": "M17 4.4h3.2a0.6 0.6 0 0 1 0.6 0.6v6.2a0.6 0.6 0 0 1 -0.6 0.6h-3.2a0.6 0.6 0 0 1 -0.6 -0.6v-6.2a0.6 0.6 0 0 1 0.6 -0.6Z",
+        "min": 28
+      },
+      {
+        "id": "label",
+        "facet": "flat",
+        "tone": 0.5,
+        "bevel": "raised",
+        "d": "M8 16h16a1 1 0 0 1 1 1v8a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1v-8a1 1 0 0 1 1 -1Z",
+        "material": "paper",
+        "min": 24
+      },
+      {
+        "id": "lines",
+        "role": "crease",
+        "min": 30,
+        "d": "M9.5 19h13M9.5 22h9"
+      }
+    ]
+  },
+  "volumeOptical": {
+    "material": "glass",
+    "glyph": "drive",
+    "silhouette": "disc",
+    "parts": [
+      {
+        "id": "disc",
+        "facet": "top",
+        "tone": 0,
+        "bevel": "raised",
+        "d": "M2.5 16a13.5 13.5 0 1 0 27 0a13.5 13.5 0 1 0 -27 0Z"
+      },
+      {
+        "id": "band",
+        "role": "crease",
+        "min": 28,
+        "d": "M7.6 16a8.4 8.4 0 1 0 16.8 0a8.4 8.4 0 1 0 -16.8 0Z"
+      },
+      {
+        "id": "hub",
+        "facet": "under",
+        "tone": -0.8,
+        "bevel": "well",
+        "d": "M12.6 16a3.4 3.4 0 1 0 6.8 0a3.4 3.4 0 1 0 -6.8 0Z"
+      },
+      {
+        "id": "spindle",
+        "tint": "platinum.2",
+        "min": 24,
+        "d": "M14.5 16a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0Z"
+      }
+    ]
+  },
+  "volumeDiskImage": {
+    "material": "glass",
+    "glyph": "drive",
+    "silhouette": "body",
+    "parts": [
+      {
+        "id": "body",
+        "facet": "top",
+        "tone": 0,
+        "bevel": "raised",
+        "d": "M3 9h26a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-26a2 2 0 0 1 -2 -2v-10a2 2 0 0 1 2 -2Z"
+      },
+      {
+        "id": "seam",
+        "role": "crease",
+        "min": 26,
+        "d": "M4 16h13"
+      },
+      {
+        "id": "led",
+        "tint": "accent.blue.base",
+        "min": 24,
+        "d": "M24.8 16a1.2 1.2 0 1 0 2.4 0a1.2 1.2 0 1 0 -2.4 0Z"
+      }
+    ]
+  },
+  "volumeNetwork": {
+    "material": "platinum",
+    "glyph": "cloud",
+    "silhouette": "body",
+    "parts": [
+      {
+        "id": "body",
+        "facet": "top",
+        "tone": 0,
+        "bevel": "raised",
+        "d": "M3 9h26a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-26a2 2 0 0 1 -2 -2v-10a2 2 0 0 1 2 -2Z"
+      },
+      {
+        "id": "plate",
+        "facet": "under",
+        "tone": -0.8,
+        "bevel": "well",
+        "d": "M5.2 12h9.6a1.2 1.2 0 0 1 1.2 1.2v5.6a1.2 1.2 0 0 1 -1.2 1.2h-9.6a1.2 1.2 0 0 1 -1.2 -1.2v-5.6a1.2 1.2 0 0 1 1.2 -1.2Z",
+        "min": 26
+      },
+      {
+        "id": "globe",
+        "role": "crease",
+        "min": 26,
+        "d": "M21 18.4a1.6 1.6 0 0 1-0.2-3.2a2.4 2.4 0 0 1 4.6 0.6A1.4 1.4 0 0 1 25.2 18.4z"
+      }
+    ]
+  },
+  "volumeServer": {
+    "material": "graphite",
+    "glyph": "drive",
+    "silhouette": "body",
+    "parts": [
+      {
+        "id": "body",
+        "facet": "top",
+        "tone": 0,
+        "bevel": "raised",
+        "d": "M8.2 2h15.6a2.2 2.2 0 0 1 2.2 2.2v23.6a2.2 2.2 0 0 1 -2.2 2.2h-15.6a2.2 2.2 0 0 1 -2.2 -2.2v-23.6a2.2 2.2 0 0 1 2.2 -2.2Z"
+      },
+      {
+        "id": "bay0",
+        "facet": "under",
+        "tone": -0.8,
+        "bevel": "well",
+        "d": "M9.8 7.4h12.4a0.8 0.8 0 0 1 0.8 0.8v2.4a0.8 0.8 0 0 1 -0.8 0.8h-12.4a0.8 0.8 0 0 1 -0.8 -0.8v-2.4a0.8 0.8 0 0 1 0.8 -0.8Z",
+        "min": 26
+      },
+      {
+        "id": "bay1",
+        "facet": "under",
+        "tone": -0.8,
+        "bevel": "well",
+        "d": "M9.8 13.4h12.4a0.8 0.8 0 0 1 0.8 0.8v2.4a0.8 0.8 0 0 1 -0.8 0.8h-12.4a0.8 0.8 0 0 1 -0.8 -0.8v-2.4a0.8 0.8 0 0 1 0.8 -0.8Z",
+        "min": 26
+      },
+      {
+        "id": "bay2",
+        "facet": "under",
+        "tone": -0.8,
+        "bevel": "well",
+        "d": "M9.8 19.4h12.4a0.8 0.8 0 0 1 0.8 0.8v2.4a0.8 0.8 0 0 1 -0.8 0.8h-12.4a0.8 0.8 0 0 1 -0.8 -0.8v-2.4a0.8 0.8 0 0 1 0.8 -0.8Z",
+        "min": 26
+      },
+      {
+        "id": "leds",
+        "tint": "traffic.zoom.base",
+        "min": 26,
+        "d": "M9.6 26.4a1 1 0 1 0 2 0a1 1 0 1 0 -2 0ZM13 26.4a1 1 0 1 0 2 0a1 1 0 1 0 -2 0Z"
+      }
+    ]
+  },
+  "devicePrinter": {
+    "material": "platinum",
+    "glyph": "document",
+    "silhouette": "body",
+    "parts": [
+      {
+        "id": "sheet",
+        "facet": "flat",
+        "tone": 0.5,
+        "bevel": "raised",
+        "d": "M9.5 2.5h13a1 1 0 0 1 1 1v7a1 1 0 0 1 -1 1h-13a1 1 0 0 1 -1 -1v-7a1 1 0 0 1 1 -1Z",
+        "material": "paper"
+      },
+      {
+        "id": "body",
+        "facet": "top",
+        "tone": 0,
+        "bevel": "raised",
+        "d": "M4.4 11h23.2a2.4 2.4 0 0 1 2.4 2.4v9.2a2.4 2.4 0 0 1 -2.4 2.4h-23.2a2.4 2.4 0 0 1 -2.4 -2.4v-9.2a2.4 2.4 0 0 1 2.4 -2.4Z"
+      },
+      {
+        "id": "slot",
+        "facet": "under",
+        "tone": -0.8,
+        "bevel": "well",
+        "d": "M7.3 14h17.4a1.3 1.3 0 0 1 1.3 1.3v0a1.3 1.3 0 0 1 -1.3 1.3h-17.4a1.3 1.3 0 0 1 -1.3 -1.3v0a1.3 1.3 0 0 1 1.3 -1.3Z",
+        "min": 26
+      },
+      {
+        "id": "tray",
+        "facet": "front",
+        "tone": -0.25,
+        "bevel": "none",
+        "d": "M7.7 25h16.6a1.2 1.2 0 0 1 1.2 1.2v1.6a1.2 1.2 0 0 1 -1.2 1.2h-16.6a1.2 1.2 0 0 1 -1.2 -1.2v-1.6a1.2 1.2 0 0 1 1.2 -1.2Z",
+        "min": 24
+      },
+      {
+        "id": "rules",
+        "role": "crease",
+        "min": 30,
+        "d": "M11 5.5h10M11 8.5h7"
+      }
+    ]
+  },
+  "deviceScanner": {
+    "material": "platinum",
+    "glyph": "image",
+    "silhouette": "body",
+    "parts": [
+      {
+        "id": "lid",
+        "facet": "top",
+        "tone": 0.25,
+        "bevel": "raised",
+        "d": "M3.8 3h24.4a1.8 1.8 0 0 1 1.8 1.8v3.4a1.8 1.8 0 0 1 -1.8 1.8h-24.4a1.8 1.8 0 0 1 -1.8 -1.8v-3.4a1.8 1.8 0 0 1 1.8 -1.8Z"
+      },
+      {
+        "id": "body",
+        "facet": "front",
+        "tone": 0,
+        "bevel": "raised",
+        "d": "M4.2 10h23.6a2.2 2.2 0 0 1 2.2 2.2v13.6a2.2 2.2 0 0 1 -2.2 2.2h-23.6a2.2 2.2 0 0 1 -2.2 -2.2v-13.6a2.2 2.2 0 0 1 2.2 -2.2Z"
+      },
+      {
+        "id": "bed",
+        "facet": "under",
+        "tone": -0.8,
+        "bevel": "well",
+        "d": "M6.7 13h18.6a1.2 1.2 0 0 1 1.2 1.2v9.1a1.2 1.2 0 0 1 -1.2 1.2h-18.6a1.2 1.2 0 0 1 -1.2 -1.2v-9.1a1.2 1.2 0 0 1 1.2 -1.2Z"
+      },
+      {
+        "id": "light",
+        "tint": "accent.blue.light",
+        "min": 26,
+        "d": "M7.6 17.6h16.8a1.1 1.1 0 0 1 1.1 1.1v0a1.1 1.1 0 0 1 -1.1 1.1h-16.8a1.1 1.1 0 0 1 -1.1 -1.1v0a1.1 1.1 0 0 1 1.1 -1.1Z"
+      }
+    ]
+  },
+  "deviceDisplay": {
+    "material": "platinum",
+    "glyph": "desktop",
+    "silhouette": "body",
+    "parts": [
+      {
+        "id": "body",
+        "facet": "top",
+        "tone": 0,
+        "bevel": "raised",
+        "d": "M3.2 4h25.6a2.2 2.2 0 0 1 2.2 2.2v14.6a2.2 2.2 0 0 1 -2.2 2.2h-25.6a2.2 2.2 0 0 1 -2.2 -2.2v-14.6a2.2 2.2 0 0 1 2.2 -2.2Z"
+      },
+      {
+        "id": "screen",
+        "facet": "under",
+        "tone": -0.8,
+        "bevel": "well",
+        "d": "M4.8 6.4h22.4a1.2 1.2 0 0 1 1.2 1.2v11.8a1.2 1.2 0 0 1 -1.2 1.2h-22.4a1.2 1.2 0 0 1 -1.2 -1.2v-11.8a1.2 1.2 0 0 1 1.2 -1.2Z"
+      },
+      {
+        "id": "neck",
+        "facet": "front",
+        "tone": -0.2,
+        "bevel": "none",
+        "d": "M14.2 23h3.6a0.8 0.8 0 0 1 0.8 0.8v2.4a0.8 0.8 0 0 1 -0.8 0.8h-3.6a0.8 0.8 0 0 1 -0.8 -0.8v-2.4a0.8 0.8 0 0 1 0.8 -0.8Z",
+        "min": 24
+      },
+      {
+        "id": "foot",
+        "facet": "top",
+        "tone": 0.2,
+        "bevel": "raised",
+        "d": "M9.4 27h13.2a1.4 1.4 0 0 1 1.4 1.4v0.2a1.4 1.4 0 0 1 -1.4 1.4h-13.2a1.4 1.4 0 0 1 -1.4 -1.4v-0.2a1.4 1.4 0 0 1 1.4 -1.4Z",
+        "min": 24
+      }
+    ]
+  },
+  "deviceKeyboard": {
+    "material": "platinum",
+    "glyph": "grid",
+    "silhouette": "body",
+    "parts": [
+      {
+        "id": "body",
+        "facet": "top",
+        "tone": 0,
+        "bevel": "raised",
+        "d": "M3.2 8h25.6a2.2 2.2 0 0 1 2.2 2.2v11.6a2.2 2.2 0 0 1 -2.2 2.2h-25.6a2.2 2.2 0 0 1 -2.2 -2.2v-11.6a2.2 2.2 0 0 1 2.2 -2.2Z"
+      },
+      {
+        "id": "keys",
+        "tint": "platinum.4",
+        "min": 26,
+        "d": "M4.6 11h1.4a0.6 0.6 0 0 1 0.6 0.6v1.4a0.6 0.6 0 0 1 -0.6 0.6h-1.4a0.6 0.6 0 0 1 -0.6 -0.6v-1.4a0.6 0.6 0 0 1 0.6 -0.6ZM8.1 11h1.4a0.6 0.6 0 0 1 0.6 0.6v1.4a0.6 0.6 0 0 1 -0.6 0.6h-1.4a0.6 0.6 0 0 1 -0.6 -0.6v-1.4a0.6 0.6 0 0 1 0.6 -0.6ZM11.6 11h1.4a0.6 0.6 0 0 1 0.6 0.6v1.4a0.6 0.6 0 0 1 -0.6 0.6h-1.4a0.6 0.6 0 0 1 -0.6 -0.6v-1.4a0.6 0.6 0 0 1 0.6 -0.6ZM15.1 11h1.4a0.6 0.6 0 0 1 0.6 0.6v1.4a0.6 0.6 0 0 1 -0.6 0.6h-1.4a0.6 0.6 0 0 1 -0.6 -0.6v-1.4a0.6 0.6 0 0 1 0.6 -0.6ZM18.6 11h1.4a0.6 0.6 0 0 1 0.6 0.6v1.4a0.6 0.6 0 0 1 -0.6 0.6h-1.4a0.6 0.6 0 0 1 -0.6 -0.6v-1.4a0.6 0.6 0 0 1 0.6 -0.6ZM22.1 11h1.4a0.6 0.6 0 0 1 0.6 0.6v1.4a0.6 0.6 0 0 1 -0.6 0.6h-1.4a0.6 0.6 0 0 1 -0.6 -0.6v-1.4a0.6 0.6 0 0 1 0.6 -0.6ZM25.6 11h1.4a0.6 0.6 0 0 1 0.6 0.6v1.4a0.6 0.6 0 0 1 -0.6 0.6h-1.4a0.6 0.6 0 0 1 -0.6 -0.6v-1.4a0.6 0.6 0 0 1 0.6 -0.6ZM4.6 14.6h1.4a0.6 0.6 0 0 1 0.6 0.6v1.4a0.6 0.6 0 0 1 -0.6 0.6h-1.4a0.6 0.6 0 0 1 -0.6 -0.6v-1.4a0.6 0.6 0 0 1 0.6 -0.6ZM8.1 14.6h1.4a0.6 0.6 0 0 1 0.6 0.6v1.4a0.6 0.6 0 0 1 -0.6 0.6h-1.4a0.6 0.6 0 0 1 -0.6 -0.6v-1.4a0.6 0.6 0 0 1 0.6 -0.6ZM11.6 14.6h1.4a0.6 0.6 0 0 1 0.6 0.6v1.4a0.6 0.6 0 0 1 -0.6 0.6h-1.4a0.6 0.6 0 0 1 -0.6 -0.6v-1.4a0.6 0.6 0 0 1 0.6 -0.6ZM15.1 14.6h1.4a0.6 0.6 0 0 1 0.6 0.6v1.4a0.6 0.6 0 0 1 -0.6 0.6h-1.4a0.6 0.6 0 0 1 -0.6 -0.6v-1.4a0.6 0.6 0 0 1 0.6 -0.6ZM18.6 14.6h1.4a0.6 0.6 0 0 1 0.6 0.6v1.4a0.6 0.6 0 0 1 -0.6 0.6h-1.4a0.6 0.6 0 0 1 -0.6 -0.6v-1.4a0.6 0.6 0 0 1 0.6 -0.6ZM22.1 14.6h1.4a0.6 0.6 0 0 1 0.6 0.6v1.4a0.6 0.6 0 0 1 -0.6 0.6h-1.4a0.6 0.6 0 0 1 -0.6 -0.6v-1.4a0.6 0.6 0 0 1 0.6 -0.6ZM25.6 14.6h1.4a0.6 0.6 0 0 1 0.6 0.6v1.4a0.6 0.6 0 0 1 -0.6 0.6h-1.4a0.6 0.6 0 0 1 -0.6 -0.6v-1.4a0.6 0.6 0 0 1 0.6 -0.6ZM4.6 18.2h1.4a0.6 0.6 0 0 1 0.6 0.6v1.4a0.6 0.6 0 0 1 -0.6 0.6h-1.4a0.6 0.6 0 0 1 -0.6 -0.6v-1.4a0.6 0.6 0 0 1 0.6 -0.6ZM8.1 18.2h1.4a0.6 0.6 0 0 1 0.6 0.6v1.4a0.6 0.6 0 0 1 -0.6 0.6h-1.4a0.6 0.6 0 0 1 -0.6 -0.6v-1.4a0.6 0.6 0 0 1 0.6 -0.6ZM11.6 18.2h1.4a0.6 0.6 0 0 1 0.6 0.6v1.4a0.6 0.6 0 0 1 -0.6 0.6h-1.4a0.6 0.6 0 0 1 -0.6 -0.6v-1.4a0.6 0.6 0 0 1 0.6 -0.6ZM15.1 18.2h1.4a0.6 0.6 0 0 1 0.6 0.6v1.4a0.6 0.6 0 0 1 -0.6 0.6h-1.4a0.6 0.6 0 0 1 -0.6 -0.6v-1.4a0.6 0.6 0 0 1 0.6 -0.6ZM18.6 18.2h1.4a0.6 0.6 0 0 1 0.6 0.6v1.4a0.6 0.6 0 0 1 -0.6 0.6h-1.4a0.6 0.6 0 0 1 -0.6 -0.6v-1.4a0.6 0.6 0 0 1 0.6 -0.6ZM22.1 18.2h1.4a0.6 0.6 0 0 1 0.6 0.6v1.4a0.6 0.6 0 0 1 -0.6 0.6h-1.4a0.6 0.6 0 0 1 -0.6 -0.6v-1.4a0.6 0.6 0 0 1 0.6 -0.6ZM25.6 18.2h1.4a0.6 0.6 0 0 1 0.6 0.6v1.4a0.6 0.6 0 0 1 -0.6 0.6h-1.4a0.6 0.6 0 0 1 -0.6 -0.6v-1.4a0.6 0.6 0 0 1 0.6 -0.6Z"
+      },
+      {
+        "id": "space",
+        "tint": "platinum.4",
+        "min": 28,
+        "d": "M11.3 21.8h9.4a0.8 0.8 0 0 1 0.8 0.8v0a0.8 0.8 0 0 1 -0.8 0.8h-9.4a0.8 0.8 0 0 1 -0.8 -0.8v0a0.8 0.8 0 0 1 0.8 -0.8Z"
+      }
+    ]
+  },
+  "deviceMouse": {
+    "material": "platinum",
+    "glyph": "drop",
+    "silhouette": "body",
+    "parts": [
+      {
+        "id": "body",
+        "facet": "top",
+        "tone": 0,
+        "bevel": "raised",
+        "d": "M16 2.5c6.1 0 10 4.6 10 11.5v6c0 6.9-3.9 11.5-10 11.5S6 26.9 6 20v-6C6 7.1 9.9 2.5 16 2.5Z"
+      },
+      {
+        "id": "seam",
+        "role": "crease",
+        "min": 26,
+        "d": "M16 4.6v9.4"
+      },
+      {
+        "id": "wheel",
+        "facet": "under",
+        "tone": -0.8,
+        "bevel": "well",
+        "d": "M16 6.4h0a1.1 1.1 0 0 1 1.1 1.1v2.8a1.1 1.1 0 0 1 -1.1 1.1h0a1.1 1.1 0 0 1 -1.1 -1.1v-2.8a1.1 1.1 0 0 1 1.1 -1.1Z",
+        "min": 28
+      }
+    ]
+  },
+  "deviceCamera": {
+    "material": "graphite",
+    "glyph": "image",
+    "silhouette": "body",
+    "parts": [
+      {
+        "id": "hump",
+        "facet": "top",
+        "tone": 0.3,
+        "bevel": "raised",
+        "d": "M12.2 4h7.6a1.2 1.2 0 0 1 1.2 1.2v2a1.2 1.2 0 0 1 -1.2 1.2h-7.6a1.2 1.2 0 0 1 -1.2 -1.2v-2a1.2 1.2 0 0 1 1.2 -1.2Z"
+      },
+      {
+        "id": "body",
+        "facet": "top",
+        "tone": 0,
+        "bevel": "raised",
+        "d": "M4.1 8h23.8a2.6 2.6 0 0 1 2.6 2.6v12.8a2.6 2.6 0 0 1 -2.6 2.6h-23.8a2.6 2.6 0 0 1 -2.6 -2.6v-12.8a2.6 2.6 0 0 1 2.6 -2.6Z"
+      },
+      {
+        "id": "lens",
+        "facet": "under",
+        "tone": -0.8,
+        "bevel": "well",
+        "d": "M9.4 17a6.6 6.6 0 1 0 13.2 0a6.6 6.6 0 1 0 -13.2 0Z"
+      },
+      {
+        "id": "glass",
+        "tint": "accent.blue.deep",
+        "min": 26,
+        "d": "M11.6 17a4.4 4.4 0 1 0 8.8 0a4.4 4.4 0 1 0 -8.8 0Z"
+      },
+      {
+        "id": "flash",
+        "tint": "traffic.minimize.light",
+        "min": 28,
+        "d": "M5.3 11h1.8a0.8 0.8 0 0 1 0.8 0.8v0.8a0.8 0.8 0 0 1 -0.8 0.8h-1.8a0.8 0.8 0 0 1 -0.8 -0.8v-0.8a0.8 0.8 0 0 1 0.8 -0.8Z"
+      }
+    ]
+  },
+  "devicePhone": {
+    "material": "graphite",
+    "glyph": "desktop",
+    "silhouette": "body",
+    "parts": [
+      {
+        "id": "body",
+        "facet": "top",
+        "tone": 0,
+        "bevel": "raised",
+        "d": "M11 1.5h10a3 3 0 0 1 3 3v23a3 3 0 0 1 -3 3h-10a3 3 0 0 1 -3 -3v-23a3 3 0 0 1 3 -3Z"
+      },
+      {
+        "id": "screen",
+        "facet": "under",
+        "tone": -0.8,
+        "bevel": "well",
+        "d": "M11.2 5h9.6a1.2 1.2 0 0 1 1.2 1.2v18.6a1.2 1.2 0 0 1 -1.2 1.2h-9.6a1.2 1.2 0 0 1 -1.2 -1.2v-18.6a1.2 1.2 0 0 1 1.2 -1.2Z"
+      },
+      {
+        "id": "speaker",
+        "tint": "platinum.6",
+        "min": 28,
+        "d": "M14.5 3h3a0.5 0.5 0 0 1 0.5 0.5v0a0.5 0.5 0 0 1 -0.5 0.5h-3a0.5 0.5 0 0 1 -0.5 -0.5v0a0.5 0.5 0 0 1 0.5 -0.5Z"
+      },
+      {
+        "id": "home",
+        "role": "crease",
+        "min": 28,
+        "d": "M16 28h.01"
+      }
+    ]
+  },
+  "deviceMediaPlayer": {
+    "material": "platinum",
+    "glyph": "music",
+    "silhouette": "body",
+    "parts": [
+      {
+        "id": "body",
+        "facet": "top",
+        "tone": 0,
+        "bevel": "raised",
+        "d": "M10.6 1.5h10.8a2.6 2.6 0 0 1 2.6 2.6v23.8a2.6 2.6 0 0 1 -2.6 2.6h-10.8a2.6 2.6 0 0 1 -2.6 -2.6v-23.8a2.6 2.6 0 0 1 2.6 -2.6Z"
+      },
+      {
+        "id": "screen",
+        "facet": "under",
+        "tone": -0.8,
+        "bevel": "well",
+        "d": "M11 4h10a1 1 0 0 1 1 1v7a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1v-7a1 1 0 0 1 1 -1Z"
+      },
+      {
+        "id": "wheel",
+        "facet": "under",
+        "tone": -0.8,
+        "bevel": "well",
+        "d": "M9.6 21.5a6.4 6.4 0 1 0 12.8 0a6.4 6.4 0 1 0 -12.8 0Z"
+      },
+      {
+        "id": "hub",
+        "tint": "platinum.2",
+        "min": 26,
+        "d": "M13.6 21.5a2.4 2.4 0 1 0 4.8 0a2.4 2.4 0 1 0 -4.8 0Z"
+      }
+    ]
+  },
+  "netGlobe": {
+    "material": "glass",
+    "glyph": "cloud",
+    "silhouette": "sphere",
+    "parts": [
+      {
+        "id": "sphere",
+        "facet": "top",
+        "tone": 0,
+        "bevel": "raised",
+        "d": "M2.5 16a13.5 13.5 0 1 0 27 0a13.5 13.5 0 1 0 -27 0Z"
+      },
+      {
+        "id": "meridian",
+        "role": "crease",
+        "min": 26,
+        "d": "M16 2.6c4 3.6 6.2 8.2 6.2 13.4S20 25.8 16 29.4c-4-3.6-6.2-8.2-6.2-13.4S12 6.2 16 2.6Z"
+      },
+      {
+        "id": "equator",
+        "role": "crease",
+        "min": 26,
+        "d": "M2.8 16h26.4"
+      }
+    ]
+  },
+  "netAirport": {
+    "material": "platinum",
+    "glyph": "cloud",
+    "silhouette": "base",
+    "parts": [
+      {
+        "id": "base",
+        "facet": "top",
+        "tone": 0,
+        "bevel": "raised",
+        "d": "M9.4 17h13.2a2.4 2.4 0 0 1 2.4 2.4v7.2a2.4 2.4 0 0 1 -2.4 2.4h-13.2a2.4 2.4 0 0 1 -2.4 -2.4v-7.2a2.4 2.4 0 0 1 2.4 -2.4Z"
+      },
+      {
+        "id": "waves",
+        "role": "crease",
+        "min": 26,
+        "d": "M9.6 12.4a9 9 0 0 1 12.8 0M13 8.6a14 14 0 0 1 6 0"
+      },
+      {
+        "id": "led",
+        "tint": "traffic.zoom.base",
+        "min": 24,
+        "d": "M14.6 23a1.4 1.4 0 1 0 2.8 0a1.4 1.4 0 1 0 -2.8 0Z"
+      }
+    ]
+  },
+  "netEthernet": {
+    "material": "platinum",
+    "glyph": "drive",
+    "silhouette": "body",
+    "parts": [
+      {
+        "id": "body",
+        "facet": "top",
+        "tone": 0,
+        "bevel": "raised",
+        "d": "M7.8 8h16.4a1.8 1.8 0 0 1 1.8 1.8v11.4a1.8 1.8 0 0 1 -1.8 1.8h-16.4a1.8 1.8 0 0 1 -1.8 -1.8v-11.4a1.8 1.8 0 0 1 1.8 -1.8Z"
+      },
+      {
+        "id": "tab",
+        "facet": "top",
+        "tone": 0.3,
+        "bevel": "raised",
+        "d": "M14 4h4a1 1 0 0 1 1 1v2.4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-2.4a1 1 0 0 1 1 -1Z",
+        "min": 24
+      },
+      {
+        "id": "pins",
+        "tint": "traffic.minimize.base",
+        "min": 26,
+        "d": "M9 11h0.8a0.4 0.4 0 0 1 0.4 0.4v3.2a0.4 0.4 0 0 1 -0.4 0.4h-0.8a0.4 0.4 0 0 1 -0.4 -0.4v-3.2a0.4 0.4 0 0 1 0.4 -0.4ZM11.6 11h0.8a0.4 0.4 0 0 1 0.4 0.4v3.2a0.4 0.4 0 0 1 -0.4 0.4h-0.8a0.4 0.4 0 0 1 -0.4 -0.4v-3.2a0.4 0.4 0 0 1 0.4 -0.4ZM14.2 11h0.8a0.4 0.4 0 0 1 0.4 0.4v3.2a0.4 0.4 0 0 1 -0.4 0.4h-0.8a0.4 0.4 0 0 1 -0.4 -0.4v-3.2a0.4 0.4 0 0 1 0.4 -0.4ZM16.8 11h0.8a0.4 0.4 0 0 1 0.4 0.4v3.2a0.4 0.4 0 0 1 -0.4 0.4h-0.8a0.4 0.4 0 0 1 -0.4 -0.4v-3.2a0.4 0.4 0 0 1 0.4 -0.4ZM19.4 11h0.8a0.4 0.4 0 0 1 0.4 0.4v3.2a0.4 0.4 0 0 1 -0.4 0.4h-0.8a0.4 0.4 0 0 1 -0.4 -0.4v-3.2a0.4 0.4 0 0 1 0.4 -0.4ZM22 11h0.8a0.4 0.4 0 0 1 0.4 0.4v3.2a0.4 0.4 0 0 1 -0.4 0.4h-0.8a0.4 0.4 0 0 1 -0.4 -0.4v-3.2a0.4 0.4 0 0 1 0.4 -0.4Z"
+      },
+      {
+        "id": "cable",
+        "facet": "front",
+        "tone": -0.3,
+        "bevel": "none",
+        "d": "M14.8 23h2.4a1.4 1.4 0 0 1 1.4 1.4v4.2a1.4 1.4 0 0 1 -1.4 1.4h-2.4a1.4 1.4 0 0 1 -1.4 -1.4v-4.2a1.4 1.4 0 0 1 1.4 -1.4Z",
+        "material": "graphite",
+        "min": 24
+      }
+    ]
+  },
+  "netBluetooth": {
+    "material": "glass",
+    "glyph": "cloud",
+    "silhouette": "bead",
+    "parts": [
+      {
+        "id": "bead",
+        "facet": "top",
+        "tone": 0,
+        "bevel": "raised",
+        "d": "M2.5 16a13.5 13.5 0 1 0 27 0a13.5 13.5 0 1 0 -27 0Z"
+      },
+      {
+        "id": "rune",
+        "role": "crease",
+        "tint": "ink.on-accent",
+        "min": 24,
+        "d": "M14.4 14.4l3.2 3.2l-1.6 1.2V13.2l1.6 1.2l-3.2 3.2"
+      }
+    ]
+  },
+  "netSharedComputer": {
+    "material": "platinum",
+    "glyph": "desktop",
+    "silhouette": "body",
+    "parts": [
+      {
+        "id": "body",
+        "facet": "top",
+        "tone": 0,
+        "bevel": "raised",
+        "d": "M3.2 4h25.6a2.2 2.2 0 0 1 2.2 2.2v14.6a2.2 2.2 0 0 1 -2.2 2.2h-25.6a2.2 2.2 0 0 1 -2.2 -2.2v-14.6a2.2 2.2 0 0 1 2.2 -2.2Z"
+      },
+      {
+        "id": "screen",
+        "facet": "under",
+        "tone": -0.8,
+        "bevel": "well",
+        "d": "M4.8 6.4h22.4a1.2 1.2 0 0 1 1.2 1.2v11.8a1.2 1.2 0 0 1 -1.2 1.2h-22.4a1.2 1.2 0 0 1 -1.2 -1.2v-11.8a1.2 1.2 0 0 1 1.2 -1.2Z"
+      },
+      {
+        "id": "share",
+        "role": "crease",
+        "tint": "accent.blue.light",
+        "min": 26,
+        "d": "M16 14.7V10.3M14.4 11.9l1.6-1.6l1.6 1.6M13.2 14.3v2.4h5.6v-2.4"
+      },
+      {
+        "id": "foot",
+        "facet": "top",
+        "tone": 0.2,
+        "bevel": "raised",
+        "d": "M9.4 25h13.2a1.4 1.4 0 0 1 1.4 1.4v0.6a1.4 1.4 0 0 1 -1.4 1.4h-13.2a1.4 1.4 0 0 1 -1.4 -1.4v-0.6a1.4 1.4 0 0 1 1.4 -1.4Z",
+        "min": 24
+      }
+    ]
+  },
+  "netRemoteDesktop": {
+    "material": "graphite",
+    "glyph": "desktop",
+    "silhouette": "body",
+    "parts": [
+      {
+        "id": "body",
+        "facet": "top",
+        "tone": 0,
+        "bevel": "raised",
+        "d": "M3.2 4h25.6a2.2 2.2 0 0 1 2.2 2.2v14.6a2.2 2.2 0 0 1 -2.2 2.2h-25.6a2.2 2.2 0 0 1 -2.2 -2.2v-14.6a2.2 2.2 0 0 1 2.2 -2.2Z"
+      },
+      {
+        "id": "screen",
+        "facet": "under",
+        "tone": -0.8,
+        "bevel": "well",
+        "d": "M4.8 6.4h22.4a1.2 1.2 0 0 1 1.2 1.2v11.8a1.2 1.2 0 0 1 -1.2 1.2h-22.4a1.2 1.2 0 0 1 -1.2 -1.2v-11.8a1.2 1.2 0 0 1 1.2 -1.2Z"
+      },
+      {
+        "id": "arrow",
+        "role": "crease",
+        "tint": "traffic.zoom.light",
+        "min": 26,
+        "d": "M12.8 13.5h6M16.4 11.1l2.4 2.4l-2.4 2.4"
+      },
+      {
+        "id": "foot",
+        "facet": "top",
+        "tone": 0.2,
+        "bevel": "raised",
+        "d": "M9.4 25h13.2a1.4 1.4 0 0 1 1.4 1.4v0.6a1.4 1.4 0 0 1 -1.4 1.4h-13.2a1.4 1.4 0 0 1 -1.4 -1.4v-0.6a1.4 1.4 0 0 1 1.4 -1.4Z",
+        "min": 24
+      }
+    ]
   }
 }

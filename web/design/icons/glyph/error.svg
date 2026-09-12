@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="96" height="96">
+  <title>error</title>
+  <g id="error" fill="none" stroke="#4a4e57" stroke-width="1.7"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path id="error-0" d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z"/>
+    <path id="error-1" d="M8.5 8.5l7 7"/>
+    <path id="error-2" d="M15.5 8.5l-7 7"/>
+  </g>
+</svg>

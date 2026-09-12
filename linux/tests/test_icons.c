@@ -5,7 +5,7 @@
 #include "maryui/lp_svgpath.h"
 
 LP_TEST(has_every_icon_from_icons_json) {
-    LP_ASSERT_EQ(LP_ICON_COUNT, 27);
+    LP_ASSERT_EQ(LP_ICON_COUNT, 81);
     LP_ASSERT_EQ(lp_icon_by_name("trash"), LP_ICON_TRASH);
     LP_ASSERT_STR(LP_ICON_NAMES[LP_ICON_FOLDER], "folder");
     LP_ASSERT_STR(LP_ICON_NAMES[LP_ICON_CHEVRON_LEFT], "chevronLeft");

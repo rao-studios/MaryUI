@@ -62,10 +62,13 @@ is listed in the tables as **↳**.
 
 ## Waves
 
-- **Wave 1** — everything the running desktop renders today, plus the full application roster.
-  Enough to make Spotlight and Finder read correctly.
-- **Wave 2** — the long tail, drawn against a recipe already proven by Wave 1.
-- **Later** — needs the C target in scope, because it grows `icons.json` and `LP_ICON_COUNT`.
+Both waves have shipped, and so have the glyphs. `objects.json` holds **69 objects**; `icons.json`
+holds **81 glyphs**, up from 27. Every mark below is drawn, in the app, and exported to
+`design/icons/*.svg` by `npm run icons`.
+
+- **Wave 1** — everything the running desktop renders, plus the application roster.
+- **Wave 2** — the long tail, drawn against the recipe Wave 1 proved.
+- **Still to come** — badges and cursors, and the C renderer for the object tier.
 
 ---
 
@@ -212,11 +215,18 @@ a template makes copies. **18 objects.**
 `chevronLeft` · `chevronRight` · `chevronDown` · `search` · `grid` · `list` · `gear` · `check` ·
 `close` · `plus` · `minus`
 
-### Later — needs the C target in scope
+### Shipped — the 54 that landed with Wave 2
 
-These are drawn now and live in the Sketch sheet, but adding them to `icons.json` grows
-`LP_ICON_COUNT` and trips the count assertion in `linux/tests/test_icons.c`, so they land as one
-batch when linux is in scope.
+These are in `icons.json` now. Adding them took `LP_ICON_COUNT` from 27 to 81, which meant one
+integer in `linux/tests/test_icons.c`; no other C source changed, and the C desktop renders all 81
+through the existing `lp_icon_draw`.
+
+One limitation to know about: `icons.json` is a flat list of `d` strings and the tier strokes every
+one of them, so a mark that wants a **fill** cannot say so. `radioDot`, `unread`, `triangleClosed`
+and `triangleOpen` are drawn stroke-native instead — small enough that the 1.7px stroke closes the
+interior and they read solid. Platinum's disclosure triangles were properly filled; getting that
+exactly right needs a fill flag in the shared format, which touches `toIconsC`, `lp_icons.h` and
+`lp_icon_draw` together.
 
 | Group | Marks |
 |---|---|
@@ -306,13 +316,17 @@ name entirely.
 
 ## Counts
 
-| Tier | Wave 1 | Wave 2 | Later | Total |
-|---|---|---|---|---|
-| Objects | 50 | 54 | — | 104 |
-| Glyphs | 11 (existing) | — | 54 | 65 |
-| Badges | — | — | 7 | 7 |
-| Cursors | — | — | 14 | 14 |
-| | | | | **190** |
+| Tier | Shipped | Still to come |
+|---|---|---|
+| Objects | 69 | — |
+| Glyphs | 81 | — |
+| Badges | — | 7 |
+| Cursors | — | 14 |
+| | **150** | **21** |
+
+The object count is 69 rather than the 104 first sketched: folder and document variants turned out
+to be one silhouette plus an embossed mark rather than separate drawings, which is both fewer files
+and the more honest structure — a Documents folder *is* a folder.
 
 Counts are the drawings on the canvas, not an estimate. `volume` belongs to Transport and is not
 repeated under Menu bar; the transport square is `stopPlayback`, since `stop` is the alert octagon.

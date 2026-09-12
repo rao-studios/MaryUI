@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="96" height="96">
+  <title>collapse</title>
+  <g id="collapse" fill="none" stroke="#4a4e57" stroke-width="1.7"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path id="collapse-0" d="M10 4v6H4"/>
+    <path id="collapse-1" d="M14 20v-6h6"/>
+    <path id="collapse-2" d="M4 10l7-7"/>
+    <path id="collapse-3" d="M20 14l-7 7"/>
+  </g>
+</svg>

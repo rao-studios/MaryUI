@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="128" height="128">
+  <title>netAirport</title>
+  <defs>
+    <clipPath id="clip-base"><path d="M9.4 17h13.2a2.4 2.4 0 0 1 2.4 2.4v7.2a2.4 2.4 0 0 1 -2.4 2.4h-13.2a2.4 2.4 0 0 1 -2.4 -2.4v-7.2a2.4 2.4 0 0 1 2.4 -2.4Z"/></clipPath>
+    <linearGradient id="grad-base" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#e9ebee"/>
+      <stop offset="1" stop-color="#b9bdc6"/>
+    </linearGradient>
+    <clipPath id="clip-led"><path d="M14.6 23a1.4 1.4 0 1 0 2.8 0a1.4 1.4 0 1 0 -2.8 0Z"/></clipPath>
+    <clipPath id="clip-silhouette"><path d="M9.4 17h13.2a2.4 2.4 0 0 1 2.4 2.4v7.2a2.4 2.4 0 0 1 -2.4 2.4h-13.2a2.4 2.4 0 0 1 -2.4 -2.4v-7.2a2.4 2.4 0 0 1 2.4 -2.4Z"/></clipPath>
+    <linearGradient id="grad-key" x1="0" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.62"/>
+      <stop offset="0.3" stop-color="#ffffff" stop-opacity="0.2"/>
+      <stop offset="0.6" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <g id="netAirport">
+    <g id="base-platinum-top" clip-path="url(#clip-base)"><title>base · platinum/top</title><path d="M9.4 17h13.2a2.4 2.4 0 0 1 2.4 2.4v7.2a2.4 2.4 0 0 1 -2.4 2.4h-13.2a2.4 2.4 0 0 1 -2.4 -2.4v-7.2a2.4 2.4 0 0 1 2.4 -2.4Z" fill="url(#grad-base)"/><path d="M9.4 17h13.2a2.4 2.4 0 0 1 2.4 2.4v7.2a2.4 2.4 0 0 1 -2.4 2.4h-13.2a2.4 2.4 0 0 1 -2.4 -2.4v-7.2a2.4 2.4 0 0 1 2.4 -2.4Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M9.4 17h13.2a2.4 2.4 0 0 1 2.4 2.4v7.2a2.4 2.4 0 0 1 -2.4 2.4h-13.2a2.4 2.4 0 0 1 -2.4 -2.4v-7.2a2.4 2.4 0 0 1 2.4 -2.4Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
+    <g id="waves-edge-hairline"><title>waves · edge/hairline</title><path d="M9.6 12.4a9 9 0 0 1 12.8 0M13 8.6a14 14 0 0 1 6 0" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="1" stroke-linecap="round" transform="translate(0 0.85)"/><path d="M9.6 12.4a9 9 0 0 1 12.8 0M13 8.6a14 14 0 0 1 6 0" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1" stroke-linecap="round"/></g>
+    <g id="led-traffic-zoom-base" clip-path="url(#clip-led)"><title>led · traffic.zoom.base</title><path d="M14.6 23a1.4 1.4 0 1 0 2.8 0a1.4 1.4 0 1 0 -2.8 0Z" fill="#63c657"/></g>
+    <g id="key-sheen-color" clip-path="url(#clip-silhouette)" opacity="0.55" style="mix-blend-mode:screen"><title>key · sheen/color</title><path d="M9.4 17h13.2a2.4 2.4 0 0 1 2.4 2.4v7.2a2.4 2.4 0 0 1 -2.4 2.4h-13.2a2.4 2.4 0 0 1 -2.4 -2.4v-7.2a2.4 2.4 0 0 1 2.4 -2.4Z" fill="url(#grad-key)"/></g>
+    <path id="keyline-edge-hairline" d="M9.4 17h13.2a2.4 2.4 0 0 1 2.4 2.4v7.2a2.4 2.4 0 0 1 -2.4 2.4h-13.2a2.4 2.4 0 0 1 -2.4 -2.4v-7.2a2.4 2.4 0 0 1 2.4 -2.4Z" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1"/>
+  </g>
+</svg>

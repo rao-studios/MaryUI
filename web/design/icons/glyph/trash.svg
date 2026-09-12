@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="96" height="96">
+  <title>trash</title>
+  <g id="trash" fill="none" stroke="#4a4e57" stroke-width="1.7"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path id="trash-0" d="M4 7h16"/>
+    <path id="trash-1" d="M6 7l1 13h10l1-13"/>
+    <path id="trash-2" d="M9 7V4h6v3"/>
+    <path id="trash-3" d="M10 11v5M14 11v5"/>
+  </g>
+</svg>

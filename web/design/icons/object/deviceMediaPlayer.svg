@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="128" height="128">
+  <title>deviceMediaPlayer</title>
+  <defs>
+    <clipPath id="clip-body"><path d="M10.6 1.5h10.8a2.6 2.6 0 0 1 2.6 2.6v23.8a2.6 2.6 0 0 1 -2.6 2.6h-10.8a2.6 2.6 0 0 1 -2.6 -2.6v-23.8a2.6 2.6 0 0 1 2.6 -2.6Z"/></clipPath>
+    <linearGradient id="grad-body" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#e9ebee"/>
+      <stop offset="1" stop-color="#b9bdc6"/>
+    </linearGradient>
+    <clipPath id="clip-screen"><path d="M11 4h10a1 1 0 0 1 1 1v7a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1v-7a1 1 0 0 1 1 -1Z"/></clipPath>
+    <linearGradient id="grad-screen" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#a6abb4"/>
+      <stop offset="1" stop-color="#676a70"/>
+    </linearGradient>
+    <clipPath id="clip-wheel"><path d="M9.6 21.5a6.4 6.4 0 1 0 12.8 0a6.4 6.4 0 1 0 -12.8 0Z"/></clipPath>
+    <linearGradient id="grad-wheel" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#a6abb4"/>
+      <stop offset="1" stop-color="#676a70"/>
+    </linearGradient>
+    <clipPath id="clip-hub"><path d="M13.6 21.5a2.4 2.4 0 1 0 4.8 0a2.4 2.4 0 1 0 -4.8 0Z"/></clipPath>
+    <clipPath id="clip-silhouette"><path d="M10.6 1.5h10.8a2.6 2.6 0 0 1 2.6 2.6v23.8a2.6 2.6 0 0 1 -2.6 2.6h-10.8a2.6 2.6 0 0 1 -2.6 -2.6v-23.8a2.6 2.6 0 0 1 2.6 -2.6Z"/></clipPath>
+    <linearGradient id="grad-key" x1="0" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.62"/>
+      <stop offset="0.3" stop-color="#ffffff" stop-opacity="0.2"/>
+      <stop offset="0.6" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <g id="deviceMediaPlayer">
+    <g id="body-platinum-top" clip-path="url(#clip-body)"><title>body · platinum/top</title><path d="M10.6 1.5h10.8a2.6 2.6 0 0 1 2.6 2.6v23.8a2.6 2.6 0 0 1 -2.6 2.6h-10.8a2.6 2.6 0 0 1 -2.6 -2.6v-23.8a2.6 2.6 0 0 1 2.6 -2.6Z" fill="url(#grad-body)"/><path d="M10.6 1.5h10.8a2.6 2.6 0 0 1 2.6 2.6v23.8a2.6 2.6 0 0 1 -2.6 2.6h-10.8a2.6 2.6 0 0 1 -2.6 -2.6v-23.8a2.6 2.6 0 0 1 2.6 -2.6Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M10.6 1.5h10.8a2.6 2.6 0 0 1 2.6 2.6v23.8a2.6 2.6 0 0 1 -2.6 2.6h-10.8a2.6 2.6 0 0 1 -2.6 -2.6v-23.8a2.6 2.6 0 0 1 2.6 -2.6Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
+    <g id="screen-platinum-under" clip-path="url(#clip-screen)"><title>screen · platinum/under</title><path d="M11 4h10a1 1 0 0 1 1 1v7a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1v-7a1 1 0 0 1 1 -1Z" fill="url(#grad-screen)"/><path d="M11 4h10a1 1 0 0 1 1 1v7a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1v-7a1 1 0 0 1 1 -1Z" fill="#000000" opacity="0.128"/><path d="M11 4h10a1 1 0 0 1 1 1v7a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1v-7a1 1 0 0 1 1 -1Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(-0.8 -0.8)"/><path d="M11 4h10a1 1 0 0 1 1 1v7a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1v-7a1 1 0 0 1 1 -1Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(0.8 0.8)"/></g>
+    <g id="wheel-platinum-under" clip-path="url(#clip-wheel)"><title>wheel · platinum/under</title><path d="M9.6 21.5a6.4 6.4 0 1 0 12.8 0a6.4 6.4 0 1 0 -12.8 0Z" fill="url(#grad-wheel)"/><path d="M9.6 21.5a6.4 6.4 0 1 0 12.8 0a6.4 6.4 0 1 0 -12.8 0Z" fill="#000000" opacity="0.128"/><path d="M9.6 21.5a6.4 6.4 0 1 0 12.8 0a6.4 6.4 0 1 0 -12.8 0Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(-0.8 -0.8)"/><path d="M9.6 21.5a6.4 6.4 0 1 0 12.8 0a6.4 6.4 0 1 0 -12.8 0Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(0.8 0.8)"/></g>
+    <g id="hub-platinum-2" clip-path="url(#clip-hub)"><title>hub · platinum.2</title><path d="M13.6 21.5a2.4 2.4 0 1 0 4.8 0a2.4 2.4 0 1 0 -4.8 0Z" fill="#e3e5e9"/></g>
+    <g id="key-sheen-color" clip-path="url(#clip-silhouette)" opacity="0.55" style="mix-blend-mode:screen"><title>key · sheen/color</title><path d="M10.6 1.5h10.8a2.6 2.6 0 0 1 2.6 2.6v23.8a2.6 2.6 0 0 1 -2.6 2.6h-10.8a2.6 2.6 0 0 1 -2.6 -2.6v-23.8a2.6 2.6 0 0 1 2.6 -2.6Z" fill="url(#grad-key)"/></g>
+    <path id="keyline-edge-hairline" d="M10.6 1.5h10.8a2.6 2.6 0 0 1 2.6 2.6v23.8a2.6 2.6 0 0 1 -2.6 2.6h-10.8a2.6 2.6 0 0 1 -2.6 -2.6v-23.8a2.6 2.6 0 0 1 2.6 -2.6Z" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1"/>
+  </g>
+</svg>

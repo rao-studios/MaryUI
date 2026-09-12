@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="96" height="96">
+  <title>share</title>
+  <g id="share" fill="none" stroke="#4a4e57" stroke-width="1.7"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path id="share-0" d="M12 15V4"/>
+    <path id="share-1" d="M8 8l4-4 4 4"/>
+    <path id="share-2" d="M5 14v6h14v-6"/>
+  </g>
+</svg>

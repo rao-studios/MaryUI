@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="96" height="96">
+  <title>listBullet</title>
+  <g id="listBullet" fill="none" stroke="#4a4e57" stroke-width="1.7"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path id="listBullet-0" d="M5 7h.01M5 12h.01M5 17h.01"/>
+    <path id="listBullet-1" d="M9 7h11M9 12h11M9 17h11"/>
+  </g>
+</svg>

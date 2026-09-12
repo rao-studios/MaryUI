@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="96" height="96">
+  <title>radioDot</title>
+  <g id="radioDot" fill="none" stroke="#4a4e57" stroke-width="1.7"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path id="radioDot-0" d="M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16z"/>
+    <path id="radioDot-1" d="M12 10.4a1.6 1.6 0 1 0 0 3.2 1.6 1.6 0 0 0 0-3.2z"/>
+  </g>
+</svg>

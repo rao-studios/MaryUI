@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="96" height="96">
+  <title>drive</title>
+  <g id="drive" fill="none" stroke="#4a4e57" stroke-width="1.7"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path id="drive-0" d="M4 6h16v12H4z"/>
+    <path id="drive-1" d="M4 14h16"/>
+    <path id="drive-2" d="M16 16.5h1"/>
+  </g>
+</svg>

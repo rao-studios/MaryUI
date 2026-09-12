@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="128" height="128">
+  <title>volumeServer</title>
+  <defs>
+    <clipPath id="clip-body"><path d="M8.2 2h15.6a2.2 2.2 0 0 1 2.2 2.2v23.6a2.2 2.2 0 0 1 -2.2 2.2h-15.6a2.2 2.2 0 0 1 -2.2 -2.2v-23.6a2.2 2.2 0 0 1 2.2 -2.2Z"/></clipPath>
+    <linearGradient id="grad-body" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#7f848f"/>
+      <stop offset="1" stop-color="#3c4047"/>
+    </linearGradient>
+    <clipPath id="clip-bay0"><path d="M9.8 7.4h12.4a0.8 0.8 0 0 1 0.8 0.8v2.4a0.8 0.8 0 0 1 -0.8 0.8h-12.4a0.8 0.8 0 0 1 -0.8 -0.8v-2.4a0.8 0.8 0 0 1 0.8 -0.8Z"/></clipPath>
+    <linearGradient id="grad-bay0" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#292c32"/>
+      <stop offset="1" stop-color="#1a1b1f"/>
+    </linearGradient>
+    <clipPath id="clip-bay1"><path d="M9.8 13.4h12.4a0.8 0.8 0 0 1 0.8 0.8v2.4a0.8 0.8 0 0 1 -0.8 0.8h-12.4a0.8 0.8 0 0 1 -0.8 -0.8v-2.4a0.8 0.8 0 0 1 0.8 -0.8Z"/></clipPath>
+    <linearGradient id="grad-bay1" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#292c32"/>
+      <stop offset="1" stop-color="#1a1b1f"/>
+    </linearGradient>
+    <clipPath id="clip-bay2"><path d="M9.8 19.4h12.4a0.8 0.8 0 0 1 0.8 0.8v2.4a0.8 0.8 0 0 1 -0.8 0.8h-12.4a0.8 0.8 0 0 1 -0.8 -0.8v-2.4a0.8 0.8 0 0 1 0.8 -0.8Z"/></clipPath>
+    <linearGradient id="grad-bay2" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#292c32"/>
+      <stop offset="1" stop-color="#1a1b1f"/>
+    </linearGradient>
+    <clipPath id="clip-leds"><path d="M9.6 26.4a1 1 0 1 0 2 0a1 1 0 1 0 -2 0ZM13 26.4a1 1 0 1 0 2 0a1 1 0 1 0 -2 0Z"/></clipPath>
+    <clipPath id="clip-silhouette"><path d="M8.2 2h15.6a2.2 2.2 0 0 1 2.2 2.2v23.6a2.2 2.2 0 0 1 -2.2 2.2h-15.6a2.2 2.2 0 0 1 -2.2 -2.2v-23.6a2.2 2.2 0 0 1 2.2 -2.2Z"/></clipPath>
+    <linearGradient id="grad-key" x1="0" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.62"/>
+      <stop offset="0.3" stop-color="#ffffff" stop-opacity="0.2"/>
+      <stop offset="0.6" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <g id="volumeServer">
+    <g id="body-graphite-top" clip-path="url(#clip-body)"><title>body · graphite/top</title><path d="M8.2 2h15.6a2.2 2.2 0 0 1 2.2 2.2v23.6a2.2 2.2 0 0 1 -2.2 2.2h-15.6a2.2 2.2 0 0 1 -2.2 -2.2v-23.6a2.2 2.2 0 0 1 2.2 -2.2Z" fill="url(#grad-body)"/><path d="M8.2 2h15.6a2.2 2.2 0 0 1 2.2 2.2v23.6a2.2 2.2 0 0 1 -2.2 2.2h-15.6a2.2 2.2 0 0 1 -2.2 -2.2v-23.6a2.2 2.2 0 0 1 2.2 -2.2Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M8.2 2h15.6a2.2 2.2 0 0 1 2.2 2.2v23.6a2.2 2.2 0 0 1 -2.2 2.2h-15.6a2.2 2.2 0 0 1 -2.2 -2.2v-23.6a2.2 2.2 0 0 1 2.2 -2.2Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
+    <g id="bay0-graphite-under" clip-path="url(#clip-bay0)"><title>bay0 · graphite/under</title><path d="M9.8 7.4h12.4a0.8 0.8 0 0 1 0.8 0.8v2.4a0.8 0.8 0 0 1 -0.8 0.8h-12.4a0.8 0.8 0 0 1 -0.8 -0.8v-2.4a0.8 0.8 0 0 1 0.8 -0.8Z" fill="url(#grad-bay0)"/><path d="M9.8 7.4h12.4a0.8 0.8 0 0 1 0.8 0.8v2.4a0.8 0.8 0 0 1 -0.8 0.8h-12.4a0.8 0.8 0 0 1 -0.8 -0.8v-2.4a0.8 0.8 0 0 1 0.8 -0.8Z" fill="#000000" opacity="0.128"/><path d="M9.8 7.4h12.4a0.8 0.8 0 0 1 0.8 0.8v2.4a0.8 0.8 0 0 1 -0.8 0.8h-12.4a0.8 0.8 0 0 1 -0.8 -0.8v-2.4a0.8 0.8 0 0 1 0.8 -0.8Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(-0.8 -0.8)"/><path d="M9.8 7.4h12.4a0.8 0.8 0 0 1 0.8 0.8v2.4a0.8 0.8 0 0 1 -0.8 0.8h-12.4a0.8 0.8 0 0 1 -0.8 -0.8v-2.4a0.8 0.8 0 0 1 0.8 -0.8Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(0.8 0.8)"/></g>
+    <g id="bay1-graphite-under" clip-path="url(#clip-bay1)"><title>bay1 · graphite/under</title><path d="M9.8 13.4h12.4a0.8 0.8 0 0 1 0.8 0.8v2.4a0.8 0.8 0 0 1 -0.8 0.8h-12.4a0.8 0.8 0 0 1 -0.8 -0.8v-2.4a0.8 0.8 0 0 1 0.8 -0.8Z" fill="url(#grad-bay1)"/><path d="M9.8 13.4h12.4a0.8 0.8 0 0 1 0.8 0.8v2.4a0.8 0.8 0 0 1 -0.8 0.8h-12.4a0.8 0.8 0 0 1 -0.8 -0.8v-2.4a0.8 0.8 0 0 1 0.8 -0.8Z" fill="#000000" opacity="0.128"/><path d="M9.8 13.4h12.4a0.8 0.8 0 0 1 0.8 0.8v2.4a0.8 0.8 0 0 1 -0.8 0.8h-12.4a0.8 0.8 0 0 1 -0.8 -0.8v-2.4a0.8 0.8 0 0 1 0.8 -0.8Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(-0.8 -0.8)"/><path d="M9.8 13.4h12.4a0.8 0.8 0 0 1 0.8 0.8v2.4a0.8 0.8 0 0 1 -0.8 0.8h-12.4a0.8 0.8 0 0 1 -0.8 -0.8v-2.4a0.8 0.8 0 0 1 0.8 -0.8Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(0.8 0.8)"/></g>
+    <g id="bay2-graphite-under" clip-path="url(#clip-bay2)"><title>bay2 · graphite/under</title><path d="M9.8 19.4h12.4a0.8 0.8 0 0 1 0.8 0.8v2.4a0.8 0.8 0 0 1 -0.8 0.8h-12.4a0.8 0.8 0 0 1 -0.8 -0.8v-2.4a0.8 0.8 0 0 1 0.8 -0.8Z" fill="url(#grad-bay2)"/><path d="M9.8 19.4h12.4a0.8 0.8 0 0 1 0.8 0.8v2.4a0.8 0.8 0 0 1 -0.8 0.8h-12.4a0.8 0.8 0 0 1 -0.8 -0.8v-2.4a0.8 0.8 0 0 1 0.8 -0.8Z" fill="#000000" opacity="0.128"/><path d="M9.8 19.4h12.4a0.8 0.8 0 0 1 0.8 0.8v2.4a0.8 0.8 0 0 1 -0.8 0.8h-12.4a0.8 0.8 0 0 1 -0.8 -0.8v-2.4a0.8 0.8 0 0 1 0.8 -0.8Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(-0.8 -0.8)"/><path d="M9.8 19.4h12.4a0.8 0.8 0 0 1 0.8 0.8v2.4a0.8 0.8 0 0 1 -0.8 0.8h-12.4a0.8 0.8 0 0 1 -0.8 -0.8v-2.4a0.8 0.8 0 0 1 0.8 -0.8Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(0.8 0.8)"/></g>
+    <g id="leds-traffic-zoom-base" clip-path="url(#clip-leds)"><title>leds · traffic.zoom.base</title><path d="M9.6 26.4a1 1 0 1 0 2 0a1 1 0 1 0 -2 0ZM13 26.4a1 1 0 1 0 2 0a1 1 0 1 0 -2 0Z" fill="#63c657"/></g>
+    <g id="key-sheen-color" clip-path="url(#clip-silhouette)" opacity="0.6" style="mix-blend-mode:screen"><title>key · sheen/color</title><path d="M8.2 2h15.6a2.2 2.2 0 0 1 2.2 2.2v23.6a2.2 2.2 0 0 1 -2.2 2.2h-15.6a2.2 2.2 0 0 1 -2.2 -2.2v-23.6a2.2 2.2 0 0 1 2.2 -2.2Z" fill="url(#grad-key)"/></g>
+    <path id="keyline-edge-hairline" d="M8.2 2h15.6a2.2 2.2 0 0 1 2.2 2.2v23.6a2.2 2.2 0 0 1 -2.2 2.2h-15.6a2.2 2.2 0 0 1 -2.2 -2.2v-23.6a2.2 2.2 0 0 1 2.2 -2.2Z" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1"/>
+  </g>
+</svg>
