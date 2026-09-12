@@ -2,13 +2,14 @@
  * libseat, or the Wayland/X11 nested backends when run inside another
  * session), renderer (GLES2 where there is a GPU, pixman otherwise; honours
  * WLR_RENDERER), allocator, the scene graph with its four layers, the seat
- * and the cursor. Five scene layers: wallpaper, windows, menu bar, menus, Spotlight. */
+ * and the cursor. Five scene layers: wallpaper, windows, the clock, menus, Spotlight. */
 #include <stdlib.h>
 
 #include "server.h"
 
 bool mui_server_init(struct mui_server *server) {
-    lp_desktop_init(&server->desktop, LP_RECT(0, 24, 1280, 776), server);
+    /* The whole output: no menu bar reserves a strip at the top any more. */
+    lp_desktop_init(&server->desktop, LP_RECT(0, 0, 1280, 800), server);
     lp_desktop_register_builtin_apps(&server->desktop);
     server->settings = &server->desktop.settings;
     server->branding = server->desktop.branding;

@@ -11,6 +11,16 @@
 
 #define EXTENT LP_SPOTLIGHT_SHADOW_EXTENT
 
+/* The view for the current model, minus the two fields only the host knows. */
+static lp_spotlight_view view_of(struct mui_server *server, const lp_spotlight_item *items, int count) {
+    lp_spotlight_view v = lp_desktop_spotlight_view(&server->desktop, items, count);
+    v.focus_bar = 1;
+    /* An open menu grows the panel downward; keep it on the desktop. */
+    float room = (float)server->desktop_height - (float)(server->spotlight_y + EXTENT) - LP_SPACE_2;
+    v.max_h = room > 0 ? room : 0;
+    return v;
+}
+
 static void paint_spotlight(lp_ctx *ctx, struct mui_chrome *chrome, void *data) {
     struct mui_server *server = data;
     lp_desktop *d = &server->desktop;
@@ -18,18 +28,43 @@ static void paint_spotlight(lp_ctx *ctx, struct mui_chrome *chrome, void *data) 
     lp_spotlight_item results[LP_SPOTLIGHT_MAX_RESULTS];
     int n = lp_desktop_spotlight_results(d, results, LP_SPOTLIGHT_MAX_RESULTS);
     if (d->spotlight.selection >= n) d->spotlight.selection = n > 0 ? n - 1 : 0;
-    lp_spotlight_view view = { .query = &d->spotlight.query, .items = results, .count = n, .selection = d->spotlight.selection, .focus_bar = 1 };
+    lp_spotlight_view view = view_of(server, results, n);
     lp_spotlight_result res;
     lp_spotlight_panel(ctx, EXTENT, EXTENT, &view, &res);
     server->spotlight_panel = res.panel;
-    if (ctx->pass == LP_PASS_EVENT) {
-        if (res.query_changed) { d->spotlight.selection = 0; ctx->dirty = 1; }
-        if (res.hovered >= 0 && res.hovered != d->spotlight.selection) { d->spotlight.selection = res.hovered; ctx->dirty = 1; }
-        if (res.activated >= 0) {
-            lp_desktop_spotlight_activate(d, res.activated); /* opens, focuses or spawns; closes Spotlight */
-            mui_spotlight_request_sync(server);
-            ctx->dirty = 1;
-        }
+    if (ctx->pass != LP_PASS_EVENT) return;
+
+    if (res.query_changed) {
+        lp_desktop_spotlight_query_changed(d);  /* selection 0; a typed query drops the pill */
+        mui_spotlight_resize(server);           /* the commands section may have gone with it */
+        ctx->dirty = 1;
+    }
+    if (res.hovered >= 0 && res.hovered != d->spotlight.selection) { d->spotlight.selection = res.hovered; ctx->dirty = 1; }
+
+    /* The command pills. Press opens, as a pull-down menu does. */
+    if (res.menu_pressed >= 0) {
+        lp_desktop_toggle_menu(d, res.menu_pressed);
+        mui_spotlight_resize(server);
+        ctx->dirty = 1;
+    } else if (d->open_menu >= 0 && d->open_menu < LP_DESKTOP_MENU_COUNT &&
+               res.menu_hovered >= 0 && res.menu_hovered != d->open_menu) {
+        lp_desktop_toggle_menu(d, res.menu_hovered);   /* hover switches while one is open */
+        mui_spotlight_resize(server);
+        ctx->dirty = 1;
+    }
+
+    /* The open menu's entries. */
+    if (res.entry_hovered != d->menu_active) { d->menu_active = res.entry_hovered; ctx->dirty = 1; }
+    if (res.entry_selected >= 0) {
+        lp_desktop_select_menu_entry(d, res.entry_selected);  /* runs it, closes the menu */
+        lp_spotlight_close(&d->spotlight);                    /* picking a command dismisses the panel */
+        mui_spotlight_request_sync(server);                   /* CLOSES: deferred, never from here */
+        ctx->dirty = 1;
+    }
+    if (res.activated >= 0) {
+        lp_desktop_spotlight_activate(d, res.activated); /* opens, focuses or spawns; closes Spotlight */
+        mui_spotlight_request_sync(server);
+        ctx->dirty = 1;
     }
 }
 
@@ -43,6 +78,39 @@ static void close_chrome(struct mui_server *server) {
     mui_input_disarm_repeat(server);
 }
 
+/* The resting state lp-spotlight-in ends in. A resize has to get here first:
+ * the tween scales the node from the buffer's size, so changing that size
+ * under it makes the scale and the position jump. */
+static void spotlight_settle(struct mui_server *server) {
+    if (!server->spotlight) return;
+    server->spotlight_anim.active = 0;
+    wlr_scene_buffer_set_opacity(server->spotlight->node, 1.0f);
+    wlr_scene_buffer_set_dest_size(server->spotlight->node, 0, 0);
+    wlr_scene_node_set_position(&server->spotlight->node->node, server->spotlight_x, server->spotlight_y);
+    mui_server_damage_all(server);
+}
+
+/*
+ * Sizes the open panel for the current model — a command pill opened, closed or
+ * switched, or a query hid the commands. Safe to call from inside the panel's
+ * own EVENT pass, because it never destroys the chrome; mui_spotlight_sync
+ * does, so that one must stay deferred (see mui_spotlight_request_sync).
+ * The resize is synchronous on purpose: mui_chrome_event repaints as soon as
+ * the pass returns, and a deferred resize would paint one frame of an open
+ * menu clipped to the old, too-short buffer.
+ */
+void mui_spotlight_resize(struct mui_server *server) {
+    if (!server->spotlight || !server->desktop.spotlight.open) return;
+    lp_spotlight_item results[LP_SPOTLIGHT_MAX_RESULTS];
+    int n = lp_desktop_spotlight_results(&server->desktop, results, LP_SPOTLIGHT_MAX_RESULTS);
+    lp_spotlight_view v = view_of(server, results, n);
+    lp_size want = lp_spotlight_measure(&v), base = lp_spotlight_max_size(&v);
+    int h = (int)(want.h > base.h ? want.h : base.h) + 2 * EXTENT;
+    if (h == server->spotlight->height) return;
+    spotlight_settle(server);
+    mui_chrome_resize(server->spotlight, server->spotlight->width, h);
+}
+
 void mui_spotlight_sync(struct mui_server *server) {
     lp_desktop *d = &server->desktop;
     if (!d->spotlight.open) {
@@ -51,8 +119,12 @@ void mui_spotlight_sync(struct mui_server *server) {
     }
     double now = mui_now_ms();
     if (!server->spotlight) {
-        /* One buffer the size of the tallest panel: typing never reallocates. */
-        lp_size max = lp_spotlight_max_size(0);
+        /* One buffer the size of the tallest panel with no pill open: typing
+         * never reallocates. Opening a pill is a click, and resizes. */
+        lp_spotlight_item results[LP_SPOTLIGHT_MAX_RESULTS];
+        int n = lp_desktop_spotlight_results(d, results, LP_SPOTLIGHT_MAX_RESULTS);
+        lp_spotlight_view v = lp_desktop_spotlight_view(d, results, n);
+        lp_size max = lp_spotlight_max_size(&v);
         int w = (int)max.w + 2 * EXTENT, h = (int)max.h + 2 * EXTENT;
         server->spotlight = calloc(1, sizeof(*server->spotlight));
         mui_chrome_init(server->spotlight, server, server->layer_spotlight, w, h, paint_spotlight, server);
@@ -114,10 +186,7 @@ int mui_spotlight_animate(struct mui_server *server, double now_ms) {
     int w = server->spotlight->width, h = server->spotlight->height;
     float p = mui_tween_progress(&server->spotlight_anim, now_ms);
     if (!server->spotlight_anim.active) {
-        wlr_scene_buffer_set_opacity(node, 1.0f);
-        wlr_scene_buffer_set_dest_size(node, 0, 0);
-        wlr_scene_node_set_position(&node->node, server->spotlight_x, server->spotlight_y);
-        mui_server_damage_all(server);
+        spotlight_settle(server);
         return 0;
     }
     float s = 0.96f + 0.04f * p;

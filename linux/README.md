@@ -2,13 +2,14 @@
 
 The design system in `../web` (React, the reference) rebuilt as a C library, `libmaryui`,
 plus `maryui-desktop`, a Wayland compositor (wlroots 0.17) that *is* the desktop: the
-wallpaper, the menu bar, window frames with liquid traffic lights, menus, Spotlight (the
-search bar that is also the dock, `Ctrl+Space`) and the built-in apps are drawn by the
-library with Cairo and Pango; other Wayland programs open as Liquid Platinum windows with
-server-side decorations.
+wallpaper, an ambient clock, window frames with liquid traffic lights, menus, Spotlight (the
+search bar that is also the dock *and* the app's commands, `Ctrl+Space`) and the built-in apps
+are drawn by the library with Cairo and Pango; other Wayland programs open as Liquid Platinum
+windows with server-side decorations. There is no menu bar: it folded into Spotlight, the way
+the dock did before it.
 
 `../web/tokens/tokens.json` is the contract. `npm run tokens` in `../web` regenerates
-`include/maryui/lp_tokens.h` and `include/maryui/lp_icons.h`; the physics
+`include/maryui/lp_tokens.h`, `lp_icons.h` and `lp_objects.h`; the physics
 (`src/core/lp_spring.c`, `lp_slosh.c`, `lp_velocity.c`, `lp_motion.c`), the geometry and
 the window manager (`src/core/lp_geometry.c`, `lp_wm.c`) are line-for-line ports of
 `../web/src/lib` and `../web/src/desktop/wm`, and their tests carry the same case names
@@ -18,9 +19,9 @@ every web file, its C counterpart, and every deliberate deviation.
 ```sh
 make check-deps        # cairo pangocairo fontconfig pixman-1 xkbcommon, wlroots wayland-server wayland-protocols, egl glesv2
 make                   # build/libmaryui.a (+ .so), build/lp-render, build/lp-input, build/maryui-desktop
-make test              # tests/test_*.c (127 cases)
+make test              # tests/test_*.c (140 cases)
 make parity            # tools/parity-check.sh: every web component and ported file has its C twin
-make gen-check         # the generated headers match tokens.json and icons.json
+make gen-check         # the generated headers match tokens.json, icons.json and objects.json
 make install DESTDIR=/tmp/root PREFIX=/usr
 build/maryui-desktop   # from a tty with a logind/seatd seat, or nested inside another Wayland/X11 session
 ```
@@ -42,8 +43,8 @@ wallpaper falls back to the procedural filter chain. That is how this tree build
 `maryui.pc` in `lib/`, and the headers in `include/maryui/`. Start `maryui-desktop` from a
 session on a seat: a systemd unit with a PAM service name, `TTYPath=/dev/tty1` and
 `Conflicts=getty@tty1.service`, or a greeter. It reads `/etc/os-release` for the distro's
-name, `$XDG_CONFIG_HOME/maryui/settings.conf` for appearance settings (accent, liquid merge,
-wallpaper, reduced motion; the View menu writes it), and `MARYUI_DATA_DIR` for prerendered
+name, `$XDG_CONFIG_HOME/maryui/settings.conf` for appearance settings (accent, folder
+appearance, liquid merge, wallpaper, reduced motion; the View menu writes it), and `MARYUI_DATA_DIR` for prerendered
 assets (`wallpaper-WxH.png`). MaryOS (`github.com/rao-studios/MaryPi`, `linux/`) is the
 reference integration: its builder compiles this directory, its image boots it, and
 `linux/docs/09-the-desktop.md` there walks through the wiring.
@@ -72,14 +73,14 @@ scales the frame and clips the client, the jelly leaves clients alone (see `PARI
 ## Layout
 
 ```
-include/maryui/     public headers (lp_*.h); lp_tokens.h and lp_icons.h are generated
+include/maryui/     public headers (lp_*.h); lp_tokens.h, lp_icons.h and lp_objects.h are generated
 src/core/           geometry, spring, slosh, velocity, motion (engine + window motion), wm, settings, desktop, spotlight, files (the filesystem model), drag
-src/draw/           noise (feTurbulence), blur, brush tile, wallpaper, Cairo primitives, Pango text (+ wrapped layouts), icons, shadows, bubbles
+src/draw/           noise (feTurbulence), blur, brush tile, wallpaper, Cairo primitives, Pango text (+ wrapped layouts), icons (stroked glyphs and the lit object tier), shadows, bubbles
 src/ui/             the immediate-mode context and layout helpers
 src/components/     one directory per web component, README.md mirrors the web one
 src/apps/           About, Finder (a real file manager; finder_mock.c for previews), Gallery, TextEdit (Spotlight-only), Info (internal)
 src/compositor/     maryui-desktop (wlroots): server, output (frames), input (+ key repeat for chromes), cursor, chrome, window, xdg, desktop, spotlight, drag (the ghost + grab), files (inotify)
-tools/lp-render.c   headless PNG renders for parity checks (--all DIR renders everything; --spotlight [QUERY], --textedit)
+tools/lp-render.c   headless PNG renders for parity checks (--all DIR renders everything; --spotlight [QUERY], --spotlight-menu NAME, --clock W, --textedit)
 tools/lp-input.c    a uinput pointer + keyboard for scripted tests inside a VM
 tests/              C tests; case names mirror the vitest suites
 PARITY.md           web file → C file, status, deviations, constants not yet in tokens.json

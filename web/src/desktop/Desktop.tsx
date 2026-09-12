@@ -1,14 +1,13 @@
 /**
  * Desktop — the simulated machine. Owns the window-manager store, keeps its
  * bounds in step with the viewport, mounts the shared SVG defs, the wallpaper,
- * the windows, the menu bar and Spotlight, and opens the starting apps once.
+ * the windows and Spotlight, and opens the starting apps once. There is no
+ * standalone menu bar: app commands live inside Spotlight (see SpotlightHost).
  */
 
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
-import { MenuBar } from '@/components/MenuBar'
 import { SvgDefs } from '@/components/SvgDefs'
 import { useDesktopKeys } from '@/hooks/useDesktopKeys'
-import { tokens } from '@/tokens/tokens'
 import { openApp } from './apps/registry'
 import { initialSpotlight, spotlightReducer } from './spotlight'
 import { SpotlightHost } from './SpotlightHost'
@@ -19,10 +18,8 @@ import { createStore } from './wm/store'
 import { WMContext, type WMStore } from './wm/useWM'
 import styles from './Desktop.module.css'
 
-const MENUBAR_H = parseFloat(tokens.size.menubarHeight)
-
 function boundsOf(width: number, height: number) {
-  return { x: 0, y: MENUBAR_H, w: width, h: Math.max(0, height - MENUBAR_H) }
+  return { x: 0, y: 0, w: width, h: height }
 }
 
 export function Desktop() {
@@ -59,9 +56,6 @@ export function Desktop() {
         <Wallpaper />
         <div className={styles.windows}>
           <WindowLayer />
-        </div>
-        <div className={styles.menubarSlot}>
-          <MenuBar />
         </div>
         <SpotlightHost state={spotlight} dispatch={dispatchSpotlight} />
       </div>

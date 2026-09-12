@@ -12,6 +12,7 @@ import { SpotlightPanel } from '@/components/Spotlight'
 import { TextArea } from '@/components/TextArea'
 import { TextField } from '@/components/TextField'
 import { Toggle } from '@/components/Toggle'
+import type { MenuModel } from '@/desktop/menus'
 import type { SpotlightItem } from '@/desktop/spotlight'
 import styles from '../GalleryApp.module.css'
 
@@ -23,6 +24,33 @@ const dock: SpotlightItem[] = [
   { kind: 'app', id: 'about', title: 'About', subtitle: 'Application', icon: 'info', running: false },
   { kind: 'app', id: 'textedit', title: 'TextEdit', subtitle: 'Application', icon: 'pencil', running: false },
   { kind: 'command', id: 'terminal', title: 'Terminal', subtitle: 'Command', icon: 'terminal', running: false },
+]
+
+/** A static stand-in for buildMenus(), so this demo doesn't reach into the real desktop's store. */
+const menus: MenuModel[] = [
+  { id: 'rao', label: 'Rao', entries: [{ id: 'about', label: 'About Liquid Platinum' }] },
+  {
+    id: 'file',
+    label: 'File',
+    entries: [
+      { id: 'new', label: 'New Finder Window', shortcut: '⌘N' },
+      { id: 'open', label: 'Open…', shortcut: '⌘O', disabled: true },
+      { separator: true },
+      { id: 'close', label: 'Close Window', shortcut: '⌘W' },
+    ],
+  },
+  {
+    id: 'edit',
+    label: 'Edit',
+    entries: [
+      { id: 'undo', label: 'Undo', shortcut: '⌘Z', disabled: true },
+      { id: 'copy', label: 'Copy', shortcut: '⌘C', disabled: true },
+      { id: 'paste', label: 'Paste', shortcut: '⌘V', disabled: true },
+    ],
+  },
+  { id: 'view', label: 'View', entries: [{ id: 'goo', label: 'Liquid Merge', checked: true }] },
+  { id: 'window', label: 'Window', entries: [{ id: 'zoom', label: 'Zoom' }] },
+  { id: 'help', label: 'Help', entries: [{ id: 'readme', label: 'Read the README' }] },
 ]
 
 export function ControlsTab() {
@@ -155,8 +183,21 @@ export function ControlsTab() {
 
       <section className={styles.section}>
         <h2 className={styles.heading}>Spotlight</h2>
-        <p className={styles.note}>Ctrl+Space opens it on the desktop: the search bar is the dock; typing filters apps and windows.</p>
-        <SpotlightPanel query="" items={dock} selection={tile} onHover={setTile} onActivate={setTile} onMove={(d) => setTile((t) => (t + d + dock.length) % dock.length)} />
+        <p className={styles.note}>
+          Ctrl+Space opens it on the desktop: the search bar is the dock, and — no standalone menu bar
+          anymore — a blank query also shows the frontmost app's commands as pills below it; click one to open
+          it. Typing filters apps, commands and windows.
+        </p>
+        <SpotlightPanel
+          query=""
+          items={dock}
+          selection={tile}
+          menus={menus}
+          context={{ icon: 'drop', name: 'Gallery' }}
+          onHover={setTile}
+          onActivate={setTile}
+          onMove={(d) => setTile((t) => (t + d + dock.length) % dock.length)}
+        />
       </section>
     </>
   )

@@ -4,7 +4,7 @@
 #   make               libmaryui.a (+ .so on Linux), lp-render, maryui-desktop (when wlroots is installed)
 #   make test          build and run tests/test_*.c
 #   make install       DESTDIR=… PREFIX=/usr
-#   make gen           regenerate lp_tokens.h / lp_icons.h / lp_fixtures.h from ../web (needs node)
+#   make gen           regenerate lp_tokens.h / lp_icons.h / lp_objects.h from ../web (needs node)
 #   make gen-check     fail when the committed generated headers are stale
 #   make parity        tools/parity-check.sh
 #   make check-deps    pkg-config for every library used
@@ -150,7 +150,7 @@ gen:
 
 gen-check:
 	@tmp=$$(mktemp -d); node ../web/scripts/build-tokens.mjs --out "$$tmp" > /dev/null \
-	  && for f in include/maryui/lp_tokens.h include/maryui/lp_icons.h; do \
+	  && for f in include/maryui/lp_tokens.h include/maryui/lp_icons.h include/maryui/lp_objects.h; do \
 	       [ -f "$$tmp/$$(basename $$f)" ] && ! cmp -s "$$tmp/$$(basename $$f)" "$$f" && { echo "gen-check: $$f is stale (run make gen)"; exit 1; }; done; \
 	  rm -rf "$$tmp"; echo "gen-check: generated headers are current"
 

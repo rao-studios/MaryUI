@@ -1,19 +1,25 @@
 /**
- * Spotlight — the floating search bar that is also the application dock.
- * `SpotlightPanel` is the pure look (the Gallery shows one inline);
+ * Spotlight — the floating search bar that is also the application dock, and
+ * (folded in the same way the dock was) the app's commands: File / Edit /
+ * View / Window / Help ride along as pills under the dock, and opening one
+ * expands its entries inline in the same panel instead of a second floating
+ * menu. `SpotlightPanel` is the pure look (the Gallery shows one inline);
  * `Spotlight` mounts it over the desktop, focuses the bar, and closes on a
  * press outside. The model (open, query, selection, ranking) is
  * desktop/spotlight.ts; the C desktop paints the same panel (lp_spotlight_panel).
  */
 
-import { useEffect, useMemo, useRef, type CSSProperties, type KeyboardEvent, type RefObject } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type RefObject } from 'react'
 import { createPortal } from 'react-dom'
-import { Icon } from '@/components/Icon'
+import { Icon, type IconName } from '@/components/Icon'
 import { ListRow } from '@/components/ListRow'
+import { MenuItem, MenuSeparator } from '@/components/MenuItem'
+import { Monogram } from '@/components/Monogram'
 import { Surface } from '@/components/Surface'
 import { TextField } from '@/components/TextField'
 import { useOutsideClick } from '@/hooks/useOutsideClick'
 import { cx } from '@/lib/cx'
+import { isSeparator, type MenuEntry, type MenuModel } from '@/desktop/menus'
 import { isBlankQuery, SPOTLIGHT_PLACEHOLDER, type SpotlightItem } from '@/desktop/spotlight'
 import styles from './Spotlight.module.css'
 
@@ -23,11 +29,16 @@ export interface SpotlightPanelProps {
   items: SpotlightItem[]
   selection: number
   placeholder?: string
+  /** The frontmost app's commands, shown as pills under the dock (blank query only). */
+  menus?: MenuModel[]
+  /** The focused window's app, so the panel can say whose commands these are. */
+  context?: { icon: IconName; name: string } | null
   onQueryChange?(query: string): void
   onHover?(index: number): void
   onActivate?(index: number): void
   /** ↑/↓ (and ←/→ in the dock) step the selection by this much. */
   onMove?(delta: number): void
+  onActivateCommand?(entry: MenuEntry): void
   inputRef?: RefObject<HTMLInputElement>
   className?: string
   style?: CSSProperties
@@ -38,15 +49,23 @@ export function SpotlightPanel({
   items,
   selection,
   placeholder = SPOTLIGHT_PLACEHOLDER,
+  menus,
+  context,
   onQueryChange,
   onHover,
   onActivate,
   onMove,
+  onActivateCommand,
   inputRef,
   className,
   style,
 }: SpotlightPanelProps) {
   const dock = isBlankQuery(query)
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+  useEffect(() => {
+    if (!dock) setOpenMenuId(null)
+  }, [dock])
+  const openMenu = menus?.find((m) => m.id === openMenuId)
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'ArrowDown' || (dock && event.key === 'ArrowRight')) {
       event.preventDefault()
@@ -78,26 +97,81 @@ export function SpotlightPanel({
         />
         <div className={styles.divider} />
         {dock ? (
-          <div className={styles.dock} role="listbox" aria-label="Applications">
-            {items.map((item, i) => (
-              <button
-                key={`${item.kind}:${item.id}`}
-                type="button"
-                role="option"
-                aria-selected={i === selection}
-                className={styles.cell}
-                data-selected={i === selection ? '' : undefined}
-                onPointerEnter={() => onHover?.(i)}
-                onClick={() => onActivate?.(i)}
-              >
-                <span className={styles.plate}>
-                  <Icon name={item.icon} variant="object" size={36} strokeWidth={1.6} />
-                </span>
-                <span className={styles.label}>{item.title}</span>
-                <span className={cx(styles.dot, item.running && styles.running)} aria-hidden="true" />
-              </button>
-            ))}
-          </div>
+          <>
+            <div className={styles.dock} role="listbox" aria-label="Applications">
+              {items.map((item, i) => (
+                <button
+                  key={`${item.kind}:${item.id}`}
+                  type="button"
+                  role="option"
+                  aria-selected={i === selection}
+                  className={styles.cell}
+                  data-selected={i === selection ? '' : undefined}
+                  onPointerEnter={() => onHover?.(i)}
+                  onClick={() => onActivate?.(i)}
+                >
+                  <span className={styles.plate}>
+                    <Icon name={item.icon} variant="object" size={36} strokeWidth={1.6} />
+                  </span>
+                  <span className={styles.label}>{item.title}</span>
+                  <span className={cx(styles.dot, item.running && styles.running)} aria-hidden="true" />
+                </button>
+              ))}
+            </div>
+            {menus?.length ? (
+              <>
+                <div className={styles.cmdDivider} />
+                {context ? (
+                  <div className={styles.cmdHeader}>
+                    <Icon name={context.icon} size={12} />
+                    <span>
+                      Searching <span className={styles.cmdHeaderName}>{context.name}</span>
+                    </span>
+                  </div>
+                ) : null}
+                <div className={styles.cmdPills} role="menubar">
+                  {menus.map((menu) => (
+                    <button
+                      key={menu.id}
+                      type="button"
+                      role="menuitem"
+                      aria-haspopup="menu"
+                      aria-expanded={openMenuId === menu.id}
+                      className={styles.cmdPill}
+                      data-open={openMenuId === menu.id ? '' : undefined}
+                      onClick={() => setOpenMenuId((id) => (id === menu.id ? null : menu.id))}
+                      onPointerEnter={() => {
+                        if (openMenuId && openMenuId !== menu.id) setOpenMenuId(menu.id)
+                      }}
+                    >
+                      {menu.id === 'rao' ? <Monogram size={14} /> : menu.label}
+                    </button>
+                  ))}
+                </div>
+                {openMenu ? (
+                  <div className={styles.cmdDropdown} role="menu">
+                    {openMenu.entries.map((entry, i) =>
+                      isSeparator(entry) ? (
+                        <MenuSeparator key={`sep-${i}`} />
+                      ) : (
+                        <MenuItem
+                          key={entry.id}
+                          label={entry.label}
+                          shortcut={entry.shortcut}
+                          checked={entry.checked}
+                          disabled={entry.disabled}
+                          onSelect={() => {
+                            setOpenMenuId(null)
+                            onActivateCommand?.(entry)
+                          }}
+                        />
+                      ),
+                    )}
+                  </div>
+                ) : null}
+              </>
+            ) : null}
+          </>
         ) : items.length ? (
           <div className={styles.results} role="grid" aria-label="Results">
             {items.map((item, i) => (

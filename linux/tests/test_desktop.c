@@ -47,7 +47,7 @@ static void write_file(const char *rel, const char *text, size_t n) {
 }
 
 static void setup(void) {
-    lp_desktop_init(&d, LP_RECT(0, 24, 1280, 776), NULL);
+    lp_desktop_init(&d, LP_RECT(0, 0, 1280, 800), NULL);
     lp_desktop_register_builtin_apps(&d);
     lp_desktop_register_app(&d, &stub);
     d.on_app_dirty = on_dirty;

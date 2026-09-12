@@ -18,9 +18,6 @@ npm run sketch     # design/liquid-platinum.sketch (needs Chrome for the texture
 
 ## What you are looking at
 
-- **Menu bar** — the Rao monogram menu, File / Edit / View / Window / Help, a live clock. View toggles
-  Liquid Merge (the goo filter), the wallpaper (molten / procedural / raster) and the molten grade
-  (Platinum / Faithful), and the Blue / Graphite appearance.
 - **Windows** — drag the title bar, resize from any edge or corner, red closes, yellow **shades**
   (collapses to the title bar, Mac OS 8/9 style), green zooms with a spring, double-click zooms.
   `⌘/Ctrl+W` close, `⌘/Ctrl+M` shade, `Ctrl+\`` cycle. Fling one sideways and watch the corners: the
@@ -31,9 +28,13 @@ npm run sketch     # design/liquid-platinum.sketch (needs Chrome for the texture
   bead's tint (both hand back a *Copy JSON patch* to paste into `tokens/tokens.json`), and **Debug**
   turns on the crest hairline, reveals the raw merge layer, and freezes the ambient wave.
 - **About** — the platinum monogram.
-- **Spotlight** — `Ctrl+Space` (or `⌘Space` where the browser lets it through). The pill-shaped search bar is
-  also the dock: a blank query shows every app as a tile (running ones carry a dot); typing filters apps,
-  commands and open windows; `↑/↓` move, `Enter` launches, `Esc` or a click outside closes.
+- **Spotlight** — `Ctrl+Space` (or `⌘Space` where the browser lets it through). There is no standalone menu
+  bar: the pill-shaped search bar is also the dock and the app's commands. A blank query shows every app as
+  a tile (running ones carry a dot) plus, below it, File / Edit / View / Window / Help as pills — click one
+  to open its entries inline in the same panel. View toggles Liquid Merge (the goo filter), the wallpaper
+  (molten / procedural / raster) and the molten grade (Platinum / Faithful), and the Blue / Graphite
+  appearance. Typing filters apps, commands and open windows; `↑/↓` move, `Enter` launches, `Esc` or a click
+  outside closes.
 - **TextEdit** — the first application, reachable only from Spotlight: a name field, Save, a TextArea, a
   status bar with words, characters and `Ln, Col`; `⌘/Ctrl+S` keeps the document in `localStorage`
   (the C desktop writes `~/Documents/<name>.txt`).

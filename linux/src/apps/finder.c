@@ -984,7 +984,7 @@ static void finder_paint(void *state, lp_ctx *ctx, lp_rect body, lp_desktop *d) 
             }
             if (is_drop) drop_ring(cr, r, LP_RADIUS_SM, accent);
             lp_rect ic = LP_RECT(r.x + (r.w - 52) / 2, r.y + LP_SPACE_2, 52, 52);
-            lp_file_icon_paint(cr, ic, lp_files_kind_icon(e->kind), e->is_dir, accent);
+            lp_file_icon_paint(cr, ic, lp_files_kind_icon(e->kind), e->is_dir, ctx->settings);
             if (e->is_link) lp_icon_draw(cr, LP_ICON_CHEVRON_RIGHT, ic.x + 2, ic.y + ic.h - 16, 14, 2.2f, LP_INK_SECONDARY);
             lp_rect label = LP_RECT(r.x + 2, ic.y + 52 + LP_SPACE_1, r.w - 4, 16);
             if (f->renaming != i) {
@@ -1155,7 +1155,7 @@ int lp_finder_view(const void *state) { return ((const struct finder *)state)->v
 int lp_finder_sidebar_count(const void *state) { return ((const struct finder *)state)->nside; }
 
 const lp_app lp_app_finder = {
-    .id = "finder", .title = "Rao", .name = "Finder", .icon = LP_ICON_FOLDER, .default_rect = { 72, 72, 720, 460 }, .min_size = { 420, 240 }, .singleton = 0, .resizable = 1,
+    .id = "finder", .title = "Rao", .name = "Finder", .icon = LP_ICON_FOLDER, .object = "appFinder", .default_rect = { 72, 72, 720, 460 }, .min_size = { 420, 240 }, .singleton = 0, .resizable = 1,
     .create = finder_create, .paint = finder_paint, .destroy = finder_destroy,
     .open = finder_open, .command = finder_command, .menu_entries = finder_menu_entries, .notify = finder_notify, .title_of = finder_title_of,
 };

@@ -9,7 +9,7 @@
 #include <cairo.h>
 
 #include "maryui/maryui.h"
-#include "maryui/components/lp_menu_bar.h"
+#include "maryui/lp_text.h"
 #include "maryui/components/lp_spotlight_panel.h"
 #include "maryui/components/lp_surface.h"
 #include "maryui/components/lp_window.h"
@@ -26,12 +26,13 @@ static int usage(int status) {
         "usage: lp-render --brush <out.png>              the 512px brushed-platinum tile\n"
         "       lp-render --wallpaper WxH <out.png>      the wallpaper cover-fitted to WxH\n"
         "       lp-render --molten WxH [TONE] <out.png>  the molten shader at WxH (TONE platinum|faithful); needs EGL\n"
-        "       lp-render --menubar W <out.png>          the menu bar, W px wide, over the wallpaper\n"
+        "       lp-render --clock W <out.png>            the ambient clock, W px wide, over the wallpaper\n"
         "       lp-render --window <out.png>             a focused About window and an inactive one, over the wallpaper\n"
         "       lp-render --finder <out.png>             the Finder window (icon view)\n"
         "       lp-render --gallery N <out.png>          the Gallery window on tab N (0 controls … 4 motion)\n"
         "       lp-render --textedit <out.png>           the TextEdit window with a sample document\n"
-        "       lp-render --spotlight [QUERY] <out.png>  Spotlight over the desktop: the dock, or the results for QUERY\n"
+        "       lp-render --spotlight [QUERY] <out.png>  Spotlight over the desktop: the dock and its command pills, or the results for QUERY\n"
+        "       lp-render --spotlight-menu NAME <out.png>  the same with the NAME pill open (rao|file|edit|view|go|window|help)\n"
         "       lp-render --all <dir>                    every preview into <dir>\n"
         "       lp-render --version\n");
     return status;
@@ -91,22 +92,21 @@ static int render_molten(int w, int h, const char *tone_name, const char *path) 
     return rc;
 }
 
-static int render_menubar(int w, const char *path) {
-    int h = (int)LP_SIZE_MENUBAR_HEIGHT + LP_MENU_BAR_SHADOW_EXTENT + 40;
+/* The ambient clock in its corner — all that is left on the desktop itself. */
+static int render_clock(int w, const char *path) {
+    int h = 80;
     cairo_surface_t *s = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, w, h);
     cairo_t *cr = cairo_create(s);
     cairo_surface_t *wp = lp_wallpaper_render(w, h + 200);
     cairo_set_source_surface(cr, wp, 0, 0);
     cairo_paint(cr);
     cairo_surface_destroy(wp);
-    lp_settings settings = lp_settings_defaults();
-    lp_ctx ctx = { 0 };
-    ctx.settings = &settings;
-    ctx.active_window = 1;
-    lp_ctx_begin(&ctx, LP_PASS_DRAW, cr, NULL, LP_RECT(0, 0, w, h), 0);
-    lp_menu_bar_model model = { .labels = { "", "File", "Edit", "View", "Go", "Window", "Help" }, .count = 7, .open_index = 3, .clock = "Tue 9:41 AM" };
-    lp_menu_bar(&ctx, LP_RECT(0, 0, w, LP_SIZE_MENUBAR_HEIGHT), &model, NULL);
-    lp_ctx_end(&ctx);
+    lp_wallpaper_vignette(cr, w, h);
+    lp_text_style st = lp_text_style_default();
+    st.weight = LP_TEXT_WEIGHT_MEDIUM;
+    st.tabular_nums = 1;
+    st.emboss = 1;
+    lp_text_draw(cr, "Tue 9:41 AM", LP_RECT(w - 160 - LP_SPACE_3, LP_SPACE_1, 160, LP_SIZE_MENUBAR_HEIGHT), &st, LP_ALIGN_END);
     cairo_destroy(cr);
     int rc = write_png(s, path);
     cairo_surface_destroy(s);
@@ -191,8 +191,9 @@ static int render_app(const lp_app *app, int tab, const char *path) {
     return rc;
 }
 
-/* Spotlight over a 1280×800 desktop with the Finder and the Gallery open: the dock, or the results for a query. */
-static int render_spotlight(const char *query, const char *path) {
+/* Spotlight over a 1280×800 desktop with the Finder and the Gallery open: the
+ * dock with its command pills, one pill open, or the results for a query. */
+static int render_spotlight(const char *query, const char *menu, const char *path) {
     int w = 1280, h = 800;
     cairo_surface_t *s = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, w, h);
     cairo_t *cr = cairo_create(s);
@@ -202,23 +203,29 @@ static int render_spotlight(const char *query, const char *path) {
     cairo_surface_destroy(wp);
     lp_wallpaper_vignette(cr, w, h);
     lp_desktop d;
-    lp_desktop_init(&d, LP_RECT(0, LP_SIZE_MENUBAR_HEIGHT, w, h - LP_SIZE_MENUBAR_HEIGHT), NULL);
+    lp_desktop_init(&d, LP_RECT(0, 0, w, h), NULL);
     lp_desktop_register_builtin_apps(&d);
     lp_desktop_open_app(&d, "finder");
     lp_desktop_open_app(&d, "gallery");
     lp_spotlight_open(&d.spotlight);
     lp_spotlight_set_query(&d.spotlight, query ? query : "");
+    lp_desktop_build_menus(&d);
+    if (menu) {
+        static const char *const names[] = { "rao", "file", "edit", "view", "go", "window", "help" };
+        for (int i = 0; i < LP_DESKTOP_MENU_COUNT; i++) {
+            if (strcmp(menu, names[i]) == 0) { lp_desktop_toggle_menu(&d, i); break; }
+        }
+        if (d.open_menu < 0) { fprintf(stderr, "lp-render: no menu named %s\n", menu); return 1; }
+    }
     lp_ctx ctx = { 0 };
     ctx.settings = &d.settings;
     ctx.sheen_x = 0.5f;
     ctx.active_window = 1;
     ctx.focus = LP_SPOTLIGHT_QUERY_ID;
     lp_ctx_begin(&ctx, LP_PASS_DRAW, cr, NULL, LP_RECT(0, 0, w, h), 0);
-    lp_menu_bar_model model = { .labels = { "", "File", "Edit", "View", "Go", "Window", "Help" }, .count = 7, .open_index = -1, .clock = "Tue 9:41 AM" };
-    lp_menu_bar(&ctx, LP_RECT(0, 0, w, LP_SIZE_MENUBAR_HEIGHT), &model, NULL);
     lp_spotlight_item results[LP_SPOTLIGHT_MAX_RESULTS];
     int n = lp_desktop_spotlight_results(&d, results, LP_SPOTLIGHT_MAX_RESULTS);
-    lp_spotlight_view view = { .query = &d.spotlight.query, .items = results, .count = n, .selection = 0 };
+    lp_spotlight_view view = lp_desktop_spotlight_view(&d, results, n);
     lp_size size = lp_spotlight_measure(&view);
     float x = (w - size.w) / 2, y = h * LP_SPOTLIGHT_Y_FRACTION - LP_SIZE_SPOTLIGHT_BAR_HEIGHT / 2 - LP_SPOTLIGHT_PAD;
     lp_spotlight_panel(&ctx, x, y, &view, NULL);
@@ -247,13 +254,14 @@ int main(int argc, char **argv) {
         if (!parse_size(argv[2], &w, &h)) return usage(2);
         return argc == 5 ? render_molten(w, h, argv[3], argv[4]) : render_molten(w, h, NULL, argv[3]);
     }
-    if (strcmp(argv[1], "--menubar") == 0 && argc == 4) return render_menubar(atoi(argv[2]), argv[3]);
+    if (strcmp(argv[1], "--clock") == 0 && argc == 4) return render_clock(atoi(argv[2]), argv[3]);
     if (strcmp(argv[1], "--window") == 0 && argc == 3) return render_window(argv[2]);
     if (strcmp(argv[1], "--finder") == 0 && argc == 3) return render_app(&lp_app_finder, 0, argv[2]);
     if (strcmp(argv[1], "--gallery") == 0 && argc == 4) return render_app(&lp_app_gallery, atoi(argv[2]), argv[3]);
     if (strcmp(argv[1], "--textedit") == 0 && argc == 3) return render_app(&lp_app_textedit, 0, argv[2]);
-    if (strcmp(argv[1], "--spotlight") == 0 && argc == 3) return render_spotlight(NULL, argv[2]);
-    if (strcmp(argv[1], "--spotlight") == 0 && argc == 4) return render_spotlight(argv[2], argv[3]);
+    if (strcmp(argv[1], "--spotlight") == 0 && argc == 3) return render_spotlight(NULL, NULL, argv[2]);
+    if (strcmp(argv[1], "--spotlight") == 0 && argc == 4) return render_spotlight(argv[2], NULL, argv[3]);
+    if (strcmp(argv[1], "--spotlight-menu") == 0 && argc == 4) return render_spotlight(NULL, argv[2], argv[3]);
     if (strcmp(argv[1], "--all") == 0 && argc == 3) {
         if (ensure_dir(argv[2]) != 0) return 1;
         char path[1024];
@@ -271,8 +279,8 @@ int main(int argc, char **argv) {
         } else {
             fprintf(stderr, "lp-render: no EGL here; the molten wallpaper is not baked\n");
         }
-        snprintf(path, sizeof path, "%s/menubar.png", argv[2]);
-        rc |= render_menubar(640, path);
+        snprintf(path, sizeof path, "%s/clock.png", argv[2]);
+        rc |= render_clock(640, path);
         snprintf(path, sizeof path, "%s/window.png", argv[2]);
         rc |= render_window(path);
         snprintf(path, sizeof path, "%s/finder.png", argv[2]);
@@ -285,9 +293,11 @@ int main(int argc, char **argv) {
         snprintf(path, sizeof path, "%s/textedit.png", argv[2]);
         rc |= render_app(&lp_app_textedit, 0, path);
         snprintf(path, sizeof path, "%s/spotlight.png", argv[2]);
-        rc |= render_spotlight(NULL, path);
+        rc |= render_spotlight(NULL, NULL, path);
+        snprintf(path, sizeof path, "%s/spotlight-menu.png", argv[2]);
+        rc |= render_spotlight(NULL, "file", path);
         snprintf(path, sizeof path, "%s/spotlight-results.png", argv[2]);
-        rc |= render_spotlight("te", path);
+        rc |= render_spotlight("te", NULL, path);
         return rc;
     }
     return usage(2);

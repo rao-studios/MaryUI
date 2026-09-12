@@ -18,6 +18,7 @@ typedef struct lp_spotlight_item {
     char title[128];
     char subtitle[64];    /* "Application", "Window · Finder", "Command" */
     lp_icon icon;
+    const char *object;       /* the object-tier mark, when the glyph's name is not it */
     int index;            /* app index (APP), window index (WINDOW) */
     int running;          /* an app with a window open (the dock's dot) */
 } lp_spotlight_item;

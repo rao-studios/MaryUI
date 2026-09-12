@@ -1,13 +1,29 @@
 /**
- * The menu bar's models: what each menu says and what it does. Kept as data so
- * the MenuBar stays a dumb renderer and the same commands can be bound to keys.
+ * The app commands' models: what each menu says and what it does. Kept as data
+ * so Spotlight's command pills stay a dumb renderer and the same commands can
+ * be bound to keys. Rendered inline inside Spotlight (see components/Spotlight)
+ * rather than a standalone menu bar.
  */
 
-import type { MenuEntry } from '@/components/Menu'
 import type { WMState } from './wm/types'
 import type { WMStore } from './wm/useWM'
 import { apps, openApp } from './apps/registry'
 import { updateSettings, type Settings } from './settings'
+
+export interface MenuItemModel {
+  id: string
+  label: string
+  shortcut?: string
+  checked?: boolean
+  disabled?: boolean
+  onSelect?(): void
+}
+
+export type MenuEntry = MenuItemModel | { separator: true }
+
+export function isSeparator(entry: MenuEntry): entry is { separator: true } {
+  return 'separator' in entry
+}
 
 export interface MenuModel {
   id: string

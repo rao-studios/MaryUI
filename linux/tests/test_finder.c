@@ -103,7 +103,7 @@ static void reset_tree(void) {
 
 static void setup(void) {
     reset_tree();
-    lp_desktop_init(&d, LP_RECT(0, 24, 1280, 776), NULL);
+    lp_desktop_init(&d, LP_RECT(0, 0, 1280, 800), NULL);
     lp_desktop_register_builtin_apps(&d);
     d.on_drag = on_drag;
     drag_hook_calls = 0;

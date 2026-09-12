@@ -1,14 +1,16 @@
-/* Spotlight's model: the dock, ranking, windows, selection, the keys. Case
- * names mirror web/src/desktop/spotlight.test.ts. */
+/* Spotlight's model: the dock, ranking, windows, selection, the keys, and the
+ * app commands it carries now that there is no menu bar. The first nine case
+ * names mirror web/src/desktop/spotlight.test.ts; the rest are C-only. */
 #include <xkbcommon/xkbcommon-keysyms.h>
 #include "lp_test.h"
+#include "maryui/components/lp_spotlight_panel.h"
 #include "maryui/lp_desktop.h"
 #include "maryui/lp_spotlight.h"
 
 static lp_desktop d;
 
 static void setup(void) {
-    lp_desktop_init(&d, LP_RECT(0, 24, 1280, 776), NULL);
+    lp_desktop_init(&d, LP_RECT(0, 0, 1280, 800), NULL);
     lp_desktop_register_builtin_apps(&d);
 }
 
@@ -168,6 +170,114 @@ LP_TEST(enter_activates_the_selection) {
     LP_ASSERT_EQ(d.wm.focused, 0);
 }
 
+/* MARK: - The commands, folded into the panel */
+
+static void open_spotlight(void) {
+    setup();
+    lp_desktop_open_app(&d, "gallery");
+    lp_desktop_key(&d, XKB_KEY_space, LP_MOD_CTRL);
+    LP_ASSERT(d.spotlight.open);
+}
+
+LP_TEST(command_pills_open_switch_and_close) {
+    open_spotlight();
+    lp_desktop_toggle_menu(&d, LP_MENU_FILE);
+    LP_ASSERT_EQ(d.open_menu, LP_MENU_FILE);
+    LP_ASSERT(d.spotlight.open);      /* the pills live inside the panel: it stays up */
+    lp_desktop_toggle_menu(&d, LP_MENU_VIEW);
+    LP_ASSERT_EQ(d.open_menu, LP_MENU_VIEW);
+    LP_ASSERT(d.spotlight.open);
+    lp_desktop_toggle_menu(&d, LP_MENU_VIEW);
+    LP_ASSERT_EQ(d.open_menu, -1);
+    LP_ASSERT(d.spotlight.open);
+}
+
+LP_TEST(typing_closes_the_open_command_menu) {
+    open_spotlight();
+    lp_desktop_toggle_menu(&d, LP_MENU_FILE);
+    lp_spotlight_set_query(&d.spotlight, "te");
+    lp_desktop_spotlight_query_changed(&d);
+    LP_ASSERT_EQ(d.open_menu, -1);    /* the commands only show for a blank query */
+    LP_ASSERT_EQ(d.spotlight.selection, 0);
+    lp_spotlight_set_query(&d.spotlight, "");
+    lp_desktop_spotlight_query_changed(&d);
+    LP_ASSERT_EQ(d.open_menu, -1);    /* and blanking it does not bring the menu back */
+}
+
+LP_TEST(escape_closes_the_command_menu_before_spotlight) {
+    open_spotlight();
+    lp_desktop_toggle_menu(&d, LP_MENU_FILE);
+    LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_Escape, 0), 1);
+    LP_ASSERT_EQ(d.open_menu, -1);
+    LP_ASSERT(d.spotlight.open);      /* the pill went, the panel stayed */
+    LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_Escape, 0), 1);
+    LP_ASSERT(!d.spotlight.open);
+}
+
+LP_TEST(arrows_walk_the_open_command_menu) {
+    open_spotlight();
+    /* With no pill open the arrows still step the dock. */
+    LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_Right, 0), 1);
+    LP_ASSERT_EQ(d.spotlight.selection, 1);
+    lp_desktop_toggle_menu(&d, LP_MENU_FILE);
+    LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_Down, 0), 1);
+    LP_ASSERT_EQ(d.menu_active, 0);
+    LP_ASSERT_EQ(d.spotlight.selection, 1);   /* the menu took it, not the dock */
+    LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_Right, 0), 1);
+    LP_ASSERT_EQ(d.open_menu, LP_MENU_EDIT);  /* ←/→ step between pills */
+    /* A character still reaches the bar rather than being swallowed. */
+    LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_x, 0), 0);
+}
+
+LP_TEST(choosing_a_command_runs_it_and_closes_spotlight) {
+    open_spotlight();
+    int goo = d.settings.goo;
+    lp_desktop_toggle_menu(&d, LP_MENU_VIEW);
+    int entry = -1;
+    for (int i = 0; i < d.menus[LP_MENU_VIEW].count; i++) {
+        if (strcmp(d.menus[LP_MENU_VIEW].entries[i].label, "Liquid Merge") == 0) entry = i;
+    }
+    LP_ASSERT(entry >= 0);
+    d.menu_active = entry;
+    LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_Return, 0), 1);
+    LP_ASSERT_EQ(d.settings.goo, !goo);
+    LP_ASSERT_EQ(d.open_menu, -1);
+    LP_ASSERT(!d.spotlight.open);
+}
+
+LP_TEST(the_view_names_the_frontmost_app) {
+    open_spotlight();
+    lp_spotlight_item r[LP_SPOTLIGHT_MAX_RESULTS];
+    int n = lp_desktop_spotlight_results(&d, r, LP_SPOTLIGHT_MAX_RESULTS);
+    lp_spotlight_view v = lp_desktop_spotlight_view(&d, r, n);
+    LP_ASSERT_STR(v.context_name, "Gallery");
+    LP_ASSERT_EQ(v.menu_count, LP_DESKTOP_MENU_COUNT);
+    LP_ASSERT_EQ(v.open_menu, -1);
+    /* The Finder's context menu is a floating panel, never one of the pills. */
+    d.open_menu = LP_DESKTOP_MENU_POPUP;
+    v = lp_desktop_spotlight_view(&d, r, n);
+    LP_ASSERT_EQ(v.open_menu, -1);
+}
+
+LP_TEST(the_panel_never_reallocates_while_typing) {
+    open_spotlight();
+    lp_spotlight_item r[LP_SPOTLIGHT_MAX_RESULTS];
+    int n = lp_desktop_spotlight_results(&d, r, LP_SPOTLIGHT_MAX_RESULTS);
+    lp_spotlight_view v = lp_desktop_spotlight_view(&d, r, n);
+    lp_size max = lp_spotlight_max_size(&v);
+    /* The dock with its pills fits the one buffer the host allocates at open. */
+    LP_ASSERT(lp_spotlight_measure(&v).h <= max.h);
+    /* So does a full page of results, which is what typing produces. */
+    lp_spotlight_set_query(&d.spotlight, "e");
+    lp_spotlight_view typed = v;
+    typed.count = LP_SPOTLIGHT_MAX_RESULTS;
+    LP_ASSERT(lp_spotlight_measure(&typed).h <= max.h);
+    lp_spotlight_set_query(&d.spotlight, "");
+    /* An open menu is the one thing that does not fit: the host resizes for it. */
+    v.open_menu = LP_MENU_VIEW;
+    LP_ASSERT(lp_spotlight_measure(&v).h > max.h);
+}
+
 int main(void) {
     LP_RUN(empty_query_shows_dock);
     LP_RUN(filters_apps_by_title_prefix_and_substring);
@@ -180,5 +290,12 @@ int main(void) {
     LP_RUN(caps_results_at_eight);
     LP_RUN(ctrl_space_toggles_and_escape_closes);
     LP_RUN(enter_activates_the_selection);
+    LP_RUN(command_pills_open_switch_and_close);
+    LP_RUN(typing_closes_the_open_command_menu);
+    LP_RUN(escape_closes_the_command_menu_before_spotlight);
+    LP_RUN(arrows_walk_the_open_command_menu);
+    LP_RUN(choosing_a_command_runs_it_and_closes_spotlight);
+    LP_RUN(the_view_names_the_frontmost_app);
+    LP_RUN(the_panel_never_reallocates_while_typing);
     LP_TEST_MAIN_END();
 }

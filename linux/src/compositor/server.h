@@ -98,8 +98,7 @@ struct mui_server {
         double sx, sy;                   /* pointer at grab start (layout) */
         lp_rect start;
     } grab;
-    struct mui_chrome *menu;             /* the open dropdown, or NULL */
-    int menu_index;
+    struct mui_chrome *menu;             /* the Finder's context menu while it is open, or NULL */
     int menu_shown_index;                /* which menu the dropdown shows (-1: none); a change replays lp-menu-in */
     struct mui_tween menu_anim;          /* Menu.module.css lp-menu-in on the dropdown */
     int menu_x, menu_y;                  /* the dropdown's resting position */
@@ -142,7 +141,9 @@ struct mui_server {
 
     struct wlr_scene *scene;
     struct wlr_scene_output_layout *scene_layout;
-    /* z.wallpaper 0 · z.windows 100 · z.menubar 600 · z.menus 700 · z.spotlight 800 (tokens.json) */
+    /* z.wallpaper 0 · z.windows 100 · z.menubar 600 · z.menus 700 · z.spotlight 800 (tokens.json).
+     * There is no menu bar any more — the commands are Spotlight's pills — so
+     * z.menubar's band carries the one thing left up there, the ambient clock. */
     struct wlr_scene_tree *layer_wallpaper, *layer_windows, *layer_menubar, *layer_menus, *layer_spotlight;
     int desktop_width, desktop_height;   /* the first output */
 
@@ -152,7 +153,7 @@ struct mui_server {
     enum mui_cursor_shape cursor_shape;
     struct mui_chrome *pointer_chrome;   /* the chrome under the pointer, for leave events */
 
-    struct mui_chrome *menubar;          /* the top strip, one per desktop (first output) */
+    struct mui_chrome *clock;            /* the ambient clock, top right on the wallpaper (no bar behind it) */
     struct wl_event_source *clock_timer;
     char clock_text[32];
     struct wl_list keyboards; /* struct mui_keyboard */
@@ -237,8 +238,14 @@ int mui_desktop_animate(struct mui_server *server, double now_ms);
 
 /* Spotlight (spotlight.c): the panel chrome follows desktop.spotlight. */
 void mui_spotlight_sync(struct mui_server *server);
-/* Syncs on the next loop turn (safe from inside a chrome's EVENT pass). */
+/* Syncs on the next loop turn (safe from inside a chrome's EVENT pass).
+ * Anything that CLOSES Spotlight must come this way: mui_spotlight_sync frees
+ * the chrome, and mui_chrome_event touches it again after the pass returns. */
 void mui_spotlight_request_sync(struct mui_server *server);
+/* Resizes the open panel for the current model (a pill opened, closed or
+ * switched). Immediate, and safe from inside the panel's EVENT pass because it
+ * never destroys the chrome — do not fold it into mui_spotlight_sync. */
+void mui_spotlight_resize(struct mui_server *server);
 int mui_spotlight_hit(struct mui_server *server, double lx, double ly, struct mui_hit *hit);
 int mui_spotlight_animate(struct mui_server *server, double now_ms);
 void mui_spotlight_finish(struct mui_server *server);

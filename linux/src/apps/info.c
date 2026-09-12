@@ -102,12 +102,11 @@ static void info_paint(void *state, lp_ctx *ctx, lp_rect body, lp_desktop *d) {
     cairo_t *cr = ctx->cr;
     int draw = ctx->pass == LP_PASS_DRAW && cr;
     lp_rect area = lp_rect_inset(body, LP_SPACE_4, LP_SPACE_4);
-    lp_accent accent = lp_settings_accent(ctx->settings);
 
     /* the tile and the name */
     lp_rect head = lp_rect_cut_top(&area, 64);
     if (draw) {
-        lp_file_icon_paint(cr, LP_RECT(head.x, head.y + 6, 52, 52), lp_files_kind_icon(s->kind), s->kind == LP_FILE_FOLDER, accent);
+        lp_file_icon_paint(cr, LP_RECT(head.x, head.y + 6, 52, 52), lp_files_kind_icon(s->kind), s->kind == LP_FILE_FOLDER, ctx->settings);
         lp_text_style ns = lp_text_style_default();
         ns.size_px = LP_TEXT_LG; ns.weight = LP_TEXT_WEIGHT_SEMIBOLD; ns.ellipsize = 1;
         lp_text_draw(cr, s->name, LP_RECT(head.x + 64, head.y + 10, head.w - 64, 22), &ns, LP_ALIGN_START);

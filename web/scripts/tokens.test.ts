@@ -2,9 +2,10 @@
 
 import { describe, expect, it } from 'vitest'
 // @ts-expect-error — plain ESM module without a declaration file.
-import { buildAll, cDimension, cDurationMs, cFloat, cIconName, cName, cssName, flatten, parseColor, resolveAliases, toCss, toCssValue, toIconsC } from './tokens-lib.mjs'
+import { buildAll, cDimension, cDurationMs, cFloat, cIconName, cName, cObjectName, cssName, flatten, parseColor, resolveAliases, toCss, toCssValue, toIconsC } from './tokens-lib.mjs'
 import tree from '../tokens/tokens.json'
 import icons from '../src/components/Icon/icons.json'
+import objects from '../src/components/ObjectIcon/objects.json'
 
 describe('flatten', () => {
   it('inherits $type from groups and keeps source order', () => {
@@ -95,7 +96,7 @@ describe('c', () => {
 })
 
 describe('the real tokens.json', () => {
-  const out = buildAll(tree, icons, { sourceHash: 'abc', iconsHash: 'def' })
+  const out = buildAll(tree, icons, { sourceHash: 'abc', iconsHash: 'def', objectsHash: 'ghi' }, objects)
 
   /*
    * lp_icon.c includes lp_tokens.h and lp_icons.h together, so a name defined by
@@ -104,10 +105,32 @@ describe('the real tokens.json', () => {
    * LP_ICON_VIEWBOX and icon.stroke to LP_ICON_STROKE, which lp_icons.h already
    * owns. That is why the object tier's tokens live under `object`.
    */
-  it('defines no macro that lp_icons.h already defines', () => {
+  it('defines no macro that another generated header already defines', () => {
     const names = (src: string) => new Set(Array.from(src.matchAll(/^#define (LP_[A-Z0-9_]+)/gm), (m) => m[1]))
-    const clash = [...names(out.c)].filter((name) => names(out.iconsC).has(name))
-    expect(clash).toEqual([])
+    /* lp_object_icon.c includes all three at once, so every pair has to be disjoint —
+     * which is why the object geometry is emitted under LP_OBJ_ and not LP_OBJECT_. */
+    const headers: Array<[string, string]> = [['c', out.c], ['iconsC', out.iconsC], ['objectsC', out.objectsC]]
+    for (const [an, a] of headers) {
+      for (const [bn, b] of headers) {
+        if (an >= bn) continue
+        expect([an, bn, [...names(a)].filter((name) => names(b).has(name))]).toEqual([an, bn, []])
+      }
+    }
+  })
+
+  it('emits the object tier\'s geometry in JSON order, with every material tokens.json defines', () => {
+    const names = Object.keys(objects).filter((k) => !k.startsWith('$'))
+    expect(out.objectsC).toContain(`#define LP_OBJ_GRID ${(objects as { $grid: number }).$grid}`)
+    expect(out.objectsC).toContain(`    ${cObjectName(names[0])},`)
+    expect(out.objectsC).toContain('    LP_OBJ_COUNT,')
+    /* slate is spent by the folder appearance and named by no part: the enum still carries it. */
+    for (const m of Object.keys(tree.object.material).filter((k) => !k.startsWith('$')))
+      expect(out.objectsC).toContain(`    LP_OBJ_MATERIAL_${m.toUpperCase()},`)
+    /* Every object's silhouette names one of its own parts. */
+    for (const name of names) {
+      const def = (objects as unknown as Record<string, { silhouette: string; parts: Array<{ id: string }> }>)[name]
+      expect(def.parts.map((p) => p.id)).toContain(def.silhouette)
+    }
   })
 
   it('keeps the Spotlight panel concentric with the field inside it', () => {

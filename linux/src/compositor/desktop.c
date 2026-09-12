@@ -1,7 +1,8 @@
-/* The desktop on the scene: wallpaper per output, the menu bar and its
- * clock, dropdown menus, Spotlight (spotlight.c), and the routing of pointer
+/* The desktop on the scene: wallpaper per output, the ambient clock, the
+ * Finder's context menu, Spotlight (spotlight.c), and the routing of pointer
  * and keyboard input to the window manager (drags, resizes, focus) and to
- * chromes. */
+ * chromes. There is no menu bar: the app commands are Spotlight's pills, and
+ * the only chrome left on the desktop itself is the clock in its corner. */
 #include <math.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -11,10 +12,10 @@
 #include <unistd.h>
 #include <linux/input-event-codes.h>
 
-#include "maryui/components/lp_menu.h"
-#include "maryui/components/lp_menu_bar.h"
+#include "maryui/components/lp_menu_item.h"
 #include "maryui/components/lp_window.h"
 #include "maryui/lp_geometry.h"
+#include "maryui/lp_text.h"
 #include "maryui/lp_tokens.h"
 #include "maryui/lp_molten.h"
 #include "maryui/lp_wallpaper.h"
@@ -22,6 +23,10 @@
 #include "window.h"
 
 #define DOUBLE_CLICK_MS 400
+/* The ambient clock's box. Fixed, and right-aligned inside itself, so a wider
+ * string ("Wed 12:38 PM") never moves the anchor or resizes the chrome. */
+#define MUI_CLOCK_W 160
+#define MUI_CLOCK_H ((int)LP_SIZE_MENUBAR_HEIGHT)
 
 static void format_clock(char *out, size_t n) {
     time_t now = time(NULL);
@@ -35,16 +40,19 @@ static void format_clock(char *out, size_t n) {
     snprintf(out, n, "%s %s", day, hm);
 }
 
-/* MARK: - The dropdown */
-
-struct menu_host { struct mui_server *server; };
+/* MARK: - The context menu
+ *
+ * The one floating dropdown left on this side. The app commands open inside
+ * Spotlight's panel instead (components/Spotlight), so this path serves
+ * menus[LP_DESKTOP_MENU_POPUP] alone — the Finder's right-click menu, which
+ * the web has no counterpart for. */
 
 static void paint_menu(lp_ctx *ctx, struct mui_chrome *chrome, void *data) {
     struct mui_server *server = data;
     lp_desktop *d = &server->desktop;
-    if (d->open_menu < 0) return;
-    lp_menu_result result;
-    lp_menu(ctx, LP_RECT(LP_MENU_SHADOW_EXTENT, LP_MENU_SHADOW_EXTENT, 0, 0), &d->menus[d->open_menu], d->menu_active, &result);
+    if (d->open_menu != LP_DESKTOP_MENU_POPUP) return;
+    lp_menu_list_result result;
+    lp_menu_popup(ctx, LP_MENU_SHADOW_EXTENT, LP_MENU_SHADOW_EXTENT, &d->menus[d->open_menu], d->menu_active, &result);
     if (ctx->pass == LP_PASS_EVENT) {
         if (result.hovered != d->menu_active) { d->menu_active = result.hovered; ctx->dirty = 1; }
         if (result.selected >= 0) {
@@ -63,20 +71,15 @@ static void close_menu_chrome(struct mui_server *server) {
     server->menu_anim.active = 0;
 }
 
-/* Shows (or hides) the dropdown for the desktop's open menu below its trigger. */
-static void sync_menu_chrome(struct mui_server *server) {
+/* Shows (or hides) the context menu at its anchor in the owning window. */
+static void sync_popup_chrome(struct mui_server *server) {
     lp_desktop *d = &server->desktop;
-    if (d->open_menu < 0) {
+    if (d->open_menu != LP_DESKTOP_MENU_POPUP) {
         close_menu_chrome(server);
-        if (server->menubar) { mui_chrome_damage_all(server->menubar); mui_chrome_repaint(server->menubar, mui_now_ms()); }
         return;
     }
-    /* size from the model */
-    cairo_surface_t *tmp = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 1, 1);
-    cairo_t *cr = cairo_create(tmp);
-    lp_size size = lp_menu_measure(cr, &d->menus[d->open_menu]);
-    cairo_destroy(cr);
-    cairo_surface_destroy(tmp);
+    /* size from the model; lp_menu_list_measure keeps its own scratch context */
+    lp_size size = lp_menu_list_measure(NULL, &d->menus[d->open_menu]);
     int w = (int)size.w + 2 * LP_MENU_SHADOW_EXTENT, h = (int)size.h + 2 * LP_MENU_SHADOW_EXTENT;
     if (!server->menu) {
         server->menu = calloc(1, sizeof(*server->menu));
@@ -84,45 +87,22 @@ static void sync_menu_chrome(struct mui_server *server) {
     } else {
         mui_chrome_resize(server->menu, w, h);
     }
-    int x, y;
-    if (d->open_menu == LP_DESKTOP_MENU_POPUP) {
-        /* The context menu: at its anchor in the owning window, kept on the desktop. */
-        struct mui_window *owner = mui_window_find(server, d->popup_window);
-        int tx = 0, ty = 0;
-        if (owner) wlr_scene_node_coords(&owner->tree->node, &tx, &ty);
-        x = tx + (int)d->popup_x - LP_MENU_SHADOW_EXTENT;
-        y = ty + (int)d->popup_y - LP_MENU_SHADOW_EXTENT;
-        if (x + w - LP_MENU_SHADOW_EXTENT > server->desktop_width) x = server->desktop_width - w + LP_MENU_SHADOW_EXTENT;
-        if (y + h - LP_MENU_SHADOW_EXTENT > server->desktop_height) y = server->desktop_height - h + LP_MENU_SHADOW_EXTENT;
-        if (y < (int)LP_SIZE_MENUBAR_HEIGHT - LP_MENU_SHADOW_EXTENT) y = (int)LP_SIZE_MENUBAR_HEIGHT - LP_MENU_SHADOW_EXTENT;
-    } else {
-        /* anchor: the trigger's left, 2px below the bar (MenuBar.tsx anchorFor) */
-        lp_menu_bar_model model = { .count = LP_DESKTOP_MENU_COUNT, .open_index = d->open_menu, .clock = server->clock_text };
-        for (int i = 0; i < LP_DESKTOP_MENU_COUNT; i++) model.labels[i] = i == 0 ? "" : d->menus[i].label;
-        lp_menu_bar_result bar;
-        lp_ctx probe = { 0 };
-        probe.settings = server->settings;
-        cairo_surface_t *ms = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 1, 1);
-        cairo_t *mcr = cairo_create(ms);
-        lp_ctx_begin(&probe, LP_PASS_DRAW, mcr, NULL, LP_RECT(0, 0, server->desktop_width, LP_SIZE_MENUBAR_HEIGHT), 0);
-        cairo_push_group(mcr);
-        lp_menu_bar(&probe, LP_RECT(0, 0, server->desktop_width, LP_SIZE_MENUBAR_HEIGHT), &model, &bar);
-        cairo_pattern_destroy(cairo_pop_group(mcr));
-        lp_ctx_end(&probe);
-        cairo_destroy(mcr);
-        cairo_surface_destroy(ms);
-        lp_rect t = bar.triggers[d->open_menu];
-        x = (int)t.x - LP_MENU_SHADOW_EXTENT;
-        y = (int)LP_SIZE_MENUBAR_HEIGHT + 2 - LP_MENU_SHADOW_EXTENT;
-        if (x + w - LP_MENU_SHADOW_EXTENT > server->desktop_width) x = server->desktop_width - w + LP_MENU_SHADOW_EXTENT;
-    }
+    struct mui_window *owner = mui_window_find(server, d->popup_window);
+    int tx = 0, ty = 0;
+    if (owner) wlr_scene_node_coords(&owner->tree->node, &tx, &ty);
+    int x = tx + (int)d->popup_x - LP_MENU_SHADOW_EXTENT;
+    int y = ty + (int)d->popup_y - LP_MENU_SHADOW_EXTENT;
+    if (x + w - LP_MENU_SHADOW_EXTENT > server->desktop_width) x = server->desktop_width - w + LP_MENU_SHADOW_EXTENT;
+    if (y + h - LP_MENU_SHADOW_EXTENT > server->desktop_height) y = server->desktop_height - h + LP_MENU_SHADOW_EXTENT;
+    /* No bar to clear any more: the desktop starts at its top edge. */
+    if (y < -LP_MENU_SHADOW_EXTENT) y = -LP_MENU_SHADOW_EXTENT;
     wlr_scene_node_set_position(&server->menu->node->node, x, y);
     server->menu_x = x;
     server->menu_y = y;
     if (server->menu_shown_index != d->open_menu) {
         server->menu_shown_index = d->open_menu;
         if (!server->settings->reduced_motion) {
-            /* Menu.module.css lp-menu-in: opacity 0→1, translateY(-4px) scaleY(.96) → none, motion.fast ease-out. */
+            /* lp-menu-in: opacity 0→1, translateY(-4px) scaleY(.96) → none, motion.fast ease-out. */
             mui_tween_start(&server->menu_anim, mui_now_ms(), LP_MOTION_FAST_MS, LP_MOTION_EASE_OUT);
             wlr_scene_buffer_set_opacity(server->menu->node, 0.0f);
             mui_server_schedule_frame(server);
@@ -130,41 +110,33 @@ static void sync_menu_chrome(struct mui_server *server) {
     }
     mui_chrome_damage_all(server->menu);
     mui_chrome_repaint(server->menu, mui_now_ms());
-    if (server->menubar) { mui_chrome_damage_all(server->menubar); mui_chrome_repaint(server->menubar, mui_now_ms()); }
 }
 
-/* MARK: - The menu bar */
+/* MARK: - The ambient clock
+ *
+ * All that is left of the menu bar: the time, top right, sitting on the
+ * wallpaper with no strip behind it. Not interactive, never hit-tested, and
+ * repainted once a minute — only when the string actually changes — so an idle
+ * desktop still schedules no frames. */
 
-static void paint_menubar(lp_ctx *ctx, struct mui_chrome *chrome, void *data) {
+static void paint_clock(lp_ctx *ctx, struct mui_chrome *chrome, void *data) {
     struct mui_server *server = data;
-    lp_desktop *d = &server->desktop;
-    if (d->menus[1].label == NULL) lp_desktop_build_menus(d);
-    lp_menu_bar_model model = { .count = LP_DESKTOP_MENU_COUNT, .open_index = d->open_menu < LP_DESKTOP_MENU_COUNT ? d->open_menu : -1, .clock = server->clock_text, .status = NULL };
-    for (int i = 0; i < LP_DESKTOP_MENU_COUNT; i++) model.labels[i] = i == 0 ? "" : d->menus[i].label;
-    lp_menu_bar_result result;
-    lp_menu_bar(ctx, LP_RECT(0, 0, chrome->width, LP_SIZE_MENUBAR_HEIGHT), &model, &result);
-    if (ctx->pass == LP_PASS_EVENT) {
-        if (result.pressed >= 0) {
-            lp_desktop_toggle_menu(d, result.pressed);
-            ctx->dirty = 1;
-            server->menu_index = d->open_menu;
-            sync_menu_chrome(server);
-        } else if (d->open_menu >= 0 && d->open_menu < LP_DESKTOP_MENU_COUNT && result.hovered >= 0 && result.hovered != d->open_menu) {
-            lp_desktop_toggle_menu(d, result.hovered);
-            ctx->dirty = 1;
-            sync_menu_chrome(server);
-        }
-    }
+    if (ctx->pass != LP_PASS_DRAW || !ctx->cr) return;
+    lp_text_style s = lp_text_style_default();
+    s.weight = LP_TEXT_WEIGHT_MEDIUM;
+    s.tabular_nums = 1;
+    s.emboss = 1;
+    lp_text_draw(ctx->cr, server->clock_text, LP_RECT(0, 0, chrome->width, chrome->height), &s, LP_ALIGN_END);
 }
 
 static int clock_tick(void *data) {
     struct mui_server *server = data;
     char text[32];
     format_clock(text, sizeof text);
-    if (strcmp(text, server->clock_text) != 0 && server->menubar) {
+    if (strcmp(text, server->clock_text) != 0 && server->clock) {
         snprintf(server->clock_text, sizeof server->clock_text, "%s", text);
-        mui_chrome_damage(server->menubar, LP_RECT(server->menubar->width - 200, 0, 200, LP_SIZE_MENUBAR_HEIGHT));
-        mui_chrome_repaint(server->menubar, mui_now_ms());
+        mui_chrome_damage_all(server->clock);   /* 160×24: the whole chrome is the partial damage */
+        mui_chrome_repaint(server->clock, mui_now_ms());
     }
     time_t now = time(NULL);
     wl_event_source_timer_update(server->clock_timer, (int)((60 - now % 60) * 1000 + 50));
@@ -176,7 +148,7 @@ static int clock_tick(void *data) {
 static void desktop_changed(lp_desktop *d, uint64_t changed) {
     struct mui_server *server = d->host;
     mui_windows_sync(server);
-    if (d->open_menu < 0 && server->menu) sync_menu_chrome(server);
+    if (d->open_menu != LP_DESKTOP_MENU_POPUP && server->menu) sync_popup_chrome(server);
     /* The window list is part of Spotlight's results; deferred, since this may run inside its EVENT pass. */
     if (server->spotlight || d->spotlight.open) mui_spotlight_request_sync(server);
 }
@@ -253,7 +225,6 @@ void mui_desktop_init(struct mui_server *server) {
     server->desktop.on_drag = desktop_on_drag;
     mui_files_init(server);
     server->desktop.open_menu = -1;
-    server->menu_index = -1;
     lp_desktop_build_menus(&server->desktop);
 }
 
@@ -268,17 +239,17 @@ void mui_desktop_finish(struct mui_server *server) {
     mui_spotlight_finish(server);
     struct mui_window *win, *tmp;
     wl_list_for_each_safe(win, tmp, &server->windows, link) mui_window_destroy(win);
-    if (server->menubar) {
-        mui_chrome_finish(server->menubar);
-        free(server->menubar);
-        server->menubar = NULL;
+    if (server->clock) {
+        mui_chrome_finish(server->clock);
+        free(server->clock);
+        server->clock = NULL;
     }
 }
 
 void mui_desktop_settings_changed(struct mui_server *server) {
     struct mui_window *win;
     wl_list_for_each(win, &server->windows, link) { mui_chrome_damage_all(&win->chrome); mui_chrome_repaint(&win->chrome, mui_now_ms()); }
-    if (server->menubar) { mui_chrome_damage_all(server->menubar); mui_chrome_repaint(server->menubar, mui_now_ms()); }
+    if (server->clock) { mui_chrome_damage_all(server->clock); mui_chrome_repaint(server->clock, mui_now_ms()); }
     if (server->menu) { mui_chrome_damage_all(server->menu); mui_chrome_repaint(server->menu, mui_now_ms()); }
     if (server->spotlight) { mui_chrome_damage_all(server->spotlight); mui_chrome_repaint(server->spotlight, mui_now_ms()); }
 }
@@ -322,19 +293,19 @@ void mui_desktop_output_ready(struct mui_output *output) {
     pixman_region32_fini(&opaque);
     wlr_log(WLR_INFO, "wallpaper %dx%d ready in %.0f ms", w, h, mui_now_ms() - t0);
 
-    /* The first output is the desktop: menu bar across it, bounds below the bar. */
-    if (server->menubar && server->desktop_width && box.x != 0) return;
+    /* The first output is the desktop: the clock in its corner, and windows
+     * over the whole of it — nothing is reserved at the top any more. */
+    if (server->clock && server->desktop_width && box.x != 0) return;
     server->desktop_width = w;
     server->desktop_height = h;
-    if (!server->menubar) {
-        server->menubar = calloc(1, sizeof(*server->menubar));
-        mui_chrome_init(server->menubar, server, server->layer_menubar, w, (int)LP_SIZE_MENUBAR_HEIGHT + LP_MENU_BAR_SHADOW_EXTENT, paint_menubar, server);
-        wlr_scene_node_set_position(&server->menubar->node->node, box.x, box.y);
-    } else {
-        mui_chrome_resize(server->menubar, w, (int)LP_SIZE_MENUBAR_HEIGHT + LP_MENU_BAR_SHADOW_EXTENT);
+    if (!server->clock) {
+        server->clock = calloc(1, sizeof(*server->clock));
+        mui_chrome_init(server->clock, server, server->layer_menubar, MUI_CLOCK_W, MUI_CLOCK_H, paint_clock, server);
     }
-    mui_chrome_repaint(server->menubar, mui_now_ms());
-    lp_wm_action a = { .type = LP_WM_SET_BOUNDS, .bounds = LP_RECT(box.x, box.y + LP_SIZE_MENUBAR_HEIGHT, w, h - LP_SIZE_MENUBAR_HEIGHT) };
+    wlr_scene_node_set_position(&server->clock->node->node, box.x + w - MUI_CLOCK_W - (int)LP_SPACE_3, box.y + (int)LP_SPACE_1);
+    mui_chrome_damage_all(server->clock);
+    mui_chrome_repaint(server->clock, mui_now_ms());
+    lp_wm_action a = { .type = LP_WM_SET_BOUNDS, .bounds = LP_RECT(box.x, box.y, w, h) };
     lp_desktop_dispatch(&server->desktop, &a);
     if (server->desktop.wm.count == 0) {
         lp_desktop_open_app(&server->desktop, "finder");
@@ -381,18 +352,8 @@ void mui_desktop_hit(struct mui_server *server, double lx, double ly, struct mui
             return;
         }
     }
-    /* The menu bar, above its shadow. */
-    if (server->menubar) {
-        int mx, my;
-        wlr_scene_node_coords(&server->menubar->node->node, &mx, &my);
-        double sx = lx - mx, sy = ly - my;
-        if (sx >= 0 && sy >= 0 && sx < server->menubar->width && sy < LP_SIZE_MENUBAR_HEIGHT) {
-            hit->chrome = server->menubar;
-            hit->sx = sx;
-            hit->sy = sy;
-            return;
-        }
-    }
+    /* The clock is not interactive: a press over it falls through to whatever
+     * is behind, which is the wallpaper. */
     /* Windows, front to back, by their rect plus the resize grip that pokes out of it. */
     struct mui_window *sorted[LP_WM_MAX_WINDOWS];
     int n = 0;
@@ -504,10 +465,11 @@ int mui_desktop_pointer_event(struct mui_server *server, double lx, double ly, i
     struct mui_window *win = hit.win;
     double sx = hit.sx, sy = hit.sy;
 
-    /* A press outside the open menu (and off the menu bar) closes it. */
-    if ((pressed & (LP_BUTTON_LEFT | LP_BUTTON_RIGHT)) && d->open_menu >= 0 && chrome != server->menu && chrome != server->menubar) {
+    /* A press outside the open menu closes it — off the context menu itself,
+     * or off the Spotlight panel that draws the command pills. */
+    if ((pressed & (LP_BUTTON_LEFT | LP_BUTTON_RIGHT)) && d->open_menu >= 0 && chrome != server->menu && chrome != server->spotlight) {
         lp_desktop_close_menu(d);
-        sync_menu_chrome(server);
+        sync_popup_chrome(server);
     }
     /* A press outside Spotlight's panel closes it; the press carries on to what is beneath. */
     if ((pressed & LP_BUTTON_LEFT) && d->spotlight.open && chrome != server->spotlight) {
@@ -602,8 +564,10 @@ int mui_desktop_pointer_event(struct mui_server *server, double lx, double ly, i
         mui_cursor_set_shape(server, MUI_CURSOR_ARROW);
         return 1;
     }
-    /* The pass may have opened a context menu (or closed the dropdown): bring the chrome in step. */
-    if ((d->open_menu >= 0) != (server->menu != NULL) || (server->menu && d->open_menu != server->menu_shown_index)) sync_menu_chrome(server);
+    /* The pass may have opened a context menu (or closed it): bring the chrome
+     * in step. A command pill is not a chrome — the panel draws it inline. */
+    if ((d->open_menu == LP_DESKTOP_MENU_POPUP) != (server->menu != NULL) ||
+        (server->menu && d->open_menu != server->menu_shown_index)) sync_popup_chrome(server);
     return 1;
 }
 
@@ -625,12 +589,15 @@ int mui_desktop_key(struct mui_server *server, uint32_t keysym, uint32_t modifie
             mui_chrome_key(server->spotlight, keysym, modifiers, utf8, pressed, mui_now_ms());
             server->key_to_chrome = 1;
         }
+        /* ←/→ can have switched pills, and typing can have closed one: size the
+         * panel before the sync repaints it. */
+        if (had_menu != d->open_menu) mui_spotlight_resize(server);
         mui_spotlight_sync(server);
-        if (had_menu >= 0 || d->open_menu >= 0) sync_menu_chrome(server);
+        if (had_menu >= 0 || d->open_menu >= 0) sync_popup_chrome(server);
         return 1;
     }
     if (handled && (had_menu >= 0 || d->open_menu >= 0)) {
-        sync_menu_chrome(server);
+        sync_popup_chrome(server);
         return 1;
     }
     if (handled) return 1;

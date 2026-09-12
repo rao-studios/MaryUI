@@ -7,6 +7,7 @@
  *   tokens/export/palette-index.txt             token names in palette order
  *   ../linux/include/maryui/lp_tokens.h         the same tokens for the C desktop (MaryUI/linux)
  *   ../linux/include/maryui/lp_icons.h          the icon paths for the C desktop
+ *   ../linux/include/maryui/lp_objects.h        the object tier's geometry for the C desktop
  *
  * Run via `npm run tokens`; `npm run dev` and `npm run build` run it first and
  * the Vite plugin re-runs it whenever tokens.json or icons.json changes.
@@ -22,6 +23,7 @@ import { buildAll } from './tokens-lib.mjs'
 const repo = join(dirname(fileURLToPath(import.meta.url)), '..')
 const source = join(repo, 'tokens', 'tokens.json')
 const iconsSource = join(repo, 'src', 'components', 'Icon', 'icons.json')
+const objectsSource = join(repo, 'src', 'components', 'ObjectIcon', 'objects.json')
 
 let outDir = null
 const args = process.argv.slice(2)
@@ -32,7 +34,9 @@ for (let i = 0; i < args.length; i++) {
 const sha = (text) => createHash('sha256').update(text).digest('hex').slice(0, 16)
 const sourceText = readFileSync(source, 'utf8')
 const iconsText = readFileSync(iconsSource, 'utf8')
-const out = buildAll(JSON.parse(sourceText), JSON.parse(iconsText), { sourceHash: sha(sourceText), iconsHash: sha(iconsText) })
+const objectsText = readFileSync(objectsSource, 'utf8')
+const out = buildAll(JSON.parse(sourceText), JSON.parse(iconsText),
+  { sourceHash: sha(sourceText), iconsHash: sha(iconsText), objectsHash: sha(objectsText) }, JSON.parse(objectsText))
 
 const targets = [
   ['src/styles/tokens.css', out.css],
@@ -41,6 +45,7 @@ const targets = [
   ['tokens/export/palette-index.txt', out.index],
   ['../linux/include/maryui/lp_tokens.h', out.c],
   ['../linux/include/maryui/lp_icons.h', out.iconsC],
+  ['../linux/include/maryui/lp_objects.h', out.objectsC],
 ]
 
 for (const [rel, content] of targets) {

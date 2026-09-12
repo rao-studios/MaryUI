@@ -46,7 +46,7 @@ void lp_drag_ghost(lp_ctx *ctx, lp_rect r, const lp_drag *drag) {
     cairo_save(cr);
     cairo_push_group(cr);
     lp_rect ic = LP_RECT(r.x + (r.w - 52) / 2, r.y + 4, 52, 52);
-    lp_file_icon_paint(cr, ic, drag->icon < LP_ICON_COUNT ? drag->icon : LP_ICON_DOCUMENT, drag->folder, accent);
+    lp_file_icon_paint(cr, ic, drag->icon < LP_ICON_COUNT ? drag->icon : LP_ICON_DOCUMENT, drag->folder, ctx->settings);
     if (drag->count > 1) {
         /* a red count badge on the tile's corner, like the Dock's */
         char n[16];

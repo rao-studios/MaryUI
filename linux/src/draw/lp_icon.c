@@ -26,10 +26,11 @@ lp_icon lp_icon_by_name(const char *name) {
 }
 
 /* finder.c's tile, shared with the drag ghost and the Info window. */
-void lp_file_icon_paint(cairo_t *cr, lp_rect r, lp_icon icon, int folder, lp_accent accent) {
+void lp_file_icon_paint(cairo_t *cr, lp_rect r, lp_icon icon, int folder, const lp_settings *settings) {
     /* The raised squircle plate is gone: it was carrying no meaning, only
-     * weight. What is left is the glyph, larger and drawn in the accent for a
-     * folder — the same move as the Spotlight dock's tiles. */
+     * weight. What is left is the mark itself, as large as the tile allows. */
     float inset = r.w * 2.0f / 52.0f, size = r.w - 2 * inset;
-    lp_icon_draw(cr, icon, r.x + inset, r.y + inset, size, 1.6f, folder ? accent.base : LP_INK_SECONDARY);
+    lp_accent accent = lp_settings_accent(settings);
+    lp_icon_paint_object(cr, icon, LP_RECT(r.x + inset, r.y + inset, size, size), 1.6f,
+        folder ? accent.base : LP_INK_SECONDARY, settings);
 }

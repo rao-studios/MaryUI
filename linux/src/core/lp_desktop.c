@@ -186,6 +186,7 @@ int lp_desktop_run_command(lp_desktop *d, enum lp_command command, int arg) {
         return 1;
     }
     case LP_CMD_SET_ACCENT: d->settings.accent = (enum lp_accent_kind)arg; settings_changed(d); return 1;
+    case LP_CMD_SET_FOLDERS: d->settings.folders = (enum lp_folder_appearance)arg; settings_changed(d); return 1;
     case LP_CMD_TOGGLE_GOO: d->settings.goo = !d->settings.goo; settings_changed(d); return 1;
     case LP_CMD_SET_WALLPAPER: d->settings.wallpaper = (enum lp_wallpaper_mode)arg; settings_changed(d); return 1;
     case LP_CMD_SET_MOLTEN_TONE: d->settings.molten_tone = (enum lp_molten_tone)arg; settings_changed(d); return 1;
@@ -295,6 +296,10 @@ void lp_desktop_build_menus(lp_desktop *d) {
     sep(m);
     add(m, "Blue Appearance", NULL, LP_CMD_SET_ACCENT, LP_ACCENT_BLUE)->checked = d->settings.accent == LP_ACCENT_BLUE;
     add(m, "Graphite Appearance", NULL, LP_CMD_SET_ACCENT, LP_ACCENT_GRAPHITE)->checked = d->settings.accent == LP_ACCENT_GRAPHITE;
+    sep(m);
+    /* The folder material's two appearances, as menus.ts has them. */
+    add(m, "Folders · Manila", NULL, LP_CMD_SET_FOLDERS, LP_FOLDER_MANILA)->checked = d->settings.folders == LP_FOLDER_MANILA;
+    add(m, "Folders · Slate", NULL, LP_CMD_SET_FOLDERS, LP_FOLDER_SLATE)->checked = d->settings.folders == LP_FOLDER_SLATE;
 
     m = &d->menus[LP_MENU_GO]; m->id = "go"; m->label = "Go";
     before = m->count;
@@ -339,11 +344,15 @@ void lp_desktop_close_window(lp_desktop *d, const char *window_id) {
     lp_desktop_dispatch(d, &a);
 }
 
+/*
+ * The commands are Spotlight's pills now, so opening one no longer dismisses
+ * the panel they are drawn in — the invariant is the other way round: an open
+ * menu below LP_DESKTOP_MENU_POPUP implies Spotlight is up.
+ */
 void lp_desktop_toggle_menu(lp_desktop *d, int index) {
     if (index < 0 || index >= LP_DESKTOP_MENU_COUNT || d->open_menu == index) {
         d->open_menu = -1;
     } else {
-        lp_spotlight_close(&d->spotlight);
         lp_desktop_build_menus(d);
         d->open_menu = index;
     }
@@ -393,10 +402,46 @@ int lp_desktop_spotlight_results(const lp_desktop *d, lp_spotlight_item *out, in
     return lp_spotlight_results(items, n, d->spotlight.query.text, out, max);
 }
 
+/*
+ * The query changed under the bar: rank from the top again, and drop the open
+ * command menu, which only shows while the query is blank (the web hides the
+ * whole commands section as soon as anything is typed).
+ */
+void lp_desktop_spotlight_query_changed(lp_desktop *d) {
+    d->spotlight.selection = 0;
+    if (!lp_spotlight_query_is_blank_key(d)) lp_desktop_close_menu(d);
+}
+
+/*
+ * The view the desktop paints: the results, the frontmost app's commands, and
+ * whose commands they are. One place so the compositor and lp-render cannot
+ * drift; `width`, `focus_bar` and `max_h` belong to the host.
+ */
+lp_spotlight_view lp_desktop_spotlight_view(lp_desktop *d, const lp_spotlight_item *items, int count) {
+    /* The menus are built lazily, as the menu bar used to do before it drew. */
+    if (d->menus[LP_MENU_FILE].label == NULL) lp_desktop_build_menus(d);
+    const lp_window_record *f = lp_wm_focused(&d->wm);
+    const lp_app *app = f ? lp_desktop_find_app(d, f->app_id) : NULL;
+    return (lp_spotlight_view){
+        .query = (lp_text_buffer *)&d->spotlight.query,
+        .items = items,
+        .count = count,
+        .selection = d->spotlight.selection,
+        .menus = d->menus,
+        .menu_count = LP_DESKTOP_MENU_COUNT,
+        /* The Finder's context menu is a floating panel, never a pill. */
+        .open_menu = d->open_menu < LP_DESKTOP_MENU_COUNT ? d->open_menu : -1,
+        .menu_active = d->menu_active,
+        .context_name = f ? (app ? (app->name ? app->name : app->title) : f->app_id) : NULL,
+        .context_icon = app ? app->icon : LP_ICON_DOCUMENT,
+    };
+}
+
 void lp_desktop_spotlight_activate(lp_desktop *d, int index) {
     lp_spotlight_item results[LP_SPOTLIGHT_MAX_RESULTS];
     int n = lp_desktop_spotlight_results(d, results, LP_SPOTLIGHT_MAX_RESULTS);
     lp_spotlight_close(&d->spotlight);
+    lp_desktop_close_menu(d);   /* the panel goes: so does its open pill */
     if (index < 0 || index >= n) return;
     const lp_spotlight_item *it = &results[index];
     switch (it->kind) {
@@ -417,6 +462,28 @@ int lp_desktop_key(lp_desktop *d, uint32_t keysym, uint32_t mods) {
     }
     if (d->spotlight.open) {
         lp_spotlight_item results[LP_SPOTLIGHT_MAX_RESULTS];
+        /*
+         * A command pill is open: it owns the arrows and Enter, the way the
+         * dropdown under the menu bar used to. Two deliberate differences from
+         * the popup block below, both required because this menu lives inside
+         * a text field: space types a space rather than selecting, and an
+         * unhandled key falls through to the bar instead of being swallowed.
+         */
+        if (d->open_menu >= 0 && d->open_menu < LP_DESKTOP_MENU_COUNT) {
+            lp_menu_model *m = &d->menus[d->open_menu];
+            switch (keysym) {
+            case XKB_KEY_Escape: lp_desktop_close_menu(d); return 1;   /* the pill, not the panel */
+            case XKB_KEY_Down: d->menu_active = step_enabled(m, d->menu_active, 1); return 1;
+            case XKB_KEY_Up: d->menu_active = step_enabled(m, d->menu_active < 0 ? m->count : d->menu_active, -1); return 1;
+            case XKB_KEY_Left: lp_desktop_toggle_menu(d, (d->open_menu + LP_DESKTOP_MENU_COUNT - 1) % LP_DESKTOP_MENU_COUNT); return 1;
+            case XKB_KEY_Right: lp_desktop_toggle_menu(d, (d->open_menu + 1) % LP_DESKTOP_MENU_COUNT); return 1;
+            case XKB_KEY_Return: case XKB_KEY_KP_Enter:
+                lp_desktop_select_menu_entry(d, d->menu_active);
+                lp_spotlight_close(&d->spotlight);
+                return 1;
+            default: break;   /* the bar still types, and typing closes the pill */
+            }
+        }
         switch (keysym) {
         case XKB_KEY_Escape: lp_spotlight_close(&d->spotlight); return 1;
         case XKB_KEY_Down: lp_spotlight_move(&d->spotlight, 1, lp_desktop_spotlight_results(d, results, LP_SPOTLIGHT_MAX_RESULTS)); return 1;

@@ -68,7 +68,8 @@ holds **81 glyphs**, up from 27. Every mark below is drawn, in the app, and expo
 
 - **Wave 1** — everything the running desktop renders, plus the application roster.
 - **Wave 2** — the long tail, drawn against the recipe Wave 1 proved.
-- **Still to come** — badges and cursors, and the C renderer for the object tier.
+- **Still to come** — badges and cursors. The C renderer for the object tier has landed
+  (`linux/src/draw/lp_object_icon.c`, generated geometry in `linux/include/maryui/lp_objects.h`).
 
 ---
 

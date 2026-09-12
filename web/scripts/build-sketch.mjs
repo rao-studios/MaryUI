@@ -557,6 +557,116 @@ const MENUBAR_H = num('size.menubar-height')
   defineSymbol('Menu Bar', w, MENUBAR_H, layers)
 }
 
+// MARK: - Spotlight
+//
+// The search bar that is also the dock, and — folded the same way — the app's
+// commands: File/Edit/View/Window/Help ride as pills under the dock, and one
+// (File, here) sits open with its entries inline in the same panel. There is
+// no separate Menu Bar instance on the Desktop composition below; this is
+// what replaced it. Mirrors web/src/components/Spotlight.
+
+{
+  const w = num('size.spotlight-width')
+  const barH = num('size.spotlight-bar-height')
+  const tile = num('size.spotlight-tile')
+  const cellW = 88
+  const pad = num('space.2')
+  const rSpot = num('radius.spotlight')
+  const dockApps = [
+    { name: 'Finder', mark: '▢' },
+    { name: 'Gallery', mark: '◆' },
+    { name: 'About', mark: 'i' },
+    { name: 'TextEdit', mark: '✎' },
+    { name: 'Terminal', mark: '⌘' },
+  ]
+  const fileEntries = [
+    { text: 'New Finder Window', shortcut: '⌘N' },
+    { text: 'Open…', shortcut: '⌘O', disabled: true },
+    { text: 'Close Window', shortcut: '⌘W' },
+    { text: 'Get Info', shortcut: '⌘I', disabled: true },
+  ]
+
+  const layers = []
+  let y = pad
+
+  layers.push(well('bar', f(pad, y, w - pad * 2, barH), { radius: barH / 2, fill: 'surface.well' }))
+  layers.push(label('bar icon', f(pad + 16, y, 18, barH), '⌕', { align: 0, size: 15, color: 'ink.tertiary', emboss: false }))
+  layers.push(
+    label('bar placeholder', f(pad + 42, y, w - pad * 2 - 60, barH), 'Say “Hey Mary” or type something…', {
+      align: 0,
+      size: num('text.lg'),
+      font: S.FONT.regular,
+      color: 'ink.tertiary',
+      emboss: false,
+    }),
+  )
+  y += barH + pad
+
+  layers.push(S.rectangle('divider', f(pad, y, w - pad * 2, 1), S.style({ fills: [S.fillColor(col('edge.divider'))] })))
+  y += pad + 6
+
+  const dockY = y
+  let x = Math.round((w - cellW * dockApps.length) / 2)
+  for (const app of dockApps) {
+    layers.push(label(`dock ${app.name} mark`, f(x, dockY, cellW, tile), app.mark, { align: 1, size: 26, font: S.FONT.regular, color: 'ink.secondary', emboss: false }))
+    layers.push(label(`dock ${app.name} label`, f(x, dockY + tile + 2, cellW, 14), app.name, { align: 1, size: num('text.xs'), color: 'ink.primary', emboss: false }))
+    x += cellW
+  }
+  y += tile + 14 + pad + 4
+
+  layers.push(S.rectangle('cmd divider', f(pad + 4, y, w - pad * 2 - 8, 1), S.style({ fills: [S.fillColor(col('edge.divider'))] })))
+  y += 10
+  layers.push(
+    label('cmd header', f(pad + 8, y, w - pad * 2 - 16, 14), 'Searching Gallery', { align: 0, size: num('text.xs'), font: S.FONT.regular, color: 'ink.tertiary', emboss: false }),
+  )
+  y += 22
+
+  let px = pad + 8
+  const pillH = 24
+  layers.push(inst('Monogram/Flat', px + 8, y + 4, { layerName: 'pill rao', w: 16, h: 16 }))
+  px += 32
+  for (const m of ['File', 'Edit', 'View', 'Window', 'Help']) {
+    const isOpen = m === 'File'
+    const pw = Math.round(m.length * 7 + 24)
+    if (isOpen) {
+      layers.push(S.rectangle(`pill ${m}`, f(px, y, pw, pillH), S.style({ fills: [S.fillGradient([[0, col('accent.blue.light')], [1, col('accent.blue.base')]])] }), { radius: PILL }))
+      layers.push(label(`pill ${m} label`, f(px, y, pw, pillH), m, { align: 1, size: num('text.sm'), font: S.FONT.medium, colorObj: col('ink.on-accent'), emboss: false }))
+    } else {
+      layers.push(S.rectangle(`pill ${m}`, f(px, y, pw, pillH), S.style({ fills: [S.fillColor(S.BLACK(0.045))] }), { radius: PILL }))
+      layers.push(label(`pill ${m} label`, f(px, y, pw, pillH), m, { align: 1, size: num('text.sm'), font: S.FONT.medium, color: 'ink.primary', emboss: false }))
+    }
+    px += pw + 4
+  }
+  y += pillH + pad
+
+  const dropX = pad + 8
+  const dropW = 220
+  const dropH = fileEntries.length * CONTROL_H + 8
+  layers.push(
+    S.rectangle('dropdown bg', f(dropX, y, dropW, dropH), S.style({ fills: [S.fillColor(col('surface.menu'))], innerShadows: emboss(), shadows: [S.shadow(rgbaTok(20, 22, 28, 0.3), { y: 10, blur: 30 }), S.shadow(S.BLACK(0.22), { spread: 1 })] }), { radius: R.md }),
+  )
+  let iy = y + 4
+  for (const e of fileEntries) {
+    const ink = e.disabled ? col('ink.disabled') : col('ink.primary')
+    layers.push(label(`drop ${e.text}`, f(dropX + 12, iy + 3, dropW - 76, 16), e.text, { align: 0, font: S.FONT.regular, colorObj: ink, emboss: false }))
+    layers.push(label(`drop ${e.text} key`, f(dropX + dropW - 60, iy + 3, 48, 16), e.shortcut, { align: 1, font: S.FONT.regular, size: num('text.sm'), color: 'ink.tertiary', emboss: false }))
+    iy += CONTROL_H
+  }
+  y += dropH + pad
+
+  layers.unshift(
+    metal('panel bg', f(0, 0, w, y), {
+      top: 'surface.window-top',
+      bottom: 'surface.window-bottom',
+      radius: rSpot,
+      shadows: [S.shadow(rgbaTok(20, 22, 28, 0.3), { y: 10, blur: 30 }), S.shadow(S.BLACK(0.22), { spread: 1 })],
+    }),
+  )
+  layers.splice(1, 0, sheen(f(0, 0, w, y), rSpot, { at: num('sheen.light-x') }))
+
+  defineSymbol('Spotlight', w, y, layers)
+}
+
 defineSymbol('Toolbar', WIN_W, 40, [
   metal('bar', f(0, 0, WIN_W, 40), { top: 'surface.window-top', bottom: 'surface.window-bottom' }),
   S.rectangle('hairline', f(0, 39, WIN_W, 1), S.style({ fills: [S.fillColor(col('edge.hairline'))] })),
@@ -730,7 +840,7 @@ const symbolsPage = S.page('Symbols', symbolsLayers)
 // Components overview.
 const componentsLayers = []
 {
-  const order = ['Window', 'Title Bar', 'Menu Bar', 'Toolbar', 'Traffic Lights', 'Liquid Merge', 'Bubble', 'Button', 'Segmented Control', 'Toggle', 'Checkbox', 'Slider', 'Text Field', 'Progress Bar', 'Menu', 'Menu Item', 'Menu Separator', 'Sidebar Item', 'List Row', 'Surface', 'Monogram']
+  const order = ['Window', 'Title Bar', 'Spotlight', 'Menu Bar', 'Toolbar', 'Traffic Lights', 'Liquid Merge', 'Bubble', 'Button', 'Segmented Control', 'Toggle', 'Checkbox', 'Slider', 'Text Field', 'Progress Bar', 'Menu', 'Menu Item', 'Menu Separator', 'Sidebar Item', 'List Row', 'Surface', 'Monogram']
   let y = 48
   componentsLayers.push(S.text('heading', f(40, y, 800, 34), 'Liquid Platinum — Components', { font: S.FONT.display, size: 28, color: INK('ink.primary'), behaviour: 0, shadows: embossText() }))
   componentsLayers.push(S.text('sub', f(40, y + 40, 900, 18), `Brushed platinum overlay at ${BRUSH} · every color is a Color Variable from tokens/tokens.json · symbols live on the Symbols page`, { font: S.FONT.regular, size: 13, color: INK('ink.secondary'), behaviour: 0 }))
@@ -819,15 +929,23 @@ const tokensLayers = []
 const tokensBoard = S.artboard('Tokens', f(0, 0, 1440, tokensH), tokensLayers, { background: col('surface.body') })
 
 // Desktop composition.
+//
+// No Menu Bar instance here: the app commands it used to show are folded into
+// Spotlight (see "MARK: - Spotlight" above), the same way the dock already
+// was, and the desktop itself carries no persistent top chrome. Menu Bar
+// stays in the symbols library — the C desktop still draws a real one — it
+// just no longer appears in this composition.
 const desktopLayers = []
 {
   if (wallpaperPng) desktopLayers.push(S.bitmap('wallpaper', f(0, 0, 1440, 900), WALLPAPER_REF))
   else desktopLayers.push(S.rectangle('wallpaper', f(0, 0, 1440, 900), S.style({ fills: [S.fillGradient([[0, col('platinum.3')], [0.55, col('platinum.6')], [1, col('platinum.8')]], { from: S.pt(0, 0), to: S.pt(1, 1) })] })))
   desktopLayers.push(S.rectangle('vignette', f(0, 0, 1440, 900), S.style({ fills: [S.fillGradient([[0.55, S.BLACK(0)], [1, rgbaTok(20, 22, 28, 0.35)]], { type: 1, from: S.pt(0.5, 0.4), to: S.pt(0.5, 1.1), elipseLength: 1.6 })] })))
-  desktopLayers.push(inst('Menu Bar', 0, 0))
   desktopLayers.push(inst('Window', 72, 72, { layerName: 'Rao' }))
   /* One at rest, one mid-fling, so the motion vocabulary is visible in a still file. */
   desktopLayers.push(inst('Window/In Motion', 560, 200, { layerName: 'Liquid Platinum (in motion)' }))
+  /* Spotlight summoned, centred at SPOTLIGHT_Y_FRACTION (0.38) of the desktop height (desktop/spotlight.ts). */
+  const spot = SYM.get('Spotlight')
+  desktopLayers.push(inst('Spotlight', Math.round((1440 - spot.w) / 2), Math.round(900 * 0.38 - spot.h / 2), { layerName: 'Spotlight (summoned)' }))
 }
 const desktopBoard = S.artboard('Desktop', f(0, 0, 1440, 900), desktopLayers, { background: col('platinum.6') })
 

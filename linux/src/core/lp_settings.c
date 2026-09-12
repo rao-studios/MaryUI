@@ -9,8 +9,9 @@
 lp_settings lp_settings_defaults(void) {
     /* Molten is the default, as it is on the web; it falls back on its own
      * when the image has no EGL (lp_wallpaper_cached). */
-    return (lp_settings){ .accent = LP_ACCENT_BLUE, .goo = 1, .wallpaper = LP_WALLPAPER_MOLTEN,
-                          .molten_tone = LP_MOLTEN_PLATINUM, .reduced_motion = 0 };
+    /* Slate folders, as object.folder-appearance says and base.css's bare :root maps. */
+    return (lp_settings){ .accent = LP_ACCENT_BLUE, .folders = LP_FOLDER_SLATE, .goo = 1,
+                          .wallpaper = LP_WALLPAPER_MOLTEN, .molten_tone = LP_MOLTEN_PLATINUM, .reduced_motion = 0 };
 }
 
 static void config_path(char *out, size_t n, int mkdirs) {
@@ -39,6 +40,7 @@ lp_settings lp_settings_load(void) {
         char key[64], value[128];
         if (sscanf(line, " %63[A-Za-z_] = %127s", key, value) != 2) continue;
         if (strcmp(key, "accent") == 0) s.accent = strcmp(value, "graphite") == 0 ? LP_ACCENT_GRAPHITE : LP_ACCENT_BLUE;
+        else if (strcmp(key, "folders") == 0) s.folders = strcmp(value, "manila") == 0 ? LP_FOLDER_MANILA : LP_FOLDER_SLATE;
         else if (strcmp(key, "goo") == 0) s.goo = strcmp(value, "off") != 0 && strcmp(value, "0") != 0;
         else if (strcmp(key, "wallpaper") == 0)
             s.wallpaper = strcmp(value, "raster") == 0 ? LP_WALLPAPER_RASTER
@@ -58,12 +60,19 @@ int lp_settings_save(const lp_settings *s) {
     FILE *f = fopen(path, "w");
     if (!f) return -1;
     fprintf(f, "# Liquid Platinum desktop settings (View menu). Mirrors the web's localStorage['lp-settings'].\n");
-    fprintf(f, "accent=%s\ngoo=%s\nwallpaper=%s\nmolten_tone=%s\nreduced_motion=%s\n",
-        s->accent == LP_ACCENT_GRAPHITE ? "graphite" : "blue", s->goo ? "on" : "off",
+    fprintf(f, "accent=%s\nfolders=%s\ngoo=%s\nwallpaper=%s\nmolten_tone=%s\nreduced_motion=%s\n",
+        s->accent == LP_ACCENT_GRAPHITE ? "graphite" : "blue",
+        s->folders == LP_FOLDER_MANILA ? "manila" : "slate", s->goo ? "on" : "off",
         s->wallpaper == LP_WALLPAPER_RASTER ? "raster" : s->wallpaper == LP_WALLPAPER_PROCEDURAL ? "procedural" : "molten",
         s->molten_tone == LP_MOLTEN_FAITHFUL ? "faithful" : "platinum", s->reduced_motion ? "on" : "off");
     fclose(f);
     return 0;
+}
+
+lp_ramp lp_settings_folders(const lp_settings *s) {
+    if (s && s->folders == LP_FOLDER_MANILA)
+        return (lp_ramp){ LP_OBJECT_MATERIAL_MANILA_HI, LP_OBJECT_MATERIAL_MANILA_MID, LP_OBJECT_MATERIAL_MANILA_LO };
+    return (lp_ramp){ LP_OBJECT_MATERIAL_SLATE_HI, LP_OBJECT_MATERIAL_SLATE_MID, LP_OBJECT_MATERIAL_SLATE_LO };
 }
 
 lp_accent lp_settings_accent(const lp_settings *s) {

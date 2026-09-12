@@ -4,10 +4,13 @@
 
 #include "maryui/components/lp_controls.h"
 #include "maryui/components/lp_layout_components.h"
+#include "maryui/components/lp_menu_item.h"
+#include "maryui/components/lp_monogram.h"
 #include "maryui/components/lp_spotlight_panel.h"
 #include "maryui/components/lp_surface.h"
 #include "maryui/lp_draw.h"
 #include "maryui/lp_icon.h"
+#include "maryui/lp_object_icon.h"
 #include "maryui/lp_settings.h"
 #include "maryui/lp_shadow.h"
 #include "maryui/lp_text.h"
@@ -15,6 +18,9 @@
 
 #define EMPTY_H 40
 #define LIST_PAD LP_SPACE_1
+/* The monogram's box inside the first pill, where the others carry a label. */
+#define PILL_MARK 14
+#define PILLS_PAD_TOP 4
 
 int lp_spotlight_query_is_blank(const char *query) {
     for (; query && *query; query++) if (!isspace((unsigned char)*query)) return 0;
@@ -25,15 +31,73 @@ static float width_of(const lp_spotlight_view *v) { return v->width > 0 ? v->wid
 static float dock_height(void) { return 1 + LP_SPOTLIGHT_PAD + LP_SPOTLIGHT_CELL_H + LP_SPOTLIGHT_PAD; }
 static float results_height(int count) { return count > 0 ? 1 + 2 * LIST_PAD + count * LP_LIST_ROW_H : 1 + EMPTY_H; }
 
-lp_size lp_spotlight_measure(const lp_spotlight_view *v) {
-    int dock = lp_spotlight_query_is_blank(v->query ? v->query->text : "");
-    float h = 2 * LP_SPOTLIGHT_PAD + LP_SIZE_SPOTLIGHT_BAR_HEIGHT + (dock ? dock_height() : results_height(v->count));
-    return (lp_size){ width_of(v), h };
+static int pill_count(const lp_spotlight_view *v) {
+    return v->menu_count > LP_SPOTLIGHT_MAX_PILLS ? LP_SPOTLIGHT_MAX_PILLS : v->menu_count;
+}
+static int has_commands(const lp_spotlight_view *v) { return v->menus && v->menu_count > 0; }
+static int open_menu_of(const lp_spotlight_view *v) {
+    return has_commands(v) && v->open_menu >= 0 && v->open_menu < v->menu_count ? v->open_menu : -1;
 }
 
-lp_size lp_spotlight_max_size(float width) {
-    float tallest = dock_height() > results_height(LP_SPOTLIGHT_MAX_RESULTS) ? dock_height() : results_height(LP_SPOTLIGHT_MAX_RESULTS);
-    return (lp_size){ width > 0 ? width : LP_SIZE_SPOTLIGHT_WIDTH, 2 * LP_SPOTLIGHT_PAD + LP_SIZE_SPOTLIGHT_BAR_HEIGHT + tallest };
+static lp_text_style pill_style(void) {
+    lp_text_style s = lp_text_style_default();
+    s.size_px = LP_TEXT_SM;
+    s.weight = LP_TEXT_WEIGHT_MEDIUM;
+    return s;
+}
+
+/*
+ * Lays the pills out like the web's `flex-wrap: wrap`, left to right inside
+ * `box`, and returns the row count. `rects` (optional) receives one rect per
+ * pill. Measured with lp_text_measure, which keeps a scratch context, so the
+ * EVENT pass lays them out exactly where the DRAW pass will.
+ */
+static int pill_layout(cairo_t *cr, const lp_spotlight_view *v, lp_rect box, lp_rect *rects) {
+    lp_text_style ps = pill_style();
+    float x = box.x, y = box.y;
+    int rows = 1;
+    for (int i = 0, n = pill_count(v); i < n; i++) {
+        const char *label = v->menus[i].label ? v->menus[i].label : "";
+        float inner = i == 0 ? PILL_MARK : lp_text_measure(cr, label, &ps).w;
+        float w = inner + 2 * LP_SPACE_3;
+        if (x > box.x && x + w > box.x + box.w) {
+            x = box.x;
+            y += LP_SPOTLIGHT_PILL_H + LP_SPOTLIGHT_PILL_GAP;
+            rows++;
+        }
+        if (rects) rects[i] = LP_RECT(x, y, w, LP_SPOTLIGHT_PILL_H);
+        x += w + LP_SPOTLIGHT_PILL_GAP;
+    }
+    return rows;
+}
+
+/* The dock's commands: the divider, the context line, the pills, and the open
+ * menu's entries. `open` is -1 to measure the section with nothing expanded. */
+static float commands_height(const lp_spotlight_view *v, float width, int open) {
+    if (!has_commands(v)) return 0;
+    lp_rect box = LP_RECT(0, 0, width - 2 * LP_SPOTLIGHT_PAD, 0);
+    float h = 1;                                     /* .cmdDivider */
+    if (v->context_name) h += LP_SPOTLIGHT_CMD_HEADER_H;
+    int rows = pill_layout(NULL, v, box, NULL);
+    h += PILLS_PAD_TOP + rows * LP_SPOTLIGHT_PILL_H + (rows - 1) * LP_SPOTLIGHT_PILL_GAP + LP_SPOTLIGHT_PAD;
+    if (open >= 0) h += lp_menu_list_measure(NULL, &v->menus[open]).h + LP_SPOTLIGHT_PAD;
+    return h;
+}
+
+lp_size lp_spotlight_measure(const lp_spotlight_view *v) {
+    int dock = lp_spotlight_query_is_blank(v->query ? v->query->text : "");
+    float w = width_of(v);
+    float h = 2 * LP_SPOTLIGHT_PAD + LP_SIZE_SPOTLIGHT_BAR_HEIGHT + (dock ? dock_height() : results_height(v->count));
+    if (dock) h += commands_height(v, w, open_menu_of(v));
+    if (v->max_h > 0 && h > v->max_h) h = v->max_h;
+    return (lp_size){ w, h };
+}
+
+lp_size lp_spotlight_max_size(const lp_spotlight_view *v) {
+    float w = width_of(v);
+    float dock = dock_height() + commands_height(v, w, -1);
+    float results = results_height(LP_SPOTLIGHT_MAX_RESULTS);
+    return (lp_size){ w, 2 * LP_SPOTLIGHT_PAD + LP_SIZE_SPOTLIGHT_BAR_HEIGHT + (dock > results ? dock : results) };
 }
 
 static void tile(lp_ctx *ctx, lp_id id, lp_rect cell, const lp_spotlight_item *it, int selected, lp_spotlight_result *res, int index) {
@@ -53,8 +117,12 @@ static void tile(lp_ctx *ctx, lp_id id, lp_rect cell, const lp_spotlight_item *i
     float plate = LP_SIZE_SPOTLIGHT_TILE;
     lp_rect ic = LP_RECT(cell.x + (cell.w - plate) / 2, cell.y + 6, plate, plate);
     /* No raised plate: hover and selection belong to the cell around the icon,
-     * which is what the plate was being mistaken for. */
-    lp_icon_draw(cr, it->icon, ic.x + (plate - 36) / 2, ic.y + (plate - 36) / 2, 36, 1.6f, LP_INK_SECONDARY);
+     * which is what the plate was being mistaken for. At 36 the mark is above
+     * the glyph tier, so an app with an object of its name is drawn as one. */
+    lp_rect mark = LP_RECT(ic.x + (plate - 36) / 2, ic.y + (plate - 36) / 2, 36, 36);
+    lp_object named = it->object ? lp_object_by_name(it->object) : LP_OBJ_COUNT;
+    if (named < LP_OBJ_COUNT && lp_icon_tier(mark.w) != LP_TIER_GLYPH) lp_object_icon_draw(cr, named, mark, ctx->settings);
+    else lp_icon_paint_object(cr, it->icon, mark, 1.6f, LP_INK_SECONDARY, ctx->settings);
     lp_text_style st = lp_text_style_default();
     st.size_px = LP_TEXT_XS;
     st.ellipsize = 1;
@@ -63,8 +131,94 @@ static void tile(lp_ctx *ctx, lp_id id, lp_rect cell, const lp_spotlight_item *i
     if (it->running) lp_fill_solid(cr, LP_RECT(cell.x + cell.w / 2 - 2, label.y + label.h + 2, 4, 4), accent.base, 2);
 }
 
+/*
+ * The commands, under the dock: the hairline, the "Searching <app>" line, the
+ * pills, and the open pill's entries inline. `y` is the section's top; the
+ * panel's own bottom edge bounds the open menu, which is where view.max_h
+ * takes effect.
+ */
+static void commands(lp_ctx *ctx, const lp_spotlight_view *v, lp_rect panel, float y, lp_id base, lp_spotlight_result *res) {
+    int draw = ctx->pass == LP_PASS_DRAW && ctx->cr;
+    cairo_t *cr = ctx->cr;
+    lp_accent accent = lp_settings_accent(ctx->settings);
+    float inner_x = panel.x + LP_SPOTLIGHT_PAD, inner_w = panel.w - 2 * LP_SPOTLIGHT_PAD;
+    int open = open_menu_of(v);
+
+    if (draw) lp_fill_solid(cr, LP_RECT(inner_x, y, inner_w, 1), LP_EDGE_DIVIDER, 0);
+    y += 1;
+
+    if (v->context_name) {
+        if (draw) {
+            lp_text_style ts = lp_text_style_default();
+            ts.size_px = LP_TEXT_XS;
+            ts.color = LP_INK_TERTIARY;
+            lp_rect line = LP_RECT(panel.x + LP_SPACE_3, y + LP_SPACE_2, inner_w, 14);
+            lp_icon_draw(cr, v->context_icon, line.x, line.y + 1, 12, 1.6f, LP_INK_TERTIARY);
+            float tx = line.x + 12 + LP_SPACE_1;
+            float tw = lp_text_measure(cr, "Searching ", &ts).w;
+            lp_text_draw(cr, "Searching ", LP_RECT(tx, line.y, tw + 2, line.h), &ts, LP_ALIGN_START);
+            lp_text_style ns = ts;
+            ns.color = LP_INK_SECONDARY;
+            ns.weight = LP_TEXT_WEIGHT_MEDIUM;
+            ns.ellipsize = 1;
+            lp_text_draw(cr, v->context_name, LP_RECT(tx + tw, line.y, panel.x + panel.w - LP_SPACE_3 - (tx + tw), line.h), &ns, LP_ALIGN_START);
+        }
+        y += LP_SPOTLIGHT_CMD_HEADER_H;
+    }
+
+    y += PILLS_PAD_TOP;
+    lp_rect pills[LP_SPOTLIGHT_MAX_PILLS];
+    int n = pill_count(v);
+    int rows = pill_layout(cr, v, LP_RECT(inner_x, y, inner_w, 0), pills);
+    for (int i = 0; i < n; i++) {
+        lp_rect pr = pills[i];
+        if (lp_hot(ctx, lp_id_index(base, 300 + i), pr)) {
+            res->menu_hovered = i;
+            /* Press, not release: a pull-down menu opens under the finger. */
+            if (ctx->pass == LP_PASS_EVENT && (ctx->in.pressed & LP_BUTTON_LEFT)) res->menu_pressed = i;
+        }
+        if (!draw) continue;
+        int is_open = i == open;
+        if (is_open) lp_fill_vgradient(cr, pr, accent.light, accent.base, LP_RADIUS_PILL);
+        else lp_fill_solid(cr, pr, LP_RGBA(0, 0, 0, 0.045f), LP_RADIUS_PILL);
+        lp_color ink = is_open ? LP_INK_ON_ACCENT : LP_INK_PRIMARY;
+        if (i == 0) {
+            lp_monogram_paint(cr, LP_RECT(pr.x + LP_SPACE_3, pr.y + (pr.h - PILL_MARK) / 2, PILL_MARK, PILL_MARK), LP_MONOGRAM_FLAT, ink);
+        } else if (v->menus[i].label) {
+            lp_text_style ps = pill_style();
+            ps.color = ink;
+            lp_text_draw(cr, v->menus[i].label, pr, &ps, LP_ALIGN_CENTER);
+        }
+    }
+    y += rows * LP_SPOTLIGHT_PILL_H + (rows - 1) * LP_SPOTLIGHT_PILL_GAP + LP_SPOTLIGHT_PAD;
+
+    if (open < 0) return;
+    /* The entries, inline. Unlike the old floating menu this carries shadow.menu
+     * but no emboss: the panel around it is the surface (the web's .cmdDropdown). */
+    float avail = panel.y + panel.h - LP_SPOTLIGHT_PAD - y;
+    lp_size ds = lp_menu_list_measure(cr, &v->menus[open]);
+    float dh = ds.h < avail ? ds.h : avail;
+    if (dh <= 2 * LP_SPACE_1) return;
+    lp_rect drop = LP_RECT(inner_x, y, inner_w, dh);
+    float radius = lp_radius_flex(ctx, LP_RADIUS_MD);
+    if (draw) {
+        lp_draw_shadow_9slice(cr, drop, radius, LP_SHADOW_MENU, LP_SHADOW_MENU_COUNT);
+        lp_fill_solid(cr, drop, LP_SURFACE_MENU, radius);
+        cairo_save(cr);
+        lp_path_rrect(cr, drop, radius);
+        cairo_clip(cr);
+    }
+    lp_menu_list_result mr;
+    lp_menu_list(ctx, LP_RECT(drop.x + LP_SPACE_1, drop.y + LP_SPACE_1, drop.w - 2 * LP_SPACE_1, drop.h - 2 * LP_SPACE_1),
+        &v->menus[open], v->menu_active, &mr);
+    res->entry_hovered = mr.hovered;
+    res->entry_selected = mr.selected;
+    if (draw) cairo_restore(cr);
+}
+
 void lp_spotlight_panel(lp_ctx *ctx, float x, float y, const lp_spotlight_view *v, lp_spotlight_result *out) {
-    lp_spotlight_result res = { .hovered = -1, .activated = -1 };
+    lp_spotlight_result res = { .hovered = -1, .activated = -1, .menu_pressed = -1, .menu_hovered = -1,
+                                .entry_hovered = -1, .entry_selected = -1 };
     lp_size size = lp_spotlight_measure(v);
     lp_rect panel = LP_RECT(x, y, size.w, size.h);
     res.panel = panel;
@@ -101,6 +255,8 @@ void lp_spotlight_panel(lp_ctx *ctx, float x, float y, const lp_spotlight_view *
             lp_rect cell = LP_RECT(x0 + i * LP_SPOTLIGHT_CELL_W, cy + LP_SPOTLIGHT_PAD, LP_SPOTLIGHT_CELL_W, LP_SPOTLIGHT_CELL_H);
             tile(ctx, lp_id_index(base, 100 + i), cell, &v->items[i], v->selection == i, &res, i);
         }
+        /* The commands the menu bar used to carry, folded in under the dock. */
+        if (has_commands(v)) commands(ctx, v, panel, cy + LP_SPOTLIGHT_PAD + LP_SPOTLIGHT_CELL_H + LP_SPOTLIGHT_PAD, base, &res);
     } else if (v->count > 0) {
         lp_rect list = LP_RECT(panel.x + LP_SPOTLIGHT_PAD, cy + LIST_PAD, panel.w - 2 * LP_SPOTLIGHT_PAD, v->count * LP_LIST_ROW_H);
         if (draw) { cairo_save(cr); lp_path_rrect(cr, list, LP_RADIUS_SM); cairo_clip(cr); lp_fill_solid(cr, list, LP_SURFACE_WELL, 0); }

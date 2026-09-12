@@ -15,11 +15,3 @@
 .windows > * {
   pointer-events: auto;
 }
-
-.menubarSlot {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: var(--lp-z-menubar);
-}

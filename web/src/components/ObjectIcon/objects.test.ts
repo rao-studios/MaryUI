@@ -1,8 +1,9 @@
 /**
  * The object tier's contract. Three things are load-bearing: the geometry is
- * well formed, every small-size fallback resolves to a real glyph, and the C
- * pipeline never learns about this file — objects are web-only for now, and
- * `make gen-check` stays green only as long as that holds.
+ * well formed, every small-size fallback resolves to a real glyph, and the
+ * header the C desktop reads still says what this file says — objects are on
+ * both targets now, and `linux/include/maryui/lp_objects.h` is generated from
+ * here (`npm run tokens`, enforced by `make gen-check`).
  *
  * The structural checks read their allowed values out of objects.schema.json
  * rather than repeating them, so the schema stays the single source of truth
@@ -111,13 +112,41 @@ describe('objects.json', () => {
 })
 
 describe('the C pipeline', () => {
-  it('never reads objects.json', () => {
-    /*
-     * Wiring this into the token build would change lp_icons.h, bump
-     * LP_ICON_COUNT and break linux/tests/test_icons.c. The object tier stays
-     * web-only until the C renderer is in scope.
-     */
-    for (const file of ['../../../scripts/build-tokens.mjs', '../../../scripts/tokens-lib.mjs'])
-      expect(readFileSync(new URL(file, import.meta.url), 'utf8')).not.toContain('objects.json')
+  /*
+   * The object tier used to be web-only, and this described that: it asserted
+   * neither build script so much as named objects.json. The C renderer is in
+   * scope now (linux/src/draw/lp_object_icon.c), so what has to hold instead is
+   * that the generated header still says what the JSON says — `make gen-check`
+   * fails when the two drift, and this fails when the emitter drops something.
+   */
+  const header = readFileSync(new URL('../../../../linux/include/maryui/lp_objects.h', import.meta.url), 'utf8')
+
+  it('emits every object, in JSON order, with its parts', () => {
+    const cName = (name: string) =>
+      `LP_OBJ_${name.replace(/([a-z0-9])([A-Z])/g, '$1_$2').replace(/[^A-Za-z0-9]+/g, '_').toUpperCase()}`
+    const enumNames = Array.from(header.matchAll(/^ {4}(LP_OBJ_[A-Z0-9_]+),$/gm), (m) => m[1])
+      .filter((n) => !n.startsWith('LP_OBJ_MATERIAL_') && n !== 'LP_OBJ_COUNT')
+    expect(enumNames).toEqual(entries.map(([name]) => cName(name)))
+    expect(header).toContain(`#define LP_OBJ_GRID ${(objects as { $grid: number }).$grid}`)
+    for (const [name, def] of entries) {
+      expect(header).toContain(`static const lp_obj_part ${cName(name)}_PARTS[] = {`)
+      expect(header).toContain(`${cName(name)}_PARTS, ${def.parts.length} },`)
+    }
+  })
+
+  it('carries every part\'s geometry and no colour of its own', () => {
+    for (const [, def] of entries) {
+      for (const part of def.parts) expect(header).toContain(JSON.stringify(part.d))
+    }
+    const body = header.slice(header.indexOf('static const lp_obj_part'))
+    expect(body).not.toMatch(/#[0-9a-f]{3,8}\b|rgba?\(/i)
+  })
+
+  it('gives every object a glyph to fall back to below the lit tier', () => {
+    for (const [name, def] of entries) {
+      const glyph = def.glyph ?? name
+      expect(glyphNames.has(glyph)).toBe(true)
+      expect(header).toContain(`${JSON.stringify(glyph)}, LP_OBJ_${name.replace(/([a-z0-9])([A-Z])/g, '$1_$2').replace(/[^A-Za-z0-9]+/g, '_').toUpperCase()}_PARTS`)
+    }
   })
 })

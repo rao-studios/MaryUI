@@ -24,7 +24,7 @@ export interface WMState {
   focusedId: string | null
   nextZ: number
   nextId: number
-  /** The desktop area: viewport minus the menu bar. */
+  /** The desktop area: the full viewport — there is no menu bar to reserve space for. */
   bounds: Rect
 }
 

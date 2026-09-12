@@ -159,16 +159,35 @@ static void controls_tab(struct gallery *g, lp_ctx *ctx, lp_rect *c) {
     section_end(c);
 
     heading(ctx, c, "Spotlight");
-    note(ctx, c, "Ctrl+Space opens it on the desktop: the search bar is the dock; typing filters apps and windows.");
+    note(ctx, c, "Ctrl+Space opens it on the desktop: the search bar is the dock, and — there is no menu bar any more — "
+                 "a blank query also shows the frontmost app's commands as pills; click one to open it. Typing filters apps and windows.");
     static const lp_spotlight_item dock[5] = {
-        { LP_SPOT_APP, "finder", "Finder", "Application", LP_ICON_FOLDER, 0, 1 }, { LP_SPOT_APP, "gallery", "Gallery", "Application", LP_ICON_DROP, 1, 1 },
-        { LP_SPOT_APP, "about", "About", "Application", LP_ICON_INFO, 2, 0 }, { LP_SPOT_APP, "textedit", "TextEdit", "Application", LP_ICON_PENCIL, 3, 0 },
-        { LP_SPOT_COMMAND, "terminal", "Terminal", "Command", LP_ICON_TERMINAL, 0, 0 },
+        { .kind = LP_SPOT_APP, .id = "finder", .title = "Finder", .subtitle = "Application", .icon = LP_ICON_FOLDER, .object = "appFinder", .index = 0, .running = 1 },
+        { .kind = LP_SPOT_APP, .id = "gallery", .title = "Gallery", .subtitle = "Application", .icon = LP_ICON_DROP, .index = 1, .running = 1 },
+        { .kind = LP_SPOT_APP, .id = "about", .title = "About", .subtitle = "Application", .icon = LP_ICON_INFO, .index = 2 },
+        { .kind = LP_SPOT_APP, .id = "textedit", .title = "TextEdit", .subtitle = "Application", .icon = LP_ICON_PENCIL, .index = 3 },
+        { .kind = LP_SPOT_COMMAND, .id = "terminal", .title = "Terminal", .subtitle = "Command", .icon = LP_ICON_TERMINAL },
     };
+    /* A static stand-in for lp_desktop_build_menus, so the preview does not
+     * reach into the real desktop's state (ControlsTab.tsx does the same). */
+    static const lp_menu_model menus[3] = {
+        { "rao", "Rao", { { 0, "About Liquid Platinum", NULL, 0, 0, 0, 0 } }, 1 },
+        { "file", "File", { { 0, "New Finder Window", "⌘N", 0, 0, 0, 0 }, { 0, "Open…", "⌘O", 0, 1, 0, 0 },
+                            { 1, "", NULL, 0, 0, 0, 0 }, { 0, "Close Window", "⌘W", 0, 0, 0, 0 } }, 4 },
+        { "view", "View", { { 0, "Liquid Merge", NULL, 1, 0, 0, 0 } }, 1 },
+    };
+    static int preview_menu = -1;
     static lp_text_buffer query;
-    lp_spotlight_view view = { .query = &query, .items = dock, .count = 5, .selection = 3, .width = fminf(LP_SIZE_SPOTLIGHT_WIDTH, c->w) };
+    lp_spotlight_view view = { .query = &query, .items = dock, .count = 5, .selection = 3, .width = fminf(LP_SIZE_SPOTLIGHT_WIDTH, c->w),
+        .menus = menus, .menu_count = 3, .open_menu = preview_menu, .menu_active = -1,
+        .context_name = "Gallery", .context_icon = LP_ICON_DROP };
     lp_size ps = lp_spotlight_measure(&view);
-    lp_spotlight_panel(ctx, c->x, c->y, &view, NULL);
+    lp_spotlight_result pres;
+    lp_spotlight_panel(ctx, c->x, c->y, &view, &pres);
+    if (ctx->pass == LP_PASS_EVENT && pres.menu_pressed >= 0) {
+        preview_menu = preview_menu == pres.menu_pressed ? -1 : pres.menu_pressed;
+        ctx->dirty = 1;
+    }
     c->y += ps.h;
     section_end(c);
 }

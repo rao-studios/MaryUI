@@ -1,15 +1,17 @@
 /* The desktop model (Desktop.tsx + menus.ts + useDesktopKeys.ts without
  * React): the window-manager state, the settings, the built-in app instances,
- * the menu bar's menus as data, the commands they bind, and the keyboard
- * shortcuts. Backend-agnostic: the compositor is one host, lp-render another. */
+ * the app commands as data, the commands they bind, and the keyboard
+ * shortcuts. Backend-agnostic: the compositor is one host, lp-render another.
+ * The commands are shown as Spotlight's pills; there is no menu bar. */
 #ifndef MARYUI_LP_DESKTOP_H
 #define MARYUI_LP_DESKTOP_H
 
 #include <stdint.h>
 
-#include "maryui/components/lp_menu.h"
+#include "maryui/components/lp_spotlight_panel.h"
 #include "maryui/lp_app.h"
 #include "maryui/lp_drag.h"
+#include "maryui/lp_menus.h"
 #include "maryui/lp_settings.h"
 #include "maryui/lp_spotlight.h"
 #include "maryui/lp_wm.h"
@@ -28,6 +30,7 @@ enum lp_command {
     LP_CMD_FOCUS_NEXT,
     LP_CMD_FOCUS_WINDOW,      /* arg: window index */
     LP_CMD_SET_ACCENT,        /* arg: lp_accent_kind */
+    LP_CMD_SET_FOLDERS,       /* arg: lp_folder_appearance */
     LP_CMD_TOGGLE_GOO,
     LP_CMD_SET_WALLPAPER,     /* arg: lp_wallpaper_mode */
     LP_CMD_SET_MOLTEN_TONE,   /* arg: lp_molten_tone */
@@ -108,7 +111,13 @@ int lp_desktop_key(lp_desktop *d, uint32_t keysym, uint32_t mods);
 int lp_desktop_spotlight_results(const lp_desktop *d, lp_spotlight_item *out, int max);
 /* Opens the app, focuses the window or runs the command at `index` of the results, then closes Spotlight. */
 void lp_desktop_spotlight_activate(lp_desktop *d, int index);
-/* Menu bar interaction: open/close/switch. */
+/* The bar edited the query: re-rank from the top, and close the open command
+ * menu, which shows only while the query is blank. */
+void lp_desktop_spotlight_query_changed(lp_desktop *d);
+/* Everything the panel paints for this desktop: the results plus the command
+ * pills and the "Searching <app>" line. The host fills in width/focus_bar/max_h. */
+lp_spotlight_view lp_desktop_spotlight_view(lp_desktop *d, const lp_spotlight_item *items, int count);
+/* Command-pill interaction: open/close/switch. */
 void lp_desktop_toggle_menu(lp_desktop *d, int index);
 void lp_desktop_close_menu(lp_desktop *d);
 /* Selects an entry of the open menu (runs its command, closes the menu). */

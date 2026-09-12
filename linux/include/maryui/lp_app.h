@@ -5,7 +5,7 @@
 
 #include <stddef.h>
 
-#include "maryui/components/lp_menu.h"
+#include "maryui/lp_menus.h"
 #include "maryui/lp_icons.h"
 #include "maryui/lp_ui.h"
 
@@ -16,6 +16,7 @@ typedef struct lp_app {
     const char *title;      /* the window title */
     const char *name;       /* the display name in Spotlight (NULL: the title) */
     lp_icon icon;           /* the Spotlight tile (LP_ICON_COUNT: a document) */
+    const char *object;     /* the object-tier mark when it is not the glyph's own name (lp_objects.h) */
     int hidden;             /* reachable from Spotlight only: not in Window › Open … */
     int internal;           /* not in Spotlight either: opened by other apps (Info) */
     lp_rect default_rect;   /* NAN fields take the cascade default */
