@@ -51,7 +51,7 @@ README, or when a file under `web/src/lib` or `web/src/desktop` is missing from 
 | `desktop/wm/store.ts`, `desktop/wm/useWM.ts` | `lp_desktop_dispatch` + `on_change` (the host syncs from the change mask) | ≈ no subscriptions: one host, one callback |
 | `desktop/settings.ts` | `lp_settings.h`, `src/core/lp_settings.c` (`$XDG_CONFIG_HOME/maryui/settings.conf`) | ≈ **D6** raster wallpaper stored, not rendered; plus `clock`, C-only (**D13**) |
 | `desktop/menus.ts` | `include/maryui/lp_menus.h` (the models), `lp_desktop_build_menus` in `src/core/lp_desktop.c` | ≈ **D11** plus File › New Terminal (`spawn("foot")`), a Go menu, and the focused app's entries (`lp_app.menu_entries`); both sides draw them as Spotlight's pills |
-| `desktop/apps/registry.ts` | `lp_desktop_register_builtin_apps`, `lp_app.h` (`name`, `icon`, `hidden`, `internal`, `dock`, `open`, `command`, `menu_entries`, `notify`) | ≈ **D11** **D15** finder, gallery, about, textedit (hidden: Spotlight only), info (internal: opened by the Finder); `dock` pins Finder and TextEdit |
+| `desktop/apps/registry.ts` | `lp_desktop_register_builtin_apps`, `lp_app.h` (`name`, `icon`, `hidden`, `internal`, `dock`, `open`, `command`, `menu_entries`, `notify`) | ≈ **D11** **D15** finder, gallery, about, textedit (hidden: Spotlight only), info (internal: opened by the Finder), and the Linux-only system apps: calculator; `dock` pins Finder and TextEdit |
 | `desktop/spotlight.ts` | `include/maryui/lp_spotlight.h`, `src/core/lp_spotlight.c`, `lp_desktop_spotlight_*` in `src/core/lp_desktop.c`, `tests/test_spotlight.c` | ≈ **D15** 9/9 cases: the dock for a blank query (the pinned apps only), ranking (prefix, word prefix, substring), windows as items, wrap, cap 8; the C tests add the Ctrl+Space / Esc / Enter key cases and seven for the command pills |
 | `desktop/SpotlightHost.tsx` | `src/compositor/spotlight.c` (one chrome in the `z.spotlight` layer sized for the no-menu panel so typing never reallocates, `mui_spotlight_resize` when a pill opens, `lp-spotlight-in` tween, hit-test inside the panel, outside-press closes); the view is `lp_desktop_spotlight_view` | ≈ **D9** the Terminal tile |
 | `desktop/Desktop.tsx` | `src/compositor/desktop.c` (the ambient clock, the context menu, pointer/keyboard routing), `src/core/lp_desktop.c` (commands, keys) | ≈ **D13** the clock; opens Finder + Gallery at start like the web, windows use the whole output, hit-testing skips shadows like CSS |
@@ -116,8 +116,9 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
 | — | `tests/test_motion.c` (engine, window motion, easing), `test_ui.c`, `test_layout.c`, `test_noise.c`, `test_smoke.c` |
 | — | `tests/test_files.c` (the filesystem model), `tests/test_finder.c` (the Finder driven headlessly: navigation, selection, rename, trash, clipboard, the popup, drag and drop), `tests/test_desktop.c` (opening paths, app commands and menus, the popup, change broadcasts, TextEdit's documents, the clock setting) |
 | — | `tests/test_sources.c` (the event-source wrappers through the poll loop in `tests/lp_test_loop.h`); `test_desktop.c` adds `routes_pictures_and_media_to_their_viewers_once_registered` and `new_terminal_runs_foot_until_a_terminal_app_is_registered`, `test_spotlight.c` adds `pins_the_dock_and_finds_the_rest_by_typing` and `a_terminal_app_replaces_the_terminal_command` |
+| — | `tests/test_calc.c` (Calculator's model: precedence, repeated equals, percent, memory, formatting, keys, clipboard text); `test_desktop.c` adds `calculator_copies_its_display_and_types_the_clipboard_in` |
 
-149 C cases in all.
+164 C cases in all.
 
 ## Deviations
 
@@ -220,6 +221,9 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   NULL-safe through the `lp_desktop_*` wrappers, with one-shot timers like wlroots'. **Files route by kind:**
   `lp_file_kind` gains `VIDEO` and `PDF`; `lp_desktop_open_path` sends images and PDFs to `preview` and audio and
   video to `media` once those apps are registered, and never hands audio, video or a PDF to TextEdit.
+  **Calculator** (`src/apps/calculator.c` over `lp_calc.h`, `tests/test_calc.c`) is the first of them: four
+  functions with precedence (2 + 3 × 4 = 14), percent of what it is added to, sign, backspace, a memory
+  register, repeated equals, the keyboard, and Edit › Copy / Paste through the shared text clipboard.
 - **Close animation.** `lp-window-close` (scale .96 + fade over `motion.fast`, `CLOSE` after
   fast + 80 ms) runs for built-in windows. A client that unmaps is gone at once — the compositor
   has no pixels left to fade.

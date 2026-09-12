@@ -11,6 +11,8 @@
 #include "lp_test.h"
 #include "maryui/lp_desktop.h"
 #include "maryui/lp_files.h"
+#include "maryui/lp_calc.h"
+#include "maryui/components/lp_text_area.h"
 
 static char root[512];
 static lp_desktop d;
@@ -122,6 +124,32 @@ LP_TEST(new_terminal_runs_foot_until_a_terminal_app_is_registered) {
     LP_ASSERT_STR(spawned, "");
     LP_ASSERT_EQ(d.wm.count, 1);
     LP_ASSERT_STR(d.wm.windows[0].app_id, "terminal");
+}
+
+LP_TEST(calculator_copies_its_display_and_types_the_clipboard_in) {
+    setup();
+    lp_desktop_open_app(&d, "calculator");
+    lp_desktop_open_app(&d, "calculator");
+    LP_ASSERT_EQ(d.wm.count, 1);   /* one Calculator */
+    lp_app_instance *inst = lp_desktop_instance(&d, d.wm.windows[0].id);
+    LP_ASSERT(inst != NULL);
+    lp_text_clipboard *clip = lp_text_clipboard_shared();
+    lp_text_clipboard_set(clip, "1,200 / 4 =", 11);
+    LP_ASSERT_EQ(lp_desktop_run_command(&d, LP_CMD_APP, LP_CALCULATOR_PASTE), 1);
+    char shown[64];
+    lp_calc_display(lp_calculator_calc(inst->state), shown, sizeof shown);
+    LP_ASSERT_STR(shown, "300");
+    lp_text_clipboard_set(clip, "", 0);
+    LP_ASSERT_EQ(lp_desktop_run_command(&d, LP_CMD_APP, LP_CALCULATOR_COPY), 1);
+    LP_ASSERT(clip->text && strcmp(clip->text, "300") == 0);
+    lp_desktop_build_menus(&d);
+    int copy = 0, paste = 0;
+    for (int i = 0; i < d.menus[LP_MENU_EDIT].count; i++) {
+        copy += strcmp(d.menus[LP_MENU_EDIT].entries[i].label, "Copy") == 0;
+        paste += strcmp(d.menus[LP_MENU_EDIT].entries[i].label, "Paste") == 0;
+    }
+    LP_ASSERT_EQ(copy, 1);
+    LP_ASSERT_EQ(paste, 1);
 }
 
 LP_TEST(hands_the_path_to_the_app_open_hook_with_the_window_id) {
@@ -255,7 +283,7 @@ LP_TEST(spotlight_skips_internal_apps) {
     lp_spotlight_item items[LP_SPOTLIGHT_MAX_ITEMS];
     int n = lp_spotlight_items(&d, items, LP_SPOTLIGHT_MAX_ITEMS);
     for (int i = 0; i < n; i++) { LP_ASSERT(strcmp(items[i].id, "info") != 0); LP_ASSERT(strcmp(items[i].id, "stub") != 0); }
-    LP_ASSERT_EQ(n, 5); /* finder, gallery, about, textedit + Terminal */
+    LP_ASSERT_EQ(n, 6); /* finder, gallery, about, textedit, calculator + Terminal */
 }
 
 static int view_entry(const char *label) {
@@ -370,6 +398,7 @@ int main(void) {
     LP_RUN(opens_a_folder_in_the_finder_and_a_text_file_in_textedit);
     LP_RUN(routes_pictures_and_media_to_their_viewers_once_registered);
     LP_RUN(new_terminal_runs_foot_until_a_terminal_app_is_registered);
+    LP_RUN(calculator_copies_its_display_and_types_the_clipboard_in);
     LP_RUN(hands_the_path_to_the_app_open_hook_with_the_window_id);
     LP_RUN(routes_app_commands_to_the_focused_window);
     LP_RUN(lets_the_focused_app_fill_the_file_and_go_menus);

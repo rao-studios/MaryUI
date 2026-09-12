@@ -45,6 +45,7 @@ extern const lp_app lp_app_finder;
 extern const lp_app lp_app_gallery;
 extern const lp_app lp_app_textedit;
 extern const lp_app lp_app_info;
+extern const lp_app lp_app_calculator;
 
 /* TextEdit: replaces the document (for previews). */
 void lp_textedit_set_text(void *state, const char *name, const char *text);
@@ -73,5 +74,11 @@ enum lp_finder_command {
     LP_FINDER_SORT_NAME, LP_FINDER_SORT_DATE, LP_FINDER_SORT_SIZE, LP_FINDER_SORT_KIND,
 };
 enum lp_textedit_command { LP_TEXTEDIT_OPEN, LP_TEXTEDIT_SAVE };
+enum lp_calculator_command { LP_CALCULATOR_COPY, LP_CALCULATOR_PASTE };
+/* The Calculator's model, for tests. */
+struct lp_calc;
+const struct lp_calc *lp_calculator_calc(const void *state);
+/* The Calculator: types keys in (digits . + - * / = %), for previews. */
+void lp_calculator_type(void *state, const char *keys);
 
 #endif

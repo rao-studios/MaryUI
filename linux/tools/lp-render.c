@@ -31,6 +31,7 @@ static int usage(int status) {
         "       lp-render --finder <out.png>             the Finder window (icon view)\n"
         "       lp-render --gallery N <out.png>          the Gallery window on tab N (0 controls … 4 motion)\n"
         "       lp-render --textedit <out.png>           the TextEdit window with a sample document\n"
+        "       lp-render --calculator <out.png>         the Calculator with a sum under way\n"
         "       lp-render --spotlight [QUERY] <out.png>  Spotlight over the desktop: the dock and its command pills, or the results for QUERY\n"
         "       lp-render --spotlight-menu NAME <out.png>  the same with the NAME pill open (rao|file|edit|view|go|window|help)\n"
         "       lp-render --all <dir>                    every preview into <dir>\n"
@@ -151,6 +152,8 @@ static int render_window(const char *path) {
 
 static int render_app(const lp_app *app, int tab, const char *path) {
     int w = 900, h = 640;
+    /* a window that cannot be resized is shown at its own size, not stretched to the canvas */
+    if (!app->resizable) { w = (int)app->default_rect.w + 80; h = (int)app->default_rect.h + 60; }
     cairo_surface_t *s = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, w, h);
     cairo_t *cr = cairo_create(s);
     cairo_surface_t *wp = lp_wallpaper_render(w, h);
@@ -163,6 +166,7 @@ static int render_app(const lp_app *app, int tab, const char *path) {
     void *state = app->create ? app->create(&d, "w1") : NULL;
     if (tab > 0 && state) *(int *)state = tab; /* the gallery's first field is its tab */
     if (app == &lp_app_finder && state) lp_finder_set_preview(state); /* files.ts, not the build host's home */
+    if (app == &lp_app_calculator && state) lp_calculator_type(state, "1234.5*2");
     if (app == &lp_app_textedit && state)
         lp_textedit_set_text(state, "Design notes",
             "Liquid Platinum is brushed metal that moves like liquid.\n\n"
@@ -259,6 +263,7 @@ int main(int argc, char **argv) {
     if (strcmp(argv[1], "--finder") == 0 && argc == 3) return render_app(&lp_app_finder, 0, argv[2]);
     if (strcmp(argv[1], "--gallery") == 0 && argc == 4) return render_app(&lp_app_gallery, atoi(argv[2]), argv[3]);
     if (strcmp(argv[1], "--textedit") == 0 && argc == 3) return render_app(&lp_app_textedit, 0, argv[2]);
+    if (strcmp(argv[1], "--calculator") == 0 && argc == 3) return render_app(&lp_app_calculator, 0, argv[2]);
     if (strcmp(argv[1], "--spotlight") == 0 && argc == 3) return render_spotlight(NULL, NULL, argv[2]);
     if (strcmp(argv[1], "--spotlight") == 0 && argc == 4) return render_spotlight(argv[2], NULL, argv[3]);
     if (strcmp(argv[1], "--spotlight-menu") == 0 && argc == 4) return render_spotlight(NULL, argv[2], argv[3]);
@@ -292,6 +297,8 @@ int main(int argc, char **argv) {
         }
         snprintf(path, sizeof path, "%s/textedit.png", argv[2]);
         rc |= render_app(&lp_app_textedit, 0, path);
+        snprintf(path, sizeof path, "%s/calculator.png", argv[2]);
+        rc |= render_app(&lp_app_calculator, 0, path);
         snprintf(path, sizeof path, "%s/spotlight.png", argv[2]);
         rc |= render_spotlight(NULL, NULL, path);
         snprintf(path, sizeof path, "%s/spotlight-menu.png", argv[2]);
