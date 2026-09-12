@@ -44,6 +44,23 @@ ifeq ($(HAVE_EGL),1)
 LIB_CFLAGS += $(shell $(PKG_CONFIG) --cflags $(MOLTEN_PKGS)) -DHAVE_EGL
 LIB_LIBS += $(shell $(PKG_CONFIG) --libs $(MOLTEN_PKGS))
 endif
+# The system apps' libraries, each optional like EGL: without one, the app it
+# serves compiles to a body that says so (its HAVE_* is undefined), so the
+# library and its tests still build on a Mac. The builder image has them all.
+define optional_pkgs
+HAVE_$(1) := $$(shell $$(PKG_CONFIG) --exists $(2) 2>/dev/null && echo 1)
+ifeq ($$(HAVE_$(1)),1)
+LIB_CFLAGS += $$(shell $$(PKG_CONFIG) --cflags $(2)) -DHAVE_$(1)
+LIB_LIBS += $$(shell $$(PKG_CONFIG) --libs $(2))
+endif
+endef
+$(eval $(call optional_pkgs,VTERM,vterm))                                             # Terminal
+$(eval $(call optional_pkgs,PIXBUF,gdk-pixbuf-2.0))                                   # Preview: pictures
+$(eval $(call optional_pkgs,POPPLER,poppler-glib))                                    # Preview: PDFs
+$(eval $(call optional_pkgs,GST,gstreamer-1.0 gstreamer-app-1.0 gstreamer-video-1.0)) # Media Player
+$(eval $(call optional_pkgs,ICAL,libical))                                            # Calendar
+$(eval $(call optional_pkgs,SDBUS,libsystemd))                                        # Settings, Disk Utility
+OPTIONAL_MISSING := $(strip $(foreach n,VTERM PIXBUF POPPLER GST ICAL SDBUS,$(if $(HAVE_$(n)),,$(n))))
 DESKTOP_CFLAGS := $(shell $(PKG_CONFIG) --cflags $(DESKTOP_PKGS) 2>/dev/null) -DWLR_USE_UNSTABLE -I$(O)/protocols
 DESKTOP_LIBS := $(shell $(PKG_CONFIG) --libs $(DESKTOP_PKGS) 2>/dev/null)
 
@@ -73,13 +90,20 @@ MOLTEN_NOTE := true
 else
 MOLTEN_NOTE := echo "make: egl/glesv2 not found; the molten wallpaper falls back to the procedural one"
 endif
+ifeq ($(OPTIONAL_MISSING),)
+OPTIONAL_NOTE := true
+else
+OPTIONAL_NOTE := echo "make: without $(OPTIONAL_MISSING) the apps that need them show a notice instead"
+endif
 ifeq ($(HAVE_WLROOTS),1)
 all: lib tools desktop
 	@$(MOLTEN_NOTE)
+	@$(OPTIONAL_NOTE)
 else
 all: lib tools
 	@echo "make: wlroots not found; maryui-desktop skipped (libmaryui and lp-render built)"
 	@$(MOLTEN_NOTE)
+	@$(OPTIONAL_NOTE)
 endif
 lib: $(LIB_TARGETS)
 desktop: $(DESKTOP)
@@ -162,6 +186,7 @@ check-deps:
 	$(PKG_CONFIG) --print-errors --exists $(DESKTOP_PKGS) wayland-protocols && echo "maryui-desktop deps ok"
 	@$(PKG_CONFIG) --exists $(MOLTEN_PKGS) && echo "molten wallpaper deps ok" \
 	  || echo "molten wallpaper deps missing (egl glesv2); the procedural wallpaper stands in"
+	@[ -z "$(OPTIONAL_MISSING)" ] && echo "system app deps ok" || echo "system app deps missing: $(OPTIONAL_MISSING)"
 
 clean:
 	rm -rf $(O)
