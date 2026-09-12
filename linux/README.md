@@ -44,7 +44,8 @@ wallpaper falls back to the procedural filter chain. That is how this tree build
 session on a seat: a systemd unit with a PAM service name, `TTYPath=/dev/tty1` and
 `Conflicts=getty@tty1.service`, or a greeter. It reads `/etc/os-release` for the distro's
 name, `$XDG_CONFIG_HOME/maryui/settings.conf` for appearance settings (accent, folder
-appearance, liquid merge, wallpaper, reduced motion; the View menu writes it), and `MARYUI_DATA_DIR` for prerendered
+appearance, liquid merge, wallpaper, reduced motion, and `clock=on|off` for the ambient clock;
+Spotlight's View pill writes it), and `MARYUI_DATA_DIR` for prerendered
 assets (`wallpaper-WxH.png`). MaryOS (`github.com/rao-studios/MaryPi`, `linux/`) is the
 reference integration: its builder compiles this directory, its image boots it, and
 `linux/docs/09-the-desktop.md` there walks through the wiring.

@@ -6,7 +6,8 @@
 #ifndef MARYUI_LP_MENUS_H
 #define MARYUI_LP_MENUS_H
 
-#define LP_MENU_MAX_ENTRIES 24
+/* The Finder's View menu plus the desktop's settings is 24 already; leave headroom. */
+#define LP_MENU_MAX_ENTRIES 32
 
 typedef struct lp_menu_entry {
     int separator;

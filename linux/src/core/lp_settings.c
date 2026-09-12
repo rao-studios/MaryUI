@@ -10,8 +10,10 @@ lp_settings lp_settings_defaults(void) {
     /* Molten is the default, as it is on the web; it falls back on its own
      * when the image has no EGL (lp_wallpaper_cached). */
     /* Slate folders, as object.folder-appearance says and base.css's bare :root maps. */
+    /* The clock shows until someone hides it, so a file written before the key existed keeps it. */
     return (lp_settings){ .accent = LP_ACCENT_BLUE, .folders = LP_FOLDER_SLATE, .goo = 1,
-                          .wallpaper = LP_WALLPAPER_MOLTEN, .molten_tone = LP_MOLTEN_PLATINUM, .reduced_motion = 0 };
+                          .wallpaper = LP_WALLPAPER_MOLTEN, .molten_tone = LP_MOLTEN_PLATINUM, .reduced_motion = 0,
+                          .clock = 1 };
 }
 
 static void config_path(char *out, size_t n, int mkdirs) {
@@ -49,6 +51,7 @@ lp_settings lp_settings_load(void) {
         else if (strcmp(key, "molten_tone") == 0)
             s.molten_tone = strcmp(value, "faithful") == 0 ? LP_MOLTEN_FAITHFUL : LP_MOLTEN_PLATINUM;
         else if (strcmp(key, "reduced_motion") == 0) s.reduced_motion = strcmp(value, "on") == 0 || strcmp(value, "1") == 0;
+        else if (strcmp(key, "clock") == 0) s.clock = strcmp(value, "off") != 0 && strcmp(value, "0") != 0;
     }
     fclose(f);
     return s;
@@ -59,12 +62,14 @@ int lp_settings_save(const lp_settings *s) {
     config_path(path, sizeof path, 1);
     FILE *f = fopen(path, "w");
     if (!f) return -1;
-    fprintf(f, "# Liquid Platinum desktop settings (View menu). Mirrors the web's localStorage['lp-settings'].\n");
-    fprintf(f, "accent=%s\nfolders=%s\ngoo=%s\nwallpaper=%s\nmolten_tone=%s\nreduced_motion=%s\n",
+    fprintf(f, "# Liquid Platinum desktop settings (View menu). Mirrors the web's localStorage['lp-settings'];\n"
+               "# clock is the one key the web does not have.\n");
+    fprintf(f, "accent=%s\nfolders=%s\ngoo=%s\nwallpaper=%s\nmolten_tone=%s\nreduced_motion=%s\nclock=%s\n",
         s->accent == LP_ACCENT_GRAPHITE ? "graphite" : "blue",
         s->folders == LP_FOLDER_MANILA ? "manila" : "slate", s->goo ? "on" : "off",
         s->wallpaper == LP_WALLPAPER_RASTER ? "raster" : s->wallpaper == LP_WALLPAPER_PROCEDURAL ? "procedural" : "molten",
-        s->molten_tone == LP_MOLTEN_FAITHFUL ? "faithful" : "platinum", s->reduced_motion ? "on" : "off");
+        s->molten_tone == LP_MOLTEN_FAITHFUL ? "faithful" : "platinum", s->reduced_motion ? "on" : "off",
+        s->clock ? "on" : "off");
     fclose(f);
     return 0;
 }

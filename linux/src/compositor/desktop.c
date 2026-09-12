@@ -117,7 +117,13 @@ static void sync_popup_chrome(struct mui_server *server) {
  * All that is left of the menu bar: the time, top right, sitting on the
  * wallpaper with no strip behind it. Not interactive, never hit-tested, and
  * repainted once a minute — only when the string actually changes — so an idle
- * desktop still schedules no frames. */
+ * desktop still schedules no frames. View › Show Clock (settings.clock) hides
+ * it: the node is disabled, the minute timer keeps the string current, and
+ * nothing is painted until it shows again. */
+
+static int clock_visible(struct mui_server *server) {
+    return server->clock && server->desktop.settings.clock;
+}
 
 static void paint_clock(lp_ctx *ctx, struct mui_chrome *chrome, void *data) {
     struct mui_server *server = data;
@@ -133,10 +139,12 @@ static int clock_tick(void *data) {
     struct mui_server *server = data;
     char text[32];
     format_clock(text, sizeof text);
-    if (strcmp(text, server->clock_text) != 0 && server->clock) {
+    if (strcmp(text, server->clock_text) != 0) {
         snprintf(server->clock_text, sizeof server->clock_text, "%s", text);
-        mui_chrome_damage_all(server->clock);   /* 160×24: the whole chrome is the partial damage */
-        mui_chrome_repaint(server->clock, mui_now_ms());
+        if (clock_visible(server)) {
+            mui_chrome_damage_all(server->clock);   /* 160×24: the whole chrome is the partial damage */
+            mui_chrome_repaint(server->clock, mui_now_ms());
+        }
     }
     time_t now = time(NULL);
     wl_event_source_timer_update(server->clock_timer, (int)((60 - now % 60) * 1000 + 50));
@@ -249,7 +257,10 @@ void mui_desktop_finish(struct mui_server *server) {
 void mui_desktop_settings_changed(struct mui_server *server) {
     struct mui_window *win;
     wl_list_for_each(win, &server->windows, link) { mui_chrome_damage_all(&win->chrome); mui_chrome_repaint(&win->chrome, mui_now_ms()); }
-    if (server->clock) { mui_chrome_damage_all(server->clock); mui_chrome_repaint(server->clock, mui_now_ms()); }
+    if (server->clock) {
+        wlr_scene_node_set_enabled(&server->clock->node->node, server->desktop.settings.clock);
+        if (clock_visible(server)) { mui_chrome_damage_all(server->clock); mui_chrome_repaint(server->clock, mui_now_ms()); }
+    }
     if (server->menu) { mui_chrome_damage_all(server->menu); mui_chrome_repaint(server->menu, mui_now_ms()); }
     if (server->spotlight) { mui_chrome_damage_all(server->spotlight); mui_chrome_repaint(server->spotlight, mui_now_ms()); }
 }
@@ -303,8 +314,11 @@ void mui_desktop_output_ready(struct mui_output *output) {
         mui_chrome_init(server->clock, server, server->layer_menubar, MUI_CLOCK_W, MUI_CLOCK_H, paint_clock, server);
     }
     wlr_scene_node_set_position(&server->clock->node->node, box.x + w - MUI_CLOCK_W - (int)LP_SPACE_3, box.y + (int)LP_SPACE_1);
-    mui_chrome_damage_all(server->clock);
-    mui_chrome_repaint(server->clock, mui_now_ms());
+    wlr_scene_node_set_enabled(&server->clock->node->node, server->desktop.settings.clock);
+    if (clock_visible(server)) {
+        mui_chrome_damage_all(server->clock);
+        mui_chrome_repaint(server->clock, mui_now_ms());
+    }
     lp_wm_action a = { .type = LP_WM_SET_BOUNDS, .bounds = LP_RECT(box.x, box.y, w, h) };
     lp_desktop_dispatch(&server->desktop, &a);
     if (server->desktop.wm.count == 0) {

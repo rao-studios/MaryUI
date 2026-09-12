@@ -1,6 +1,7 @@
 /* Desktop preferences (web/src/desktop/settings.ts): accent, folder
- * appearance, goo, wallpaper source, reduced motion. Persisted as KEY=VALUE in
- * $XDG_CONFIG_HOME/maryui/settings.conf. The accent and folder mappings are
+ * appearance, goo, wallpaper source, reduced motion — plus the ambient clock,
+ * which settings.ts has no counterpart for (PARITY D13). Persisted as KEY=VALUE
+ * in $XDG_CONFIG_HOME/maryui/settings.conf. The accent and folder mappings are
  * base.css's `:root[data-accent]` and `[data-folders]` blocks. Branding comes
  * from /etc/os-release. */
 #ifndef MARYUI_LP_SETTINGS_H
@@ -21,6 +22,8 @@ typedef struct lp_settings {
     enum lp_wallpaper_mode wallpaper;
     enum lp_molten_tone molten_tone;
     int reduced_motion;
+    /* Show the ambient clock in the desktop's corner. C only: the web has no clock (D13). */
+    int clock;
 } lp_settings;
 
 typedef struct lp_accent {

@@ -35,6 +35,7 @@ enum lp_command {
     LP_CMD_SET_WALLPAPER,     /* arg: lp_wallpaper_mode */
     LP_CMD_SET_MOLTEN_TONE,   /* arg: lp_molten_tone */
     LP_CMD_TOGGLE_REDUCED_MOTION,
+    LP_CMD_TOGGLE_CLOCK,
     LP_CMD_NEW_TERMINAL,
     LP_CMD_HELP,
     LP_CMD_APP,               /* arg: an app command id, for the focused (or the popup's) window */

@@ -58,4 +58,4 @@ One symbol, with the commands section (pills + one open dropdown) as part of its
 `Spotlight` symbol in `design/liquid-platinum.sketch`, placed on the Desktop artboard where the old
 standalone `Menu Bar` instance used to sit. `Surface/Menu Bar` remains in the symbols library as a brushed-strip
 treatment; the `Menu Bar` symbol is a record of what this replaced, on both targets — the C desktop dropped its
-menu bar too (`linux/PARITY.md`), keeping only an ambient clock in the corner.
+menu bar too (`linux/PARITY.md`), keeping only an ambient clock in the corner, which its View pill can hide.

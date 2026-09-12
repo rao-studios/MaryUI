@@ -49,7 +49,7 @@ README, or when a file under `web/src/lib` or `web/src/desktop` is missing from 
 | `desktop/wm/actions.ts`, `desktop/wm/types.ts` | `lp_wm_action`, `lp_window_record`, `lp_open_spec` in `lp_wm.h` | ✓ |
 | `desktop/wm/selectors.ts` | `lp_wm_focused`, `lp_wm_find` | ✓ |
 | `desktop/wm/store.ts`, `desktop/wm/useWM.ts` | `lp_desktop_dispatch` + `on_change` (the host syncs from the change mask) | ≈ no subscriptions: one host, one callback |
-| `desktop/settings.ts` | `lp_settings.h`, `src/core/lp_settings.c` (`$XDG_CONFIG_HOME/maryui/settings.conf`) | ≈ **D6** raster wallpaper stored, not rendered |
+| `desktop/settings.ts` | `lp_settings.h`, `src/core/lp_settings.c` (`$XDG_CONFIG_HOME/maryui/settings.conf`) | ≈ **D6** raster wallpaper stored, not rendered; plus `clock`, C-only (**D13**) |
 | `desktop/menus.ts` | `include/maryui/lp_menus.h` (the models), `lp_desktop_build_menus` in `src/core/lp_desktop.c` | ≈ **D11** plus File › New Terminal (`spawn("foot")`), a Go menu, and the focused app's entries (`lp_app.menu_entries`); both sides draw them as Spotlight's pills |
 | `desktop/apps/registry.ts` | `lp_desktop_register_builtin_apps`, `lp_app.h` (`name`, `icon`, `hidden`, `internal`, `open`, `command`, `menu_entries`, `notify`) | ≈ **D11** finder, gallery, about, textedit (hidden: Spotlight only), info (internal: opened by the Finder) |
 | `desktop/spotlight.ts` | `include/maryui/lp_spotlight.h`, `src/core/lp_spotlight.c`, `lp_desktop_spotlight_*` in `src/core/lp_desktop.c`, `tests/test_spotlight.c` | ✓ 9/9 cases: the dock for a blank query, ranking (prefix, word prefix, substring), windows as items, wrap, cap 8; the C tests add the Ctrl+Space / Esc / Enter key cases and seven for the command pills |
@@ -78,7 +78,7 @@ README, or when a file under `web/src/lib` or `web/src/desktop` is missing from 
 | `hooks/useMotionTarget.ts` | `mui_window.target` registered with `server->engine` | ✓ |
 | `hooks/useOutsideClick.ts` | a press off the context menu, or off the Spotlight panel that carries the command pills, closes it (`mui_desktop_pointer_event`) | ✓ |
 | `hooks/useDesktopKeys.ts` | `lp_desktop_key` (⌘W, ⌘M, Ctrl+`, Esc, Ctrl/⌘+Space for Spotlight, ↑/↓/Enter while it is open, and ↑/↓/←/→/Enter through an open command pill; window shortcuts suspended meanwhile) | ✓ Super is ⌘; the pill keys are C-only, the web's pills are pointer-driven |
-| `hooks/useClock.ts` | `clock_tick` + `paint_clock` in `desktop.c` (a 160×24 chrome, repainted once a minute and only when the string changes) | ✗ **D13** the web deleted the hook with the menu bar; the C desktop keeps an ambient clock |
+| `hooks/useClock.ts` | `clock_tick` + `paint_clock` in `desktop.c` (a 160×24 chrome, repainted once a minute and only when the string changes; View › Show Clock disables its node) | ✗ **D13** the web deleted the hook with the menu bar; the C desktop keeps an ambient clock, on unless `settings.clock` hides it |
 
 ## `src/components`
 
@@ -114,9 +114,9 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
 | `scripts/tokens.test.ts` (`toC`, `toIconsC`, `toObjectsC`) | `tests/test_tokens.c`, `tests/test_icons.c`, `tests/test_objects.c` check the generated headers from the other side |
 | `src/components/ObjectIcon/objects.test.ts` | `tests/test_objects.c` — the geometry, the silhouettes, the tier thresholds, and that the ink stays in the box |
 | — | `tests/test_motion.c` (engine, window motion, easing), `test_ui.c`, `test_layout.c`, `test_noise.c`, `test_smoke.c` |
-| — | `tests/test_files.c` (the filesystem model), `tests/test_finder.c` (the Finder driven headlessly: navigation, selection, rename, trash, clipboard, the popup, drag and drop), `tests/test_desktop.c` (opening paths, app commands and menus, the popup, change broadcasts, TextEdit's documents) |
+| — | `tests/test_files.c` (the filesystem model), `tests/test_finder.c` (the Finder driven headlessly: navigation, selection, rename, trash, clipboard, the popup, drag and drop), `tests/test_desktop.c` (opening paths, app commands and menus, the popup, change broadcasts, TextEdit's documents, the clock setting) |
 
-140 C cases in all.
+142 C cases in all.
 
 ## Deviations
 
@@ -194,6 +194,11 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   still schedules no frames. The ink is `ink.primary` with the 1 px emboss the bar drew, which was
   chosen against a light platinum strip and now sits on the wallpaper instead: `lp-render --clock`
   exists to keep an eye on that, and a white-on-shadow treatment would want a token of its own.
+  It is a setting, not a fixture: View › Show Clock (`LP_CMD_TOGGLE_CLOCK`) flips `settings.clock`,
+  saved as `clock=on|off` in `settings.conf` — the one key with no `settings.ts` counterpart. It
+  defaults to on, and a file without the key keeps it on. Hidden, the chrome's scene node is
+  disabled rather than repainted empty; the minute timer keeps the string current and paints
+  nothing, and showing it again repaints once with the time as it is.
 - **D14 — the object tier's contact shadow.** The web drop-shadows the whole composite's alpha with
   an SVG filter (`feDropShadow` at the lit tier only). C blurs the object's *silhouette* instead,
   offset by `object.contact-dy`: the silhouette is that outline by construction, and taking it

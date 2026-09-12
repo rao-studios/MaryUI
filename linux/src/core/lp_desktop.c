@@ -191,6 +191,7 @@ int lp_desktop_run_command(lp_desktop *d, enum lp_command command, int arg) {
     case LP_CMD_SET_WALLPAPER: d->settings.wallpaper = (enum lp_wallpaper_mode)arg; settings_changed(d); return 1;
     case LP_CMD_SET_MOLTEN_TONE: d->settings.molten_tone = (enum lp_molten_tone)arg; settings_changed(d); return 1;
     case LP_CMD_TOGGLE_REDUCED_MOTION: d->settings.reduced_motion = !d->settings.reduced_motion; settings_changed(d); return 1;
+    case LP_CMD_TOGGLE_CLOCK: d->settings.clock = !d->settings.clock; settings_changed(d); return 1;
     case LP_CMD_NEW_TERMINAL: if (d->spawn) d->spawn(d, "foot"); return 1;
     case LP_CMD_HELP: return 1;
     case LP_CMD_APP: {
@@ -277,6 +278,8 @@ void lp_desktop_build_menus(lp_desktop *d) {
     before = m->count;
     if (inst) inst->app->menu_entries(inst->state, d, LP_MENU_VIEW, m);
     if (m->count > before) sep(m);
+    /* The desktop's two switches. Show Clock is C only (PARITY D13): the one thing left on the desktop itself. */
+    add(m, "Show Clock", NULL, LP_CMD_TOGGLE_CLOCK, 0)->checked = d->settings.clock;
     add(m, "Liquid Merge", NULL, LP_CMD_TOGGLE_GOO, 0)->checked = d->settings.goo;
     sep(m);
     add(m, "Molten Wallpaper", NULL, LP_CMD_SET_WALLPAPER, LP_WALLPAPER_MOLTEN)->checked = d->settings.wallpaper == LP_WALLPAPER_MOLTEN;

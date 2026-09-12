@@ -213,6 +213,52 @@ LP_TEST(spotlight_skips_internal_apps) {
     LP_ASSERT_EQ(n, 5); /* finder, gallery, about, textedit + Terminal */
 }
 
+static int view_entry(const char *label) {
+    const lp_menu_model *m = &d.menus[LP_MENU_VIEW];
+    for (int i = 0; i < m->count; i++) if (!m->entries[i].separator && strcmp(m->entries[i].label, label) == 0) return i;
+    return -1;
+}
+
+LP_TEST(the_clock_setting_round_trips) {
+    lp_settings s = lp_settings_defaults();
+    LP_ASSERT_EQ(s.clock, 1);
+    s.clock = 0;
+    LP_ASSERT_EQ(lp_settings_save(&s), 0);
+    LP_ASSERT_EQ(lp_settings_load().clock, 0);
+    /* a file written before the key existed keeps the clock showing */
+    char path[600];
+    snprintf(path, sizeof path, "%s/maryui/settings.conf", getenv("XDG_CONFIG_HOME"));
+    FILE *f = fopen(path, "w");
+    fputs("accent=graphite\n", f);
+    fclose(f);
+    lp_settings old = lp_settings_load();
+    LP_ASSERT_EQ(old.clock, 1);
+    LP_ASSERT_EQ(old.accent, LP_ACCENT_GRAPHITE);
+    remove(path);
+}
+
+LP_TEST(view_menu_toggles_the_clock) {
+    setup();
+    lp_desktop_build_menus(&d);
+    int entry = view_entry("Show Clock");
+    LP_ASSERT(entry >= 0);
+    if (entry < 0) return;
+    LP_ASSERT(d.menus[LP_MENU_VIEW].entries[entry].checked);
+    LP_ASSERT_EQ(lp_desktop_run_command(&d, d.menus[LP_MENU_VIEW].entries[entry].command, d.menus[LP_MENU_VIEW].entries[entry].arg), 1);
+    LP_ASSERT_EQ(d.settings.clock, 0);
+    LP_ASSERT_EQ(lp_settings_load().clock, 0);
+    lp_desktop_build_menus(&d);
+    LP_ASSERT(!d.menus[LP_MENU_VIEW].entries[view_entry("Show Clock")].checked);
+    /* the Finder's own View entries and the desktop's still fit under the cap */
+    lp_desktop_open_app(&d, "finder");
+    lp_desktop_build_menus(&d);
+    LP_ASSERT(view_entry("Show Clock") >= 0);
+    LP_ASSERT(view_entry("Folders · Slate") >= 0);
+    LP_ASSERT(d.menus[LP_MENU_VIEW].count < LP_MENU_MAX_ENTRIES);
+    lp_desktop_run_command(&d, LP_CMD_TOGGLE_CLOCK, 0);
+    LP_ASSERT_EQ(d.settings.clock, 1);
+}
+
 static void textedit_pass(void *state, lp_input in) {
     static lp_ctx ctx;
     ctx.settings = &d.settings;
@@ -267,6 +313,10 @@ int main(void) {
     snprintf(root, sizeof root, "%s/lp_desktop_XXXXXX", tmp && *tmp ? tmp : "/tmp");
     if (!mkdtemp(root)) return 1;
     setenv("HOME", root, 1);
+    /* Settings commands save as they run; keep them out of the real ~/.config. */
+    char config[600];
+    snprintf(config, sizeof config, "%s/.config", root);
+    setenv("XDG_CONFIG_HOME", config, 1);
     char docs[600];
     snprintf(docs, sizeof docs, "%s/Documents", root);
     mkdir(docs, 0755);
@@ -282,6 +332,8 @@ int main(void) {
     LP_RUN(keeps_a_drag_session_and_tells_the_host);
     LP_RUN(spotlight_skips_internal_apps);
     LP_RUN(textedit_opens_a_path_and_saves_back_to_it);
+    LP_RUN(the_clock_setting_round_trips);
+    LP_RUN(view_menu_toggles_the_clock);
     lp_files_delete_tree(root);
     LP_TEST_MAIN_END();
 }
