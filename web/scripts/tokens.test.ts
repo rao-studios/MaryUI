@@ -110,16 +110,18 @@ describe('the real tokens.json', () => {
     expect(clash).toEqual([])
   })
 
-  it('keeps the Spotlight panel on the same arc as its search field', () => {
+  it('keeps the Spotlight panel concentric with the field inside it', () => {
     /*
-     * The field is a pill, so its radius is half its own height. The panel is
-     * meant to read as the same corner, which only holds while these two agree
-     * — and nothing else would notice if a later change to the bar's height
-     * quietly left the panel behind.
+     * The field is a pill, so its corner is half its own height; add the panel's
+     * padding and you get the radius at which the two arcs share a centre and
+     * the gap between them stays even the whole way round. Nothing else in the
+     * file would notice if a later change to the bar height or the padding left
+     * the panel behind.
      */
     const px = (path: string) =>
       Number.parseFloat(out.tokens.find((t: { path: string[] }) => t.path.join('.') === path).value)
-    expect(px('radius.spotlight')).toBe(px('size.spotlight-bar-height') / 2)
+    const field = px('size.spotlight-bar-height') / 2
+    expect(px('radius.spotlight')).toBe(field + px('space.2'))
   })
 
   it('keeps the object tier under a prefix of its own', () => {

@@ -275,7 +275,7 @@ export const tokens = {
     window: "12px",
     windowMin: "8px",
     windowMax: "16px",
-    spotlight: "22px",
+    spotlight: "30px",
     pill: "999px",
   },
   radiusFlex: {
