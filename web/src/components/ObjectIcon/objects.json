@@ -1,0 +1,447 @@
+{
+  "$description": "Object-icon silhouettes on a 32 grid. Geometry only — no colours and no gradients anywhere in this file. Lighting is the one shared recipe under `object` in tokens/tokens.json, so the whole set regrades from there. A part supplies a facet (which end of the ramp it faces), a signed tone (a lighting offset, not a colour) and a bevel; the renderer supplies everything else. Names that also exist in ../Icon/icons.json inherit that glyph as their small-size fallback; names that do not must declare one with `glyph`.",
+  "$grid": 32,
+  "folder": {
+    "material": "folder",
+    "silhouette": "back",
+    "parts": [
+      {
+        "id": "back",
+        "facet": "top",
+        "tone": -0.35,
+        "bevel": "raised",
+        "d": "M2 9a2.5 2.5 0 0 1 2.5-2.5h8.2l3 3H27.5A2.5 2.5 0 0 1 30 12v12.5a2.5 2.5 0 0 1-2.5 2.5h-23A2.5 2.5 0 0 1 2 24.5Z"
+      },
+      {
+        "id": "front",
+        "facet": "front",
+        "tone": 0.45,
+        "bevel": "raised",
+        "d": "M2 13h28v11.5a2.5 2.5 0 0 1-2.5 2.5h-23A2.5 2.5 0 0 1 2 24.5Z"
+      },
+      {
+        "id": "seam",
+        "role": "crease",
+        "min": 24,
+        "d": "M2.8 13h26.4"
+      }
+    ]
+  },
+  "document": {
+    "material": "paper",
+    "silhouette": "sheet",
+    "parts": [
+      {
+        "id": "sheet",
+        "facet": "flat",
+        "tone": 0.1,
+        "bevel": "raised",
+        "d": "M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z"
+      },
+      {
+        "id": "fold",
+        "facet": "under",
+        "tone": -0.5,
+        "bevel": "none",
+        "d": "M19.5 2.5 26 9.5h-5a1.5 1.5 0 0 1-1.5-1.5Z"
+      },
+      {
+        "id": "rule",
+        "role": "crease",
+        "min": 28,
+        "d": "M11 15h11M11 19h11M11 23h7"
+      }
+    ]
+  },
+  "image": {
+    "material": "paper",
+    "silhouette": "print",
+    "parts": [
+      {
+        "id": "print",
+        "facet": "flat",
+        "tone": 0.1,
+        "bevel": "raised",
+        "d": "M5 5h22a2 2 0 0 1 2 2v18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"
+      },
+      {
+        "id": "field",
+        "facet": "under",
+        "tone": -0.3,
+        "bevel": "well",
+        "d": "M6.5 8.5h19a.5.5 0 0 1 .5.5v11a.5.5 0 0 1-.5.5h-19a.5.5 0 0 1-.5-.5V9a.5.5 0 0 1 .5-.5Z"
+      },
+      {
+        "id": "sun",
+        "tint": "accent.blue.light",
+        "min": 28,
+        "d": "M22 11a2 2 0 1 1 0 4 2 2 0 0 1 0-4Z"
+      },
+      {
+        "id": "hills",
+        "tint": "platinum.6",
+        "d": "M6 20.5v-2l5.5-5 3.5 3.5 4.5-4.5 6.5 6.5v1.5Z"
+      },
+      {
+        "id": "mount",
+        "role": "crease",
+        "min": 32,
+        "d": "M6.5 20.5h19"
+      }
+    ]
+  },
+  "music": {
+    "material": "paper",
+    "silhouette": "sheet",
+    "parts": [
+      {
+        "id": "sheet",
+        "facet": "flat",
+        "tone": 0.1,
+        "bevel": "raised",
+        "d": "M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z"
+      },
+      {
+        "id": "fold",
+        "facet": "under",
+        "tone": -0.5,
+        "bevel": "none",
+        "d": "M19.5 2.5 26 9.5h-5a1.5 1.5 0 0 1-1.5-1.5Z"
+      },
+      {
+        "id": "notes",
+        "tint": "accent.blue.base",
+        "d": "M13 21.6a2.4 2.4 0 1 1 0 4.8 2.4 2.4 0 0 1 0-4.8ZM19.6 19.8a2.4 2.4 0 1 1 0 4.8 2.4 2.4 0 0 1 0-4.8Z"
+      },
+      {
+        "id": "beam",
+        "role": "crease",
+        "tint": "accent.blue.base",
+        "min": 24,
+        "d": "M15.4 23.9V14.4l6.6-1.4v9.2"
+      }
+    ]
+  },
+  "code": {
+    "material": "paper",
+    "silhouette": "sheet",
+    "parts": [
+      {
+        "id": "sheet",
+        "facet": "flat",
+        "tone": 0.1,
+        "bevel": "raised",
+        "d": "M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z"
+      },
+      {
+        "id": "fold",
+        "facet": "under",
+        "tone": -0.5,
+        "bevel": "none",
+        "d": "M19.5 2.5 26 9.5h-5a1.5 1.5 0 0 1-1.5-1.5Z"
+      },
+      {
+        "id": "angle",
+        "role": "crease",
+        "min": 24,
+        "d": "M13.5 16l-3 3.5 3 3.5M20 16l3 3.5-3 3.5M18 14.5l-3.4 10"
+      }
+    ]
+  },
+  "drive": {
+    "material": "platinum",
+    "silhouette": "body",
+    "parts": [
+      {
+        "id": "body",
+        "facet": "top",
+        "tone": 0,
+        "bevel": "raised",
+        "d": "M3 9h26a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V11a2 2 0 0 1 2-2Z"
+      },
+      {
+        "id": "slot",
+        "facet": "under",
+        "tone": -0.8,
+        "bevel": "well",
+        "min": 24,
+        "d": "M5.5 14.6h13a1.1 1.1 0 0 1 0 2.2h-13a1.1 1.1 0 0 1 0-2.2Z"
+      },
+      {
+        "id": "led",
+        "tint": "accent.blue.base",
+        "min": 24,
+        "d": "M25.4 14.8a1.2 1.2 0 1 1 0 2.4 1.2 1.2 0 0 1 0-2.4Z"
+      }
+    ]
+  },
+  "trash": {
+    "material": "platinum",
+    "silhouette": "body",
+    "parts": [
+      {
+        "id": "body",
+        "facet": "front",
+        "tone": 0,
+        "bevel": "raised",
+        "d": "M7.8 11.2h16.4l-1.5 15.3a2 2 0 0 1-2 1.8h-9.4a2 2 0 0 1-2-1.8Z"
+      },
+      {
+        "id": "rim",
+        "facet": "top",
+        "tone": 0.4,
+        "bevel": "raised",
+        "d": "M6 8h20a1.6 1.6 0 0 1 0 3.2H6A1.6 1.6 0 0 1 6 8Z"
+      },
+      {
+        "id": "mesh",
+        "role": "crease",
+        "min": 28,
+        "d": "M12 13.2l-.6 12.4M16 13.2v12.4M20 13.2l.6 12.4"
+      }
+    ]
+  },
+  "terminal": {
+    "material": "graphite",
+    "silhouette": "bezel",
+    "parts": [
+      {
+        "id": "bezel",
+        "facet": "top",
+        "tone": 0,
+        "bevel": "raised",
+        "d": "M3 6h26a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z"
+      },
+      {
+        "id": "screen",
+        "facet": "under",
+        "tone": -0.9,
+        "bevel": "well",
+        "d": "M4.6 9h22.8a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4.6a1 1 0 0 1-1-1V10a1 1 0 0 1 1-1Z"
+      },
+      {
+        "id": "prompt",
+        "role": "crease",
+        "tint": "traffic.zoom.light",
+        "min": 24,
+        "d": "M8 13.2l3 2.4-3 2.4M14 18.4h6"
+      }
+    ]
+  },
+  "drop": {
+    "material": "glass",
+    "silhouette": "bead",
+    "parts": [
+      {
+        "id": "bead",
+        "facet": "top",
+        "tone": 0,
+        "bevel": "raised",
+        "d": "M16 2.5s8.5 9.2 8.5 15.1a8.5 8.5 0 0 1-17 0C7.5 11.7 16 2.5 16 2.5Z"
+      },
+      {
+        "id": "meniscus",
+        "role": "crease",
+        "min": 32,
+        "d": "M9 20.5a7.6 7.6 0 0 0 14 0"
+      }
+    ]
+  },
+  "info": {
+    "material": "accent",
+    "silhouette": "disc",
+    "parts": [
+      {
+        "id": "disc",
+        "facet": "top",
+        "tone": 0,
+        "bevel": "raised",
+        "d": "M16 2.5a13.5 13.5 0 1 0 0 27 13.5 13.5 0 0 0 0-27Z"
+      },
+      {
+        "id": "mark",
+        "role": "crease",
+        "tint": "ink.on-accent",
+        "min": 24,
+        "d": "M16 14.5v8.5M16 9.6h.01"
+      }
+    ]
+  },
+  "pencil": {
+    "material": "manila",
+    "silhouette": "barrel",
+    "parts": [
+      {
+        "id": "barrel",
+        "facet": "top",
+        "tone": 0.1,
+        "bevel": "raised",
+        "d": "M9 20.6 21.6 8l3.4 3.4L12.4 24Z"
+      },
+      {
+        "id": "ferrule",
+        "material": "platinum",
+        "facet": "top",
+        "tone": 0,
+        "bevel": "raised",
+        "d": "M21.6 8 25 11.4l3.4-3.4a2.4 2.4 0 0 0-3.4-3.4Z"
+      },
+      {
+        "id": "tip",
+        "material": "graphite",
+        "facet": "front",
+        "tone": 0,
+        "bevel": "none",
+        "d": "M9 20.6 12.4 24l-5.4 2Z"
+      },
+      {
+        "id": "facet",
+        "role": "crease",
+        "min": 28,
+        "d": "M10.7 22.3 23.3 9.7"
+      }
+    ]
+  },
+  "appFinder": {
+    "material": "platinum",
+    "glyph": "folder",
+    "silhouette": "body",
+    "parts": [
+      {
+        "id": "body",
+        "facet": "top",
+        "tone": 0,
+        "bevel": "raised",
+        "d": "M4.5 5h23a3 3 0 0 1 3 3v16a3 3 0 0 1-3 3h-23a3 3 0 0 1-3-3V8a3 3 0 0 1 3-3Z"
+      },
+      {
+        "id": "sidebar",
+        "facet": "under",
+        "tone": -0.85,
+        "bevel": "none",
+        "d": "M1.5 8a3 3 0 0 1 3-3H12v22H4.5a3 3 0 0 1-3-3Z"
+      },
+      {
+        "id": "sel",
+        "tint": "accent.blue.base",
+        "min": 28,
+        "d": "M3.6 12.4h6.8a.9.9 0 0 1 0 1.8H3.6a.9.9 0 0 1 0-1.8Z"
+      },
+      {
+        "id": "rows",
+        "role": "crease",
+        "min": 24,
+        "d": "M15.5 12h11M15.5 16h11M15.5 20h7"
+      }
+    ]
+  },
+  "appMusic": {
+    "material": "ruby",
+    "finish": "glossy",
+    "glyph": "music",
+    "silhouette": "tile",
+    "parts": [
+      {
+        "id": "tile",
+        "facet": "top",
+        "tone": 0,
+        "bevel": "raised",
+        "d": "M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z"
+      },
+      {
+        "id": "heads",
+        "tint": "ink.on-accent",
+        "min": 24,
+        "d": "M8.12 24.18A3.0 2.3 -20.0 1 1 13.76 22.13A3.0 2.3 -20.0 1 1 8.12 24.18ZM17.12 22.38A3.0 2.3 -20.0 1 1 22.76 20.33A3.0 2.3 -20.0 1 1 17.12 22.38Z"
+      },
+      {
+        "id": "beam",
+        "tint": "ink.on-accent",
+        "min": 24,
+        "d": "M13.49 23.15V8.25L23.99 6.45V21.35H22.49V9.31L14.99 10.6V23.15Z"
+      }
+    ]
+  },
+  "appCalendar": {
+    "material": "paper",
+    "finish": "glossy",
+    "glyph": "document",
+    "silhouette": "tile",
+    "parts": [
+      {
+        "id": "tile",
+        "facet": "top",
+        "tone": 0.1,
+        "bevel": "raised",
+        "d": "M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z"
+      },
+      {
+        "id": "header",
+        "material": "ruby",
+        "facet": "top",
+        "tone": -0.2,
+        "bevel": "none",
+        "d": "M9 2h14a7 7 0 0 1 7 7v3H2V9a7 7 0 0 1 7-7Z"
+      },
+      {
+        "id": "binding",
+        "role": "crease",
+        "min": 28,
+        "d": "M2.6 12.0h26.8"
+      },
+      {
+        "id": "days",
+        "tint": "platinum.5",
+        "min": 28,
+        "d": "M7.05 13.8h1.1a1.05 1.05 0 0 1 1.05 1.05v1.1a1.05 1.05 0 0 1 -1.05 1.05h-1.1a1.05 1.05 0 0 1 -1.05 -1.05v-1.1a1.05 1.05 0 0 1 1.05 -1.05Z M18.25 13.8h1.1a1.05 1.05 0 0 1 1.05 1.05v1.1a1.05 1.05 0 0 1 -1.05 1.05h-1.1a1.05 1.05 0 0 1 -1.05 -1.05v-1.1a1.05 1.05 0 0 1 1.05 -1.05Z M23.85 13.8h1.1a1.05 1.05 0 0 1 1.05 1.05v1.1a1.05 1.05 0 0 1 -1.05 1.05h-1.1a1.05 1.05 0 0 1 -1.05 -1.05v-1.1a1.05 1.05 0 0 1 1.05 -1.05Z M7.05 19.4h1.1a1.05 1.05 0 0 1 1.05 1.05v1.1a1.05 1.05 0 0 1 -1.05 1.05h-1.1a1.05 1.05 0 0 1 -1.05 -1.05v-1.1a1.05 1.05 0 0 1 1.05 -1.05Z M12.65 19.4h1.1a1.05 1.05 0 0 1 1.05 1.05v1.1a1.05 1.05 0 0 1 -1.05 1.05h-1.1a1.05 1.05 0 0 1 -1.05 -1.05v-1.1a1.05 1.05 0 0 1 1.05 -1.05Z M18.25 19.4h1.1a1.05 1.05 0 0 1 1.05 1.05v1.1a1.05 1.05 0 0 1 -1.05 1.05h-1.1a1.05 1.05 0 0 1 -1.05 -1.05v-1.1a1.05 1.05 0 0 1 1.05 -1.05Z M23.85 19.4h1.1a1.05 1.05 0 0 1 1.05 1.05v1.1a1.05 1.05 0 0 1 -1.05 1.05h-1.1a1.05 1.05 0 0 1 -1.05 -1.05v-1.1a1.05 1.05 0 0 1 1.05 -1.05Z M7.05 25.0h1.1a1.05 1.05 0 0 1 1.05 1.05v1.1a1.05 1.05 0 0 1 -1.05 1.05h-1.1a1.05 1.05 0 0 1 -1.05 -1.05v-1.1a1.05 1.05 0 0 1 1.05 -1.05Z M12.65 25.0h1.1a1.05 1.05 0 0 1 1.05 1.05v1.1a1.05 1.05 0 0 1 -1.05 1.05h-1.1a1.05 1.05 0 0 1 -1.05 -1.05v-1.1a1.05 1.05 0 0 1 1.05 -1.05Z M18.25 25.0h1.1a1.05 1.05 0 0 1 1.05 1.05v1.1a1.05 1.05 0 0 1 -1.05 1.05h-1.1a1.05 1.05 0 0 1 -1.05 -1.05v-1.1a1.05 1.05 0 0 1 1.05 -1.05Z M23.85 25.0h1.1a1.05 1.05 0 0 1 1.05 1.05v1.1a1.05 1.05 0 0 1 -1.05 1.05h-1.1a1.05 1.05 0 0 1 -1.05 -1.05v-1.1a1.05 1.05 0 0 1 1.05 -1.05Z"
+      },
+      {
+        "id": "today",
+        "tint": "traffic.close.base",
+        "min": 24,
+        "d": "M12.65 13.8h1.1a1.05 1.05 0 0 1 1.05 1.05v1.1a1.05 1.05 0 0 1 -1.05 1.05h-1.1a1.05 1.05 0 0 1 -1.05 -1.05v-1.1a1.05 1.05 0 0 1 1.05 -1.05Z"
+      }
+    ]
+  },
+  "appCalculator": {
+    "material": "graphite",
+    "finish": "glossy",
+    "glyph": "plus",
+    "silhouette": "tile",
+    "parts": [
+      {
+        "id": "tile",
+        "facet": "top",
+        "tone": 0,
+        "bevel": "raised",
+        "d": "M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z"
+      },
+      {
+        "id": "screen",
+        "facet": "under",
+        "tone": -0.85,
+        "bevel": "well",
+        "d": "M7.2 6.4h17.6a1.6 1.6 0 0 1 1.6 1.6v4.4a1.6 1.6 0 0 1-1.6 1.6H7.2A1.6 1.6 0 0 1 5.6 12.4V8a1.6 1.6 0 0 1 1.6-1.6Z"
+      },
+      {
+        "id": "readout",
+        "role": "crease",
+        "tint": "traffic.zoom.light",
+        "min": 28,
+        "d": "M15.6 10.2h8.4"
+      },
+      {
+        "id": "keys",
+        "tint": "platinum.3",
+        "min": 24,
+        "d": "M8.0 15.9h1.2a1.1 1.1 0 0 1 1.1 1.1v1.2a1.1 1.1 0 0 1 -1.1 1.1h-1.2a1.1 1.1 0 0 1 -1.1 -1.1v-1.2a1.1 1.1 0 0 1 1.1 -1.1Z M13.5 15.9h1.2a1.1 1.1 0 0 1 1.1 1.1v1.2a1.1 1.1 0 0 1 -1.1 1.1h-1.2a1.1 1.1 0 0 1 -1.1 -1.1v-1.2a1.1 1.1 0 0 1 1.1 -1.1Z M19.0 15.9h1.2a1.1 1.1 0 0 1 1.1 1.1v1.2a1.1 1.1 0 0 1 -1.1 1.1h-1.2a1.1 1.1 0 0 1 -1.1 -1.1v-1.2a1.1 1.1 0 0 1 1.1 -1.1Z M8.0 20.4h1.2a1.1 1.1 0 0 1 1.1 1.1v1.2a1.1 1.1 0 0 1 -1.1 1.1h-1.2a1.1 1.1 0 0 1 -1.1 -1.1v-1.2a1.1 1.1 0 0 1 1.1 -1.1Z M13.5 20.4h1.2a1.1 1.1 0 0 1 1.1 1.1v1.2a1.1 1.1 0 0 1 -1.1 1.1h-1.2a1.1 1.1 0 0 1 -1.1 -1.1v-1.2a1.1 1.1 0 0 1 1.1 -1.1Z M19.0 20.4h1.2a1.1 1.1 0 0 1 1.1 1.1v1.2a1.1 1.1 0 0 1 -1.1 1.1h-1.2a1.1 1.1 0 0 1 -1.1 -1.1v-1.2a1.1 1.1 0 0 1 1.1 -1.1Z M8.0 24.9h1.2a1.1 1.1 0 0 1 1.1 1.1v1.2a1.1 1.1 0 0 1 -1.1 1.1h-1.2a1.1 1.1 0 0 1 -1.1 -1.1v-1.2a1.1 1.1 0 0 1 1.1 -1.1Z M13.5 24.9h1.2a1.1 1.1 0 0 1 1.1 1.1v1.2a1.1 1.1 0 0 1 -1.1 1.1h-1.2a1.1 1.1 0 0 1 -1.1 -1.1v-1.2a1.1 1.1 0 0 1 1.1 -1.1Z M19.0 24.9h1.2a1.1 1.1 0 0 1 1.1 1.1v1.2a1.1 1.1 0 0 1 -1.1 1.1h-1.2a1.1 1.1 0 0 1 -1.1 -1.1v-1.2a1.1 1.1 0 0 1 1.1 -1.1Z"
+      },
+      {
+        "id": "ops",
+        "tint": "traffic.minimize.base",
+        "min": 24,
+        "d": "M24.5 15.9h1.2a1.1 1.1 0 0 1 1.1 1.1v1.2a1.1 1.1 0 0 1 -1.1 1.1h-1.2a1.1 1.1 0 0 1 -1.1 -1.1v-1.2a1.1 1.1 0 0 1 1.1 -1.1Z M24.5 20.4h1.2a1.1 1.1 0 0 1 1.1 1.1v1.2a1.1 1.1 0 0 1 -1.1 1.1h-1.2a1.1 1.1 0 0 1 -1.1 -1.1v-1.2a1.1 1.1 0 0 1 1.1 -1.1Z M24.5 24.9h1.2a1.1 1.1 0 0 1 1.1 1.1v1.2a1.1 1.1 0 0 1 -1.1 1.1h-1.2a1.1 1.1 0 0 1 -1.1 -1.1v-1.2a1.1 1.1 0 0 1 1.1 -1.1Z"
+      }
+    ]
+  }
+}

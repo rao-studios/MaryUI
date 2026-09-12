@@ -32,6 +32,18 @@ export function brushedTextureDataUri(p: BrushParams = defaultBrushParams()): st
   return `data:image/svg+xml;utf8,${encodeURIComponent(brushedTextureSvg(p))}`
 }
 
+let defaultBrushUri: string | null = null
+
+/**
+ * The tile at its token defaults, built once. Several consumers want the same
+ * bytes — every object icon's grain, the platinum monogram — and each used to
+ * keep a cache of its own, so the SVG was serialised more than once.
+ */
+export function sharedBrushDataUri(): string {
+  defaultBrushUri ??= brushedTextureDataUri()
+  return defaultBrushUri
+}
+
 /** Publishes the tile as `--lp-brush-url` on the root so every surface can paint it. */
 export function installBrushTexture(p: BrushParams = defaultBrushParams(), root: HTMLElement = document.documentElement): void {
   root.style.setProperty('--lp-brush-url', `url("${brushedTextureDataUri(p)}")`)

@@ -91,7 +91,7 @@ export function SpotlightPanel({
                 onClick={() => onActivate?.(i)}
               >
                 <span className={styles.plate}>
-                  <Icon name={item.icon} size={36} strokeWidth={1.6} />
+                  <Icon name={item.icon} variant="object" size={36} strokeWidth={1.6} />
                 </span>
                 <span className={styles.label}>{item.title}</span>
                 <span className={cx(styles.dot, item.running && styles.running)} aria-hidden="true" />

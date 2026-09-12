@@ -140,6 +140,19 @@ export function buildMenus(store: WMStore, state: WMState, settings: Settings): 
           checked: settings.accent === 'graphite',
           onSelect: () => updateSettings({ accent: 'graphite' }),
         },
+        SEP,
+        {
+          id: 'folders-manila',
+          label: 'Folders · Manila',
+          checked: settings.folders === 'manila',
+          onSelect: () => updateSettings({ folders: 'manila' }),
+        },
+        {
+          id: 'folders-slate',
+          label: 'Folders · Slate',
+          checked: settings.folders === 'slate',
+          onSelect: () => updateSettings({ folders: 'slate' }),
+        },
       ],
     },
     {

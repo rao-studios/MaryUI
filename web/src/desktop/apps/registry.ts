@@ -38,7 +38,7 @@ export const apps: Record<string, AppDefinition> = {
     id: 'finder',
     title: 'Rao',
     name: 'Finder',
-    icon: 'folder',
+    icon: 'appFinder',
     component: FinderApp,
     defaultRect: { x: 72, y: 72, w: 720, h: 460 },
     minSize: { w: 420, h: 240 },

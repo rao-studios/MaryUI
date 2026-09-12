@@ -30,14 +30,14 @@
 .shell {
   width: var(--lp-size-spotlight-width);
   max-width: 100%;
-  border-radius: calc(var(--lp-radius-lg) * (var(--lp-radius-flex-base) + var(--lp-radius-flex-span) * var(--lp-radius-k)));
+  border-radius: calc(var(--lp-radius-spotlight) * (var(--lp-radius-flex-base) + var(--lp-radius-flex-span) * var(--lp-radius-k)));
   box-shadow: var(--lp-shadow-menu);
   backdrop-filter: blur(14px) saturate(1.1);
   -webkit-backdrop-filter: blur(14px) saturate(1.1);
 }
 
 .panel {
-  border-radius: calc(var(--lp-radius-lg) * (var(--lp-radius-flex-base) + var(--lp-radius-flex-span) * var(--lp-radius-k)));
+  border-radius: calc(var(--lp-radius-spotlight) * (var(--lp-radius-flex-base) + var(--lp-radius-flex-span) * var(--lp-radius-k)));
   padding: var(--lp-space-2);
 }
 
@@ -63,12 +63,13 @@
 
 .cell {
   width: 88px;
-  height: 84px;
+  height: var(--lp-size-spotlight-cell);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--lp-space-1);
-  padding: 6px 0 0;
+  /* The running dot needs air beneath it: at 6px 0 0 it sat on the selection edge. */
+  padding: 6px 0 8px;
   border: 0;
   border-radius: var(--lp-radius-sm);
   background: transparent;

@@ -97,6 +97,39 @@ describe('c', () => {
 describe('the real tokens.json', () => {
   const out = buildAll(tree, icons, { sourceHash: 'abc', iconsHash: 'def' })
 
+  /*
+   * lp_icon.c includes lp_tokens.h and lp_icons.h together, so a name defined by
+   * both is a macro redefinition and the C desktop stops compiling. An `icon`
+   * token group would have done exactly that: cName() maps icon.viewbox to
+   * LP_ICON_VIEWBOX and icon.stroke to LP_ICON_STROKE, which lp_icons.h already
+   * owns. That is why the object tier's tokens live under `object`.
+   */
+  it('defines no macro that lp_icons.h already defines', () => {
+    const names = (src: string) => new Set(Array.from(src.matchAll(/^#define (LP_[A-Z0-9_]+)/gm), (m) => m[1]))
+    const clash = [...names(out.c)].filter((name) => names(out.iconsC).has(name))
+    expect(clash).toEqual([])
+  })
+
+  it('keeps the Spotlight panel on the same arc as its search field', () => {
+    /*
+     * The field is a pill, so its radius is half its own height. The panel is
+     * meant to read as the same corner, which only holds while these two agree
+     * — and nothing else would notice if a later change to the bar's height
+     * quietly left the panel behind.
+     */
+    const px = (path: string) =>
+      Number.parseFloat(out.tokens.find((t: { path: string[] }) => t.path.join('.') === path).value)
+    expect(px('radius.spotlight')).toBe(px('size.spotlight-bar-height') / 2)
+  })
+
+  it('keeps the object tier under a prefix of its own', () => {
+    expect(out.c).toContain('#define LP_OBJECT_VIEWBOX 32')
+    expect(out.c).toContain('#define LP_OBJECT_TIER_GLYPH_MAX 19.0f')
+    // light-azimuth aliases goo.specular-azimuth: icons are lit by the same lamp as the beads.
+    expect(out.c).toContain('#define LP_OBJECT_LIGHT_AZIMUTH 250.0f')
+    expect(out.c).toContain('#define LP_OBJECT_MATERIAL_MANILA_MID')
+  })
+
   it('emits the C header with every token type', () => {
     expect(out.c).toContain('#define LP_PLATINUM_0 ((lp_color){ 0.9686f, 0.9686f, 0.9765f, 1.0f })')
     expect(out.c).toContain('#define LP_SURFACE_WINDOW_TOP ((lp_color){ 0.9333f, 0.9373f, 0.949f, 1.0f })')

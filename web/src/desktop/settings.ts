@@ -1,5 +1,6 @@
 /**
- * Desktop preferences: accent, goo, wallpaper source, reduced motion, and the
+ * Desktop preferences: accent, folder appearance, goo, wallpaper source, reduced
+ * motion, and the
  * Gallery's debug switches. A micro store mirrored onto <html data-*> so CSS can
  * react, and persisted to localStorage so the inline script in index.html can
  * restore it before paint.
@@ -10,9 +11,12 @@ import { useSyncExternalStore } from 'react'
 export type Accent = 'blue' | 'graphite'
 export type WallpaperMode = 'molten' | 'procedural' | 'raster'
 export type MoltenTone = 'platinum' | 'faithful'
+/** Warm card stock, or the cool blue-grey Mac OS 8/9 drew folders in. */
+export type FolderAppearance = 'manila' | 'slate'
 
 export interface Settings {
   accent: Accent
+  folders: FolderAppearance
   goo: boolean
   wallpaper: WallpaperMode
   /** Which grade the molten wallpaper wears. */
@@ -31,6 +35,7 @@ const KEY = 'lp-settings'
 function read(): Settings {
   const defaults: Settings = {
     accent: 'blue',
+    folders: 'slate',
     goo: true,
     wallpaper: 'molten',
     moltenTone: 'platinum',
@@ -52,6 +57,7 @@ const listeners = new Set<() => void>()
 function apply(s: Settings): void {
   const html = document.documentElement
   html.dataset.accent = s.accent
+  html.dataset.folders = s.folders
   html.dataset.goo = s.goo ? 'on' : 'off'
   html.dataset.wallpaper = s.wallpaper
   html.dataset.moltenTone = s.moltenTone

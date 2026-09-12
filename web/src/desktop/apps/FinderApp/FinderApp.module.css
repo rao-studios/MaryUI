@@ -59,9 +59,12 @@
   color: var(--lp-ink-secondary);
 }
 
-.tileIcon[data-kind='folder'] {
-  color: var(--lp-accent-base);
-}
+/*
+ * The folder used to be tinted here, because a hairline outline had no other
+ * way to say "folder". It is an object now and its material says it: manila,
+ * the one warm thing in a cool system. Tinting is back where it belongs, on
+ * selection.
+ */
 
 .tileName {
   max-width: 100%;

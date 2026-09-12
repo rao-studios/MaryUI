@@ -1,0 +1,123 @@
+/**
+ * The object tier's contract. Three things are load-bearing: the geometry is
+ * well formed, every small-size fallback resolves to a real glyph, and the C
+ * pipeline never learns about this file — objects are web-only for now, and
+ * `make gen-check` stays green only as long as that holds.
+ *
+ * The structural checks read their allowed values out of objects.schema.json
+ * rather than repeating them, so the schema stays the single source of truth
+ * for what a part may say and the test cannot drift from it.
+ */
+
+import { readFileSync } from 'node:fs'
+import { describe, expect, it } from 'vitest'
+import objects from './objects.json'
+import schema from './objects.schema.json'
+import icons from '../Icon/icons.json'
+import tokens from '../../../tokens/tokens.json'
+
+interface Part {
+  id: string
+  d: string
+  facet?: string
+  tone?: number
+  bevel?: string
+  role?: string
+  material?: string
+  tint?: string
+  min?: number
+  fillRule?: string
+}
+interface ObjectIconDef { material: string; silhouette: string; glyph?: string; parts: Part[] }
+
+const entries = Object.entries(objects).filter(([k]) => !k.startsWith('$')) as [string, ObjectIconDef][]
+const glyphNames = new Set(Object.keys(icons))
+
+const partSchema = schema.$defs.part
+const partKeys = new Set(Object.keys(partSchema.properties))
+const materials = new Set(schema.$defs.material.enum)
+const enumOf = (key: string) =>
+  new Set((partSchema.properties as Record<string, { enum?: string[] }>)[key].enum)
+
+describe('objects.json', () => {
+  it('is on the 32 grid the object tokens declare', () => {
+    expect((objects as { $grid: number }).$grid).toBe(schema.properties.$grid.const)
+  })
+
+  it('says only what the schema allows', () => {
+    for (const [name, icon] of entries) {
+      expect(materials.has(icon.material), `${name}.material`).toBe(true)
+      for (const part of icon.parts) {
+        const where = `${name}.${part.id}`
+        expect(Object.keys(part).filter((k) => !partKeys.has(k)), where).toEqual([])
+        expect(part.d, where).toBeTruthy()
+        if (part.facet) expect(enumOf('facet').has(part.facet), where).toBe(true)
+        if (part.bevel) expect(enumOf('bevel').has(part.bevel), where).toBe(true)
+        if (part.role) expect(enumOf('role').has(part.role), where).toBe(true)
+        if (part.material) expect(materials.has(part.material), where).toBe(true)
+        if (part.tone !== undefined) expect(Math.abs(part.tone), where).toBeLessThanOrEqual(1)
+      }
+    }
+  })
+
+  it('names a silhouette that is one of its own parts', () => {
+    for (const [name, icon] of entries)
+      expect(icon.parts.map((p) => p.id), name).toContain(icon.silhouette)
+  })
+
+  it('gives every part a unique id', () => {
+    for (const [name, icon] of entries) {
+      const ids = icon.parts.map((p) => p.id)
+      expect(new Set(ids).size, name).toBe(ids.length)
+    }
+  })
+
+  it('resolves every small-size glyph fallback', () => {
+    for (const [name, icon] of entries) {
+      const fallback = icon.glyph ?? name
+      expect(glyphNames.has(fallback), `${name} falls back to "${fallback}"`).toBe(true)
+    }
+  })
+
+  it('resolves every tint to a real token', () => {
+    const at = (path: string) =>
+      path.split('.').reduce<unknown>(
+        (node, key) => (node == null ? node : (node as Record<string, unknown>)[key]),
+        tokens,
+      ) as { $value?: unknown } | undefined
+    for (const [name, icon] of entries)
+      for (const part of icon.parts)
+        if (part.tint) expect(at(part.tint)?.$value, `${name}.${part.id} → ${part.tint}`).toBeTruthy()
+  })
+
+  it('keeps ink inside the 32 grid', () => {
+    /*
+     * Path data packs numbers without separators — "l-4.2.93" is -4.2 then .93 —
+     * so this has to match SVG's number grammar, including the leading-dot form.
+     * A naive /-?\d+(\.\d+)?/ reads that .93 as 93 and reports a false breach.
+     */
+    const NUMBER = /-?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?/g
+    for (const [name, icon] of entries)
+      for (const part of icon.parts)
+        for (const n of part.d.match(NUMBER) ?? [])
+          expect(Math.abs(Number(n)), `${name}.${part.id} — "${n}"`).toBeLessThanOrEqual(32)
+  })
+
+  it('carries no colour of its own — lighting lives in tokens.json', () => {
+    /* Checked over the icons only: the file's own $description talks about colour. */
+    const geometry = JSON.stringify(Object.fromEntries(entries))
+    expect(geometry).not.toMatch(/#[0-9a-f]{3,8}\b|rgba?\(|gradient/i)
+  })
+})
+
+describe('the C pipeline', () => {
+  it('never reads objects.json', () => {
+    /*
+     * Wiring this into the token build would change lp_icons.h, bump
+     * LP_ICON_COUNT and break linux/tests/test_icons.c. The object tier stays
+     * web-only until the C renderer is in scope.
+     */
+    for (const file of ['../../../scripts/build-tokens.mjs', '../../../scripts/tokens-lib.mjs'])
+      expect(readFileSync(new URL(file, import.meta.url), 'utf8')).not.toContain('objects.json')
+  })
+})

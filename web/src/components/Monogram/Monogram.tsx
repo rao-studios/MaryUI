@@ -6,7 +6,7 @@
 
 import { useId, type CSSProperties } from 'react'
 import { MONOGRAM_SYMBOL_ID } from '@/components/SvgDefs'
-import { brushedTextureDataUri } from '@/lib/textures'
+import { sharedBrushDataUri } from '@/lib/textures'
 import { cx } from '@/lib/cx'
 import styles from './Monogram.module.css'
 
@@ -18,8 +18,6 @@ export interface MonogramProps {
   style?: CSSProperties
   title?: string
 }
-
-let brushUri: string | null = null
 
 export function Monogram({ variant = 'flat', size = 16, className, style, title = 'Rao' }: MonogramProps) {
   const uid = useId().replace(/:/g, '')
@@ -33,7 +31,6 @@ export function Monogram({ variant = 'flat', size = 16, className, style, title 
     )
   }
 
-  brushUri ??= brushedTextureDataUri()
   const gradient = `lp-mono-grad-${uid}`
   const pattern = `lp-mono-brush-${uid}`
   const spec = `lp-mono-spec-${uid}`
@@ -54,7 +51,7 @@ export function Monogram({ variant = 'flat', size = 16, className, style, title 
           <stop offset="0.7" stopColor="#fff" stopOpacity="0" />
         </linearGradient>
         <pattern id={pattern} patternUnits="userSpaceOnUse" width="128" height="128">
-          <image href={brushUri} width="128" height="128" />
+          <image href={sharedBrushDataUri()} width="128" height="128" />
         </pattern>
         <filter id={shadow} x="-20%" y="-20%" width="140%" height="140%">
           <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#000" floodOpacity="0.35" />

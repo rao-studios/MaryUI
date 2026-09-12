@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Liquid Platinum object icons",
+  "description": "Geometry for the object-icon tier. No colours: lighting comes from the `object` group in tokens/tokens.json.",
+  "type": "object",
+  "properties": {
+    "$description": { "type": "string" },
+    "$grid": { "const": 32 }
+  },
+  "required": ["$grid"],
+  "additionalProperties": {
+    "type": "object",
+    "properties": {
+      "material": { "$ref": "#/$defs/material" },
+      "finish": {
+        "enum": ["lit", "glossy"],
+        "description": "'glossy' lays Aqua's sweep over the lit passes. Application icons only."
+      },
+      "silhouette": {
+        "type": "string",
+        "description": "The id of the part that casts the contact shadow and carries the outer keyline."
+      },
+      "glyph": {
+        "type": "string",
+        "description": "The icons.json glyph this falls back to below object.tier-glyph-max. Omit when a glyph of the same name exists."
+      },
+      "parts": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/part" } }
+    },
+    "required": ["material", "silhouette", "parts"],
+    "additionalProperties": false
+  },
+  "$defs": {
+    "material": { "enum": ["platinum", "manila", "slate", "paper", "graphite", "accent", "ruby", "amber", "verdant", "glass", "folder"] },
+    "part": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-zA-Z0-9]*$" },
+        "d": { "type": "string", "minLength": 1 },
+        "facet": {
+          "enum": ["top", "front", "under", "flat"],
+          "description": "Which way the surface faces the key light. This is what turns geometry into lighting without any per-icon gradient."
+        },
+        "tone": {
+          "type": "number", "minimum": -1, "maximum": 1,
+          "description": "A signed lighting offset in object.tone-step units — screened when positive, multiplied when negative. Not a colour."
+        },
+        "bevel": { "enum": ["raised", "well", "none"] },
+        "role": {
+          "enum": ["body", "crease", "mark"],
+          "description": "body (default) fills; crease strokes the 1px emboss pair; mark is a glyph-tier stroke drawn on top."
+        },
+        "material": { "$ref": "#/$defs/material", "description": "Overrides the icon's material for this part." },
+        "tint": {
+          "type": "string", "pattern": "^[a-z][a-z0-9-]*(\\.[a-z0-9-]+)+$",
+          "description": "A dotted tokens.json path — a flat fill instead of the material ramp, for small non-material details."
+        },
+        "min": { "type": "number", "description": "Drop this part below this rendered size." },
+        "fillRule": { "enum": ["nonzero", "evenodd"] }
+      },
+      "required": ["id", "d"],
+      "additionalProperties": false
+    }
+  }
+}

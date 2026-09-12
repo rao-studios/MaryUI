@@ -1,6 +1,7 @@
 /*
  * Global base for the Liquid Platinum desktop: token import, reset, typography,
- * the accent mapping (Blue / Graphite), and the data-attribute feature flags
+ * the accent mapping (Blue / Graphite), the folder mapping (Manila / Slate),
+ * and the data-attribute feature flags
  * that let the View menu switch goo, wallpaper, and motion at runtime.
  */
 
@@ -23,6 +24,34 @@
   --lp-accent-light: var(--lp-accent-graphite-light);
   --lp-accent-soft: var(--lp-accent-graphite-soft);
   --lp-accent-focus-ring: var(--lp-accent-graphite-focus-ring);
+}
+
+/* MARK: - Folder appearance */
+
+/*
+ * Folders are the one object with two appearances, on the same footing as the
+ * accent above: warm card stock in the System 7 lineage, or the cool blue-grey
+ * Mac OS 8/9 drew. ObjectIcon builds the `folder` material's ramp from these,
+ * so the switch costs a repaint and no redraw.
+ *
+ * Scoped to the attribute rather than to :root, unlike the accent above. These
+ * are custom properties and they inherit, so any element carrying
+ * data-folders re-roots the appearance for its own subtree — which is what lets
+ * the Gallery show both at once. The desktop still sets it on <html>, where the
+ * later rule wins on equal specificity.
+ */
+
+:root,
+[data-folders='manila'] {
+  --lp-object-folder-hi: var(--lp-object-material-manila-hi);
+  --lp-object-folder-mid: var(--lp-object-material-manila-mid);
+  --lp-object-folder-lo: var(--lp-object-material-manila-lo);
+}
+
+[data-folders='slate'] {
+  --lp-object-folder-hi: var(--lp-object-material-slate-hi);
+  --lp-object-folder-mid: var(--lp-object-material-slate-mid);
+  --lp-object-folder-lo: var(--lp-object-material-slate-lo);
 }
 
 /* MARK: - Motion defaults (the engine overrides these per window) */

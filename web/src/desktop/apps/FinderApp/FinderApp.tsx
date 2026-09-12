@@ -102,7 +102,7 @@ export function FinderApp({ windowId }: AppProps) {
                   onDoubleClick={() => file.kind === 'folder' && choose(locationId)}
                 >
                   <span className={styles.tileIcon} data-kind={file.kind}>
-                    <Icon name={kindIcon[file.kind]} size={48} strokeWidth={1.6} />
+                    <Icon name={kindIcon[file.kind]} variant="object" size={48} strokeWidth={1.6} />
                   </span>
                   <span className={styles.tileName}>{file.name}</span>
                 </button>

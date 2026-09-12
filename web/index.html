@@ -13,6 +13,7 @@
         var prefs = JSON.parse(localStorage.getItem('lp-settings') || '{}')
         var html = document.documentElement
         if (prefs.accent) html.dataset.accent = prefs.accent
+        if (prefs.folders) html.dataset.folders = prefs.folders
         if (prefs.goo === false) html.dataset.goo = 'off'
         if (prefs.wallpaper) html.dataset.wallpaper = prefs.wallpaper
         if (prefs.reducedMotion) html.dataset.reducedMotion = 'on'

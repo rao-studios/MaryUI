@@ -1,7 +1,14 @@
 /**
- * SvgDefs — the hidden <svg> that carries every shared filter and symbol:
- * the liquid-merge filters and the Rao monogram symbol. Mount once, in the
- * Desktop root.
+ * SvgDefs — the hidden <svg> that carries every shared filter, gradient,
+ * pattern and symbol: the liquid-merge filters, the object-icon recipe, the
+ * brushed tile and the Rao monogram symbol. Mount once, in the Desktop root.
+ *
+ * The object-icon defs are here rather than in each icon because they are
+ * finite and identical everywhere: six materials by four facets is
+ * twenty-four body ramps, plus one key wash, one grain tile and one contact
+ * shadow. They stay a fixed set because a part's `tone` is a blend pass and
+ * not a gradient of its own — that is the decision that keeps this from
+ * growing with the icon set.
  *
  * The merge filter does more than blur-and-threshold. That pair, on its own,
  * blurs the blobs' *colour and emboss* along with their alpha, and the merged
@@ -17,6 +24,20 @@
  */
 
 import { tokens } from '@/tokens/tokens'
+import { sharedBrushDataUri } from '@/lib/textures'
+import {
+  BRUSH_PATTERN_ID,
+  CONTACT_FILTER_ID,
+  FACETS,
+  GLOSS_GRADIENT_ID,
+  GLOSS_STOPS,
+  KEY_GRADIENT_ID,
+  KEY_STOPS,
+  RECIPE,
+  STATIC_MATERIALS,
+  bodyGradientId,
+  facetStops,
+} from '@/components/ObjectIcon'
 
 export const GOO_SIZES = ['xxs', 'xs', 'sm', 'md'] as const
 export const GOO_TENSIONS = ['rest', 'flow'] as const
@@ -99,11 +120,81 @@ function Goo({ size, tension }: { size: GooSize; tension: GooTension }) {
   )
 }
 
+/**
+ * One ramp per material and facet. The facet is what turns geometry into
+ * lighting without any per-icon gradient: it picks which stretch of the
+ * material's ramp a face occupies, given where the key is.
+ *
+ * Only the materials with a literal ramp are shared here. `accent` and `folder`
+ * resolve through CSS variables, and a var() inside a gradient stop is read
+ * against the gradient element's own context — which would be this one, at the
+ * app root — so those are emitted per instance by ObjectIcon instead.
+ */
+function ObjectDefs() {
+  return (
+    <>
+      {STATIC_MATERIALS.map((material) =>
+        FACETS.map((facet) => {
+          const [from, to] = facetStops(material, facet)
+          return (
+            <linearGradient key={`${material}-${facet}`} id={bodyGradientId(material, facet)} x1="0" y1="0" x2="0.85" y2="1">
+              <stop offset="0" stopColor={from} />
+              <stop offset="1" stopColor={to} />
+            </linearGradient>
+          )
+        }),
+      )}
+
+      {/* The broad key, along the same axis as the ramps: upper-left to lower-right. */}
+      <linearGradient id={KEY_GRADIENT_ID} x1="0" y1="0" x2="0.9" y2="1">
+        {KEY_STOPS.map((stop) => (
+          <stop key={stop.offset} offset={stop.offset} stopColor={tokens.sheen.color} stopOpacity={stop.opacity} />
+        ))}
+      </linearGradient>
+
+      {/* Aqua's sweep, for the glossy finish. Pure white, so it shares. */}
+      <linearGradient id={GLOSS_GRADIENT_ID} x1="0" y1="0" x2="0" y2="1">
+        {GLOSS_STOPS.map((stop, i) => (
+          <stop key={i} offset={stop.offset} stopColor={tokens.sheen.color} stopOpacity={stop.opacity} />
+        ))}
+      </linearGradient>
+
+      {/*
+       * The surfaces' brushed tile, at the object tier's own density rather
+       * than the window's. Surface paints one tile across 512px; matching that
+       * would fit about a tenth of a tile behind a 48px icon and the grain
+       * would flatten into a wash. So an object runs a much finer grain — near
+       * enough to read as the same metal, not literally the same sheet, which
+       * is the one place the icons knowingly depart from `brush`.
+       */}
+      <pattern id={BRUSH_PATTERN_ID} width={RECIPE.grainTile} height={RECIPE.grainTile} patternUnits="userSpaceOnUse">
+        <image
+          href={sharedBrushDataUri()}
+          width={RECIPE.grainTile}
+          height={RECIPE.grainTile}
+          preserveAspectRatio="none"
+        />
+      </pattern>
+
+      <filter id={CONTACT_FILTER_ID} x="-40%" y="-40%" width="180%" height="180%" colorInterpolationFilters="sRGB">
+        <feDropShadow
+          dx="0"
+          dy={RECIPE.contactDy}
+          stdDeviation={RECIPE.contactBlur}
+          floodColor={RECIPE.contactColor}
+        />
+      </filter>
+    </>
+  )
+}
+
 export function SvgDefs() {
   return (
     <svg width="0" height="0" style={{ position: 'absolute', overflow: 'hidden' }} aria-hidden="true" focusable="false">
       <defs>
         {GOO_SIZES.map((size) => GOO_TENSIONS.map((tension) => <Goo key={`${size}-${tension}`} size={size} tension={tension} />))}
+
+        <ObjectDefs />
 
         {/* The Rao mark: a serif R and its mirror sharing a stem. Traced paths can replace the text later. */}
         <symbol id={MONOGRAM_SYMBOL_ID} viewBox="0 0 200 200">
