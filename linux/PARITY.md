@@ -51,8 +51,8 @@ README, or when a file under `web/src/lib` or `web/src/desktop` is missing from 
 | `desktop/wm/store.ts`, `desktop/wm/useWM.ts` | `lp_desktop_dispatch` + `on_change` (the host syncs from the change mask) | ≈ no subscriptions: one host, one callback |
 | `desktop/settings.ts` | `lp_settings.h`, `src/core/lp_settings.c` (`$XDG_CONFIG_HOME/maryui/settings.conf`) | ≈ **D6** raster wallpaper stored, not rendered; plus `clock`, C-only (**D13**) |
 | `desktop/menus.ts` | `include/maryui/lp_menus.h` (the models), `lp_desktop_build_menus` in `src/core/lp_desktop.c` | ≈ **D11** plus File › New Terminal (`spawn("foot")`), a Go menu, and the focused app's entries (`lp_app.menu_entries`); both sides draw them as Spotlight's pills |
-| `desktop/apps/registry.ts` | `lp_desktop_register_builtin_apps`, `lp_app.h` (`name`, `icon`, `hidden`, `internal`, `open`, `command`, `menu_entries`, `notify`) | ≈ **D11** finder, gallery, about, textedit (hidden: Spotlight only), info (internal: opened by the Finder) |
-| `desktop/spotlight.ts` | `include/maryui/lp_spotlight.h`, `src/core/lp_spotlight.c`, `lp_desktop_spotlight_*` in `src/core/lp_desktop.c`, `tests/test_spotlight.c` | ✓ 9/9 cases: the dock for a blank query, ranking (prefix, word prefix, substring), windows as items, wrap, cap 8; the C tests add the Ctrl+Space / Esc / Enter key cases and seven for the command pills |
+| `desktop/apps/registry.ts` | `lp_desktop_register_builtin_apps`, `lp_app.h` (`name`, `icon`, `hidden`, `internal`, `dock`, `open`, `command`, `menu_entries`, `notify`) | ≈ **D11** **D15** finder, gallery, about, textedit (hidden: Spotlight only), info (internal: opened by the Finder); `dock` pins Finder and TextEdit |
+| `desktop/spotlight.ts` | `include/maryui/lp_spotlight.h`, `src/core/lp_spotlight.c`, `lp_desktop_spotlight_*` in `src/core/lp_desktop.c`, `tests/test_spotlight.c` | ≈ **D15** 9/9 cases: the dock for a blank query (the pinned apps only), ranking (prefix, word prefix, substring), windows as items, wrap, cap 8; the C tests add the Ctrl+Space / Esc / Enter key cases and seven for the command pills |
 | `desktop/SpotlightHost.tsx` | `src/compositor/spotlight.c` (one chrome in the `z.spotlight` layer sized for the no-menu panel so typing never reallocates, `mui_spotlight_resize` when a pill opens, `lp-spotlight-in` tween, hit-test inside the panel, outside-press closes); the view is `lp_desktop_spotlight_view` | ≈ **D9** the Terminal tile |
 | `desktop/Desktop.tsx` | `src/compositor/desktop.c` (the ambient clock, the context menu, pointer/keyboard routing), `src/core/lp_desktop.c` (commands, keys) | ≈ **D13** the clock; opens Finder + Gallery at start like the web, windows use the whole output, hit-testing skips shadows like CSS |
 | `desktop/Wallpaper.tsx` | `mui_desktop_output_ready` + `lp_wallpaper_cached` | ≈ **D5** |
@@ -115,8 +115,9 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
 | `src/components/ObjectIcon/objects.test.ts` | `tests/test_objects.c` — the geometry, the silhouettes, the tier thresholds, and that the ink stays in the box |
 | — | `tests/test_motion.c` (engine, window motion, easing), `test_ui.c`, `test_layout.c`, `test_noise.c`, `test_smoke.c` |
 | — | `tests/test_files.c` (the filesystem model), `tests/test_finder.c` (the Finder driven headlessly: navigation, selection, rename, trash, clipboard, the popup, drag and drop), `tests/test_desktop.c` (opening paths, app commands and menus, the popup, change broadcasts, TextEdit's documents, the clock setting) |
+| — | `tests/test_sources.c` (the event-source wrappers through the poll loop in `tests/lp_test_loop.h`); `test_desktop.c` adds `routes_pictures_and_media_to_their_viewers_once_registered` and `new_terminal_runs_foot_until_a_terminal_app_is_registered`, `test_spotlight.c` adds `pins_the_dock_and_finds_the_rest_by_typing` and `a_terminal_app_replaces_the_terminal_command` |
 
-142 C cases in all.
+149 C cases in all.
 
 ## Deviations
 
@@ -154,7 +155,9 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   `goo.specular-*` and `goo.rim-shade` tokens are now web-only.
 - **D9 — the Terminal tile.** Spotlight lists `Terminal` as a command on both sides. In C it runs
   `LP_CMD_NEW_TERMINAL` (`spawn("foot")`) and the dock's dot lights while a client window is
-  open; on the web it is a no-op — the browser has no processes.
+  open; on the web it is a no-op — the browser has no processes. The tile stands in for a native terminal:
+  once an app with the id `terminal` is registered it leaves the dock, that app takes its place, and
+  `LP_CMD_NEW_TERMINAL` (File › New Terminal, ⌘T) opens it instead of spawning foot.
 - **D10 — TextArea and TextEdit.** The web TextArea is a native `<textarea>`: the browser owns
   the caret, the selection, the clipboard and key repeat, and TextEdit saves to `localStorage`.
   The C TextArea owns a UTF-8 document (`lp_text_doc`) with a caret and an anchor, wraps through
@@ -207,6 +210,16 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   the web's. Two consequences of the C side having no `mix-blend-mode` per element: the grain is an
   `OVERLAY` paint clipped to the part and the key and gloss are `SCREEN` paints clipped to the
   silhouette, which is what those blend modes mean, and nothing above them is affected.
+- **D15 — the system apps' plumbing.** Linux grows applications the web will never have (Preview, the Media
+  Player, Terminal, Calculator, Calendar, Activity Monitor, Disk Utility, System Settings); the web stays the
+  design preview and gets no counterparts. Three pieces of the desktop model exist for them. **The dock is
+  pinned:** `lp_app.dock` marks the apps a blank query shows, and typing still ranks every non-internal app, so
+  thirteen apps fit a dock of eight (`LP_DESKTOP_MAX_APPS` is 16). On the web every app is in the dock.
+  **Apps get event sources:** `lp_desktop.add_fd` / `add_timer` / `update_timer` / `remove_source` are host hooks
+  (the compositor's `sources.c` over `wl_event_loop`, `tests/lp_test_loop.h` over `poll`, nothing in lp-render),
+  NULL-safe through the `lp_desktop_*` wrappers, with one-shot timers like wlroots'. **Files route by kind:**
+  `lp_file_kind` gains `VIDEO` and `PDF`; `lp_desktop_open_path` sends images and PDFs to `preview` and audio and
+  video to `media` once those apps are registered, and never hands audio, video or a PDF to TextEdit.
 - **Close animation.** `lp-window-close` (scale .96 + fade over `motion.fast`, `CLOSE` after
   fast + 80 ms) runs for built-in windows. A client that unmaps is gone at once — the compositor
   has no pixels left to fade.

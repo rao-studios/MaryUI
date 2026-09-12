@@ -25,17 +25,15 @@ LP_TEST(empty_query_shows_dock) {
     lp_desktop_open_app(&d, "finder");
     lp_spotlight_item r[LP_SPOTLIGHT_MAX_RESULTS];
     int n = results("", r);
-    LP_ASSERT_EQ(n, 5);
+    LP_ASSERT_EQ(n, 3);   /* the pinned apps only: Gallery and About are found by typing */
     LP_ASSERT_STR(r[0].title, "Finder");
-    LP_ASSERT_STR(r[1].title, "Gallery");
-    LP_ASSERT_STR(r[2].title, "About");
-    LP_ASSERT_STR(r[3].title, "TextEdit");
-    LP_ASSERT_STR(r[4].title, "Terminal");
-    LP_ASSERT_EQ(r[4].kind, LP_SPOT_COMMAND);
+    LP_ASSERT_STR(r[1].title, "TextEdit");
+    LP_ASSERT_STR(r[2].title, "Terminal");
+    LP_ASSERT_EQ(r[2].kind, LP_SPOT_COMMAND);
     LP_ASSERT_EQ(r[0].running, 1);
     LP_ASSERT_EQ(r[1].running, 0);
     for (int i = 0; i < n; i++) LP_ASSERT(r[i].kind != LP_SPOT_WINDOW);
-    LP_ASSERT_EQ(results("   ", r), 5);
+    LP_ASSERT_EQ(results("   ", r), 3);
 }
 
 LP_TEST(filters_apps_by_title_prefix_and_substring) {
@@ -137,7 +135,7 @@ LP_TEST(ctrl_space_toggles_and_escape_closes) {
     LP_ASSERT_EQ(d.spotlight.selection, 1);
     LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_Up, 0), 1);
     LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_Up, 0), 1);
-    LP_ASSERT_EQ(d.spotlight.selection, 4);
+    LP_ASSERT_EQ(d.spotlight.selection, 2);
     LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_x, 0), 0); /* the bar's */
     LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_w, LP_MOD_CTRL), 0); /* window shortcuts are suspended */
     LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_Escape, 0), 1);
@@ -168,6 +166,36 @@ LP_TEST(enter_activates_the_selection) {
     lp_spotlight_set_query(&d.spotlight, "untitled");
     lp_desktop_key(&d, XKB_KEY_Return, 0);
     LP_ASSERT_EQ(d.wm.focused, 0);
+}
+
+static const lp_app terminal_app = { .id = "terminal", .title = "Terminal", .name = "Terminal", .icon = LP_ICON_TERMINAL, .dock = 1, .resizable = 1 };
+
+LP_TEST(pins_the_dock_and_finds_the_rest_by_typing) {
+    setup();
+    lp_spotlight_item r[LP_SPOTLIGHT_MAX_RESULTS];
+    int n = results("", r);
+    for (int i = 0; i < n; i++) {
+        LP_ASSERT(r[i].dock);
+        LP_ASSERT(strcmp(r[i].title, "Gallery") != 0);
+    }
+    LP_ASSERT_EQ(results("gal", r), 1);
+    LP_ASSERT_STR(r[0].title, "Gallery");
+    LP_ASSERT_EQ(r[0].dock, 0);
+}
+
+LP_TEST(a_terminal_app_replaces_the_terminal_command) {
+    setup();
+    lp_desktop_register_app(&d, &terminal_app);
+    lp_spotlight_item r[LP_SPOTLIGHT_MAX_RESULTS];
+    LP_ASSERT_EQ(results("", r), 3);
+    LP_ASSERT_STR(r[2].title, "Terminal");
+    LP_ASSERT_EQ(r[2].kind, LP_SPOT_APP);
+    LP_ASSERT_EQ(results("term", r), 1);
+    lp_desktop_key(&d, XKB_KEY_space, LP_MOD_CTRL);
+    lp_spotlight_set_query(&d.spotlight, "term");
+    lp_desktop_key(&d, XKB_KEY_Return, 0);
+    LP_ASSERT_EQ(d.wm.count, 1);
+    LP_ASSERT_STR(d.wm.windows[0].app_id, "terminal");
 }
 
 /* MARK: - The commands, folded into the panel */
@@ -290,6 +318,8 @@ int main(void) {
     LP_RUN(caps_results_at_eight);
     LP_RUN(ctrl_space_toggles_and_escape_closes);
     LP_RUN(enter_activates_the_selection);
+    LP_RUN(pins_the_dock_and_finds_the_rest_by_typing);
+    LP_RUN(a_terminal_app_replaces_the_terminal_command);
     LP_RUN(command_pills_open_switch_and_close);
     LP_RUN(typing_closes_the_open_command_menu);
     LP_RUN(escape_closes_the_command_menu_before_spotlight);

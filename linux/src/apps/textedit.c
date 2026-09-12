@@ -211,7 +211,7 @@ static void textedit_paint(void *state, lp_ctx *ctx, lp_rect body, lp_desktop *d
 }
 
 const lp_app lp_app_textedit = {
-    .id = "textedit", .title = "Untitled", .name = "TextEdit", .icon = LP_ICON_PENCIL, .hidden = 1,
+    .id = "textedit", .title = "Untitled", .name = "TextEdit", .icon = LP_ICON_PENCIL, .hidden = 1, .dock = 1,
     .default_rect = { 200, 120, 560, 420 }, .min_size = { 320, 220 }, .singleton = 0, .resizable = 1,
     .create = textedit_create, .paint = textedit_paint, .destroy = textedit_destroy,
     .open = textedit_open, .command = textedit_command, .menu_entries = textedit_menu_entries,

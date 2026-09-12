@@ -37,6 +37,9 @@ static const lp_app stub = {
 };
 static void on_dirty(lp_desktop *desk, const char *id) { dirty_calls++; snprintf(dirty_id, sizeof dirty_id, "%s", id); }
 static void on_drag(lp_desktop *desk, int begin) { drag_calls += begin ? 1 : 10; }
+static char spawned[64];
+static void on_spawn(lp_desktop *desk, const char *command) { snprintf(spawned, sizeof spawned, "%s", command); }
+static lp_app preview_app, media_app, terminal_app;   /* the stub under the ids the desktop routes to */
 
 static void write_file(const char *rel, const char *text, size_t n) {
     char path[1024];
@@ -77,6 +80,48 @@ LP_TEST(opens_a_folder_in_the_finder_and_a_text_file_in_textedit) {
     LP_ASSERT_EQ(lp_desktop_open_path(&d, "/nowhere/at/all"), 0);
     LP_ASSERT_EQ(d.wm.count, 2);
     LP_ASSERT_STR(d.pending_open, "");
+}
+
+LP_TEST(routes_pictures_and_media_to_their_viewers_once_registered) {
+    setup();
+    write_file("Documents/photo.png", "\x89PNG", 4);
+    write_file("Documents/paper.pdf", "%PDF-1.4", 8);
+    write_file("Documents/song.mp3", "ID3", 3);
+    write_file("Documents/clip.mp4", "", 0);
+    char png[600], pdf[600], mp3[600], mp4[600];
+    snprintf(png, sizeof png, "%s/Documents/photo.png", root);
+    snprintf(pdf, sizeof pdf, "%s/Documents/paper.pdf", root);
+    snprintf(mp3, sizeof mp3, "%s/Documents/song.mp3", root);
+    snprintf(mp4, sizeof mp4, "%s/Documents/clip.mp4", root);
+    LP_ASSERT_EQ(lp_desktop_open_path(&d, mp4), 0);   /* nothing plays it yet */
+    preview_app = stub; preview_app.id = "preview"; preview_app.title = "Preview";
+    media_app = stub; media_app.id = "media"; media_app.title = "Media Player";
+    lp_desktop_register_app(&d, &preview_app);
+    lp_desktop_register_app(&d, &media_app);
+    const char *const paths[4] = { png, pdf, mp3, mp4 };
+    const char *const apps[4] = { "preview", "preview", "media", "media" };
+    for (int i = 0; i < 4; i++) {
+        LP_ASSERT_EQ(lp_desktop_open_path(&d, paths[i]), 1);
+        LP_ASSERT_STR(d.wm.windows[d.wm.count - 1].app_id, apps[i]);
+        LP_ASSERT_STR(opened_path, paths[i]);
+    }
+    LP_ASSERT_EQ(d.wm.count, 4);
+}
+
+LP_TEST(new_terminal_runs_foot_until_a_terminal_app_is_registered) {
+    setup();
+    d.spawn = on_spawn;
+    spawned[0] = 0;
+    LP_ASSERT_EQ(lp_desktop_run_command(&d, LP_CMD_NEW_TERMINAL, 0), 1);
+    LP_ASSERT_STR(spawned, "foot");
+    LP_ASSERT_EQ(d.wm.count, 0);
+    terminal_app = stub; terminal_app.id = "terminal"; terminal_app.title = "Terminal";
+    lp_desktop_register_app(&d, &terminal_app);
+    spawned[0] = 0;
+    LP_ASSERT_EQ(lp_desktop_run_command(&d, LP_CMD_NEW_TERMINAL, 0), 1);
+    LP_ASSERT_STR(spawned, "");
+    LP_ASSERT_EQ(d.wm.count, 1);
+    LP_ASSERT_STR(d.wm.windows[0].app_id, "terminal");
 }
 
 LP_TEST(hands_the_path_to_the_app_open_hook_with_the_window_id) {
@@ -323,6 +368,8 @@ int main(void) {
     write_file("Documents/note.md", "# hi\n", 5);
     write_file("Documents/photo.png", "\x89PNG\0\0", 6);
     LP_RUN(opens_a_folder_in_the_finder_and_a_text_file_in_textedit);
+    LP_RUN(routes_pictures_and_media_to_their_viewers_once_registered);
+    LP_RUN(new_terminal_runs_foot_until_a_terminal_app_is_registered);
     LP_RUN(hands_the_path_to_the_app_open_hook_with_the_window_id);
     LP_RUN(routes_app_commands_to_the_focused_window);
     LP_RUN(lets_the_focused_app_fill_the_file_and_go_menus);

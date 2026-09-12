@@ -260,6 +260,8 @@ void mui_drag_window_gone(struct mui_server *server, struct mui_chrome *chrome);
 /* Directory watching (files.c): lp_desktop.watch over inotify. */
 void mui_files_init(struct mui_server *server);
 void mui_files_finish(struct mui_server *server);
+/* Event sources for the built-in apps (sources.c): lp_desktop.add_fd / add_timer on the wl_event_loop. */
+void mui_sources_init(struct mui_server *server);
 /* Schedules a frame on every output; the motion engine's wake callback (output.c). */
 void mui_server_schedule_frame(struct mui_server *server);
 /* Damages every output whole (after scaled/cropped nodes return to normal). */

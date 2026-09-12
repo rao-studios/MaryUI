@@ -44,10 +44,12 @@ int lp_spotlight_items(const lp_desktop *d, lp_spotlight_item *out, int max) {
         snprintf(it->subtitle, sizeof it->subtitle, "Application");
         it->icon = app->icon < LP_ICON_COUNT ? app->icon : LP_ICON_DOCUMENT;
         it->object = app->object;
+        it->dock = app->dock;
         it->index = i;
         for (int w = 0; w < d->wm.count; w++) if (strcmp(d->wm.windows[w].app_id, app->id) == 0) it->running = 1;
     }
-    if (n < max) {
+    /* foot, until a native terminal app is registered (PARITY D9) */
+    if (n < max && !lp_desktop_find_app(d, "terminal")) {
         lp_spotlight_item *it = &out[n++];
         memset(it, 0, sizeof *it);
         it->kind = LP_SPOT_COMMAND;
@@ -55,6 +57,7 @@ int lp_spotlight_items(const lp_desktop *d, lp_spotlight_item *out, int max) {
         snprintf(it->title, sizeof it->title, "Terminal");
         snprintf(it->subtitle, sizeof it->subtitle, "Command");
         it->icon = LP_ICON_TERMINAL;
+        it->dock = 1;
         for (int w = 0; w < d->wm.count; w++) if (!lp_desktop_find_app(d, d->wm.windows[w].app_id)) it->running = 1;
     }
     for (int w = 0; w < d->wm.count && n < max; w++) {
@@ -90,7 +93,7 @@ int lp_spotlight_results(const lp_spotlight_item *items, int n, const char *quer
     lower(trimmed, q, sizeof q);
     int count = 0;
     if (!q[0]) {
-        for (int i = 0; i < n && count < max; i++) if (items[i].kind != LP_SPOT_WINDOW) out[count++] = items[i];
+        for (int i = 0; i < n && count < max; i++) if (items[i].kind != LP_SPOT_WINDOW && items[i].dock) out[count++] = items[i];
         return count;
     }
     for (int r = 0; r <= 2; r++) {

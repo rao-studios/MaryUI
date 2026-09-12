@@ -1155,7 +1155,7 @@ int lp_finder_view(const void *state) { return ((const struct finder *)state)->v
 int lp_finder_sidebar_count(const void *state) { return ((const struct finder *)state)->nside; }
 
 const lp_app lp_app_finder = {
-    .id = "finder", .title = "Rao", .name = "Finder", .icon = LP_ICON_FOLDER, .object = "appFinder", .default_rect = { 72, 72, 720, 460 }, .min_size = { 420, 240 }, .singleton = 0, .resizable = 1,
+    .id = "finder", .title = "Rao", .name = "Finder", .dock = 1, .icon = LP_ICON_FOLDER, .object = "appFinder", .default_rect = { 72, 72, 720, 460 }, .min_size = { 420, 240 }, .singleton = 0, .resizable = 1,
     .create = finder_create, .paint = finder_paint, .destroy = finder_destroy,
     .open = finder_open, .command = finder_command, .menu_entries = finder_menu_entries, .notify = finder_notify, .title_of = finder_title_of,
 };

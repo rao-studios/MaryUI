@@ -121,6 +121,13 @@ int lp_desktop_open_path(lp_desktop *d, const char *path) {
     char name[LP_FILES_NAME_MAX];
     lp_files_display_name(path, name, sizeof name);
     if (is_dir) return lp_desktop_open_app_with(d, "finder", path, name, NULL);
+    /* The viewers first: an SVG is text too, but it is a picture before it is a document. */
+    enum lp_file_kind kind = lp_files_kind(path, 0);
+    const char *viewer = kind == LP_FILE_IMAGE || kind == LP_FILE_PDF ? "preview"
+                       : kind == LP_FILE_MUSIC || kind == LP_FILE_VIDEO ? "media" : NULL;
+    if (viewer && lp_desktop_find_app(d, viewer)) return lp_desktop_open_app_with(d, viewer, path, name, NULL);
+    /* Audio, video and PDFs are never text, however they sniff (an empty .mp4 does); an image may be (SVG). */
+    if (kind == LP_FILE_MUSIC || kind == LP_FILE_VIDEO || kind == LP_FILE_PDF) return 0;
     if (lp_files_is_text(path)) return lp_desktop_open_app_with(d, "textedit", path, name, NULL);
     return 0;
 }
@@ -131,6 +138,24 @@ void lp_desktop_files_changed(lp_desktop *d, const char *dir) {
         if (!inst->app->notify) continue;
         if (inst->app->notify(inst->state, d, dir) && d->on_app_dirty) d->on_app_dirty(d, inst->window_id);
     }
+}
+
+lp_source *lp_desktop_add_fd(lp_desktop *d, int fd, uint32_t mask, lp_source_fn fn, void *data) {
+    return d->add_fd ? d->add_fd(d, fd, mask, fn, data) : NULL;
+}
+
+lp_source *lp_desktop_add_timer(lp_desktop *d, int ms, lp_source_fn fn, void *data) {
+    lp_source *s = d->add_timer ? d->add_timer(d, fn, data) : NULL;
+    if (s && ms > 0) lp_desktop_update_timer(d, s, ms);
+    return s;
+}
+
+void lp_desktop_update_timer(lp_desktop *d, lp_source *source, int ms) {
+    if (source && d->update_timer) d->update_timer(d, source, ms > 0 ? ms : 0);
+}
+
+void lp_desktop_remove_source(lp_desktop *d, lp_source *source) {
+    if (source && d->remove_source) d->remove_source(d, source);
 }
 
 void lp_desktop_open_popup(lp_desktop *d, const char *window_id, float x, float y, const lp_menu_model *model) {
@@ -192,7 +217,11 @@ int lp_desktop_run_command(lp_desktop *d, enum lp_command command, int arg) {
     case LP_CMD_SET_MOLTEN_TONE: d->settings.molten_tone = (enum lp_molten_tone)arg; settings_changed(d); return 1;
     case LP_CMD_TOGGLE_REDUCED_MOTION: d->settings.reduced_motion = !d->settings.reduced_motion; settings_changed(d); return 1;
     case LP_CMD_TOGGLE_CLOCK: d->settings.clock = !d->settings.clock; settings_changed(d); return 1;
-    case LP_CMD_NEW_TERMINAL: if (d->spawn) d->spawn(d, "foot"); return 1;
+    case LP_CMD_NEW_TERMINAL:
+        /* the native Terminal once it is registered; foot, a Wayland client, until then */
+        if (lp_desktop_find_app(d, "terminal")) lp_desktop_open_app(d, "terminal");
+        else if (d->spawn) d->spawn(d, "foot");
+        return 1;
     case LP_CMD_HELP: return 1;
     case LP_CMD_APP: {
         const char *target = d->command_target[0] ? d->command_target : focused ? focused->id : NULL;

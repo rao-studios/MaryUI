@@ -16,7 +16,7 @@
 #include "maryui/lp_spotlight.h"
 #include "maryui/lp_wm.h"
 
-#define LP_DESKTOP_MAX_APPS 8
+#define LP_DESKTOP_MAX_APPS 16
 #define LP_DESKTOP_MENU_COUNT 7           /* Rao, File, Edit, View, Go, Window, Help */
 #define LP_DESKTOP_MENU_POPUP LP_DESKTOP_MENU_COUNT /* open_menu for the context menu (menus[7]) */
 enum lp_menu_slot { LP_MENU_RAO, LP_MENU_FILE, LP_MENU_EDIT, LP_MENU_VIEW, LP_MENU_GO, LP_MENU_WINDOW, LP_MENU_HELP };
@@ -52,6 +52,15 @@ struct lp_desktop;
 typedef void (*lp_desktop_change_fn)(struct lp_desktop *d, uint64_t changed);
 typedef void (*lp_desktop_spawn_fn)(struct lp_desktop *d, const char *command);
 
+/* Event sources an app asks the host for: a terminal's pty, a player's frame
+ * eventfd, a monitor's refresh tick. The compositor backs them with its
+ * wl_event_loop (the mask bits are WL_EVENT_*'s), the tests with
+ * tests/lp_test_loop.h; lp-render has none, so every app must cope with NULL.
+ * Callbacks run on the host's thread and return 0. A timer's fd is -1. */
+enum { LP_SOURCE_READABLE = 1, LP_SOURCE_WRITABLE = 2, LP_SOURCE_HANGUP = 4, LP_SOURCE_ERROR = 8 };
+typedef struct lp_source lp_source;
+typedef int (*lp_source_fn)(int fd, uint32_t mask, void *data);
+
 typedef struct lp_desktop {
     lp_wm_state wm;
     lp_settings settings;
@@ -81,22 +90,36 @@ typedef struct lp_desktop {
     void (*on_app_dirty)(struct lp_desktop *d, const char *window_id);
     /* Watch (on) or stop watching a directory for changes; the host calls lp_desktop_files_changed. */
     void (*watch)(struct lp_desktop *d, const char *dir, int on);
+    /* Event sources (see lp_source_fn). A timer is one-shot: update_timer arms it, 0 disarms. */
+    lp_source *(*add_fd)(struct lp_desktop *d, int fd, uint32_t mask, lp_source_fn fn, void *data);
+    lp_source *(*add_timer)(struct lp_desktop *d, lp_source_fn fn, void *data);
+    void (*update_timer)(struct lp_desktop *d, lp_source *source, int ms);
+    void (*remove_source)(struct lp_desktop *d, lp_source *source);
     void *host;
 } lp_desktop;
 
 void lp_desktop_init(lp_desktop *d, lp_rect bounds, void *host);
 void lp_desktop_register_app(lp_desktop *d, const lp_app *app);
-/* Registers finder, gallery, about, textedit (hidden: Spotlight only) and info (internal). */
+/* Registers finder, gallery, about, textedit (hidden: Spotlight only) and info (internal);
+ * Finder and TextEdit are pinned to the dock. */
 void lp_desktop_register_builtin_apps(lp_desktop *d);
 /* Runs the WM reducer, syncs app instances, calls on_change. Returns the change mask. */
 uint64_t lp_desktop_dispatch(lp_desktop *d, const lp_wm_action *action);
 void lp_desktop_open_app(lp_desktop *d, const char *app_id);
 /* Opens the app with a path (its `open` hook) and a title; the window id comes back in out_id. Returns 1 on success. */
 int lp_desktop_open_app_with(lp_desktop *d, const char *app_id, const char *path, const char *title, char out_id[12]);
-/* A folder opens in a new Finder window, a text file in TextEdit; 0 when nothing can open it. */
+/* A folder opens in a new Finder window; an image or a PDF in Preview and audio or
+ * video in the Media Player once those apps are registered; a text file in
+ * TextEdit. 0 when nothing can open it. */
 int lp_desktop_open_path(lp_desktop *d, const char *path);
 /* A directory changed: every instance's `notify`, then on_app_dirty for those that want a repaint. */
 void lp_desktop_files_changed(lp_desktop *d, const char *dir);
+/* The host's event sources, NULL-safe: each returns NULL (or does nothing) when the host has none.
+ * lp_desktop_add_timer arms the timer when ms > 0. */
+lp_source *lp_desktop_add_fd(lp_desktop *d, int fd, uint32_t mask, lp_source_fn fn, void *data);
+lp_source *lp_desktop_add_timer(lp_desktop *d, int ms, lp_source_fn fn, void *data);
+void lp_desktop_update_timer(lp_desktop *d, lp_source *source, int ms);
+void lp_desktop_remove_source(lp_desktop *d, lp_source *source);
 /* Opens a context menu for a window at (x, y) in its chrome coordinates. */
 void lp_desktop_open_popup(lp_desktop *d, const char *window_id, float x, float y, const lp_menu_model *model);
 const lp_app *lp_desktop_find_app(const lp_desktop *d, const char *app_id);

@@ -19,6 +19,7 @@ typedef struct lp_app {
     const char *object;     /* the object-tier mark when it is not the glyph's own name (lp_objects.h) */
     int hidden;             /* reachable from Spotlight only: not in Window › Open … */
     int internal;           /* not in Spotlight either: opened by other apps (Info) */
+    int dock;               /* pinned: in Spotlight's dock (a blank query); the rest are found by typing */
     lp_rect default_rect;   /* NAN fields take the cascade default */
     lp_size min_size;       /* 0 = LP_DEFAULT_MIN_SIZE */
     int singleton;

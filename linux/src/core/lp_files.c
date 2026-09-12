@@ -55,6 +55,8 @@ static int ext_in(const char *ext, const char *const *list) {
 
 static const char *const IMAGE_EXT[] = { "png", "jpg", "jpeg", "gif", "svg", "webp", "bmp", "tiff", "tif", "heic", "ico", "sketch", NULL };
 static const char *const MUSIC_EXT[] = { "mp3", "m4a", "wav", "flac", "ogg", "aac", "aiff", "opus", NULL };
+static const char *const VIDEO_EXT[] = { "mp4", "m4v", "mov", "mkv", "webm", "avi", "mpg", "mpeg", "ogv", "wmv", NULL };
+static const char *const PDF_EXT[] = { "pdf", NULL };
 static const char *const CODE_EXT[] = { "c", "h", "cpp", "hpp", "cc", "ts", "tsx", "js", "jsx", "mjs", "cjs", "json", "sh", "py", "swift", "css",
     "conf", "toml", "yaml", "yml", "rs", "go", "java", "rb", "sql", "mk", "cmake", "ini", "cfg", "xml", "html", "htm", NULL };
 static const char *const TEXT_EXT[] = { "txt", "md", "markdown", "text", "log", "csv", "tsv", "rtf", "tex", "nfo", "readme", NULL };
@@ -64,17 +66,19 @@ enum lp_file_kind lp_files_kind(const char *name, int is_dir) {
     const char *ext = extension(name);
     if (ext_in(ext, IMAGE_EXT)) return LP_FILE_IMAGE;
     if (ext_in(ext, MUSIC_EXT)) return LP_FILE_MUSIC;
+    if (ext_in(ext, VIDEO_EXT)) return LP_FILE_VIDEO;
+    if (ext_in(ext, PDF_EXT)) return LP_FILE_PDF;
     if (ext_in(ext, CODE_EXT)) return LP_FILE_CODE;
     return LP_FILE_DOCUMENT;
 }
 
 const char *lp_files_kind_label(enum lp_file_kind kind) {
-    static const char *const LABELS[] = { "Folder", "Document", "Image", "Audio", "Source" };
+    static const char *const LABELS[] = { "Folder", "Document", "Image", "Audio", "Source", "Video", "PDF Document" };
     return kind < LP_FILE_KIND_COUNT ? LABELS[kind] : "Document";
 }
 
 lp_icon lp_files_kind_icon(enum lp_file_kind kind) {
-    static const lp_icon ICONS[] = { LP_ICON_FOLDER, LP_ICON_DOCUMENT, LP_ICON_IMAGE, LP_ICON_MUSIC, LP_ICON_CODE };
+    static const lp_icon ICONS[] = { LP_ICON_FOLDER, LP_ICON_DOCUMENT, LP_ICON_IMAGE, LP_ICON_MUSIC, LP_ICON_CODE, LP_ICON_PLAY, LP_ICON_DOCUMENT };
     return kind < LP_FILE_KIND_COUNT ? ICONS[kind] : LP_ICON_DOCUMENT;
 }
 

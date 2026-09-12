@@ -21,6 +21,7 @@ typedef struct lp_spotlight_item {
     const char *object;       /* the object-tier mark, when the glyph's name is not it */
     int index;            /* app index (APP), window index (WINDOW) */
     int running;          /* an app with a window open (the dock's dot) */
+    int dock;             /* pinned: shown for a blank query (lp_app.dock, or the Terminal command) */
 } lp_spotlight_item;
 
 typedef struct lp_spotlight {
@@ -43,9 +44,9 @@ void lp_spotlight_set_query(lp_spotlight *s, const char *query);   /* selection 
 void lp_spotlight_move(lp_spotlight *s, int delta, int count);
 
 /* Every launchable thing: the registered apps (hidden ones too), the Terminal
- * command, then the open windows. Returns the count. */
+ * command while no terminal app is registered, then the open windows. Returns the count. */
 int lp_spotlight_items(const struct lp_desktop *d, lp_spotlight_item *out, int max);
-/* The dock (an empty query: every non-window item) or the ranked matches:
+/* The dock (an empty query: the pinned items) or the ranked matches over every item:
  * title prefix, then a word prefix, then a substring; stable; at most max. */
 int lp_spotlight_results(const lp_spotlight_item *items, int n, const char *query, lp_spotlight_item *out, int max);
 

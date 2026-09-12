@@ -231,6 +231,7 @@ void mui_desktop_init(struct mui_server *server) {
     server->desktop.request_close = desktop_request_close;
     server->desktop.on_app_dirty = desktop_app_dirty;
     server->desktop.on_drag = desktop_on_drag;
+    mui_sources_init(server);
     mui_files_init(server);
     server->desktop.open_menu = -1;
     lp_desktop_build_menus(&server->desktop);
