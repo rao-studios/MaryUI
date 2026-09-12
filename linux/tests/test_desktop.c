@@ -41,7 +41,7 @@ static void on_dirty(lp_desktop *desk, const char *id) { dirty_calls++; snprintf
 static void on_drag(lp_desktop *desk, int begin) { drag_calls += begin ? 1 : 10; }
 static char spawned[64];
 static void on_spawn(lp_desktop *desk, const char *command) { snprintf(spawned, sizeof spawned, "%s", command); }
-static lp_app preview_app, media_app, terminal_app;   /* the stub under the ids the desktop routes to */
+static lp_app media_app, terminal_app;   /* the stub under ids the desktop routes to */
 
 static void write_file(const char *rel, const char *text, size_t n) {
     char path[1024];
@@ -78,9 +78,10 @@ LP_TEST(opens_a_folder_in_the_finder_and_a_text_file_in_textedit) {
     LP_ASSERT_STR(d.wm.windows[1].title, "note.md");
     char png[600];
     snprintf(png, sizeof png, "%s/Documents/photo.png", root);
-    LP_ASSERT_EQ(lp_desktop_open_path(&d, png), 0);
+    LP_ASSERT_EQ(lp_desktop_open_path(&d, png), 1);   /* Preview is built in */
+    LP_ASSERT_STR(d.wm.windows[2].app_id, "preview");
     LP_ASSERT_EQ(lp_desktop_open_path(&d, "/nowhere/at/all"), 0);
-    LP_ASSERT_EQ(d.wm.count, 2);
+    LP_ASSERT_EQ(d.wm.count, 3);
     LP_ASSERT_STR(d.pending_open, "");
 }
 
@@ -96,16 +97,16 @@ LP_TEST(routes_pictures_and_media_to_their_viewers_once_registered) {
     snprintf(mp3, sizeof mp3, "%s/Documents/song.mp3", root);
     snprintf(mp4, sizeof mp4, "%s/Documents/clip.mp4", root);
     LP_ASSERT_EQ(lp_desktop_open_path(&d, mp4), 0);   /* nothing plays it yet */
-    preview_app = stub; preview_app.id = "preview"; preview_app.title = "Preview";
     media_app = stub; media_app.id = "media"; media_app.title = "Media Player";
-    lp_desktop_register_app(&d, &preview_app);
     lp_desktop_register_app(&d, &media_app);
     const char *const paths[4] = { png, pdf, mp3, mp4 };
     const char *const apps[4] = { "preview", "preview", "media", "media" };
     for (int i = 0; i < 4; i++) {
         LP_ASSERT_EQ(lp_desktop_open_path(&d, paths[i]), 1);
-        LP_ASSERT_STR(d.wm.windows[d.wm.count - 1].app_id, apps[i]);
-        LP_ASSERT_STR(opened_path, paths[i]);
+        const lp_window_record *w = &d.wm.windows[d.wm.count - 1];
+        LP_ASSERT_STR(w->app_id, apps[i]);
+        lp_app_instance *inst = lp_desktop_instance(&d, w->id);
+        LP_ASSERT_STR(i < 2 ? lp_preview_path(inst->state) : opened_path, paths[i]);
     }
     LP_ASSERT_EQ(d.wm.count, 4);
 }
@@ -150,6 +151,57 @@ LP_TEST(calculator_copies_its_display_and_types_the_clipboard_in) {
     }
     LP_ASSERT_EQ(copy, 1);
     LP_ASSERT_EQ(paste, 1);
+}
+
+static void write_picture(const char *rel) {
+    char path[1024];
+    snprintf(path, sizeof path, "%s/%s", root, rel);
+    cairo_surface_t *s = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 64, 48);
+    cairo_surface_write_to_png(s, path);
+    cairo_surface_destroy(s);
+}
+
+static int menu_entry(int menu, const char *label) {
+    const lp_menu_model *m = &d.menus[menu];
+    for (int i = 0; i < m->count; i++) if (!m->entries[i].separator && strcmp(m->entries[i].label, label) == 0) return i;
+    return -1;
+}
+
+LP_TEST(preview_steps_through_the_folder_zooms_and_turns) {
+    setup();
+    char album[600], one[700];
+    snprintf(album, sizeof album, "%s/Album", root);
+    mkdir(album, 0755);
+    write_picture("Album/one.png");
+    write_picture("Album/two.png");
+    write_file("Album/notes.txt", "words", 5);
+    snprintf(one, sizeof one, "%s/one.png", album);
+    char id[12];
+    LP_ASSERT_EQ(lp_desktop_open_app_with(&d, "preview", one, "one.png", id), 1);
+    lp_app_instance *inst = lp_desktop_instance(&d, id);
+    LP_ASSERT_EQ(lp_preview_error(inst->state), 0);
+    LP_ASSERT(lp_preview_fits(inst->state));
+    LP_ASSERT_EQ(lp_desktop_run_command(&d, LP_CMD_APP, LP_PREVIEW_NEXT), 1);
+    LP_ASSERT(strstr(lp_preview_path(inst->state), "/two.png") != NULL);
+    LP_ASSERT_STR(d.wm.windows[lp_wm_find(&d.wm, id)].title, "two.png");
+    lp_desktop_run_command(&d, LP_CMD_APP, LP_PREVIEW_NEXT);   /* wraps, past the text file */
+    LP_ASSERT(strstr(lp_preview_path(inst->state), "/one.png") != NULL);
+    lp_desktop_run_command(&d, LP_CMD_APP, LP_PREVIEW_ACTUAL_SIZE);
+    LP_ASSERT(!lp_preview_fits(inst->state));
+    LP_ASSERT_NEAR(lp_preview_scale(inst->state), 1, 1e-6);
+    lp_desktop_run_command(&d, LP_CMD_APP, LP_PREVIEW_ZOOM_IN);
+    LP_ASSERT_NEAR(lp_preview_scale(inst->state), 1.5, 1e-6);
+    lp_desktop_run_command(&d, LP_CMD_APP, LP_PREVIEW_ROTATE_LEFT);
+    LP_ASSERT_EQ(lp_preview_turns(inst->state), 3);
+    lp_desktop_build_menus(&d);
+    int fit = menu_entry(LP_MENU_VIEW, "Zoom to Fit");
+    LP_ASSERT(fit >= 0);
+    LP_ASSERT_EQ(fit >= 0 ? d.menus[LP_MENU_VIEW].entries[fit].checked : -1, 0);
+    LP_ASSERT(menu_entry(LP_MENU_VIEW, "Rotate Right") >= 0);
+    LP_ASSERT(menu_entry(LP_MENU_GO, "Next Document") >= 0);
+    LP_ASSERT(menu_entry(LP_MENU_FILE, "Show in Finder") >= 0);
+    lp_desktop_run_command(&d, LP_CMD_APP, LP_PREVIEW_ZOOM_TO_FIT);
+    LP_ASSERT(lp_preview_fits(inst->state));
 }
 
 LP_TEST(hands_the_path_to_the_app_open_hook_with_the_window_id) {
@@ -283,7 +335,7 @@ LP_TEST(spotlight_skips_internal_apps) {
     lp_spotlight_item items[LP_SPOTLIGHT_MAX_ITEMS];
     int n = lp_spotlight_items(&d, items, LP_SPOTLIGHT_MAX_ITEMS);
     for (int i = 0; i < n; i++) { LP_ASSERT(strcmp(items[i].id, "info") != 0); LP_ASSERT(strcmp(items[i].id, "stub") != 0); }
-    LP_ASSERT_EQ(n, 6); /* finder, gallery, about, textedit, calculator + Terminal */
+    LP_ASSERT_EQ(n, 7); /* finder, gallery, about, textedit, calculator, preview + Terminal */
 }
 
 static int view_entry(const char *label) {
@@ -399,6 +451,7 @@ int main(void) {
     LP_RUN(routes_pictures_and_media_to_their_viewers_once_registered);
     LP_RUN(new_terminal_runs_foot_until_a_terminal_app_is_registered);
     LP_RUN(calculator_copies_its_display_and_types_the_clipboard_in);
+    LP_RUN(preview_steps_through_the_folder_zooms_and_turns);
     LP_RUN(hands_the_path_to_the_app_open_hook_with_the_window_id);
     LP_RUN(routes_app_commands_to_the_focused_window);
     LP_RUN(lets_the_focused_app_fill_the_file_and_go_menus);

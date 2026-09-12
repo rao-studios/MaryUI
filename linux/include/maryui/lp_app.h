@@ -46,6 +46,7 @@ extern const lp_app lp_app_gallery;
 extern const lp_app lp_app_textedit;
 extern const lp_app lp_app_info;
 extern const lp_app lp_app_calculator;
+extern const lp_app lp_app_preview;
 
 /* TextEdit: replaces the document (for previews). */
 void lp_textedit_set_text(void *state, const char *name, const char *text);
@@ -80,5 +81,18 @@ struct lp_calc;
 const struct lp_calc *lp_calculator_calc(const void *state);
 /* The Calculator: types keys in (digits . + - * / = %), for previews. */
 void lp_calculator_type(void *state, const char *keys);
+
+enum lp_preview_command {
+    LP_PREVIEW_PREVIOUS, LP_PREVIEW_NEXT, LP_PREVIEW_PREVIOUS_PAGE, LP_PREVIEW_NEXT_PAGE,
+    LP_PREVIEW_ZOOM_IN, LP_PREVIEW_ZOOM_OUT, LP_PREVIEW_ACTUAL_SIZE, LP_PREVIEW_ZOOM_TO_FIT,
+    LP_PREVIEW_ROTATE_LEFT, LP_PREVIEW_ROTATE_RIGHT, LP_PREVIEW_SHOW_IN_FINDER,
+};
+/* Preview's state, for tests. */
+const char *lp_preview_path(const void *state);
+int lp_preview_error(const void *state);   /* lp_image_open's, 0 when the document opened */
+int lp_preview_page(const void *state);
+int lp_preview_turns(const void *state);
+int lp_preview_fits(const void *state);
+float lp_preview_scale(const void *state);
 
 #endif

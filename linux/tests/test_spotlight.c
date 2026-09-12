@@ -25,15 +25,16 @@ LP_TEST(empty_query_shows_dock) {
     lp_desktop_open_app(&d, "finder");
     lp_spotlight_item r[LP_SPOTLIGHT_MAX_RESULTS];
     int n = results("", r);
-    LP_ASSERT_EQ(n, 3);   /* the pinned apps only: Gallery and About are found by typing */
+    LP_ASSERT_EQ(n, 4);   /* the pinned apps only: Gallery, About and Calculator are found by typing */
     LP_ASSERT_STR(r[0].title, "Finder");
     LP_ASSERT_STR(r[1].title, "TextEdit");
-    LP_ASSERT_STR(r[2].title, "Terminal");
-    LP_ASSERT_EQ(r[2].kind, LP_SPOT_COMMAND);
+    LP_ASSERT_STR(r[2].title, "Preview");
+    LP_ASSERT_STR(r[3].title, "Terminal");
+    LP_ASSERT_EQ(r[3].kind, LP_SPOT_COMMAND);
     LP_ASSERT_EQ(r[0].running, 1);
     LP_ASSERT_EQ(r[1].running, 0);
     for (int i = 0; i < n; i++) LP_ASSERT(r[i].kind != LP_SPOT_WINDOW);
-    LP_ASSERT_EQ(results("   ", r), 3);
+    LP_ASSERT_EQ(results("   ", r), 4);
 }
 
 LP_TEST(filters_apps_by_title_prefix_and_substring) {
@@ -136,7 +137,7 @@ LP_TEST(ctrl_space_toggles_and_escape_closes) {
     LP_ASSERT_EQ(d.spotlight.selection, 1);
     LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_Up, 0), 1);
     LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_Up, 0), 1);
-    LP_ASSERT_EQ(d.spotlight.selection, 2);
+    LP_ASSERT_EQ(d.spotlight.selection, 3);
     LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_x, 0), 0); /* the bar's */
     LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_w, LP_MOD_CTRL), 0); /* window shortcuts are suspended */
     LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_Escape, 0), 1);
@@ -188,9 +189,9 @@ LP_TEST(a_terminal_app_replaces_the_terminal_command) {
     setup();
     lp_desktop_register_app(&d, &terminal_app);
     lp_spotlight_item r[LP_SPOTLIGHT_MAX_RESULTS];
-    LP_ASSERT_EQ(results("", r), 3);
-    LP_ASSERT_STR(r[2].title, "Terminal");
-    LP_ASSERT_EQ(r[2].kind, LP_SPOT_APP);
+    LP_ASSERT_EQ(results("", r), 4);
+    LP_ASSERT_STR(r[3].title, "Terminal");
+    LP_ASSERT_EQ(r[3].kind, LP_SPOT_APP);
     LP_ASSERT_EQ(results("term", r), 1);
     lp_desktop_key(&d, XKB_KEY_space, LP_MOD_CTRL);
     lp_spotlight_set_query(&d.spotlight, "term");
