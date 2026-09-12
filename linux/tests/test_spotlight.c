@@ -30,7 +30,7 @@ LP_TEST(empty_query_shows_dock) {
     LP_ASSERT_STR(r[1].title, "TextEdit");
     LP_ASSERT_STR(r[2].title, "Preview");
     LP_ASSERT_STR(r[3].title, "Terminal");
-    LP_ASSERT_EQ(r[3].kind, LP_SPOT_COMMAND);
+    LP_ASSERT_EQ(r[3].kind, LP_SPOT_APP);
     LP_ASSERT_EQ(r[0].running, 1);
     LP_ASSERT_EQ(r[1].running, 0);
     for (int i = 0; i < n; i++) LP_ASSERT(r[i].kind != LP_SPOT_WINDOW);
@@ -170,8 +170,6 @@ LP_TEST(enter_activates_the_selection) {
     LP_ASSERT_EQ(d.wm.focused, 0);
 }
 
-static const lp_app terminal_app = { .id = "terminal", .title = "Terminal", .name = "Terminal", .icon = LP_ICON_TERMINAL, .dock = 1, .resizable = 1 };
-
 LP_TEST(pins_the_dock_and_finds_the_rest_by_typing) {
     setup();
     lp_spotlight_item r[LP_SPOTLIGHT_MAX_RESULTS];
@@ -186,18 +184,19 @@ LP_TEST(pins_the_dock_and_finds_the_rest_by_typing) {
 }
 
 LP_TEST(a_terminal_app_replaces_the_terminal_command) {
-    setup();
-    lp_desktop_register_app(&d, &terminal_app);
+    setup();   /* the built-in Terminal is registered */
     lp_spotlight_item r[LP_SPOTLIGHT_MAX_RESULTS];
-    LP_ASSERT_EQ(results("", r), 4);
-    LP_ASSERT_STR(r[3].title, "Terminal");
-    LP_ASSERT_EQ(r[3].kind, LP_SPOT_APP);
     LP_ASSERT_EQ(results("term", r), 1);
+    LP_ASSERT_EQ(r[0].kind, LP_SPOT_APP);
     lp_desktop_key(&d, XKB_KEY_space, LP_MOD_CTRL);
     lp_spotlight_set_query(&d.spotlight, "term");
     lp_desktop_key(&d, XKB_KEY_Return, 0);
     LP_ASSERT_EQ(d.wm.count, 1);
     LP_ASSERT_STR(d.wm.windows[0].app_id, "terminal");
+    lp_desktop_init(&d, LP_RECT(0, 0, 1280, 800), NULL);   /* a desktop without one keeps foot's command */
+    lp_desktop_register_app(&d, &lp_app_finder);
+    LP_ASSERT_EQ(results("", r), 2);
+    LP_ASSERT_EQ(r[1].kind, LP_SPOT_COMMAND);
 }
 
 /* MARK: - The commands, folded into the panel */

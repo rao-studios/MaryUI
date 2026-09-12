@@ -20,6 +20,7 @@ typedef struct lp_app {
     int hidden;             /* reachable from Spotlight only: not in Window › Open … */
     int internal;           /* not in Spotlight either: opened by other apps (Info) */
     int dock;               /* pinned: in Spotlight's dock (a blank query); the rest are found by typing */
+    int raw_ctrl;           /* Ctrl chords are the app's own (Terminal): only Super (⌘) reaches the desktop's shortcuts while it is in front */
     lp_rect default_rect;   /* NAN fields take the cascade default */
     lp_size min_size;       /* 0 = LP_DEFAULT_MIN_SIZE */
     int singleton;
@@ -47,6 +48,7 @@ extern const lp_app lp_app_textedit;
 extern const lp_app lp_app_info;
 extern const lp_app lp_app_calculator;
 extern const lp_app lp_app_preview;
+extern const lp_app lp_app_terminal;
 
 /* TextEdit: replaces the document (for previews). */
 void lp_textedit_set_text(void *state, const char *name, const char *text);
@@ -94,5 +96,13 @@ int lp_preview_page(const void *state);
 int lp_preview_turns(const void *state);
 int lp_preview_fits(const void *state);
 float lp_preview_scale(const void *state);
+
+enum lp_terminal_command { LP_TERMINAL_COPY, LP_TERMINAL_PASTE, LP_TERMINAL_CLEAR_SCROLLBACK };
+/* Terminal: feeds bytes to its screen as if the shell wrote them (NULL: the sample session previews show). */
+void lp_terminal_feed(void *state, const char *bytes);
+/* Its state, for tests: a screen row's text, the shell's pid (0 once it is gone), whether it has exited. */
+void lp_terminal_row_text(const void *state, int row, char *out, size_t n);
+int lp_terminal_pid(const void *state);
+int lp_terminal_exited(const void *state);
 
 #endif

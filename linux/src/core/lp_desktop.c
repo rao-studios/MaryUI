@@ -31,6 +31,7 @@ void lp_desktop_register_builtin_apps(lp_desktop *d) {
     lp_desktop_register_app(d, &lp_app_info);
     lp_desktop_register_app(d, &lp_app_calculator);
     lp_desktop_register_app(d, &lp_app_preview);
+    lp_desktop_register_app(d, &lp_app_terminal);
 }
 
 const lp_app *lp_desktop_find_app(const lp_desktop *d, const char *app_id) {
@@ -542,7 +543,10 @@ int lp_desktop_key(lp_desktop *d, uint32_t keysym, uint32_t mods) {
         default: return 1; /* the menu swallows other keys */
         }
     }
-    if (!mod) return 0;
+    /* Ctrl stands in for ⌘ — except in an app whose Ctrl chords are its own (Terminal's ^W, ^T, ^N) */
+    const lp_window_record *front = lp_wm_focused(&d->wm);
+    const lp_app *front_app = front ? lp_desktop_find_app(d, front->app_id) : NULL;
+    if (!(mods & LP_MOD_LOGO) && (!mod || (front_app && front_app->raw_ctrl))) return 0;
     switch (keysym) {
     case XKB_KEY_grave: return lp_desktop_run_command(d, LP_CMD_FOCUS_NEXT, 0);
     case XKB_KEY_w: case XKB_KEY_W: return lp_desktop_run_command(d, LP_CMD_CLOSE_FOCUSED, 0);

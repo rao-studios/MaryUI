@@ -41,7 +41,7 @@ static void on_dirty(lp_desktop *desk, const char *id) { dirty_calls++; snprintf
 static void on_drag(lp_desktop *desk, int begin) { drag_calls += begin ? 1 : 10; }
 static char spawned[64];
 static void on_spawn(lp_desktop *desk, const char *command) { snprintf(spawned, sizeof spawned, "%s", command); }
-static lp_app media_app, terminal_app;   /* the stub under ids the desktop routes to */
+static lp_app media_app;   /* the stub under an id the desktop routes to */
 
 static void write_file(const char *rel, const char *text, size_t n) {
     char path[1024];
@@ -111,20 +111,36 @@ LP_TEST(routes_pictures_and_media_to_their_viewers_once_registered) {
     LP_ASSERT_EQ(d.wm.count, 4);
 }
 
-LP_TEST(new_terminal_runs_foot_until_a_terminal_app_is_registered) {
+LP_TEST(new_terminal_opens_the_terminal_app_and_foot_only_without_one) {
     setup();
     d.spawn = on_spawn;
-    spawned[0] = 0;
-    LP_ASSERT_EQ(lp_desktop_run_command(&d, LP_CMD_NEW_TERMINAL, 0), 1);
-    LP_ASSERT_STR(spawned, "foot");
-    LP_ASSERT_EQ(d.wm.count, 0);
-    terminal_app = stub; terminal_app.id = "terminal"; terminal_app.title = "Terminal";
-    lp_desktop_register_app(&d, &terminal_app);
     spawned[0] = 0;
     LP_ASSERT_EQ(lp_desktop_run_command(&d, LP_CMD_NEW_TERMINAL, 0), 1);
     LP_ASSERT_STR(spawned, "");
     LP_ASSERT_EQ(d.wm.count, 1);
     LP_ASSERT_STR(d.wm.windows[0].app_id, "terminal");
+    lp_desktop_init(&d, LP_RECT(0, 0, 1280, 800), NULL);   /* a host that registers no terminal app */
+    lp_desktop_register_app(&d, &lp_app_finder);
+    d.spawn = on_spawn;
+    LP_ASSERT_EQ(lp_desktop_run_command(&d, LP_CMD_NEW_TERMINAL, 0), 1);
+    LP_ASSERT_STR(spawned, "foot");
+    LP_ASSERT_EQ(d.wm.count, 0);
+}
+
+LP_TEST(ctrl_chords_reach_the_terminal_and_super_reaches_the_desktop) {
+    setup();   /* no event sources here: the Terminal starts no shell */
+    lp_desktop_open_app(&d, "terminal");
+    LP_ASSERT_EQ(d.wm.count, 1);
+    LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_w, LP_MOD_CTRL), 0);   /* ^W erases a word */
+    LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_t, LP_MOD_CTRL), 0);
+    LP_ASSERT_EQ(d.wm.count, 1);
+    LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_t, LP_MOD_LOGO), 1);   /* ⌘T: another Terminal */
+    LP_ASSERT_EQ(d.wm.count, 2);
+    LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_w, LP_MOD_LOGO), 1);
+    LP_ASSERT_EQ(d.wm.count, 1);
+    lp_desktop_open_app(&d, "finder");
+    LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_w, LP_MOD_CTRL), 1);   /* anywhere else Ctrl still stands in for ⌘ */
+    LP_ASSERT_EQ(d.wm.count, 1);
 }
 
 LP_TEST(calculator_copies_its_display_and_types_the_clipboard_in) {
@@ -335,7 +351,7 @@ LP_TEST(spotlight_skips_internal_apps) {
     lp_spotlight_item items[LP_SPOTLIGHT_MAX_ITEMS];
     int n = lp_spotlight_items(&d, items, LP_SPOTLIGHT_MAX_ITEMS);
     for (int i = 0; i < n; i++) { LP_ASSERT(strcmp(items[i].id, "info") != 0); LP_ASSERT(strcmp(items[i].id, "stub") != 0); }
-    LP_ASSERT_EQ(n, 7); /* finder, gallery, about, textedit, calculator, preview + Terminal */
+    LP_ASSERT_EQ(n, 7); /* finder, gallery, about, textedit, calculator, preview, terminal */
 }
 
 static int view_entry(const char *label) {
@@ -449,7 +465,8 @@ int main(void) {
     write_file("Documents/photo.png", "\x89PNG\0\0", 6);
     LP_RUN(opens_a_folder_in_the_finder_and_a_text_file_in_textedit);
     LP_RUN(routes_pictures_and_media_to_their_viewers_once_registered);
-    LP_RUN(new_terminal_runs_foot_until_a_terminal_app_is_registered);
+    LP_RUN(new_terminal_opens_the_terminal_app_and_foot_only_without_one);
+    LP_RUN(ctrl_chords_reach_the_terminal_and_super_reaches_the_desktop);
     LP_RUN(calculator_copies_its_display_and_types_the_clipboard_in);
     LP_RUN(preview_steps_through_the_folder_zooms_and_turns);
     LP_RUN(hands_the_path_to_the_app_open_hook_with_the_window_id);

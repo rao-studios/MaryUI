@@ -51,7 +51,7 @@ README, or when a file under `web/src/lib` or `web/src/desktop` is missing from 
 | `desktop/wm/store.ts`, `desktop/wm/useWM.ts` | `lp_desktop_dispatch` + `on_change` (the host syncs from the change mask) | ≈ no subscriptions: one host, one callback |
 | `desktop/settings.ts` | `lp_settings.h`, `src/core/lp_settings.c` (`$XDG_CONFIG_HOME/maryui/settings.conf`) | ≈ **D6** raster wallpaper stored, not rendered; plus `clock`, C-only (**D13**) |
 | `desktop/menus.ts` | `include/maryui/lp_menus.h` (the models), `lp_desktop_build_menus` in `src/core/lp_desktop.c` | ≈ **D11** plus File › New Terminal (`spawn("foot")`), a Go menu, and the focused app's entries (`lp_app.menu_entries`); both sides draw them as Spotlight's pills |
-| `desktop/apps/registry.ts` | `lp_desktop_register_builtin_apps`, `lp_app.h` (`name`, `icon`, `hidden`, `internal`, `dock`, `open`, `command`, `menu_entries`, `notify`) | ≈ **D11** **D15** finder, gallery, about, textedit (hidden: Spotlight only), info (internal: opened by the Finder), and the Linux-only system apps: calculator, preview (hidden: Spotlight and the Finder); `dock` pins Finder, TextEdit and Preview |
+| `desktop/apps/registry.ts` | `lp_desktop_register_builtin_apps`, `lp_app.h` (`name`, `icon`, `hidden`, `internal`, `dock`, `raw_ctrl`, `open`, `command`, `menu_entries`, `notify`) | ≈ **D11** **D15** finder, gallery, about, textedit (hidden: Spotlight only), info (internal: opened by the Finder), and the Linux-only system apps: calculator, preview (hidden: Spotlight and the Finder), terminal (hidden: Spotlight and File › New Terminal); `dock` pins Finder, TextEdit, Preview and Terminal |
 | `desktop/spotlight.ts` | `include/maryui/lp_spotlight.h`, `src/core/lp_spotlight.c`, `lp_desktop_spotlight_*` in `src/core/lp_desktop.c`, `tests/test_spotlight.c` | ≈ **D15** 9/9 cases: the dock for a blank query (the pinned apps only), ranking (prefix, word prefix, substring), windows as items, wrap, cap 8; the C tests add the Ctrl+Space / Esc / Enter key cases and seven for the command pills |
 | `desktop/SpotlightHost.tsx` | `src/compositor/spotlight.c` (one chrome in the `z.spotlight` layer sized for the no-menu panel so typing never reallocates, `mui_spotlight_resize` when a pill opens, `lp-spotlight-in` tween, hit-test inside the panel, outside-press closes); the view is `lp_desktop_spotlight_view` | ≈ **D9** the Terminal tile |
 | `desktop/Desktop.tsx` | `src/compositor/desktop.c` (the ambient clock, the context menu, pointer/keyboard routing), `src/core/lp_desktop.c` (commands, keys) | ≈ **D13** the clock; opens Finder + Gallery at start like the web, windows use the whole output, hit-testing skips shadows like CSS |
@@ -77,7 +77,7 @@ README, or when a file under `web/src/lib` or `web/src/desktop` is missing from 
 | `hooks/useResize.ts` | the RESIZE grab; `lp_window_handles` (6 px grips, 14 px corners) | ✓ |
 | `hooks/useMotionTarget.ts` | `mui_window.target` registered with `server->engine` | ✓ |
 | `hooks/useOutsideClick.ts` | a press off the context menu, or off the Spotlight panel that carries the command pills, closes it (`mui_desktop_pointer_event`) | ✓ |
-| `hooks/useDesktopKeys.ts` | `lp_desktop_key` (⌘W, ⌘M, Ctrl+`, Esc, Ctrl/⌘+Space for Spotlight, ↑/↓/Enter while it is open, and ↑/↓/←/→/Enter through an open command pill; window shortcuts suspended meanwhile) | ✓ Super is ⌘; the pill keys are C-only, the web's pills are pointer-driven |
+| `hooks/useDesktopKeys.ts` | `lp_desktop_key` (⌘W, ⌘M, Ctrl+`, Esc, Ctrl/⌘+Space for Spotlight, ↑/↓/Enter while it is open, and ↑/↓/←/→/Enter through an open command pill; window shortcuts suspended meanwhile) | ✓ Super is ⌘; the pill keys are C-only, the web's pills are pointer-driven; Ctrl stands in for ⌘ except while an app with `raw_ctrl` (Terminal) is in front |
 | `hooks/useClock.ts` | `clock_tick` + `paint_clock` in `desktop.c` (a 160×24 chrome, repainted once a minute and only when the string changes; View › Show Clock disables its node) | ✗ **D13** the web deleted the hook with the menu bar; the C desktop keeps an ambient clock, on unless `settings.clock` hides it |
 
 ## `src/components`
@@ -118,8 +118,9 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
 | — | `tests/test_sources.c` (the event-source wrappers through the poll loop in `tests/lp_test_loop.h`); `test_desktop.c` adds `routes_pictures_and_media_to_their_viewers_once_registered` and `new_terminal_runs_foot_until_a_terminal_app_is_registered`, `test_spotlight.c` adds `pins_the_dock_and_finds_the_rest_by_typing` and `a_terminal_app_replaces_the_terminal_command` |
 | — | `tests/test_calc.c` (Calculator's model: precedence, repeated equals, percent, memory, formatting, keys, clipboard text); `test_desktop.c` adds `calculator_copies_its_display_and_types_the_clipboard_in` |
 | — | `tests/test_image.c` (Preview's documents: PNG and — with poppler — PDF opening, quarter-turn drawing and its cache, fit and zoom, folder siblings, refusals); `test_desktop.c` adds `preview_steps_through_the_folder_zooms_and_turns` |
+| — | `tests/test_pty.c` (the pty: size and TERM, cwd, input and resize, exit, hang-up, the job in front — runs on macOS too); `tests/test_term.c` (with libvterm: cells and attributes, key bytes, damage, scrollback and selection text, titles, rewrap, bracketed paste, the bell and the alternate screen, and the app running a real shell and hanging it up); `test_desktop.c` adds `ctrl_chords_reach_the_terminal_and_super_reaches_the_desktop` |
 
-172 C cases in all.
+190 C cases in all (180 on a Mac, where libvterm's ten are one "not in this build" case).
 
 ## Deviations
 
@@ -157,9 +158,9 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   `goo.specular-*` and `goo.rim-shade` tokens are now web-only.
 - **D9 — the Terminal tile.** Spotlight lists `Terminal` as a command on both sides. In C it runs
   `LP_CMD_NEW_TERMINAL` (`spawn("foot")`) and the dock's dot lights while a client window is
-  open; on the web it is a no-op — the browser has no processes. The tile stands in for a native terminal:
-  once an app with the id `terminal` is registered it leaves the dock, that app takes its place, and
-  `LP_CMD_NEW_TERMINAL` (File › New Terminal, ⌘T) opens it instead of spawning foot.
+  open; on the web it is a no-op — the browser has no processes. Since D15 the built-in Terminal is registered, so
+  `LP_CMD_NEW_TERMINAL` (File › New Terminal, ⌘T) opens that app; the tile and foot remain only for a host
+  that registers no app with the id `terminal`. foot stays in the image as a Wayland client to test with.
 - **D10 — TextArea and TextEdit.** The web TextArea is a native `<textarea>`: the browser owns
   the caret, the selection, the clipboard and key repeat, and TextEdit saves to `localStorage`.
   The C TextArea owns a UTF-8 document (`lp_text_doc`) with a caret and an anchor, wraps through
@@ -231,6 +232,14 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   through a cache keyed on its exact pixel size, turned in quarter turns without resampling; zoomed past
   4096² it is rendered straight through the viewport's clip instead. Fit (never enlarging), fixed zoom steps
   from ⅛ to 16×, ⌘-wheel zoom about the centre, pages, and ←/→ through the folder's pictures and PDFs.
+  **Terminal** (`src/apps/terminal.c` over `lp_pty.h` and `lp_term.h`, `tests/test_pty.c`, `tests/test_term.c`) runs
+  the user's login shell on a pty (`TERM=xterm-256color`), watched through `lp_desktop_add_fd`, and keeps its
+  screen in libvterm: a 2000-line scrollback, reflow on resize, the alternate screen, bracketed paste, OSC
+  titles (else the job in front names the window), and a sixteen-colour palette darkened to read on the well.
+  Cells are drawn as runs of like cells in `font.mono`; wide characters on their own. It is the first app
+  with `raw_ctrl`: Ctrl chords go to the shell, Super keeps the desktop's, and ⌘C / ⌘V or Ctrl+Shift+C / V
+  copy and paste. Closing the window hangs the shell up. The whole body still repaints on output (the
+  damaged rows are tracked, not yet used) — the obvious next optimisation.
 - **Close animation.** `lp-window-close` (scale .96 + fade over `motion.fast`, `CLOSE` after
   fast + 80 ms) runs for built-in windows. A client that unmaps is gone at once — the compositor
   has no pixels left to fade.
