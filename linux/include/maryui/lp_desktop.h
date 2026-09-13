@@ -101,7 +101,7 @@ typedef struct lp_desktop {
 void lp_desktop_init(lp_desktop *d, lp_rect bounds, void *host);
 void lp_desktop_register_app(lp_desktop *d, const lp_app *app);
 /* Registers finder, gallery, about, textedit (hidden: Spotlight only), info (internal)
- * and the system apps (calculator, preview, terminal); Finder, TextEdit, Preview and Terminal are pinned. */
+ * and the system apps (calculator, preview, terminal, activity, diskutil); Finder, TextEdit, Preview and Terminal are pinned. */
 void lp_desktop_register_builtin_apps(lp_desktop *d);
 /* Runs the WM reducer, syncs app instances, calls on_change. Returns the change mask. */
 uint64_t lp_desktop_dispatch(lp_desktop *d, const lp_wm_action *action);

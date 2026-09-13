@@ -9,3 +9,5 @@ grid `minmax(160px, 2fr) repeat(minmax(90px, 1fr))` (`lp_list_columns`), gap `sp
 
 ## C
 `lp_list_header(ctx, rect, cols, n)`; `lp_list_row(ctx, id, rect, icon, name, cols, n, selected, even)` → 1 click, 2 double-click.
+`lp_list_header_aligned` / `lp_list_row_aligned` take an `enum lp_align` per trailing column (C only: Activity Monitor's
+numbers sit flush right; the web's rows have no numeric columns).

@@ -4,6 +4,7 @@
 #define MARYUI_LP_LAYOUT_COMPONENTS_H
 
 #include "maryui/lp_icons.h"
+#include "maryui/lp_text.h"
 #include "maryui/lp_ui.h"
 
 /* ScrollArea — a viewport over taller/wider content with thin platinum scrollbars.
@@ -34,5 +35,9 @@ void lp_list_columns(float width, int n, float *xs, float *ws);
 int lp_list_header(lp_ctx *ctx, lp_id id, lp_rect r, const char *const *columns, int n, int sort_col, int descending);
 /* Returns 1 on click, 2 on double-click. */
 int lp_list_row(lp_ctx *ctx, lp_id id, lp_rect r, lp_icon icon, const char *name, const char *const *columns, int n, int selected, int even);
+/* The same header and row with the trailing columns aligned one by one — numbers read best flush right.
+ * align[k] is for the k-th trailing column (the header's columns[k + 1], the row's columns[k]); NULL: all at the start. */
+int lp_list_header_aligned(lp_ctx *ctx, lp_id id, lp_rect r, const char *const *columns, const enum lp_align *align, int n, int sort_col, int descending);
+int lp_list_row_aligned(lp_ctx *ctx, lp_id id, lp_rect r, lp_icon icon, const char *name, const char *const *columns, const enum lp_align *align, int n, int selected, int even);
 
 #endif

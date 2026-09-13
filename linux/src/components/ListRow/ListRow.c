@@ -19,7 +19,7 @@ void lp_list_columns(float width, int n, float *xs, float *ws) {
     for (int i = 1; i <= n; i++) { xs[i] = xs[i - 1] + ws[i - 1] + LP_SPACE_3; ws[i] = col; }
 }
 
-int lp_list_header(lp_ctx *ctx, lp_id id, lp_rect r, const char *const *columns, int n, int sort_col, int descending) {
+int lp_list_header_aligned(lp_ctx *ctx, lp_id id, lp_rect r, const char *const *columns, const enum lp_align *align, int n, int sort_col, int descending) {
     float xs[16], ws[16];
     lp_list_columns(r.w, n - 1, xs, ws);
     int clicked = -1;
@@ -37,15 +37,15 @@ int lp_list_header(lp_ctx *ctx, lp_id id, lp_rect r, const char *const *columns,
         if (i == sort_col) {
             char label[80];
             snprintf(label, sizeof label, "%s %s", columns[i], descending ? "▼" : "▲");
-            lp_text_draw(cr, label, LP_RECT(r.x + xs[i], r.y, ws[i], r.h), &st, LP_ALIGN_START);
+            lp_text_draw(cr, label, LP_RECT(r.x + xs[i], r.y, ws[i], r.h), &st, i > 0 && align ? align[i - 1] : LP_ALIGN_START);
         } else {
-            lp_text_draw(cr, columns[i], LP_RECT(r.x + xs[i], r.y, ws[i], r.h), &st, LP_ALIGN_START);
+            lp_text_draw(cr, columns[i], LP_RECT(r.x + xs[i], r.y, ws[i], r.h), &st, i > 0 && align ? align[i - 1] : LP_ALIGN_START);
         }
     }
     return clicked;
 }
 
-int lp_list_row(lp_ctx *ctx, lp_id id, lp_rect r, lp_icon icon, const char *name, const char *const *columns, int n, int selected, int even) {
+int lp_list_row_aligned(lp_ctx *ctx, lp_id id, lp_rect r, lp_icon icon, const char *name, const char *const *columns, const enum lp_align *align, int n, int selected, int even) {
     int result = lp_clicked(ctx, id, r) ? 1 : 0;
     if (ctx->pass == LP_PASS_EVENT && lp_hit(ctx, r) && ctx->in.double_click) result = 2;
     if (ctx->pass != LP_PASS_DRAW || !ctx->cr) return result;
@@ -63,6 +63,14 @@ int lp_list_row(lp_ctx *ctx, lp_id id, lp_rect r, lp_icon icon, const char *name
     lp_text_draw(cr, name, LP_RECT(x, r.y, r.x + xs[0] + ws[0] - x, r.h), &st, LP_ALIGN_START);
     lp_text_style cs = st;
     if (!selected) cs.color = LP_INK_SECONDARY;
-    for (int i = 0; i < n && i + 1 < 16; i++) lp_text_draw(cr, columns[i], LP_RECT(r.x + xs[i + 1], r.y, ws[i + 1], r.h), &cs, LP_ALIGN_START);
+    for (int i = 0; i < n && i + 1 < 16; i++) lp_text_draw(cr, columns[i], LP_RECT(r.x + xs[i + 1], r.y, ws[i + 1], r.h), &cs, align ? align[i] : LP_ALIGN_START);
     return result;
+}
+
+int lp_list_header(lp_ctx *ctx, lp_id id, lp_rect r, const char *const *columns, int n, int sort_col, int descending) {
+    return lp_list_header_aligned(ctx, id, r, columns, NULL, n, sort_col, descending);
+}
+
+int lp_list_row(lp_ctx *ctx, lp_id id, lp_rect r, lp_icon icon, const char *name, const char *const *columns, int n, int selected, int even) {
+    return lp_list_row_aligned(ctx, id, r, icon, name, columns, NULL, n, selected, even);
 }

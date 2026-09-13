@@ -49,6 +49,8 @@ extern const lp_app lp_app_info;
 extern const lp_app lp_app_calculator;
 extern const lp_app lp_app_preview;
 extern const lp_app lp_app_terminal;
+extern const lp_app lp_app_activity;
+extern const lp_app lp_app_diskutil;
 
 /* TextEdit: replaces the document (for previews). */
 void lp_textedit_set_text(void *state, const char *name, const char *text);
@@ -104,5 +106,32 @@ void lp_terminal_feed(void *state, const char *bytes);
 void lp_terminal_row_text(const void *state, int row, char *out, size_t n);
 int lp_terminal_pid(const void *state);
 int lp_terminal_exited(const void *state);
+
+enum lp_activity_command { LP_ACTIVITY_QUIT_PROCESS, LP_ACTIVITY_VIEW_CPU, LP_ACTIVITY_VIEW_MEMORY };
+/* Activity Monitor, for tests: read another /proc tree, stand in for kill(2), search, select, and look. */
+void lp_activity_set_root(void *state, const char *root);
+void lp_activity_set_signal(void *state, int (*signal_fn)(int pid, int force));
+void lp_activity_search(void *state, const char *query);
+void lp_activity_select(void *state, int pid);
+int lp_activity_selected(const void *state);
+int lp_activity_visible_count(const void *state);
+int lp_activity_visible_pid(const void *state, int v);
+double lp_activity_cpu(const void *state, int pid);   /* -1 when the pid is not listed */
+int lp_activity_sheet_open(const void *state);
+const char *lp_activity_status(const void *state);
+lp_rect lp_activity_sheet_button(const void *state, lp_ctx *ctx, lp_rect body, int button);
+
+enum lp_diskutil_command { LP_DISKUTIL_MOUNT, LP_DISKUTIL_UNMOUNT, LP_DISKUTIL_EJECT, LP_DISKUTIL_SHOW_IN_FINDER };
+/* Disk Utility, for tests: read fixture sysfs/udev/mounts paths, stand in for lp_job_run, select, and ask what it offers. */
+struct lp_job;
+void lp_diskutil_set_paths(void *state, const char *sys_block, const char *udev_data, const char *mounts_path);
+void lp_diskutil_set_runner(void *state, struct lp_job *(*run)(struct lp_desktop *d, const char *const *argv,
+                            void (*done)(int status, const char *output, void *user), void *user));
+void lp_diskutil_select(void *state, const char *device);
+const char *lp_diskutil_selected(const void *state);
+int lp_diskutil_can(const void *state, int command);
+int lp_diskutil_busy(const void *state);
+const char *lp_diskutil_status(const void *state);
+void lp_diskutil_refresh(void *state);
 
 #endif

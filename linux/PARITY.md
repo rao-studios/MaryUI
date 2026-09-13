@@ -51,7 +51,7 @@ README, or when a file under `web/src/lib` or `web/src/desktop` is missing from 
 | `desktop/wm/store.ts`, `desktop/wm/useWM.ts` | `lp_desktop_dispatch` + `on_change` (the host syncs from the change mask) | ≈ no subscriptions: one host, one callback |
 | `desktop/settings.ts` | `lp_settings.h`, `src/core/lp_settings.c` (`$XDG_CONFIG_HOME/maryui/settings.conf`) | ≈ **D6** raster wallpaper stored, not rendered; plus `clock`, C-only (**D13**) |
 | `desktop/menus.ts` | `include/maryui/lp_menus.h` (the models), `lp_desktop_build_menus` in `src/core/lp_desktop.c` | ≈ **D11** plus File › New Terminal (`spawn("foot")`), a Go menu, and the focused app's entries (`lp_app.menu_entries`); both sides draw them as Spotlight's pills |
-| `desktop/apps/registry.ts` | `lp_desktop_register_builtin_apps`, `lp_app.h` (`name`, `icon`, `hidden`, `internal`, `dock`, `raw_ctrl`, `open`, `command`, `menu_entries`, `notify`) | ≈ **D11** **D15** finder, gallery, about, textedit (hidden: Spotlight only), info (internal: opened by the Finder), and the Linux-only system apps: calculator, preview (hidden: Spotlight and the Finder), terminal (hidden: Spotlight and File › New Terminal); `dock` pins Finder, TextEdit, Preview and Terminal |
+| `desktop/apps/registry.ts` | `lp_desktop_register_builtin_apps`, `lp_app.h` (`name`, `icon`, `hidden`, `internal`, `dock`, `raw_ctrl`, `open`, `command`, `menu_entries`, `notify`) | ≈ **D11** **D15** finder, gallery, about, textedit (hidden: Spotlight only), info (internal: opened by the Finder), and the Linux-only system apps: calculator, preview (hidden: Spotlight and the Finder), terminal (hidden: Spotlight and File › New Terminal), activity, diskutil; `dock` pins Finder, TextEdit, Preview and Terminal |
 | `desktop/spotlight.ts` | `include/maryui/lp_spotlight.h`, `src/core/lp_spotlight.c`, `lp_desktop_spotlight_*` in `src/core/lp_desktop.c`, `tests/test_spotlight.c` | ≈ **D15** 9/9 cases: the dock for a blank query (the pinned apps only), ranking (prefix, word prefix, substring), windows as items, wrap, cap 8; the C tests add the Ctrl+Space / Esc / Enter key cases and seven for the command pills |
 | `desktop/SpotlightHost.tsx` | `src/compositor/spotlight.c` (one chrome in the `z.spotlight` layer sized for the no-menu panel so typing never reallocates, `mui_spotlight_resize` when a pill opens, `lp-spotlight-in` tween, hit-test inside the panel, outside-press closes); the view is `lp_desktop_spotlight_view` | ≈ **D9** the Terminal tile |
 | `desktop/Desktop.tsx` | `src/compositor/desktop.c` (the ambient clock, the context menu, pointer/keyboard routing), `src/core/lp_desktop.c` (commands, keys) | ≈ **D13** the clock; opens Finder + Gallery at start like the web, windows use the whole output, hit-testing skips shadows like CSS |
@@ -99,7 +99,7 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
 | Toggle, Checkbox, Slider, TextField, SegmentedControl, ProgressBar | `components/lp_controls.h` | ✓ TextField's `large` is Spotlight's bar |
 | TextArea | `components/lp_text_area.h` (`lp_text_doc`, `lp_text_clipboard`, `lp_text_area`) | ≈ **D10** |
 | Spotlight | `components/lp_spotlight_panel.h` (`lp_spotlight_panel`, `lp_spotlight_measure`, `lp_spotlight_max_size`) | ≈ **D7** backdrop blur, **D9**; carries the command pills and the open menu inline |
-| ScrollArea, Toolbar, Sidebar, ListRow | `components/lp_layout_components.h` | ✓ |
+| ScrollArea, Toolbar, Sidebar, ListRow | `components/lp_layout_components.h` | ✓; ListRow adds `lp_list_header_aligned` / `lp_list_row_aligned` for right-aligned numbers (**D15**) |
 | Icon | `lp_icon.h` + generated `lp_icons.h` | ✓ |
 | ObjectIcon | `lp_object_icon.h` (`src/components/ObjectIcon/ObjectIcon.c` tiers, `src/draw/lp_object_icon.c` passes) | ≈ **D14** the contact shadow |
 | SvgDefs | `src/draw/lp_texture.c`, `src/draw/lp_draw.c`, `GooGroup.c` | ≈ the filter numbers live where they are used |
@@ -119,8 +119,10 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
 | — | `tests/test_calc.c` (Calculator's model: precedence, repeated equals, percent, memory, formatting, keys, clipboard text); `test_desktop.c` adds `calculator_copies_its_display_and_types_the_clipboard_in` |
 | — | `tests/test_image.c` (Preview's documents: PNG and — with poppler — PDF opening, quarter-turn drawing and its cache, fit and zoom, folder siblings, refusals); `test_desktop.c` adds `preview_steps_through_the_folder_zooms_and_turns` |
 | — | `tests/test_pty.c` (the pty: size and TERM, cwd, input and resize, exit, hang-up, the job in front — runs on macOS too); `tests/test_term.c` (with libvterm: cells and attributes, key bytes, damage, scrollback and selection text, titles, rewrap, bracketed paste, the bell and the alternate screen, and the app running a real shell and hanging it up); `test_desktop.c` adds `ctrl_chords_reach_the_terminal_and_super_reaches_the_desktop` |
+| — | `tests/test_proc.c` (the /proc model over a fixture: totals, a comm with parentheses, a kernel thread, a name cut at 15, CPU shares and a reused pid, sorting, search, formatting, SIGTERM/SIGKILL on a real child); `tests/test_activity.c` (the app headless: list, search, the shaded-window refresh, the Quit sheet's Esc/Return/Force Quit with an injected signal, and what cannot be quit) |
+| — | `tests/test_job.c` (status, output, a signal death, a missing program, no event loop, cancelling, a 123 KB flood); `tests/test_disks.c` (sysfs, udev and mounts fixtures: a virtual disk's system partitions, a USB stick's encoded label and escaped mount point, a blank SD card, skipped devices, the udisksctl commands); `tests/test_diskutil.c` (the app headless with a stand-in runner: what each selection offers, Unmount/Mount results and refusals, Eject's script, Show in Finder, a DRAW pass) |
 
-190 C cases in all (180 on a Mac, where libvterm's ten are one "not in this build" case).
+218 C cases in all (208 on a Mac, where libvterm's ten are one "not in this build" case).
 
 ## Deviations
 
@@ -240,6 +242,22 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   with `raw_ctrl`: Ctrl chords go to the shell, Super keeps the desktop's, and ⌘C / ⌘V or Ctrl+Shift+C / V
   copy and paste. Closing the window hangs the shell up. The whole body still repaints on output (the
   damaged rows are tracked, not yet used) — the obvious next optimisation.
+  **Activity Monitor** (`src/apps/activity.c` over `lp_proc.h`, `tests/test_proc.c`, `tests/test_activity.c`) reads
+  `/proc` every two seconds through `lp_desktop_add_timer` — not while the window is shaded — and lists
+  processes in a CPU view (share of one CPU between samples, with a reused pid told apart by its start time)
+  and a Memory view (VmRSS), sortable by header and searchable, over the machine's totals. Quit Process…
+  asks through the first **sheet** (`lp_sheet.h` in `src/ui`, not a component: the web has no dialogs, and
+  `make parity` holds `src/components` to the web's list): it hangs from the title bar, swallows the
+  window's input until answered, Return quits (SIGTERM), Esc cancels, Force Quit sends SIGKILL. Init, kernel
+  threads, the desktop itself and its launcher cannot be quit.
+  **Disk Utility** (`src/apps/diskutil.c` over `lp_disks.h` and `lp_job.h`; `tests/test_disks.c`, `test_job.c`,
+  `test_diskutil.c`) lists drives and volumes from `/sys/block`, udev's database and `/proc/mounts` — no daemon
+  needed to look — and mounts, unmounts and ejects by running `udisksctl … --no-user-interaction` as an
+  **`lp_job`**: spawned beside the desktop, its output read through `lp_desktop_add_fd`, its exit status passed
+  back by a waiter process because the compositor's SIGCHLD handler reaps its own children first. udisks2's
+  polkit rules still decide who may. This replaces the plan's sd-bus client for udisks: the listing is
+  fixture-testable anywhere, and the actions are the ones a person would type. Eject unmounts each mounted
+  volume and powers the drive off in one job; volumes the system runs from are never offered.
 - **Close animation.** `lp-window-close` (scale .96 + fade over `motion.fast`, `CLOSE` after
   fast + 80 ms) runs for built-in windows. A client that unmaps is gone at once — the compositor
   has no pixels left to fade.
