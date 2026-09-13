@@ -64,6 +64,8 @@ typedef struct lp_segment {
 } lp_segment;
 lp_size lp_segmented_measure(lp_ctx *ctx, const lp_segment *options, int n, enum lp_control_size size);
 int lp_segmented(lp_ctx *ctx, lp_id id, float x, float y, const lp_segment *options, int n, int *index, enum lp_control_size size);
+/* The same with some segments disabled (bit i: options[i]): drawn in the disabled ink, never chosen by a click or an arrow. */
+int lp_segmented_masked(lp_ctx *ctx, lp_id id, float x, float y, const lp_segment *options, int n, int *index, enum lp_control_size size, unsigned disabled_mask);
 
 /* ProgressBar — an 8px inset rail with a liquid accent fill; value < 0 is indeterminate (barber pole). */
 #define LP_PROGRESS_H 8

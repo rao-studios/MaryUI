@@ -221,11 +221,15 @@ LP_TEST(settings_keep_their_defaults_and_bounds) {
     LP_ASSERT_EQ(fresh.key_repeat_delay, 600);
     LP_ASSERT_STR(fresh.dock, "");
     LP_ASSERT_STR(fresh.mary_voice, "fr_marie_neutral");
+    LP_ASSERT_STR(fresh.mary_voice_engine, "mistral");
+    LP_ASSERT_STR(fresh.mary_skill_engine, "mistral");
+    LP_ASSERT(fresh.mary_recall_personal && fresh.mary_recall_conversation && fresh.mary_recall_application && fresh.mary_recall_behavioral);
     char path[700];
     snprintf(path, sizeof path, "%s/config/maryui", root);
     lp_files_mkdir_p(path);
     snprintf(path, sizeof path, "%s/config/maryui/settings.conf", root);
-    const char *old = "accent=graphite\nclock=on\nkey_repeat_rate=0\nkey_repeat_delay=99999\npointer_speed=5\nclock_24h=on\ndock=finder,settings\nmary_voice=en_paul_neutral\n";
+    const char *old = "accent=graphite\nclock=on\nkey_repeat_rate=0\nkey_repeat_delay=99999\npointer_speed=5\nclock_24h=on\ndock=finder,settings\nmary_voice=en_paul_neutral\n"
+                      "mary_skill_engine=tinker\nmary_voice_engine=gemini\nmary_recall_conversation=off\n";
     lp_files_write(path, old, strlen(old));
     lp_settings s = lp_settings_load();
     LP_ASSERT_EQ(s.accent, LP_ACCENT_GRAPHITE);
@@ -236,6 +240,9 @@ LP_TEST(settings_keep_their_defaults_and_bounds) {
     LP_ASSERT_STR(s.dock, "finder,settings");
     LP_ASSERT_STR(s.keyboard_layout, "");
     LP_ASSERT_STR(s.mary_voice, "en_paul_neutral");
+    LP_ASSERT_STR(s.mary_skill_engine, "tinker");            /* kept on the wire for later */
+    LP_ASSERT_STR(s.mary_voice_engine, "mistral");           /* an engine the wire does not know is not kept */
+    LP_ASSERT(!s.mary_recall_conversation && s.mary_recall_personal);
     LP_ASSERT_EQ(lp_settings_save(&s), 0);
     lp_settings again = lp_settings_load();
     LP_ASSERT_EQ(again.key_repeat_delay, 2000);

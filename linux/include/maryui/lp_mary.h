@@ -10,6 +10,7 @@
  *                     ambient{state}, trace{records}, trace.report{text},
  *                     skill.confirm{call_id, app, app_name, skill, title, args, summary} (the card), triage.result{…}
  *   desktop → maryd   ask{text}, listen, stop, dismiss, key.set{key}, key.verify, skill.confirm.reply{call_id, yes}, triage{text},
+ *                     config{voice_engine, skill_engine, recall{personal, conversation, application, behavioral}}, calls.list{limit},
  *                     config{wake?, voice?}, voices.list, voice.sample{voice_id, text?},
  *                     skills{apps}, skill.result{call_id, ok, result | error},
  *                     world{…}, selection{…}, selection.clear{…}, app.state.result{…} (lp_world.h),
@@ -130,6 +131,7 @@ enum {
     LP_MARY_CHANGED_TRACE = 1024,       /* the trace (Routes and Runs), or its report */
     LP_MARY_CHANGED_CONFIRM = 2048,     /* a confirmation card came, or was answered */
     LP_MARY_CHANGED_TRIAGE = 4096,      /* a rehearsal's answer (the Abilities app) */
+    LP_MARY_CHANGED_CALLS = 8192,       /* sewnd's calls ledger (Settings › Mary › Network activity) */
 };
 
 /* A skill call from maryd (U4 answers it); args_json is "null" when there are none. */
@@ -185,6 +187,7 @@ typedef struct lp_mary {
     char *trace_report;
     lp_mary_confirm confirm;            /* the card, while one is up */
     void *triage;                       /* the last triage.result (json-c, opaque), or NULL */
+    void *calls;                        /* the last calls{calls[]} (json-c, opaque): sewnd's ledger, newest first; or NULL */
 } lp_mary;
 
 /* 1 when the client is compiled in. */
@@ -209,6 +212,11 @@ int lp_mary_verify_key(lp_mary *m);
 int lp_mary_set_wake(lp_mary *m, int on);
 /* config: `wake` 0 or 1 (-1 leaves it out), and a voice id (NULL leaves it out). */
 int lp_mary_send_config(lp_mary *m, int wake, const char *voice);
+/* config{voice_engine, skill_engine, recall{personal, conversation, application, behavioral}}: the engine of each lane
+ * ("mistral" | "tinker"; NULL leaves it out) and which storage lanes retrieval may draw on. */
+int lp_mary_send_recall(lp_mary *m, const char *voice_engine, const char *skill_engine, int personal, int conversation, int application, int behavioral);
+/* calls.list{limit}: sewnd's calls ledger through maryd (the answer sets LP_MARY_CHANGED_CALLS). */
+int lp_mary_list_calls(lp_mary *m, int limit);
 /* voices.list; the answer fills voices[] (LP_MARY_CHANGED_VOICES). */
 int lp_mary_list_voices(lp_mary *m);
 /* voice.sample: one text spoken in a voice (text NULL: maryd's own sentence); its progress is sample_state. */

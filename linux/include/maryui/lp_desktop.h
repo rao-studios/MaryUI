@@ -167,8 +167,8 @@ lp_app_instance *lp_desktop_instance(lp_desktop *d, const char *window_id);
  * window whose app answers lp_app.model_changed with 1 is repainted through on_app_dirty. */
 enum { LP_MODEL_MARY = 1, LP_MODEL_AUDIO = 2, LP_MODEL_THREAD = 4 };
 void lp_desktop_models_changed(lp_desktop *d, unsigned model, unsigned what);
-/* Mary's settings to maryd, which keeps none of its own: the wake word and the voice. On every connect, and when
- * either changes. 0, or -ENOTCONN while maryd is away. */
+/* Mary's settings to maryd, which keeps none of its own: the wake word and the voice, then the engines and the recall
+ * lanes (a second config line). On every connect, and when any changes. 0, or -ENOTCONN while maryd is away. */
 int lp_desktop_publish_mary_config(lp_desktop *d);
 /* Rebuilds d->menus from the current state (menus.ts). */
 void lp_desktop_build_menus(lp_desktop *d);

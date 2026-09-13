@@ -36,7 +36,16 @@ typedef struct lp_settings {
     char dock[256];             /* the app ids a blank Spotlight shows, comma-separated; "" for each app's own */
     int mary_wake;              /* maryd listens for "Hey Mary" (System Settings › Mary) */
     char mary_voice[64];        /* the Mistral voice Mary speaks in (System Settings › Mary): fr_marie_neutral */
+    /* The engines, one per lane (the Mac's twin toggles, PARITY D31): "mistral" is the only one served; "tinker"
+     * (Thinking Machines) is kept on the wire for a later implementation and shown disabled. */
+    char mary_voice_engine[16];
+    char mary_skill_engine[16];
+    /* Recall: which storage lanes of the Thread a turn may retrieve from (personal, conversation, application, behavioral). */
+    int mary_recall_personal, mary_recall_conversation, mary_recall_application, mary_recall_behavioral;
 } lp_settings;
+
+/* "mistral" or "tinker": the engines the wire knows (only Mistral is served this phase). */
+int lp_settings_engine_known(const char *engine);
 
 typedef struct lp_accent {
     lp_color base, deep, light, soft, focus_ring;

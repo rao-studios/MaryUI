@@ -15,7 +15,8 @@ lp_settings lp_settings_defaults(void) {
     return (lp_settings){ .accent = LP_ACCENT_BLUE, .folders = LP_FOLDER_SLATE, .goo = 1,
                           .wallpaper = LP_WALLPAPER_MOLTEN, .molten_tone = LP_MOLTEN_PLATINUM, .reduced_motion = 0,
                           .clock = 1, .key_repeat_rate = 25, .key_repeat_delay = 600, .mary_wake = 1,
-                          .mary_voice = "fr_marie_neutral" };
+                          .mary_voice = "fr_marie_neutral", .mary_voice_engine = "mistral", .mary_skill_engine = "mistral",
+                          .mary_recall_personal = 1, .mary_recall_conversation = 1, .mary_recall_application = 1, .mary_recall_behavioral = 1 };
 }
 
 void lp_config_path(const char *name, char *out, size_t n, int mkdirs) {
@@ -42,6 +43,8 @@ static int voice_name(const char *v) {
     for (size_t i = 0; i < n; i++) if (!isalnum((unsigned char)v[i]) && v[i] != '_' && v[i] != '-') return 0;
     return 1;
 }
+
+int lp_settings_engine_known(const char *engine) { return engine && (strcmp(engine, "mistral") == 0 || strcmp(engine, "tinker") == 0); }
 
 lp_settings lp_settings_load(void) {
     lp_settings s = lp_settings_defaults();
@@ -73,6 +76,12 @@ lp_settings lp_settings_load(void) {
         else if (strcmp(key, "dock") == 0) snprintf(s.dock, sizeof s.dock, "%s", value);
         else if (strcmp(key, "mary_wake") == 0) s.mary_wake = strcmp(value, "off") != 0 && strcmp(value, "0") != 0;
         else if (strcmp(key, "mary_voice") == 0 && voice_name(value)) snprintf(s.mary_voice, sizeof s.mary_voice, "%s", value);
+        else if (strcmp(key, "mary_voice_engine") == 0 && lp_settings_engine_known(value)) snprintf(s.mary_voice_engine, sizeof s.mary_voice_engine, "%s", value);
+        else if (strcmp(key, "mary_skill_engine") == 0 && lp_settings_engine_known(value)) snprintf(s.mary_skill_engine, sizeof s.mary_skill_engine, "%s", value);
+        else if (strcmp(key, "mary_recall_personal") == 0) s.mary_recall_personal = strcmp(value, "off") != 0 && strcmp(value, "0") != 0;
+        else if (strcmp(key, "mary_recall_conversation") == 0) s.mary_recall_conversation = strcmp(value, "off") != 0 && strcmp(value, "0") != 0;
+        else if (strcmp(key, "mary_recall_application") == 0) s.mary_recall_application = strcmp(value, "off") != 0 && strcmp(value, "0") != 0;
+        else if (strcmp(key, "mary_recall_behavioral") == 0) s.mary_recall_behavioral = strcmp(value, "off") != 0 && strcmp(value, "0") != 0;
     }
     fclose(f);
     /* a hand-edited file stays inside what the compositor can use (a rate of 0 would divide by zero) */
@@ -102,6 +111,10 @@ int lp_settings_save(const lp_settings *s) {
         s->key_repeat_rate, s->key_repeat_delay, s->keyboard_layout[0] ? s->keyboard_layout : "default", s->pointer_speed,
         s->natural_scroll ? "on" : "off", s->clock_24h ? "on" : "off");
     fprintf(f, "# Mary\nmary_wake=%s\nmary_voice=%s\n", s->mary_wake ? "on" : "off", voice_name(s->mary_voice) ? s->mary_voice : "fr_marie_neutral");
+    fprintf(f, "mary_voice_engine=%s\nmary_skill_engine=%s\n", lp_settings_engine_known(s->mary_voice_engine) ? s->mary_voice_engine : "mistral",
+            lp_settings_engine_known(s->mary_skill_engine) ? s->mary_skill_engine : "mistral");
+    fprintf(f, "mary_recall_personal=%s\nmary_recall_conversation=%s\nmary_recall_application=%s\nmary_recall_behavioral=%s\n",
+            s->mary_recall_personal ? "on" : "off", s->mary_recall_conversation ? "on" : "off", s->mary_recall_application ? "on" : "off", s->mary_recall_behavioral ? "on" : "off");
     if (s->dock[0]) fprintf(f, "dock=%s\n", s->dock);
     fclose(f);
     return 0;

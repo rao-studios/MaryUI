@@ -36,7 +36,11 @@ void lp_desktop_models_changed(lp_desktop *d, unsigned model, unsigned what) {
 }
 
 int lp_desktop_publish_mary_config(lp_desktop *d) {
-    return lp_mary_send_config(&d->mary, d->settings.mary_wake != 0, d->settings.mary_voice[0] ? d->settings.mary_voice : NULL);
+    int rc = lp_mary_send_config(&d->mary, d->settings.mary_wake != 0, d->settings.mary_voice[0] ? d->settings.mary_voice : NULL);
+    if (rc == 0)
+        rc = lp_mary_send_recall(&d->mary, d->settings.mary_voice_engine, d->settings.mary_skill_engine, d->settings.mary_recall_personal,
+                                 d->settings.mary_recall_conversation, d->settings.mary_recall_application, d->settings.mary_recall_behavioral);
+    return rc;
 }
 
 void lp_desktop_register_app(lp_desktop *d, const lp_app *app) {

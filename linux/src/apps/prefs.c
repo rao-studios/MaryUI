@@ -31,7 +31,12 @@
 #include "maryui/lp_proc.h"
 #include "maryui/lp_sysinfo.h"
 #include "maryui/lp_text.h"
+#include "maryui/lp_thread.h"
 #include "maryui/lp_tokens.h"
+
+#ifdef HAVE_JSONC
+#include <json-c/json.h>
+#endif
 
 #define LABEL_W LP_PREFS_LABEL_W
 #define FOOTER_H 28
@@ -283,6 +288,13 @@ static void ask_voices(struct prefs *p) {
         lp_mary_list_voices(m);
 }
 
+/* The Mary pane's Network activity and Memory sections: sewnd's ledger through maryd, the Thread's counts. */
+static void ask_activity(struct prefs *p) {
+    if (!p->desk) return;
+    if (lp_mary_connected(&p->desk->mary)) lp_mary_list_calls(&p->desk->mary, 12);
+    if (lp_thread_connected(&p->desk->thread)) lp_thread_stats(&p->desk->thread);
+}
+
 static void show_pane(struct prefs *p, int pane) {
     if (pane < 0 || pane >= PANE_COUNT) return;
     p->pane = pane;
@@ -291,7 +303,7 @@ static void show_pane(struct prefs *p, int pane) {
     if (pane == LP_PREFS_ABOUT) { lp_sysinfo_about(&p->about); lp_text_buffer_set(&p->hostname_field, p->about.hostname); }
     if (pane == LP_PREFS_KEYBOARD && p->desk) lp_text_buffer_set(&p->layout_field, p->desk->settings.keyboard_layout);
     meter(p, pane == LP_PREFS_SOUND);
-    if (pane == LP_PREFS_MARY) ask_voices(p);
+    if (pane == LP_PREFS_MARY) { ask_voices(p); ask_activity(p); }
     refresh_pane(p);
     if (pane == LP_PREFS_NETWORK && p->desk) {
         if (!p->ticker) p->ticker = lp_desktop_add_timer(p->desk, NETWORK_REFRESH_MS, on_tick, p);
@@ -1265,6 +1277,118 @@ static float pane_mary(lp_ctx *ctx, struct prefs *p, lp_desktop *d, float x, flo
     aside(ctx, "Listens for her name while the desktop is idle", after_toggle, row_y, aside_w);
     if (!d) return y;
 
+    section(ctx, "Engines", x, &y, w);
+    note(ctx, "Which model each lane runs on. Mistral is the one served; Thinking Machines is a toggle for a later implementation.", x, &y, w);
+    {
+        static const lp_segment ENGINES[2] = { { "Mistral", LP_ICON_COUNT }, { "Thinking Machines", LP_ICON_COUNT } };
+        const char *const lanes[2] = { "Voice (Lane A)", "Skills (Lane B)" };
+        char *fields[2] = { d->settings.mary_voice_engine, d->settings.mary_skill_engine };
+        for (int lane = 0; lane < 2; lane++) {
+            int engine = strcmp(fields[lane], "tinker") == 0 ? 1 : 0;
+            label(ctx, lanes[lane], x, y);
+            lp_size s = lp_segmented_measure(ctx, ENGINES, 2, LP_CONTROL_SM);
+            lp_rect r = control_at(LP_RECT(x + LABEL_W, y + (ROW_H - s.h) / 2, s.w, s.h));
+            row_y = y;
+            if (lp_segmented_masked(ctx, lp_id_index(base, 420 + lane), r.x, r.y, ENGINES, 2, &engine, LP_CONTROL_SM, 2u)) {
+                snprintf(fields[lane], 16, "%s", engine ? "tinker" : "mistral");
+                lp_desktop_settings_changed(d);
+                lp_desktop_publish_mary_config(d);
+            }
+            aside(ctx, lane == 0 ? "The reply, spoken with retrieval" : "The silent skills loop that acts", x + LABEL_W + s.w + LP_SPACE_3, row_y, w - LABEL_W - s.w - LP_SPACE_3);
+            y += ROW_H + LP_SPACE_1;
+        }
+        note(ctx, "Thinking Machines \xE2\x80\x94 later: no key, no wire yet; the toggle is kept so the lanes need no redesign.", x + LABEL_W, &y, w - LABEL_W);
+    }
+
+    section(ctx, "Recall", x, &y, w);
+    note(ctx, "Which of the Thread's lanes a turn may retrieve from. Each is a set of record families on the drive.", x, &y, w);
+    {
+        struct { const char *name, *families; int *on; } lanes[4] = {
+            { "Personal", "memory, file, style \xE2\x80\x94 what you know, wrote and keep", &d->settings.mary_recall_personal },
+            { "Conversation", "conversation \xE2\x80\x94 what was said, turn by turn", &d->settings.mary_recall_conversation },
+            { "Application", "ability, ability-schema, application \xE2\x80\x94 what the apps can do and hold", &d->settings.mary_recall_application },
+            { "Behavioral", "behavior, interaction, routing \xE2\x80\x94 what Mary did before, and how you ask", &d->settings.mary_recall_behavioral },
+        };
+        for (int i = 0; i < 4; i++) {
+            row_y = y;
+            int on = *lanes[i].on;
+            if (toggle_row(ctx, lp_id_index(base, 430 + i), lanes[i].name, x, &y, &on)) {
+                *lanes[i].on = on;
+                lp_desktop_settings_changed(d);
+                lp_desktop_publish_mary_config(d);
+            }
+            aside(ctx, lanes[i].families, after_toggle, row_y, aside_w);
+        }
+    }
+
+    section(ctx, "Network activity", x, &y, w);
+    note(ctx, "Every call sewnd made, newest first \xE2\x80\x94 the only process on the machine that reaches the network. Never a key, never a body.", x, &y, w);
+    {
+        lp_button_opts ro = { LP_BUTTON_DEFAULT, LP_CONTROL_SM, LP_ICON_RELOAD, 0, !(m && lp_mary_connected(m)) };
+        lp_size rs = lp_button_measure(ctx, "Refresh", ro);
+        if (lp_button(ctx, lp_id_index(base, 440), control_at(LP_RECT(x + LABEL_W, y + (ROW_H - rs.h) / 2, rs.w, rs.h)), "Refresh", ro)) ask_activity(p);
+        y += ROW_H;
+#ifdef HAVE_JSONC
+        struct json_object *calls = m ? m->calls : NULL, *rows = NULL;
+        if (calls && json_object_object_get_ex(calls, "calls", &rows) && json_object_is_type(rows, json_type_array) && json_object_array_length(rows)) {
+            static const char *const COLUMNS[5] = { "purpose", "provider", "path", "status", "ms" };
+            static const enum lp_align ALIGN[5] = { LP_ALIGN_START, LP_ALIGN_START, LP_ALIGN_START, LP_ALIGN_END, LP_ALIGN_END };
+            float table_w = w - LABEL_W;
+            lp_list_header_aligned(ctx, lp_id_index(base, 441), LP_RECT(x + LABEL_W, y, table_w, LP_LIST_ROW_H), COLUMNS, ALIGN, 5, -1, 0);
+            y += LP_LIST_ROW_H;
+            double total_ms = 0;
+            size_t n = json_object_array_length(rows);
+            for (size_t i = 0; i < n && i < 12; i++) {
+                struct json_object *row = json_object_array_get_idx(rows, i), *v;
+                const char *purpose = json_object_object_get_ex(row, "purpose", &v) ? json_object_get_string(v) : "";
+                const char *provider = json_object_object_get_ex(row, "provider", &v) ? json_object_get_string(v) : "";
+                const char *path = json_object_object_get_ex(row, "path", &v) ? json_object_get_string(v) : "";
+                long status = json_object_object_get_ex(row, "status", &v) ? json_object_get_int(v) : 0;
+                long ms = json_object_object_get_ex(row, "ms", &v) ? json_object_get_int(v) : 0;
+                total_ms += (double)ms;
+                char when[40], status_s[16], ms_s[16];
+                int64_t at = json_object_object_get_ex(row, "at_ms", &v) ? json_object_get_int64(v) : 0;
+                time_t t = (time_t)(at / 1000);
+                struct tm tm;
+                if (at) strftime(when, sizeof when, "%H:%M:%S", localtime_r(&t, &tm));
+                else snprintf(when, sizeof when, "\xE2\x80\x94");
+                snprintf(status_s, sizeof status_s, status ? "%ld" : "\xE2\x80\x94", status);
+                snprintf(ms_s, sizeof ms_s, "%ld", ms);
+                const char *cols[5] = { purpose, provider, path, status_s, ms_s };
+                lp_list_row_aligned(ctx, lp_id_index(base, 450 + (int)i), LP_RECT(x + LABEL_W, y, table_w, LP_LIST_ROW_H), LP_ICON_COUNT, when, cols, ALIGN, 5, 0, (int)(i & 1));
+                y += LP_LIST_ROW_H;
+            }
+            char total[120];
+            snprintf(total, sizeof total, "%zu call%s shown, %.0f ms in all \xC2\xB7 the whole ledger: sewnctl calls", n, n == 1 ? "" : "s", total_ms);
+            note(ctx, total, x + LABEL_W, &y, w - LABEL_W);
+        } else
+#endif
+        {
+            note(ctx, m && lp_mary_connected(m) ? "No calls yet, or sewnd has not answered." : "maryd is not running.", x + LABEL_W, &y, w - LABEL_W);
+        }
+    }
+
+    section(ctx, "Memory", x, &y, w);
+    {
+        char counts[200] = "The drive's memory is threadd; it has not answered yet.";
+#ifdef HAVE_JSONC
+        struct json_object *stats = lp_thread_answer(&d->thread, LP_THREAD_STATS), *v;
+        if (stats) {
+            long documents = json_object_object_get_ex(stats, "documents", &v) ? json_object_get_int(v) : 0;
+            long files = json_object_object_get_ex(stats, "files", &v) ? json_object_get_int(v) : 0;
+            long entities = json_object_object_get_ex(stats, "entities", &v) ? json_object_get_int(v) : 0;
+            snprintf(counts, sizeof counts, "%ld record%s on the drive, %ld of them files \xC2\xB7 %ld entit%s in the graph", documents, documents == 1 ? "" : "s", files,
+                     entities, entities == 1 ? "y" : "ies");
+        }
+#endif
+        label(ctx, "The Thread", x, y);
+        lp_button_opts to = { LP_BUTTON_DEFAULT, LP_CONTROL_SM, LP_ICON_COUNT, 0, 0 };
+        lp_size ts = lp_button_measure(ctx, "Open Threads", to);
+        if (lp_button(ctx, lp_id_index(base, 460), control_at(LP_RECT(x + LABEL_W, y + (ROW_H - ts.h) / 2, ts.w, ts.h)), "Open Threads", to)) lp_desktop_open_app(d, "thread");
+        y += ROW_H;
+        note(ctx, counts, x + LABEL_W, &y, w - LABEL_W);
+    }
+
     section(ctx, "Skills", x, &y, w);
     note(ctx, "What Mary may do with each app, and when she asks you first.", x, &y, w);
     static const lp_segment ASK[3] = { { "Never", LP_ICON_COUNT }, { "Before changes", LP_ICON_COUNT }, { "Always", LP_ICON_COUNT } };
@@ -1472,8 +1596,10 @@ static int prefs_model_changed(void *state, lp_desktop *d, unsigned model, unsig
     }
     if (model == LP_MODEL_MARY && p->pane == LP_PREFS_MARY) {
         if (what & (LP_MARY_CHANGED_CONNECTION | LP_MARY_CHANGED_KEY)) ask_voices(p);   /* maryd is back, or a key is in */
+        if (what & LP_MARY_CHANGED_CONNECTION) ask_activity(p);
         return 1;
     }
+    if (model == LP_MODEL_THREAD && p->pane == LP_PREFS_MARY) return (what & (LP_THREAD_CHANGED_STATS | LP_THREAD_CHANGED_CONNECTION)) != 0;
     return 0;
 }
 

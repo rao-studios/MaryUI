@@ -288,6 +288,19 @@ static int render_app(const lp_app *app, int tab, const char *path) {
         lp_prefs_set_runner(state, fixture_run);
         d.displays = fixture_displays;
     }
+    if (app == &lp_app_prefs && state && prefs_pane == LP_PREFS_MARY) {
+        /* what maryd and threadd would answer the Mary pane: sewnd's ledger, the drive's counts */
+        int sv[2];
+        d.mary.fd = socketpair(AF_UNIX, SOCK_STREAM, 0, sv) == 0 ? sv[0] : 0;
+        d.mary.key_present = 1;
+        static const char CALLS[] = "{\"type\":\"calls\",\"ok\":true,\"calls\":["
+            "{\"id\":412,\"at_ms\":1757700061000,\"provider\":\"mistral\",\"host\":\"api.mistral.ai\",\"path\":\"/v1/audio/speech\",\"purpose\":\"speech\",\"status\":200,\"ms\":612,\"bytes_out\":210,\"bytes_in\":88422},"
+            "{\"id\":411,\"at_ms\":1757700058000,\"provider\":\"mistral\",\"host\":\"api.mistral.ai\",\"path\":\"/v1/chat/completions\",\"purpose\":\"chat\",\"status\":200,\"ms\":1840,\"bytes_out\":6120,\"bytes_in\":2210},"
+            "{\"id\":410,\"at_ms\":1757700057000,\"provider\":\"mistral\",\"host\":\"api.mistral.ai\",\"path\":\"/v1/embeddings\",\"purpose\":\"embed\",\"status\":200,\"ms\":221,\"bytes_out\":140,\"bytes_in\":12488},"
+            "{\"id\":409,\"at_ms\":1757700057000,\"provider\":\"mistral\",\"host\":\"api.mistral.ai\",\"path\":\"/v1/embeddings\",\"purpose\":\"route\",\"status\":200,\"ms\":198,\"bytes_out\":96,\"bytes_in\":12488}]}\n";
+        lp_mary_feed(&d.mary, CALLS, strlen(CALLS));
+        thread_fixtures(&d);
+    }
     if (app == &lp_app_prefs && state && prefs_pane == LP_PREFS_SOUND) {
         static const lp_audio_device outputs[2] = {
             { .id = 41, .serial = 41, .name = "alsa_output.platform-a003e00.virtio_mmio.analog-stereo", .description = "VirtIO SoundCard Analog Stereo", .kind = "Virtual" },

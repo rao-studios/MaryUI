@@ -441,6 +441,17 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   is a change to the app. **Rehearse** sends a sentence through maryd's `triage` and prints who would answer
   without a model. `lp-render --abilities PANE` and `--spotlight-chat confirm` draw them. The web has none
   of it.
+- **D31 — Settings › Mary: engines, recall, network activity, memory.** Linux only. **Engines** is the
+  Mac's twin toggles, one per lane — Voice (Lane A) and Skills (Lane B), each `Mistral | Thinking Machines`
+  (`mary_voice_engine`, `mary_skill_engine` in settings.conf); Mistral is the one served and the Thinking
+  Machines segment is disabled (`lp_segmented_masked`) with the aside that it is a toggle for a later
+  implementation. **Recall** is four switches — Personal, Conversation, Application, Behavioral — naming
+  the record families each storage lane holds (`mary_recall_*`); both reach maryd as a second `config`
+  line (`voice_engine, skill_engine, recall{…}`) on every connect and change. **Network activity** lists
+  sewnd's calls ledger through maryd (`calls.list` → `calls{calls}`): time, purpose, provider, path, status
+  and ms, newest first, with a total and a pointer to `sewnctl calls`; never a key, never a body.
+  **Memory** shows the drive's counts from threadd's stats and opens Threads. `lp-render --prefs-mary`
+  draws them over fixtures. The web has no assistant.
 - **Close animation.** `lp-window-close` (scale .96 + fade over `motion.fast`, `CLOSE` after
   fast + 80 ms) runs for built-in windows. A client that unmaps is gone at once — the compositor
   has no pixels left to fade.

@@ -81,8 +81,9 @@ void lp_mary_free(lp_mary *m) {
     if (m->ambient) json_object_put(m->ambient);
     if (m->trace) json_object_put(m->trace);
     if (m->triage) json_object_put(m->triage);
+    if (m->calls) json_object_put(m->calls);
 #endif
-    m->ambient = m->trace = m->triage = NULL;
+    m->ambient = m->trace = m->triage = m->calls = NULL;
     memset(&m->confirm, 0, sizeof m->confirm);
     free(m->trace_report);
     m->trace_report = NULL;
@@ -439,6 +440,10 @@ static void handle(lp_mary *m, struct json_object *msg) {
         if (m->triage) json_object_put(m->triage);
         m->triage = json_object_get(msg);
         changed(m, LP_MARY_CHANGED_TRIAGE);
+    } else if (strcmp(type, "calls") == 0) {
+        if (m->calls) json_object_put(m->calls);
+        m->calls = json_object_get(msg);
+        changed(m, LP_MARY_CHANGED_CALLS);
     }
 }
 
@@ -660,6 +665,27 @@ int lp_mary_send_config(lp_mary *m, int wake, const char *voice) {
 
 int lp_mary_set_wake(lp_mary *m, int on) { return lp_mary_send_config(m, on != 0, NULL); }
 
+int lp_mary_send_recall(lp_mary *m, const char *voice_engine, const char *skill_engine, int personal, int conversation, int application, int behavioral) {
+    if (m->fd < 0) return -ENOTCONN;
+    struct json_object *o = typed("config");
+    if (voice_engine && *voice_engine) json_object_object_add(o, "voice_engine", json_object_new_string(voice_engine));
+    if (skill_engine && *skill_engine) json_object_object_add(o, "skill_engine", json_object_new_string(skill_engine));
+    struct json_object *recall = json_object_new_object();
+    json_object_object_add(recall, "personal", json_object_new_boolean(personal != 0));
+    json_object_object_add(recall, "conversation", json_object_new_boolean(conversation != 0));
+    json_object_object_add(recall, "application", json_object_new_boolean(application != 0));
+    json_object_object_add(recall, "behavioral", json_object_new_boolean(behavioral != 0));
+    json_object_object_add(o, "recall", recall);
+    return send_object(m, o);
+}
+
+int lp_mary_list_calls(lp_mary *m, int limit) {
+    if (m->fd < 0) return -ENOTCONN;
+    struct json_object *o = typed("calls.list");
+    json_object_object_add(o, "limit", json_object_new_int(limit > 0 ? limit : 50));
+    return send_object(m, o);
+}
+
 int lp_mary_list_voices(lp_mary *m) {
     int rc = simple(m, "voices.list");
     if (rc == 0) {
@@ -732,6 +758,8 @@ int lp_mary_ambient_state(lp_mary *m) { return -ENOTCONN; }
 int lp_mary_list_trace(lp_mary *m) { return -ENOTCONN; }
 int lp_mary_trace_report(lp_mary *m) { return -ENOTCONN; }
 int lp_mary_confirm_reply(lp_mary *m, int yes) { (void)yes; return -ENOENT; }
+int lp_mary_send_recall(lp_mary *m, const char *voice_engine, const char *skill_engine, int personal, int conversation, int application, int behavioral) { return -ENOTCONN; }
+int lp_mary_list_calls(lp_mary *m, int limit) { (void)limit; return -ENOTCONN; }
 int lp_mary_triage(lp_mary *m, const char *text) { (void)text; return -ENOTCONN; }
 int lp_mary_stop(lp_mary *m) { return -ENOTCONN; }
 int lp_mary_dismiss(lp_mary *m) { return -ENOTCONN; }

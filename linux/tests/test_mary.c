@@ -369,11 +369,29 @@ LP_TEST(voices_samples_and_config_travel_both_ways) {
     json_object_put(o);
     d.settings.mary_wake = 0;
     snprintf(d.settings.mary_voice, sizeof d.settings.mary_voice, "fr_marie_curious");
-    LP_ASSERT_EQ(lp_desktop_publish_mary_config(&d), 0);             /* what a connect sends */
+    d.settings.mary_recall_behavioral = 0;
+    LP_ASSERT_EQ(lp_desktop_publish_mary_config(&d), 0);             /* what a connect sends: two config lines */
     o = hear(srv);
     LP_ASSERT_STR(field(o, "wake"), "false");
     LP_ASSERT_STR(field(o, "voice"), "fr_marie_curious");
     json_object_put(o);
+    o = hear(srv);
+    LP_ASSERT_STR(field(o, "type"), "config");
+    LP_ASSERT_STR(field(o, "voice_engine"), "mistral");
+    LP_ASSERT_STR(field(o, "skill_engine"), "mistral");
+    struct json_object *recall;
+    LP_ASSERT(json_object_object_get_ex(o, "recall", &recall));
+    LP_ASSERT_STR(field(recall, "personal"), "true");
+    LP_ASSERT_STR(field(recall, "behavioral"), "false");
+    json_object_put(o);
+    LP_ASSERT_EQ(lp_mary_list_calls(&d.mary, 5), 0);
+    o = hear(srv);
+    LP_ASSERT_STR(field(o, "type"), "calls.list");
+    LP_ASSERT_STR(field(o, "limit"), "5");
+    json_object_put(o);
+    say(srv, "{\"type\":\"calls\",\"ok\":true,\"calls\":[{\"id\":1,\"purpose\":\"chat\",\"provider\":\"mistral\",\"path\":\"/v1/chat/completions\",\"status\":200,\"ms\":900}]}\n");
+    lp_test_loop_run(200, NULL);
+    LP_ASSERT(d.mary.calls != NULL && (changes & LP_MARY_CHANGED_CALLS));
     LP_ASSERT_EQ(lp_mary_set_wake(&d.mary, 1), 0);
     o = hear(srv);
     LP_ASSERT(o && !json_object_object_get_ex(o, "voice", NULL));    /* the wake word alone */

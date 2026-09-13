@@ -33,6 +33,10 @@ lp_size lp_segmented_measure(lp_ctx *ctx, const lp_segment *options, int n, enum
 }
 
 int lp_segmented(lp_ctx *ctx, lp_id id, float x, float y, const lp_segment *options, int n, int *index, enum lp_control_size size) {
+    return lp_segmented_masked(ctx, id, x, y, options, n, index, size, 0);
+}
+
+int lp_segmented_masked(lp_ctx *ctx, lp_id id, float x, float y, const lp_segment *options, int n, int *index, enum lp_control_size size, unsigned disabled_mask) {
     lp_size sz = lp_segmented_measure(ctx, options, n, size);
     lp_rect track = LP_RECT(x, y, sz.w, sz.h);
     lp_rect inner = lp_rect_inset(track, LP_SIZE_SEGMENTED_PAD, LP_SIZE_SEGMENTED_PAD);
@@ -41,12 +45,18 @@ int lp_segmented(lp_ctx *ctx, lp_id id, float x, float y, const lp_segment *opti
     for (int i = 0; i < n; i++) {
         lp_rect s = LP_RECT(inner.x + i * seg_w, inner.y, seg_w, inner.h);
         lp_id sid = lp_id_index(id, i);
-        if (lp_hot(ctx, sid, s)) hot = i;
-        if (lp_clicked(ctx, sid, s) && *index != i) { *index = i; changed = 1; ctx->dirty = 1; }
+        int disabled = (disabled_mask >> i) & 1u;
+        if (!disabled && lp_hot(ctx, sid, s)) hot = i;
+        if (lp_clicked(ctx, sid, s) && !disabled && *index != i) { *index = i; changed = 1; ctx->dirty = 1; }
     }
     if (ctx->pass == LP_PASS_EVENT && ctx->focus == id && ctx->in.key_pressed) {
         int d = ctx->in.keysym == 0xff53 ? 1 : (ctx->in.keysym == 0xff51 ? -1 : 0);
-        if (d) { *index = (*index + d + n) % n; changed = 1; ctx->dirty = 1; }
+        int next = *index;
+        for (int step = 0; d && step < n; step++) {
+            next = (next + d + n) % n;
+            if (!((disabled_mask >> next) & 1u)) break;
+        }
+        if (d && next != *index && !((disabled_mask >> next) & 1u)) { *index = next; changed = 1; ctx->dirty = 1; }
     }
     if (ctx->pass != LP_PASS_DRAW || !ctx->cr) return changed;
     cairo_t *cr = ctx->cr;
@@ -76,6 +86,7 @@ int lp_segmented(lp_ctx *ctx, lp_id id, float x, float y, const lp_segment *opti
         lp_text_style st = seg_style(size);
         int selected = i == *index;
         if (selected) { st.color = LP_INK_PRIMARY; st.emboss = 1; }
+        if ((disabled_mask >> i) & 1u) st.color = LP_INK_DISABLED;
         float icon = options[i].icon < LP_ICON_COUNT ? (size == LP_CONTROL_SM ? 13 : 14) : 0;
         float text = options[i].label ? lp_text_measure(cr, options[i].label, &st).w : 0;
         float total = icon + (icon && text ? LP_SPACE_1 : 0) + text;
