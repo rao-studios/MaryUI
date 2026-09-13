@@ -45,6 +45,12 @@ void lp_ctx_end(lp_ctx *ctx) {
             } else {
                 ctx->dirty = 1;
             }
+            if (ctx->hot) {
+                ctx->last_hot = ctx->hot;
+                ctx->last_hot_since_ms = ctx->hot_since_ms;
+                ctx->last_hot_until_ms = ctx->now_ms;
+            }
+            ctx->hot_since_ms = ctx->now_ms;
         }
         ctx->hot = ctx->next_hot;
         ctx->has_hot_rect = ctx->has_next_hot_rect;
@@ -52,6 +58,16 @@ void lp_ctx_end(lp_ctx *ctx) {
         if (ctx->in.released & LP_BUTTON_LEFT) {
             if (ctx->active) ctx->dirty = 1;
             ctx->active = 0;
+        }
+        lp_id held = ctx->active && ctx->active == ctx->hot ? ctx->active : 0;
+        if (held != ctx->held) {
+            if (ctx->held) {
+                ctx->last_held = ctx->held;
+                ctx->last_held_since_ms = ctx->held_since_ms;
+                ctx->last_held_until_ms = ctx->now_ms;
+            }
+            ctx->held = held;
+            ctx->held_since_ms = ctx->now_ms;
         }
         ctx->in.pressed = ctx->in.released = 0;
         ctx->in.double_click = 0;

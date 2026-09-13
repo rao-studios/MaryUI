@@ -61,6 +61,19 @@ typedef struct lp_ctx {
      * hover change repaints two small rectangles instead of the whole chrome. */
     lp_rect hot_rect, next_hot_rect;
     int has_hot_rect, has_next_hot_rect;
+    /* When the hot widget took the hover, and the last widget that held it
+     * before (the empty space between widgets does not count), with when it
+     * took and lost it — so a hover look can ease in, and ease back out from
+     * wherever it had reached. The EVENT pass that moves hot sets them. */
+    double hot_since_ms;
+    lp_id last_hot;
+    double last_hot_since_ms, last_hot_until_ms;
+    /* The same for the widget held down under the pointer (active and hot at
+     * once), so a pressed look can ease in and out too. */
+    lp_id held;
+    double held_since_ms;
+    lp_id last_held;
+    double last_held_since_ms, last_held_until_ms;
     lp_rect bounds;           /* the chrome's rectangle in its own coordinates */
     int dirty;                /* set by widgets whose look changed: the whole chrome repaints */
     lp_rect damage;           /* lp_damage: a part of the chrome to repaint instead (union) */

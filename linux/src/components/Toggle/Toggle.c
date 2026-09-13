@@ -21,7 +21,7 @@ int lp_toggle(lp_ctx *ctx, lp_id id, float x, float y, int *checked, int disable
     float kx = x + 3 + (*checked ? 16 : 0), ky = y + 3;
     static const lp_shadow_layer knob_shadow[] = { { 0, 0, 1, 2, 0, { 0, 0, 0, 0.35f } } };
     lp_draw_outer_shadows(cr, LP_RECT(kx, ky, 16, 16), 8, knob_shadow, 1);
-    lp_liquid_bubble(ctx, kx + 8, ky + 8, 16, *checked ? LP_TINT_ACCENT : LP_TINT_PLATINUM, 0, *checked ? 0.72f : 0.5f, NULL, 0);
+    lp_liquid_bubble(ctx, disabled ? 0 : id, kx + 8, ky + 8, 16, *checked ? LP_TINT_ACCENT : LP_TINT_PLATINUM, 0, *checked ? 0.72f : 0.5f, NULL, 0);
     if (disabled) { cairo_pop_group_to_source(cr); cairo_paint_with_alpha(cr, 0.55); }
     cairo_restore(cr);
     return changed;

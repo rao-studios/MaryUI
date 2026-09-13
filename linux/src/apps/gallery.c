@@ -270,7 +270,7 @@ static void bubbles_tab(struct gallery *g, lp_ctx *ctx, lp_rect *c) {
     lp_surface(ctx, row, (lp_surface_opts){ .variant = LP_VARIANT_FLAT, .radius = LP_RADIUS_MD });
     float x = row.x + LP_SPACE_4;
     for (int i = 0; i < 5; i++) {
-        lp_liquid_bubble(ctx, x + sizes[i] / 2, row.y + row.h - LP_SPACE_4 - sizes[i] / 2, sizes[i], LP_TINT_ACCENT, i * 1.3f, -1, NULL, 0);
+        lp_liquid_bubble(ctx, 0, x + sizes[i] / 2, row.y + row.h - LP_SPACE_4 - sizes[i] / 2, sizes[i], LP_TINT_ACCENT, i * 1.3f, -1, NULL, 0);
         x += sizes[i] + LP_SPACE_5;
     }
     lp_want_frame_rect(ctx, row);
@@ -283,7 +283,10 @@ static void bubbles_tab(struct gallery *g, lp_ctx *ctx, lp_rect *c) {
     };
     x = c->x;
     for (int i = 0; i < 6; i++) {
-        lp_liquid_bubble(ctx, x + 30, c->y + 20, 40, tints[i].t, i * 0.9f, -1, NULL, 0);
+        /* Point at one and press it: the response every interactive orb shares. */
+        lp_id id = lp_id_index(LP_ID("gallery.tint"), i);
+        lp_clicked(ctx, id, LP_RECT(x + 10, c->y, 40, 40));
+        lp_liquid_bubble(ctx, id, x + 30, c->y + 20, 40, tints[i].t, i * 0.9f, -1, NULL, 0);
         mono_label(ctx, LP_RECT(x, c->y + 46, 60, 14), tints[i].name);
         x += 60 + LP_SPACE_3;
     }
@@ -296,7 +299,7 @@ static void bubbles_tab(struct gallery *g, lp_ctx *ctx, lp_rect *c) {
     for (int i = 0; i < 5; i++) {
         char t[24];
         snprintf(t, sizeof t, "%g", fills[i]);
-        lp_liquid_bubble(ctx, x + 30, c->y + 20, 40, LP_TINT_ZOOM, i * 0.7f, fills[i], NULL, 0);
+        lp_liquid_bubble(ctx, 0, x + 30, c->y + 20, 40, LP_TINT_ZOOM, i * 0.7f, fills[i], NULL, 0);
         mono_label(ctx, LP_RECT(x, c->y + 46, 60, 14), t);
         x += 60 + LP_SPACE_3;
     }

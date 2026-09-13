@@ -291,6 +291,12 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   therefore centres the ink middle of "H" for the style (`lp_text_cap_middle`, cached per font, size
   and weight), which reads as the web does whatever font fontconfig picks; TextArea's placeholder
   sits on the layout's real baseline (`lp_text_layout_baseline`) rather than 0.78 of the line.
+- **D17 — orbs fill on hover and darken when pressed.** Linux only, for now an experiment. Every
+  interactive LiquidBubble (the traffic lights, the Toggle's knob, the Gallery's tints) fills to the
+  brim under the pointer and drains back when it moves on; holding one down darkens its liquid a
+  shade (`lp_liquid_bubble_respond`, `lp_bubble_spec.darken`). The web keeps its traffic-light hover
+  bridge, which C does not have (D8). The timing comes from `lp_ctx.hot_since_ms` / `last_hot*` and
+  `held*`, which the core records whenever the hover or the press moves.
 - **Close animation.** `lp-window-close` (scale .96 + fade over `motion.fast`, `CLOSE` after
   fast + 80 ms) runs for built-in windows. A client that unmaps is gone at once — the compositor
   has no pixels left to fade.

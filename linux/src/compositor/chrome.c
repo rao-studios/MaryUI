@@ -152,15 +152,28 @@ void mui_chrome_repaint(struct mui_chrome *chrome, double now_ms) {
 
     wlr_scene_buffer_set_buffer_with_damage(chrome->node, &target->base, &chrome->damage);
     mui_chrome_apply_opaque(chrome, 1);
-    /* Ambient state: a request in this pass wins; a repaint that covered the old
-     * rect without a request means the animation is gone; a strip repaint elsewhere keeps it. */
-    if (chrome->ctx.wants_frame) {
-        chrome->ambient = 1;
-        chrome->ambient_rect = chrome->ctx.wants_frame_rect;
-    } else if (chrome->ambient) {
+    /* Ambient state. A pass only hears from the animations inside its damage, so
+     * an old rect it did not cover is still owed frames and joins this pass's
+     * requests (a traffic light draining while its neighbour's hover repaints only
+     * the neighbour). An old rect it did cover without a request has stopped. */
+    int covered = 0;
+    if (chrome->ambient) {
         lp_rect a = chrome->ambient_rect;
         pixman_box32_t box = { (int)floorf(a.x), (int)floorf(a.y), (int)ceilf(a.x + a.w), (int)ceilf(a.y + a.h) };
-        if (pixman_region32_contains_rectangle(&chrome->damage, &box) == PIXMAN_REGION_IN) chrome->ambient = 0;
+        covered = pixman_region32_contains_rectangle(&chrome->damage, &box) == PIXMAN_REGION_IN;
+    }
+    if (chrome->ctx.wants_frame) {
+        lp_rect r = chrome->ctx.wants_frame_rect;
+        if (chrome->ambient && !covered) {
+            lp_rect a = chrome->ambient_rect;
+            float x0 = fminf(a.x, r.x), y0 = fminf(a.y, r.y);
+            float x1 = fmaxf(a.x + a.w, r.x + r.w), y1 = fmaxf(a.y + a.h, r.y + r.h);
+            r = LP_RECT(x0, y0, x1 - x0, y1 - y0);
+        }
+        chrome->ambient = 1;
+        chrome->ambient_rect = r;
+    } else if (covered) {
+        chrome->ambient = 0;
     }
     /* This buffer now matches the screen; every other one is behind by what we
      * just painted. */

@@ -41,7 +41,7 @@ static void about_paint(void *state, lp_ctx *ctx, lp_rect body, lp_desktop *d) {
     static const float phases[4] = { 0, 1.5f, 3, 4.5f };
     float row = 4 * 14 + 3 * LP_SPACE_2, x = body.x + (body.w - row) / 2;
     for (int i = 0; i < 4; i++) {
-        lp_liquid_bubble(ctx, x + 7, y + 7, 14, tints[i], phases[i], -1, NULL, 0);
+        lp_liquid_bubble(ctx, 0, x + 7, y + 7, 14, tints[i], phases[i], -1, NULL, 0);
         x += 14 + LP_SPACE_2;
     }
 }

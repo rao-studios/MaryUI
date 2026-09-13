@@ -60,6 +60,7 @@ void lp_traffic_lights(lp_ctx *ctx, float x, float y, int active, int shaded, in
         spec.glyph_alpha = res.hovered ? 1.0f : 0.0f;
         spec.glyph_scale = 0.6f;
         spec.glyph_ink = 0.5f;
+        lp_liquid_bubble_respond(ctx, lp_id_index(base, i), r, &spec);
         /* The same drop shadow that sits a Toggle's knob proud of its track. */
         lp_draw_outer_shadows(ctx->cr, r, r.h / 2, bead_shadow, 1);
         lp_bubble_paint(ctx->cr, r.x + r.w / 2, r.y + r.h / 2, &spec);

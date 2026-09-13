@@ -40,7 +40,7 @@ static float wave_progress(double now_ms, float phase_s, double period_ms, int r
 /* One liquid layer: a 200% blob with four unequal corner radii, rolling
  * sideways and rocking as it goes, filled with the tint's radial gradient. */
 static void liquid(cairo_t *cr, float s, const lp_bubble_colors *c, float top, const float radii[4], float shift,
-                   float rock_deg, float opacity, float brighten, int surface_light) {
+                   float rock_deg, float opacity, float brighten, float darken, int surface_light) {
     float bw = 2 * s, bh = 2 * s, bx = -0.5f * s, by = top;
     cairo_save(cr);
     cairo_translate(cr, bx + bw / 2 + shift, by + bh / 2);
@@ -50,9 +50,11 @@ static void liquid(cairo_t *cr, float s, const lp_bubble_colors *c, float top, c
     cairo_clip(cr);
 
     cairo_pattern_t *p = cairo_pattern_create_radial(0.4 * bw, 0.3 * bh, 0, 0.4 * bw, 0.3 * bh, bw * 0.7);
-    lp_color light = lp_color_mix(c->light, LP_RGBA(1, 1, 1, 1), brighten);
-    lp_color base = lp_color_mix(c->base, LP_RGBA(1, 1, 1, 1), brighten);
-    lp_color deep = lp_color_mix(c->deep, LP_RGBA(1, 1, 1, 1), brighten);
+    /* Darkening moves each stop toward the next one down — light toward base,
+     * base toward deep, deep toward black — so the colour deepens without greying. */
+    lp_color light = lp_color_mix(lp_color_mix(c->light, c->base, darken), LP_RGBA(1, 1, 1, 1), brighten);
+    lp_color base = lp_color_mix(lp_color_mix(c->base, c->deep, darken), LP_RGBA(1, 1, 1, 1), brighten);
+    lp_color deep = lp_color_mix(lp_color_mix(c->deep, LP_RGBA(0, 0, 0, 1), darken), LP_RGBA(1, 1, 1, 1), brighten);
     cairo_pattern_add_color_stop_rgba(p, 0, light.r, light.g, light.b, 1);
     cairo_pattern_add_color_stop_rgba(p, 0.42, base.r, base.g, base.b, 1);
     cairo_pattern_add_color_stop_rgba(p, 1, deep.r, deep.g, deep.b, 1);
@@ -114,8 +116,8 @@ void lp_bubble_paint(cairo_t *cr, float cx, float cy, const lp_bubble_spec *spec
     float pb = wave_progress(spec->now_ms, spec->phase_s, period * 1.55, 1);
     static const float front_radii[4] = { 0.44f, 0.46f, 0.40f, 0.42f };
     static const float back_radii[4] = { 0.46f, 0.41f, 0.44f, 0.40f };
-    liquid(cr, s, c, (1 - fill) * s - 0.05f * s, back_radii, -amp + 2 * amp * pb, -4 + 8 * pb, LP_LIQUID_OPACITY_BACK, 0.15f, 0);
-    liquid(cr, s, c, (1 - fill) * s, front_radii, -amp + 2 * amp * pf, -4 + 8 * pf, LP_LIQUID_OPACITY_FRONT, 0, 1);
+    liquid(cr, s, c, (1 - fill) * s - 0.05f * s, back_radii, -amp + 2 * amp * pb, -4 + 8 * pb, LP_LIQUID_OPACITY_BACK, 0.15f, spec->darken, 0);
+    liquid(cr, s, c, (1 - fill) * s, front_radii, -amp + 2 * amp * pf, -4 + 8 * pf, LP_LIQUID_OPACITY_FRONT, 0, spec->darken, 1);
     cairo_restore(cr);
 
     if (!spec->liquid_only) {

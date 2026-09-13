@@ -28,6 +28,13 @@ The glyphs (`×`, `–`, `+`, and `−` when zoomed) fade in on group hover at `
 `rgba(0,0,0,0.5)` with an emboss shadow — smaller and lighter than the bubble's own default,
 because at 18px the bubble's 0.72 filled the well.
 
+## Hover and press (Linux only)
+
+Each bead is an interactive orb, so it takes LiquidBubble's response
+(`lp_liquid_bubble_respond`, see `../LiquidBubble/README.md`): pointing at a bead fills it to the
+brim, and holding it down darkens the liquid a shade. Sweeping across the three lights drains each
+one as the next fills. The web has no equivalent (**D17**).
+
 ## API
 
 `lp_traffic_lights(ctx, x, y, active, shaded, zoomed, &result)`; `lp_traffic_lights_size()` for

@@ -34,6 +34,7 @@ typedef struct lp_bubble_spec {
     float glyph_ink;    /* glyph opacity before glyph_alpha; 0 takes 0.55 */
     int liquid_only;    /* paint the liquid alone: no glass, no gloss, no rim, no glyph.
                          * This is the mass GooGroup's filter merges. */
+    float darken;       /* 0..1: slides the liquid's colours one step down the tint (a hovered traffic light) */
 } lp_bubble_spec;
 
 void lp_bubble_paint(cairo_t *cr, float cx, float cy, const lp_bubble_spec *spec);
