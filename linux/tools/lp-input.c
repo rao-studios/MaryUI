@@ -12,7 +12,7 @@
  *     drag X1 Y1 X2 Y2     press at 1, move in 12 steps, release at 2
  *     key NAME[+NAME...]   press and release, e.g. key super+w, key escape, key ctrl+grave
  *     keydown NAME | keyup NAME   hold / release one key (for key-repeat tests)
- *     type TEXT            ASCII text (letters, digits, space, punctuation)
+ *     type TEXT            ASCII text (letters, digits, space, punctuation, shifted as on a US keyboard)
  *     sleep MS
  *     mark TEXT           print TEXT (a marker for whoever watches the console)
  */
@@ -101,6 +101,16 @@ static void chord(const char *spec) {
     usleep(40000);
 }
 
+/* The punctuation a US layout reaches with a key, and whether Shift is held for it. */
+static const struct { char ch; int code, shift; } SYMBOLS[] = {
+    { '!', KEY_1, 1 }, { '@', KEY_2, 1 }, { '#', KEY_3, 1 }, { '$', KEY_4, 1 }, { '%', KEY_5, 1 }, { '^', KEY_6, 1 },
+    { '&', KEY_7, 1 }, { '*', KEY_8, 1 }, { '(', KEY_9, 1 }, { ')', KEY_0, 1 }, { '_', KEY_MINUS, 1 }, { '+', KEY_EQUAL, 1 },
+    { ';', KEY_SEMICOLON, 0 }, { ':', KEY_SEMICOLON, 1 }, { '\'', KEY_APOSTROPHE, 0 }, { '"', KEY_APOSTROPHE, 1 },
+    { '<', KEY_COMMA, 1 }, { '>', KEY_DOT, 1 }, { '?', KEY_SLASH, 1 }, { '`', KEY_GRAVE, 0 }, { '~', KEY_GRAVE, 1 },
+    { '[', KEY_LEFTBRACE, 0 }, { '{', KEY_LEFTBRACE, 1 }, { ']', KEY_RIGHTBRACE, 0 }, { '}', KEY_RIGHTBRACE, 1 },
+    { '\\', KEY_BACKSLASH, 0 }, { '|', KEY_BACKSLASH, 1 },
+};
+
 static void type_text(const char *text) {
     for (; *text; text++) {
         char ch = *text;
@@ -114,7 +124,12 @@ static void type_text(const char *text) {
         else if (ch == '/') code = KEY_SLASH;
         else if (ch == ',') code = KEY_COMMA;
         else if (ch == '=') code = KEY_EQUAL;
-        else code = keycode(lower);
+        else {
+            for (size_t k = 0; k < sizeof SYMBOLS / sizeof SYMBOLS[0]; k++) {
+                if (SYMBOLS[k].ch == ch) { code = SYMBOLS[k].code; shift = SYMBOLS[k].shift; }
+            }
+            if (code < 0) code = keycode(lower);
+        }
         if (code < 0) continue;
         if (shift) { emit(kbd_fd, EV_KEY, KEY_LEFTSHIFT, 1); sync_(kbd_fd); }
         emit(kbd_fd, EV_KEY, code, 1); sync_(kbd_fd);

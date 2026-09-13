@@ -80,11 +80,11 @@ static void paint_display(lp_ctx *ctx, lp_rect r, const lp_calc *calc) {
         lp_rect_cut_left(&line, 16);
     }
     lp_text_draw(cr, expr, line, &small, LP_ALIGN_END);
-    /* The value shrinks to fit rather than being cut: a calculator never hides a digit. */
+    /* The value shrinks to fit rather than being cut: a calculator never hides a digit. The interface's
+     * face, not font.display: that is a serif for titles and the monogram, and digits want plain figures. */
     lp_text_style value = lp_text_style_default();
-    value.font = LP_FONT_DISPLAY;
     value.size_px = LP_TEXT_XXL;
-    value.weight = LP_TEXT_WEIGHT_MEDIUM;
+    value.weight = LP_TEXT_WEIGHT_REGULAR;
     value.tabular_nums = 1;
     value.emboss = 1;
     while (value.size_px > LP_TEXT_MD && lp_text_measure(cr, shown, &value).w > inner.w) value.size_px -= 1;
