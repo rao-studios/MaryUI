@@ -39,7 +39,7 @@
 
 enum job_kind {
     JOB_NONE, JOB_LINKS, JOB_WIFI_SCAN, JOB_WIFI_LIST, JOB_WIFI_CONNECT, JOB_WIFI_DISCONNECT,
-    JOB_VOLUME_GET, JOB_VOLUME_SET, JOB_MUTE_SET, JOB_TIME_GET, JOB_TIME_SET_ZONE, JOB_TIME_SET_NTP, JOB_HOSTNAME_SET,
+    JOB_VOLUME_GET, JOB_VOLUME_SET, JOB_MUTE_SET, JOB_INPUT_VOLUME_GET, JOB_INPUT_VOLUME_SET, JOB_SET_DEFAULT, JOB_TIME_GET, JOB_TIME_SET_ZONE, JOB_TIME_SET_NTP, JOB_HOSTNAME_SET,
 };
 
 typedef lp_job *(*job_runner)(lp_desktop *d, const char *const *argv, lp_job_done_fn done, void *user);
@@ -53,13 +53,16 @@ struct prefs {
     enum job_kind job_kind;
     int refresh_pending;            /* the pane wanted a reading while a job ran */
     int queued_volume;              /* a volume the slider asked for while a job ran; -1 none */
+    int queued_input_volume;        /* the same for the microphone */
     lp_scroll_state scroll;         /* a pane taller than the window scrolls */
     float content_h;                /* the pane's height as the last pass laid it out */
     lp_source *ticker;
     char message[256];
-    /* Sound */
-    float volume;
-    int muted, sound_known;
+    /* Sound: the default output's and input's volumes (wpctl), and lp_audio's devices */
+    float volume, input_volume;
+    int muted, sound_known, input_known;
+    int metering;                   /* holds a lease on lp_audio's meter while Sound shows */
+    char switching[128];            /* the device a set-default is choosing */
     /* Network */
     lp_net_link links[16];
     int nlinks;
@@ -104,6 +107,13 @@ static void refresh_pane(struct prefs *p);
 
 static void dirty(struct prefs *p) {
     if (p->desk && p->desk->on_app_dirty) p->desk->on_app_dirty(p->desk, p->window_id);
+}
+
+/* A lease on lp_audio's meter while Sound shows: its capture stream runs only then. */
+static void meter(struct prefs *p, int on) {
+    if (!p->desk || p->metering == on) return;
+    p->metering = on;
+    lp_audio_meter(&p->desk->audio, on);
 }
 
 /* Starts a job unless one runs; returns whether it started. */
@@ -168,12 +178,31 @@ static void job_done(int status, const char *output, void *user) {
         double volume;
         int muted;
         p->sound_known = status == 0 && lp_sysinfo_parse_volume(output, &volume, &muted);
-        if (p->sound_known) { p->volume = (float)fmin(100, round(volume * 100)); p->muted = muted; }
+        if (p->sound_known) {
+            p->volume = (float)fmin(100, round(volume * 100));
+            p->muted = muted;
+            const char *const argv[] = { "wpctl", "get-volume", "@DEFAULT_AUDIO_SOURCE@", NULL };
+            start(p, JOB_INPUT_VOLUME_GET, argv);    /* and then the microphone's */
+        }
+        break;
+    }
+    case JOB_INPUT_VOLUME_GET: {
+        double volume;
+        int muted;
+        p->input_known = status == 0 && lp_sysinfo_parse_volume(output, &volume, &muted);
+        if (p->input_known) p->input_volume = (float)fmin(100, round(volume * 100));
         break;
     }
     case JOB_VOLUME_SET:
     case JOB_MUTE_SET:
         if (status) snprintf(p->message, sizeof p->message, "Could not change the sound: %s", reason);
+        break;
+    case JOB_INPUT_VOLUME_SET:
+        if (status) snprintf(p->message, sizeof p->message, "Could not change the microphone's volume: %s", reason);
+        break;
+    case JOB_SET_DEFAULT:
+        if (status) snprintf(p->message, sizeof p->message, "Could not switch to “%s”: %s", p->switching, reason);
+        else p->refresh_pending = 1;                /* the new default has volumes of its own */
         break;
     case JOB_TIME_GET:
         p->time_known = status == 0 && lp_sysinfo_value(output, "Timezone", p->timezone, sizeof p->timezone);
@@ -202,14 +231,20 @@ static void job_done(int status, const char *output, void *user) {
     case JOB_NONE:
         break;
     }
-    if (kind == JOB_VOLUME_SET || kind == JOB_MUTE_SET || kind == JOB_VOLUME_GET) {
-        if (p->queued_volume >= 0 && !p->job) {
-            char level[16];
-            snprintf(level, sizeof level, "%.2f", p->queued_volume / 100.0);
-            p->queued_volume = -1;
-            const char *const argv[] = { "wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", level, NULL };
-            start(p, JOB_VOLUME_SET, argv);
-        }
+    /* A volume asked for while a job ran is sent once nothing runs; only the newest of each. */
+    if (p->queued_volume >= 0 && !p->job) {
+        char level[16];
+        snprintf(level, sizeof level, "%.2f", p->queued_volume / 100.0);
+        p->queued_volume = -1;
+        const char *const argv[] = { "wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", level, NULL };
+        start(p, JOB_VOLUME_SET, argv);
+    }
+    if (p->queued_input_volume >= 0 && !p->job) {
+        char level[16];
+        snprintf(level, sizeof level, "%.2f", p->queued_input_volume / 100.0);
+        p->queued_input_volume = -1;
+        const char *const argv[] = { "wpctl", "set-volume", "@DEFAULT_AUDIO_SOURCE@", level, NULL };
+        start(p, JOB_INPUT_VOLUME_SET, argv);
     }
     if (p->refresh_pending && !p->job) { p->refresh_pending = 0; refresh_pane(p); }
     dirty(p);
@@ -244,6 +279,7 @@ static void show_pane(struct prefs *p, int pane) {
     p->scroll.y = 0;
     if (pane == LP_PREFS_ABOUT) { lp_sysinfo_about(&p->about); lp_text_buffer_set(&p->hostname_field, p->about.hostname); }
     if (pane == LP_PREFS_KEYBOARD && p->desk) lp_text_buffer_set(&p->layout_field, p->desk->settings.keyboard_layout);
+    meter(p, pane == LP_PREFS_SOUND);
     refresh_pane(p);
     if (pane == LP_PREFS_NETWORK && p->desk) {
         if (!p->ticker) p->ticker = lp_desktop_add_timer(p->desk, NETWORK_REFRESH_MS, on_tick, p);
@@ -302,6 +338,27 @@ static void set_volume(struct prefs *p, int volume) {
 static void set_mute(struct prefs *p, int muted) {
     const char *const argv[] = { "wpctl", "set-mute", "@DEFAULT_AUDIO_SINK@", muted ? "1" : "0", NULL };
     if (start(p, JOB_MUTE_SET, argv)) p->muted = muted;
+}
+
+static void set_input_volume(struct prefs *p, int volume) {
+    p->input_volume = (float)volume;
+    char level[16];
+    snprintf(level, sizeof level, "%.2f", volume / 100.0);
+    const char *const argv[] = { "wpctl", "set-volume", "@DEFAULT_AUDIO_SOURCE@", level, NULL };
+    if (!start(p, JOB_INPUT_VOLUME_SET, argv)) p->queued_input_volume = volume;
+}
+
+/* Makes a device the default. WirePlumber remembers it, and maryd, whose streams follow the defaults, listens and
+ * speaks through it. Choosing the default again runs nothing. */
+static void choose_device(struct prefs *p, enum lp_audio_direction dir, int index) {
+    const lp_audio *a = p->desk ? &p->desk->audio : NULL;
+    if (!a || index < 0 || index >= a->count[dir] || lp_audio_is_default(a, dir, &a->devices[dir][index])) return;
+    const lp_audio_device *device = &a->devices[dir][index];
+    char id[16];
+    snprintf(id, sizeof id, "%u", (unsigned)device->id);
+    snprintf(p->switching, sizeof p->switching, "%s", device->description);
+    const char *const argv[] = { "wpctl", "set-default", id, NULL };
+    if (!start(p, JOB_SET_DEFAULT, argv)) snprintf(p->message, sizeof p->message, "Still busy; try again in a moment.");
 }
 
 static void join(struct prefs *p, int network, const char *passphrase) {
@@ -577,18 +634,74 @@ static float pane_keyboard(lp_ctx *ctx, struct prefs *p, lp_desktop *d, float x,
     return y;
 }
 
+/* One direction's devices as a table in the second column, the default selected; choosing one makes it the default. */
+static float device_table(lp_ctx *ctx, struct prefs *p, const lp_audio *a, enum lp_audio_direction dir, float x, float y, float w, lp_id base) {
+    float tx = x + LABEL_W, tw = w - LABEL_W;
+    label(ctx, "Device", x, y - (ROW_H - LP_LIST_ROW_H) / 2);
+    trace_part(LP_PREFS_PART_TABLE, LP_RECT(tx, y, tw, LP_LIST_ROW_H * a->count[dir]), NULL);
+    for (int i = 0; i < a->count[dir]; i++) {
+        const lp_audio_device *device = &a->devices[dir][i];
+        const char *const columns[1] = { device->kind };
+        if (lp_list_row(ctx, lp_id_index(base, (dir == LP_AUDIO_OUTPUT ? 120 : 150) + i), LP_RECT(tx, y, tw, LP_LIST_ROW_H), LP_ICON_COUNT,
+                        device->description, columns, 1, lp_audio_is_default(a, dir, device), i % 2)) {
+            choose_device(p, dir, i);
+            ctx->dirty = 1;
+        }
+        y += LP_LIST_ROW_H;
+    }
+    return y + LP_SPACE_2;
+}
+
+/* The microphone's level as a row of cells lit in the accent colour; while it is live it asks for frames. */
+static void level_meter(lp_ctx *ctx, lp_rect r, float level, int live) {
+    control_at(r);
+    if (ctx->pass == LP_PASS_EVENT) {
+        if (live) lp_want_frame_rect(ctx, r);
+        return;
+    }
+    if (!ctx->cr) return;
+    enum { CELLS = 16 };
+    const float gap = 3;
+    float cell = (r.w - gap * (CELLS - 1)) / CELLS;
+    int lit = (int)lround(level * CELLS);
+    lp_accent accent = lp_settings_accent(ctx->settings);
+    for (int i = 0; i < CELLS; i++)
+        lp_fill_solid(ctx->cr, LP_RECT(r.x + i * (cell + gap), r.y, cell, r.h), i < lit ? accent.base : LP_PLATINUM_3, LP_RADIUS_XS / 2);
+}
+
 static float pane_sound(lp_ctx *ctx, struct prefs *p, lp_desktop *d, float x, float y, float w, lp_id base) {
     heading(ctx, "Sound", x, &y, w);
-    if (!p->sound_known) {
-        note(ctx, p->job ? "Asking PipeWire…" : "PipeWire is not answering, so sound cannot be changed here.", x, &y, w);
-        return y;
-    }
+    const lp_audio *a = d ? &d->audio : NULL;
+    int listed = a && a->connected;
+    lp_slider_opts percent = { .min = 0, .max = 100, .step = 1, .show_value = 1 };
     section(ctx, "Output", x, &y, w);
-    float volume = p->volume;
-    if (slider_row(ctx, lp_id_index(base, 50), "Volume", x, &y, w, &volume, (lp_slider_opts){ .min = 0, .max = 100, .step = 1, .show_value = 1 }))
-        set_volume(p, (int)lround(volume));
-    int muted = p->muted;
-    if (toggle_row(ctx, lp_id_index(base, 51), "Mute", x, &y, &muted)) set_mute(p, muted);
+    if (a && !listed) note(ctx, lp_audio_available() ? "Looking for PipeWire’s speakers and microphones…" : "This build of the desktop cannot list devices.", x, &y, w);
+    if (listed && a->count[LP_AUDIO_OUTPUT]) y = device_table(ctx, p, a, LP_AUDIO_OUTPUT, x, y, w, base);
+    else if (listed) note(ctx, "No speakers or headphones.", x, &y, w);
+    if (p->sound_known) {
+        float volume = p->volume;
+        if (slider_row(ctx, lp_id_index(base, 50), "Volume", x, &y, w, &volume, percent)) set_volume(p, (int)lround(volume));
+        int muted = p->muted;
+        if (toggle_row(ctx, lp_id_index(base, 51), "Mute", x, &y, &muted)) set_mute(p, muted);
+    } else {
+        note(ctx, p->job ? "Asking PipeWire…" : "PipeWire is not answering, so sound cannot be changed here.", x, &y, w);
+    }
+
+    section(ctx, "Input", x, &y, w);
+    if (listed && !a->count[LP_AUDIO_INPUT]) {
+        note(ctx, "No microphone. In the VM, start it with maryos vm run --microphone (ui.sh does),\nand allow maryos under the Mac’s Privacy & Security › Microphone.", x, &y, w);
+        return y + 14;                              /* the note's second line */
+    }
+    if (listed) y = device_table(ctx, p, a, LP_AUDIO_INPUT, x, y, w, base);
+    if (p->input_known) {
+        float volume = p->input_volume;
+        if (slider_row(ctx, lp_id_index(base, 52), "Volume", x, &y, w, &volume, percent)) set_input_volume(p, (int)lround(volume));
+    }
+    if (listed && lp_audio_default(a, LP_AUDIO_INPUT)) {
+        label(ctx, "Level", x, y);
+        level_meter(ctx, LP_RECT(x + LABEL_W, y + (ROW_H - 10) / 2, fmin(320, w - LABEL_W), 10), lp_audio_level(a), p->metering);
+        y += ROW_H + LP_SPACE_1;
+    }
     return y;
 }
 
@@ -831,7 +944,7 @@ static float pane_mary(lp_ctx *ctx, struct prefs *p, lp_desktop *d, float x, flo
 }
 
 static void prefs_paint(void *state, lp_ctx *ctx, lp_rect body, lp_desktop *d) {
-    static struct prefs empty = { .wifi_selected = -1, .queued_volume = -1 };
+    static struct prefs empty = { .wifi_selected = -1, .queued_volume = -1, .queued_input_volume = -1 };
     struct prefs *p = state ? state : &empty;
     lp_desktop *desk = state ? d : NULL;
     lp_id base = LP_ID("prefs");
@@ -898,6 +1011,7 @@ static void *prefs_create(lp_desktop *d, const char *window_id) {
     p->run = lp_job_run;
     p->wifi_selected = -1;
     p->queued_volume = -1;
+    p->queued_input_volume = -1;
     lp_sysinfo_about(&p->about);
     return p;
 }
@@ -905,6 +1019,7 @@ static void *prefs_create(lp_desktop *d, const char *window_id) {
 static void prefs_destroy(void *state) {
     struct prefs *p = state;
     if (!p) return;
+    meter(p, 0);
     if (p->ticker) lp_desktop_remove_source(p->desk, p->ticker);
     if (p->job && p->run == lp_job_run) lp_job_cancel(p->job);
     wipe(p->mary_key.text, sizeof p->mary_key.text);
@@ -950,8 +1065,13 @@ static int prefs_perform(void *state, lp_desktop *d, const char *skill, const ch
 
 /* The Mary pane shows lp_mary and Sound shows lp_audio: a change to either repaints the window while it shows. */
 static int prefs_model_changed(void *state, lp_desktop *d, unsigned model, unsigned what) {
-    const struct prefs *p = state;
-    return (model == LP_MODEL_MARY && p->pane == LP_PREFS_MARY) || (model == LP_MODEL_AUDIO && p->pane == LP_PREFS_SOUND);
+    struct prefs *p = state;
+    if (model == LP_MODEL_AUDIO && p->pane == LP_PREFS_SOUND) {
+        /* a new default, chosen here or anywhere else, has volumes of its own */
+        if (what & (LP_AUDIO_CHANGED_DEFAULTS | LP_AUDIO_CHANGED_CONNECTION)) refresh_pane(p);
+        return 1;
+    }
+    return model == LP_MODEL_MARY && p->pane == LP_PREFS_MARY;
 }
 
 const lp_app lp_app_prefs = {
@@ -989,6 +1109,10 @@ void lp_prefs_set_zone(void *state, const char *zone) { struct prefs *p = state;
 void lp_prefs_set_hostname(void *state, const char *name) { struct prefs *p = state; lp_text_buffer_set(&p->hostname_field, name); apply_hostname(p); }
 void lp_prefs_join(void *state, int network, const char *passphrase) { join(state, network, passphrase); }
 void lp_prefs_set_volume(void *state, int volume) { set_volume(state, volume); }
+void lp_prefs_set_input_volume(void *state, int volume) { set_input_volume(state, volume); }
+void lp_prefs_choose_device(void *state, int direction, int index) { choose_device(state, direction ? LP_AUDIO_INPUT : LP_AUDIO_OUTPUT, index); }
+int lp_prefs_input_volume(const void *state) { const struct prefs *p = state; return p->input_known ? (int)p->input_volume : -1; }
+int lp_prefs_metering(const void *state) { return ((const struct prefs *)state)->metering; }
 void lp_prefs_mary_set_key_text(void *state, const char *text) { lp_text_buffer_set(&((struct prefs *)state)->mary_key, text); }
 void lp_prefs_mary_save_key(void *state) { save_mary_key(state); }
 const char *lp_prefs_mary_status(const void *state) { return ((const struct prefs *)state)->mary_status; }

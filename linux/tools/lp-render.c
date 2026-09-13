@@ -202,6 +202,19 @@ static int render_app(const lp_app *app, int tab, const char *path) {
         lp_prefs_set_runner(state, fixture_run);
         d.displays = fixture_displays;
     }
+    if (app == &lp_app_prefs && state && prefs_pane == LP_PREFS_SOUND) {
+        static const lp_audio_device outputs[2] = {
+            { .id = 41, .serial = 41, .name = "alsa_output.platform-a003e00.virtio_mmio.analog-stereo", .description = "VirtIO SoundCard Analog Stereo", .kind = "Virtual" },
+            { .id = 52, .serial = 52, .name = "bluez_output.AA_BB_CC.1", .description = "AirPods Pro", .kind = "Bluetooth" },
+        };
+        static const lp_audio_device inputs[2] = {
+            { .id = 60, .serial = 60, .name = "alsa_input.platform-a003e00.virtio_mmio.analog-stereo", .description = "VirtIO SoundCard Analog Stereo", .kind = "Virtual" },
+            { .id = 61, .serial = 61, .name = "alsa_input.usb-Blue_Microphones_Yeti-00.analog-stereo", .description = "Yeti Stereo Microphone", .kind = "USB" },
+        };
+        d.audio.connected = 1;
+        lp_audio_set_devices(&d.audio, LP_AUDIO_OUTPUT, outputs, 2, outputs[0].name);
+        lp_audio_set_devices(&d.audio, LP_AUDIO_INPUT, inputs, 2, inputs[0].name);
+    }
     if (app == &lp_app_prefs && state && prefs_pane == LP_PREFS_MARY) {
         d.mary.fd = 0;                          /* shown as connected; a render never sends */
         d.mary.key_present = 1;
@@ -211,6 +224,7 @@ static int render_app(const lp_app *app, int tab, const char *path) {
         lp_prefs_mary_set_key_text(state, "a-new-key-being-typed");
     }
     if (app == &lp_app_prefs && state && prefs_pane >= 0) app->command(state, &d, prefs_pane);
+    if (app == &lp_app_prefs && state && prefs_pane == LP_PREFS_SOUND) lp_audio_set_level(&d.audio, 0.62f);   /* someone talking */
     if (app == &lp_app_preview && state) {
         /* a picture to show: the procedural wallpaper, written where the build can write */
         char picture[600];

@@ -187,6 +187,12 @@ void lp_prefs_set_zone(void *state, const char *zone);
 void lp_prefs_set_hostname(void *state, const char *name);
 void lp_prefs_join(void *state, int network, const char *passphrase);
 void lp_prefs_set_volume(void *state, int volume);
+/* Sound: the microphone's volume as its slider sets it, a device chosen from a table (direction 0 the outputs,
+ * 1 the inputs), the microphone's volume as read, and whether the pane holds a lease on the meter. */
+void lp_prefs_set_input_volume(void *state, int volume);
+void lp_prefs_choose_device(void *state, int direction, int index);
+int lp_prefs_input_volume(const void *state);  /* 0 … 100, or -1 while unknown */
+int lp_prefs_metering(const void *state);
 int lp_prefs_pane(const void *state);
 const char *lp_prefs_message(const void *state);
 int lp_prefs_link_count(const void *state);

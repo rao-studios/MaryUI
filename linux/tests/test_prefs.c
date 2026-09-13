@@ -90,11 +90,14 @@ LP_TEST(sound_reads_and_sets_the_volume) {
     LP_ASSERT_EQ(lp_prefs_volume(p), -1);
     finish(0, "Volume: 0.40\n");
     LP_ASSERT_EQ(lp_prefs_volume(p), 40);
+    LP_ASSERT_STR(last_run(), "wpctl get-volume @DEFAULT_AUDIO_SOURCE@");   /* then the microphone's */
+    finish(0, "Volume: 0.65 [MUTED]\n");
+    LP_ASSERT_EQ(lp_prefs_input_volume(p), 65);
     lp_prefs_set_volume(p, 70);
     LP_ASSERT_STR(last_run(), "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.70");
     lp_prefs_set_volume(p, 75);                                /* while that runs: queued */
     lp_prefs_set_volume(p, 80);
-    LP_ASSERT_EQ(runs, 2);
+    LP_ASSERT_EQ(runs, 3);
     finish(0, "");
     LP_ASSERT_STR(last_run(), "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.80");   /* only the newest */
     finish(0, "");
@@ -311,11 +314,18 @@ LP_TEST(every_pane_lays_out_in_two_flush_left_columns) {
     char id[12];
     void *p = open_prefs(id);
     d.displays = fake_displays;
+    const lp_audio_device speakers[1] = { { .id = 41, .name = "alsa_output.virtio", .description = "VirtIO SoundCard", .kind = "Virtual" } };
+    d.audio.connected = 1;
+    lp_audio_set_devices(&d.audio, LP_AUDIO_OUTPUT, speakers, 1, speakers[0].name);
+    lp_audio_set_devices(&d.audio, LP_AUDIO_INPUT, speakers, 1, speakers[0].name);
     static struct laid_out t;
     lp_prefs_trace(p, on_part, &t);
     for (int pane = 0; pane <= LP_PREFS_MARY; pane++) {
         lp_desktop_run_command(&d, LP_CMD_APP, pane);
-        if (pane == LP_PREFS_SOUND) finish(0, "Volume: 0.40\n");
+        if (pane == LP_PREFS_SOUND) {
+            finish(0, "Volume: 0.40\n");
+            finish(0, "Volume: 0.50\n");
+        }
         if (pane == LP_PREFS_NETWORK) {
             finish(0, "enp0s1 UP 192.168.64.2/24\nwlan0 UP 10.0.0.5/24\n");
             finish(0, "");
@@ -383,6 +393,83 @@ LP_TEST(a_pane_taller_than_the_window_scrolls) {
     lp_desktop_close_window(&d, id);
 }
 
+LP_TEST(sound_lists_the_devices_and_switches_the_default) {
+    char id[12];
+    void *p = open_prefs(id);
+    const lp_audio_device outputs[2] = {
+        { .id = 41, .name = "alsa_output.virtio", .description = "VirtIO SoundCard", .kind = "Virtual" },
+        { .id = 52, .name = "bluez_output.aa", .description = "AirPods", .kind = "Bluetooth" },
+    };
+    const lp_audio_device inputs[1] = { { .id = 60, .name = "alsa_input.virtio", .description = "VirtIO SoundCard", .kind = "Virtual" } };
+    d.audio.connected = 1;
+    lp_audio_set_devices(&d.audio, LP_AUDIO_OUTPUT, outputs, 2, "alsa_output.virtio");
+    lp_audio_set_devices(&d.audio, LP_AUDIO_INPUT, inputs, 1, "alsa_input.virtio");
+    LP_ASSERT_EQ(runs, 0);                                     /* General does not show them */
+    lp_desktop_run_command(&d, LP_CMD_APP, LP_PREFS_SOUND);
+    LP_ASSERT(lp_prefs_metering(p));
+    LP_ASSERT_EQ(d.audio.leases, 1);
+    finish(0, "Volume: 0.40\n");
+    finish(0, "Volume: 0.50\n");
+    int before = runs;
+    lp_prefs_choose_device(p, 0, 0);                          /* already the default */
+    LP_ASSERT_EQ(runs, before);
+    lp_prefs_choose_device(p, 0, 1);
+    LP_ASSERT_STR(last_run(), "wpctl set-default 52");
+    finish(1, "Object 52 not found\n");
+    LP_ASSERT_STR(lp_prefs_message(p), "Could not switch to “AirPods”: Object 52 not found");
+    lp_prefs_choose_device(p, 0, 1);
+    finish(0, "");
+    LP_ASSERT_STR(last_run(), "wpctl get-volume @DEFAULT_AUDIO_SINK@");   /* the new default's volume */
+    finish(0, "Volume: 0.30\n");
+    finish(0, "Volume: 0.50\n");
+    before = runs;
+    lp_audio_set_devices(&d.audio, LP_AUDIO_OUTPUT, outputs, 2, "bluez_output.aa");   /* WirePlumber moves it */
+    LP_ASSERT_EQ(runs, before + 1);
+    LP_ASSERT_STR(last_run(), "wpctl get-volume @DEFAULT_AUDIO_SINK@");
+    finish(0, "Volume: 0.30\n");
+    finish(0, "Volume: 0.50\n");
+    lp_prefs_set_input_volume(p, 80);
+    LP_ASSERT_STR(last_run(), "wpctl set-volume @DEFAULT_AUDIO_SOURCE@ 0.80");
+    lp_prefs_set_input_volume(p, 85);                         /* while that runs: queued */
+    finish(0, "");
+    LP_ASSERT_STR(last_run(), "wpctl set-volume @DEFAULT_AUDIO_SOURCE@ 0.85");
+    finish(0, "");
+    lp_desktop_run_command(&d, LP_CMD_APP, LP_PREFS_ABOUT);
+    LP_ASSERT(!lp_prefs_metering(p));
+    LP_ASSERT_EQ(d.audio.leases, 0);
+    lp_desktop_run_command(&d, LP_CMD_APP, LP_PREFS_SOUND);
+    finish(1, "Could not connect to PipeWire\n");            /* only the speaker's volume is asked for then */
+    LP_ASSERT_EQ(lp_prefs_volume(p), -1);
+    lp_desktop_close_window(&d, id);
+    LP_ASSERT_EQ(d.audio.leases, 0);                          /* closing gives the lease back */
+}
+
+LP_TEST(sound_says_when_there_is_no_microphone) {
+    char id[12];
+    void *p = open_prefs(id);
+    const lp_audio_device outputs[1] = { { .id = 41, .name = "alsa_output.virtio", .description = "VirtIO SoundCard", .kind = "Virtual" } };
+    d.audio.connected = 1;
+    lp_audio_set_devices(&d.audio, LP_AUDIO_OUTPUT, outputs, 1, outputs[0].name);
+    lp_desktop_run_command(&d, LP_CMD_APP, LP_PREFS_SOUND);
+    finish(0, "Volume: 0.40\n");
+    finish(1, "Translate ID error: '@DEFAULT_AUDIO_SOURCE@' is not a valid ID\n");
+    LP_ASSERT_EQ(lp_prefs_input_volume(p), -1);
+    static struct laid_out t;
+    lp_prefs_trace(p, on_part, &t);
+    t.n = 0;
+    pass(p, (lp_input){ .mx = -1, .my = -1 }, 4000);
+    int said = 0, metered = 0, tables = 0;
+    for (int i = 0; i < t.n; i++) {
+        said |= t.parts[i].part == LP_PREFS_PART_NOTE && strstr(t.parts[i].text, "No microphone") != NULL;
+        metered |= t.parts[i].part == LP_PREFS_PART_LABEL && strcmp(t.parts[i].text, "Level") == 0;
+        tables += t.parts[i].part == LP_PREFS_PART_TABLE;
+    }
+    LP_ASSERT(said && !metered);
+    LP_ASSERT_EQ(tables, 1);                                  /* the speakers' table, and no microphones' */
+    lp_prefs_trace(p, NULL, NULL);
+    lp_desktop_close_window(&d, id);
+}
+
 int main(void) {
     const char *tmp = getenv("TMPDIR");
     snprintf(root, sizeof root, "%s/lp_prefs_XXXXXX", tmp && *tmp ? tmp : "/tmp");
@@ -401,6 +488,8 @@ int main(void) {
     LP_RUN(mary_hands_the_key_over_once_and_keeps_no_copy);
     LP_RUN(a_pane_taller_than_the_window_scrolls);
     LP_RUN(every_pane_lays_out_in_two_flush_left_columns);
+    LP_RUN(sound_lists_the_devices_and_switches_the_default);
+    LP_RUN(sound_says_when_there_is_no_microphone);
     LP_RUN(settings_keep_their_defaults_and_bounds);
     lp_files_delete_tree(root);
     LP_TEST_MAIN_END();

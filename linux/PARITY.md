@@ -350,7 +350,9 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   capture stream meters the default microphone, rising at once and falling back over 300 ms. Changes reach
   the windows that show them through `lp_desktop_models_changed` and `lp_app.model_changed`, which System
   Settings answers for its Sound pane (and its Mary pane, for `lp_mary`). Choosing a device, volume and mute
-  stay `wpctl`'s. The web has no audio devices.
+  stay `wpctl`'s: System Settings › Sound shows each list as a table with the default selected, chooses one with
+  `wpctl set-default`, sets the microphone's volume, meters it while the pane is open, and says what to do when
+  there is no microphone. The web has no audio devices.
 - **Close animation.** `lp-window-close` (scale .96 + fade over `motion.fast`, `CLOSE` after
   fast + 80 ms) runs for built-in windows. A client that unmaps is gone at once — the compositor
   has no pixels left to fade.
