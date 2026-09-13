@@ -11,6 +11,7 @@
 #include "maryui/components/lp_spotlight_panel.h"
 #include "maryui/lp_app.h"
 #include "maryui/lp_drag.h"
+#include "maryui/lp_mary.h"
 #include "maryui/lp_menus.h"
 #include "maryui/lp_settings.h"
 #include "maryui/lp_spotlight.h"
@@ -86,6 +87,7 @@ typedef struct lp_desktop {
     lp_drag drag;             /* the drag session, when active */
     int menu_active;          /* highlighted entry of the open menu, -1 */
     lp_spotlight spotlight;   /* Ctrl+Space: the search bar and dock */
+    lp_mary mary;             /* the conversation with maryd, shown in Spotlight */
     char about_label[160];
     lp_desktop_change_fn on_change;   /* the WM changed: the host syncs its windows */
     void (*on_settings)(struct lp_desktop *d);
@@ -96,6 +98,8 @@ typedef struct lp_desktop {
     void (*on_drag)(struct lp_desktop *d, int begin);
     /* A window's app wants a repaint (a directory changed, a command ran). Damage only: this may run inside an EVENT pass. */
     void (*on_app_dirty)(struct lp_desktop *d, const char *window_id);
+    /* Mary changed (LP_MARY_CHANGED_* bits): the host repaints Spotlight, and opens it on LP_MARY_WAKE. NULL-safe. */
+    void (*on_mary)(struct lp_desktop *d, unsigned what);
     /* Watch (on) or stop watching a directory for changes; the host calls lp_desktop_files_changed. */
     void (*watch)(struct lp_desktop *d, const char *dir, int on);
     /* Event sources (see lp_source_fn). A timer is one-shot: update_timer arms it, 0 disarms. */

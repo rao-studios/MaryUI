@@ -15,6 +15,7 @@ void lp_desktop_init(lp_desktop *d, lp_rect bounds, void *host) {
     d->open_menu = -1;
     d->menu_active = -1;
     lp_spotlight_init(&d->spotlight);
+    lp_mary_init(&d->mary, d);
     d->host = host;
     snprintf(d->about_label, sizeof d->about_label, "About %s", d->branding.pretty_name);
 }
