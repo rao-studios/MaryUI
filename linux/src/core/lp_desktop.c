@@ -207,6 +207,29 @@ void lp_desktop_open_popup(lp_desktop *d, const char *window_id, float x, float 
     d->menu_active = -1;
 }
 
+void lp_desktop_open_text_menu(lp_desktop *d, const char *window_id, const lp_text_menu_request *r) {
+    static const struct { const char *label, *shortcut; int action; } items[] = {
+        { "Cut", "⌘X", LP_EDIT_CUT }, { "Copy", "⌘C", LP_EDIT_COPY }, { "Paste", "⌘V", LP_EDIT_PASTE },
+        { NULL, NULL, -1 }, { "Select All", "⌘A", LP_EDIT_SELECT_ALL },
+    };
+    lp_menu_model m = { .id = "popup", .label = "", .count = 0 };
+    for (size_t i = 0; i < sizeof items / sizeof items[0]; i++) {
+        lp_menu_entry *e = &m.entries[m.count++];
+        memset(e, 0, sizeof *e);
+        if (!items[i].label) {
+            e->separator = 1;
+            continue;
+        }
+        snprintf(e->label, sizeof e->label, "%s", items[i].label);
+        e->shortcut = items[i].shortcut;
+        e->command = LP_CMD_EDIT;
+        e->arg = items[i].action;
+        e->disabled = items[i].action == LP_EDIT_CUT ? !r->can_cut : items[i].action == LP_EDIT_COPY ? !r->can_copy
+                    : items[i].action == LP_EDIT_PASTE ? !r->can_paste : !r->can_select_all;
+    }
+    lp_desktop_open_popup(d, window_id, r->x, r->y, &m);
+}
+
 static void settings_changed(lp_desktop *d) {
     lp_settings_save(&d->settings);
     if (d->on_settings) d->on_settings(d);
@@ -270,6 +293,12 @@ int lp_desktop_run_command(lp_desktop *d, enum lp_command command, int arg) {
         snprintf(id, sizeof id, "%s", inst->window_id);
         inst->app->command(inst->state, d, arg);
         if (d->on_app_dirty && lp_wm_find(&d->wm, id) >= 0) d->on_app_dirty(d, id);
+        return 1;
+    }
+    case LP_CMD_EDIT: {
+        const char *target = d->command_target[0] ? d->command_target : focused ? focused->id : NULL;
+        if (!target || !d->edit_text) return 0;
+        d->edit_text(d, target, arg);
         return 1;
     }
     case LP_CMD_GO: {

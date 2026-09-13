@@ -42,7 +42,9 @@ enum lp_command {
     LP_CMD_HELP,
     LP_CMD_APP,               /* arg: an app command id, for the focused (or the popup's) window */
     LP_CMD_GO,                /* arg: lp_user_dir — a new Finder window there */
+    LP_CMD_EDIT,              /* arg: lp_edit_action — for the focused (or the popup's) window's text field */
 };
+enum lp_edit_action { LP_EDIT_CUT, LP_EDIT_COPY, LP_EDIT_PASTE, LP_EDIT_SELECT_ALL };
 
 typedef struct lp_app_instance {
     char window_id[12];
@@ -104,6 +106,9 @@ typedef struct lp_desktop {
     void (*on_app_dirty)(struct lp_desktop *d, const char *window_id);
     /* Mary changed (LP_MARY_CHANGED_* bits): the host repaints Spotlight, and opens it on LP_MARY_WAKE. NULL-safe. */
     void (*on_mary)(struct lp_desktop *d, unsigned what);
+    /* LP_CMD_EDIT for a window's focused text field: the host hands that window the chord the command
+     * stands for (⌘X, ⌘C, ⌘V, ⌘A). NULL: editing commands do nothing. */
+    void (*edit_text)(struct lp_desktop *d, const char *window_id, int action);
     /* Watch (on) or stop watching a directory for changes; the host calls lp_desktop_files_changed. */
     void (*watch)(struct lp_desktop *d, const char *dir, int on);
     /* Event sources (see lp_source_fn). A timer is one-shot: update_timer arms it, 0 disarms. */
@@ -146,6 +151,9 @@ int lp_desktop_in_dock(const lp_desktop *d, const lp_app *app);
 void lp_desktop_set_in_dock(lp_desktop *d, const char *app_id, int on);
 /* Opens a context menu for a window at (x, y) in its chrome coordinates. */
 void lp_desktop_open_popup(lp_desktop *d, const char *window_id, float x, float y, const lp_menu_model *model);
+/* A text field's right-click (lp_ctx.text_menu): Cut, Copy, Paste and Select All as that window's context
+ * menu, each an LP_CMD_EDIT. */
+void lp_desktop_open_text_menu(lp_desktop *d, const char *window_id, const lp_text_menu_request *request);
 const lp_app *lp_desktop_find_app(const lp_desktop *d, const char *app_id);
 lp_app_instance *lp_desktop_instance(lp_desktop *d, const char *window_id);
 /* Rebuilds d->menus from the current state (menus.ts). */

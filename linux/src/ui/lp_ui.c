@@ -18,6 +18,7 @@ void lp_ctx_begin(lp_ctx *ctx, enum lp_pass pass, cairo_t *cr, const lp_input *i
     ctx->wants_frame_rect = LP_RECT(0, 0, 0, 0);
     ctx->has_damage = 0;
     ctx->damage = LP_RECT(0, 0, 0, 0);
+    memset(&ctx->text_menu, 0, sizeof ctx->text_menu);
 }
 
 void lp_damage(lp_ctx *ctx, lp_rect r) {

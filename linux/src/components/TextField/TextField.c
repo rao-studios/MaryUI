@@ -4,6 +4,7 @@
 
 #include "maryui/components/lp_controls.h"
 #include "maryui/components/lp_monogram.h"
+#include "maryui/components/lp_text_area.h"
 #include "maryui/lp_draw.h"
 #include "maryui/lp_icon.h"
 #include "maryui/lp_settings.h"
@@ -33,8 +34,62 @@ static void clear_all(lp_text_buffer *b) {
 static int utf8_prev(const char *s, int i) { if (i <= 0) return 0; i--; while (i > 0 && ((unsigned char)s[i] & 0xC0) == 0x80) i--; return i; }
 static int utf8_next(const char *s, int i, int len) { if (i >= len) return len; i++; while (i < len && ((unsigned char)s[i] & 0xC0) == 0x80) i++; return i; }
 
-static int edit(lp_text_buffer *b, const lp_input *in) {
+/* A paste into one line: tabs become spaces, line breaks and other control characters are dropped,
+ * and it stops where the field is full, never inside a character. 1 when the text changed. */
+static int paste_into(lp_text_buffer *b, const char *text, int n) {
+    if (!text || n <= 0) return 0;
+    int changed = 0;
+    if (b->all_selected) { clear_all(b); changed = 1; }
+    for (int i = 0; i < n;) {
+        unsigned char c = (unsigned char)text[i];
+        int len = c < 0x80 ? 1 : (c & 0xE0) == 0xC0 ? 2 : (c & 0xF0) == 0xE0 ? 3 : (c & 0xF8) == 0xF0 ? 4 : 1;
+        if (i + len > n) break;
+        char one[4];
+        memcpy(one, text + i, (size_t)len);
+        i += len;
+        if (len == 1) {
+            if (c == '\t') one[0] = ' ';
+            else if (c < 0x20 || c == 0x7f || c >= 0x80) continue;
+        }
+        if (b->len + len >= (int)sizeof b->text) break;
+        memmove(b->text + b->cursor + len, b->text + b->cursor, (size_t)(b->len - b->cursor + 1));
+        memcpy(b->text + b->cursor, one, (size_t)len);
+        b->len += len;
+        b->cursor += len;
+        changed = 1;
+    }
+    return changed;
+}
+
+/* ⌘/Ctrl + A, C, X and V through the desktop's text clipboard (the one TextArea, the Calculator and
+ * the Terminal share). The field selects all or nothing, so Copy and Cut follow Select All, and a
+ * secure field pastes but never gives its text away. -1 when the key is not one of them. */
+static int chord(lp_text_buffer *b, const lp_input *in, int secure) {
+    if (!(in->mods & (LP_MOD_CTRL | LP_MOD_LOGO)) || (in->mods & LP_MOD_ALT)) return -1;
+    lp_text_clipboard *clip = lp_text_clipboard_shared();
+    switch (in->keysym) {
+    case XKB_KEY_a: case XKB_KEY_A:
+        b->all_selected = b->len > 0;
+        return 0;
+    case XKB_KEY_c: case XKB_KEY_C:
+        if (!secure && b->all_selected && b->len) lp_text_clipboard_set(clip, b->text, b->len);
+        return 0;
+    case XKB_KEY_x: case XKB_KEY_X:
+        if (secure || !b->all_selected || !b->len) return 0;
+        lp_text_clipboard_set(clip, b->text, b->len);
+        clear_all(b);
+        return 1;
+    case XKB_KEY_v: case XKB_KEY_V:
+        return paste_into(b, clip->text, clip->len);
+    default:
+        return -1;
+    }
+}
+
+static int edit(lp_text_buffer *b, const lp_input *in, int secure) {
     if (!in->key_pressed) return 0;
+    int chorded = chord(b, in, secure);
+    if (chorded >= 0) return chorded;
     if (b->all_selected) {
         switch (in->keysym) {
         case XKB_KEY_BackSpace: case XKB_KEY_Delete: clear_all(b); return 1;
@@ -90,7 +145,16 @@ int lp_text_field(lp_ctx *ctx, lp_id id, lp_rect r, lp_text_buffer *b, lp_text_f
             if (lp_hit(ctx, r)) ctx->cursor = LP_CURSOR_TEXT;
             if (lp_hit(ctx, r) && (ctx->in.pressed & LP_BUTTON_LEFT)) { if (ctx->focus != id) ctx->dirty = 1; ctx->focus = id; b->all_selected = 0; }
             else if (!lp_hit(ctx, r) && (ctx->in.pressed & LP_BUTTON_LEFT) && ctx->focus == id) { ctx->focus = 0; ctx->dirty = 1; }
-            if (ctx->focus == id && ctx->in.key_pressed) { changed = edit(b, &ctx->in); ctx->dirty = 1; }
+            if (lp_hit(ctx, r) && (ctx->in.pressed & LP_BUTTON_RIGHT)) {
+                /* Right-click: the field takes the focus and asks the host for the editing menu (PARITY D21). */
+                if (ctx->focus != id) ctx->dirty = 1;
+                ctx->focus = id;
+                lp_text_clipboard *clip = lp_text_clipboard_shared();
+                int give = !o.secure && b->all_selected && b->len > 0;
+                ctx->text_menu = (lp_text_menu_request){ .requested = 1, .x = ctx->in.mx, .y = ctx->in.my, .can_cut = give, .can_copy = give,
+                                                         .can_paste = clip->text && clip->len > 0, .can_select_all = b->len > 0 };
+            }
+            if (ctx->focus == id && ctx->in.key_pressed) { changed = edit(b, &ctx->in, o.secure); ctx->dirty = 1; }
         }
     }
     if (ctx->pass != LP_PASS_DRAW || !ctx->cr) return changed;

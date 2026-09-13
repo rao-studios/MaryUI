@@ -311,8 +311,7 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   exist for it. The web has no maryd and no chat.
 - **D19 — a TextField can keep a secret.** Linux only. `lp_text_field_opts.secure` draws one bullet per
   character — the text, the selection highlight and the caret are all measured on the bullets — for System
-  Settings' Mistral API key. There is no clipboard yet; when one arrives it must never copy or cut a secure
-  field. The Mary pane (System Settings › Assistant) keeps the key only until Save hands it to maryd
+  Settings' Mistral API key. It pastes, but it never copies or cuts (D21). The Mary pane (System Settings › Assistant) keeps the key only until Save hands it to maryd
   (`lp_mary_set_key`) and zeroes the field whatever happened; Verify asks maryd to check it with Mistral;
   “Listen for Hey Mary” is `mary_wake` in settings.conf; and every app that declares skills gets a group —
   whether Mary may use it, when she asks first, and a switch per skill (D20). The web has neither.
@@ -327,6 +326,13 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   `skill.result`. Settings (`open_pane`, which only shows a pane), the Media Player (`play_pause`) and Calendar
   (`events_today`, read from the model with no window) carry the first skills. There is no confirmation UI
   yet, so a call that needs one is refused as `needs_confirmation`. The web has no Mary.
+- **D21 — text fields edit with the keyboard and a context menu.** A browser gives every input ⌘A/C/X/V
+  and a right-click menu; C's TextField now has both, through the desktop's own text clipboard
+  (`lp_text_clipboard_shared`, which TextArea, the Calculator and the Terminal already use). A right-click
+  focuses the field and sets `lp_ctx.text_menu`; the host opens `lp_desktop_open_text_menu` as the window's
+  popup, and each entry is an `LP_CMD_EDIT` the host hands that window as the chord (`lp_desktop.edit_text`).
+  Selection is all or nothing, so Copy and Cut follow Select All; a paste into one line turns tabs into
+  spaces and drops line breaks.
 - **Close animation.** `lp-window-close` (scale .96 + fade over `motion.fast`, `CLOSE` after
   fast + 80 ms) runs for built-in windows. A client that unmaps is gone at once — the compositor
   has no pixels left to fade.

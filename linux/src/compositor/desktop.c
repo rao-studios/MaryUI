@@ -238,6 +238,17 @@ static int desktop_displays(lp_desktop *d, lp_display *out, int max) {
     return n;
 }
 
+/* LP_CMD_EDIT: the window's focused text field gets the chord the menu entry stands for. */
+static void desktop_edit_text(lp_desktop *d, const char *window_id, int action) {
+    static const uint32_t keys[] = { XKB_KEY_x, XKB_KEY_c, XKB_KEY_v, XKB_KEY_a };
+    struct mui_server *server = d->host;
+    struct mui_window *win = mui_window_find(server, window_id);
+    if (!win || action < 0 || action >= (int)(sizeof keys / sizeof keys[0])) return;
+    double now = mui_now_ms();
+    mui_chrome_key(&win->chrome, keys[action], LP_MOD_CTRL, "", 1, now);
+    mui_chrome_key(&win->chrome, keys[action], LP_MOD_CTRL, "", 0, now);
+}
+
 void mui_desktop_init(struct mui_server *server) {
     format_clock(server->clock_text, sizeof server->clock_text, server->desktop.settings.clock_24h);
     struct wl_event_loop *loop = wl_display_get_event_loop(server->display);
@@ -250,6 +261,7 @@ void mui_desktop_init(struct mui_server *server) {
     server->desktop.spawn = desktop_spawn;
     server->desktop.request_close = desktop_request_close;
     server->desktop.on_app_dirty = desktop_app_dirty;
+    server->desktop.edit_text = desktop_edit_text;
     server->desktop.on_drag = desktop_on_drag;
     server->desktop.displays = desktop_displays;
     mui_sources_init(server);

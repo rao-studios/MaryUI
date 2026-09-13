@@ -52,6 +52,14 @@ typedef struct lp_input {
 #define LP_DRAG_DROP 2        /* released here */
 #define LP_DRAG_LEAVE 3       /* the pointer left the chrome (mx/my are NAN) */
 
+/* A widget's request for the standard editing menu (a TextField's right-click): the host opens it as the
+ * desktop's popup after the EVENT pass (lp_desktop_open_text_menu). lp_ctx_begin clears it every pass. */
+typedef struct lp_text_menu_request {
+    int requested;
+    float x, y;               /* where, in chrome coordinates */
+    int can_cut, can_copy, can_paste, can_select_all;
+} lp_text_menu_request;
+
 typedef struct lp_ctx {
     enum lp_pass pass;
     cairo_t *cr;              /* NULL in the EVENT pass */
@@ -95,6 +103,7 @@ typedef struct lp_ctx {
     int wants_frame;          /* an ambient animation asks for another frame */
     lp_rect wants_frame_rect; /* where it lives (union); the host repaints only this much */
     const struct lp_settings *settings;
+    lp_text_menu_request text_menu;
 } lp_ctx;
 
 void lp_ctx_begin(lp_ctx *ctx, enum lp_pass pass, cairo_t *cr, const lp_input *in, lp_rect bounds, double now_ms);

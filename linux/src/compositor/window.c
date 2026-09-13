@@ -68,6 +68,9 @@ static void paint_window(lp_ctx *ctx, struct mui_chrome *chrome, void *data) {
                 lp_surface_paint(ctx->cr, body, (lp_surface_opts){ .variant = LP_VARIANT_BODY, .radius = 0 }, lp_surface_motion_of(ctx));
             }
             win->instance->app->paint(win->instance->state, ctx, body, &win->server->desktop);
+            /* A text field asked for its editing menu: the desktop's popup, aimed at this window. */
+            if (ctx->pass == LP_PASS_EVENT && ctx->text_menu.requested)
+                lp_desktop_open_text_menu(&win->server->desktop, win->instance->window_id, &ctx->text_menu);
             if (draw) cairo_restore(ctx->cr);
         }
     }
