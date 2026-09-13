@@ -266,6 +266,11 @@ void mui_desktop_init(struct mui_server *server) {
     server->desktop.displays = desktop_displays;
     mui_sources_init(server);
     mui_mary_init(server);      /* after the event sources it rides */
+    /* In `maryos vm run` the Mac's clipboard arrives on a virtio port; elsewhere there is none. */
+    const char *port = getenv("MARYUI_CLIPBOARD_PORT");
+    lp_clipboard_port_init(&server->clipboard_port);
+    if (lp_clipboard_port_open(&server->clipboard_port, &server->desktop, port && *port ? port : LP_CLIPBOARD_PORT) == 0)
+        wlr_log(WLR_INFO, "clipboard: the host's clipboard arrives through %s", server->clipboard_port.path);
     mui_files_init(server);
     server->desktop.open_menu = -1;
     lp_desktop_build_menus(&server->desktop);
@@ -273,6 +278,7 @@ void mui_desktop_init(struct mui_server *server) {
 
 void mui_desktop_finish(struct mui_server *server) {
     mui_mary_finish(server);
+    lp_clipboard_port_close(&server->clipboard_port);
     if (server->clock_timer) wl_event_source_remove(server->clock_timer);
     server->clock_timer = NULL;
     if (server->repaint_idle) wl_event_source_remove(server->repaint_idle);

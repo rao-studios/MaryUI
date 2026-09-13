@@ -83,6 +83,8 @@ struct mui_frame_stats {
     int motion_active;
 };
 
+#include "maryui/lp_clipboard_port.h"
+
 struct mui_server {
     const lp_settings *settings;
     lp_branding branding;
@@ -107,6 +109,7 @@ struct mui_server {
     int spotlight_x, spotlight_y;        /* the panel chrome's resting position */
     lp_rect spotlight_panel;             /* the painted panel inside the chrome (chrome-local), for hit-testing */
     struct wl_event_source *spotlight_idle; /* a deferred sync after a WM change */
+    lp_clipboard_port clipboard_port;   /* the host's clipboard, in a VM (PARITY D22) */
     struct wl_event_source *repaint_idle;   /* a deferred repaint of windows an app dirtied from inside an EVENT pass */
     struct mui_chrome *drag_ghost;          /* the drag session's ghost (drag.c), while one is active */
     struct mui_chrome *drag_source, *drag_target; /* the chrome the drag began in; the one under the pointer */

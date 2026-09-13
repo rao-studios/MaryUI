@@ -333,6 +333,11 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   popup, and each entry is an `LP_CMD_EDIT` the host hands that window as the chord (`lp_desktop.edit_text`).
   Selection is all or nothing, so Copy and Cut follow Select All; a paste into one line turns tabs into
   spaces and drops line breaks.
+- **D22 — the Mac's clipboard pastes in the VM.** Linux only, and only under `maryos vm run`. The Mac
+  writes each change of its pasteboard, while the VM's window is in front, to a virtio console port named
+  `org.maryos.clipboard` (a u32 little-endian byte count, then UTF-8); `lp_clipboard_port` reads it on the
+  desktop's event loop and makes each message the text clipboard D21 pastes from. Host to guest only; on
+  a Pi there is no port and nothing happens. The web has the browser's clipboard.
 - **Close animation.** `lp-window-close` (scale .96 + fade over `motion.fast`, `CLOSE` after
   fast + 80 ms) runs for built-in windows. A client that unmaps is gone at once — the compositor
   has no pixels left to fade.
