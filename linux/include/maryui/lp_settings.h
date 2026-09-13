@@ -24,6 +24,14 @@ typedef struct lp_settings {
     int reduced_motion;
     /* Show the ambient clock in the desktop's corner. C only: the web has no clock (D13). */
     int clock;
+    /* System Settings (C only, D15). The compositor applies the input ones to every keyboard and pointer. */
+    int key_repeat_rate;        /* repeats a second, 1 … 100 */
+    int key_repeat_delay;       /* ms before a held key repeats, 100 … 2000 */
+    char keyboard_layout[32];   /* an XKB layout, "us(dvorak)"; "" for the system's own */
+    float pointer_speed;        /* libinput's acceleration, -1 … 1 */
+    int natural_scroll;
+    int clock_24h;              /* the ambient clock in 24-hour time */
+    char dock[256];             /* the app ids a blank Spotlight shows, comma-separated; "" for each app's own */
 } lp_settings;
 
 typedef struct lp_accent {

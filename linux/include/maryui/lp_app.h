@@ -53,6 +53,7 @@ extern const lp_app lp_app_activity;
 extern const lp_app lp_app_diskutil;
 extern const lp_app lp_app_player;
 extern const lp_app lp_app_calendar;
+extern const lp_app lp_app_prefs;
 
 /* TextEdit: replaces the document (for previews). */
 void lp_textedit_set_text(void *state, const char *name, const char *text);
@@ -162,5 +163,25 @@ const char *lp_calendar_app_message(const void *state);
 void lp_calendar_app_fill(void *state, const char *title, const char *start_date, const char *start_time,
                           const char *end_date, const char *end_time, int all_day, int repeat);
 void lp_calendar_app_edit(void *state, int index);
+
+/* System Settings (app id "settings"): each command shows that pane. */
+enum lp_prefs_command {
+    LP_PREFS_GENERAL, LP_PREFS_DOCK, LP_PREFS_DISPLAYS, LP_PREFS_KEYBOARD, LP_PREFS_SOUND,
+    LP_PREFS_NETWORK, LP_PREFS_TIME, LP_PREFS_USERS, LP_PREFS_ABOUT,
+};
+/* Its actions as a person takes them, and what it shows, for tests; job runs stand in for lp_job_run. */
+void lp_prefs_set_runner(void *state, struct lp_job *(*run)(struct lp_desktop *d, const char *const *argv,
+                        void (*done)(int status, const char *output, void *user), void *user));
+void lp_prefs_set_layout(void *state, const char *layout);
+void lp_prefs_set_zone(void *state, const char *zone);
+void lp_prefs_set_hostname(void *state, const char *name);
+void lp_prefs_join(void *state, int network, const char *passphrase);
+void lp_prefs_set_volume(void *state, int volume);
+int lp_prefs_pane(const void *state);
+const char *lp_prefs_message(const void *state);
+int lp_prefs_link_count(const void *state);
+int lp_prefs_network_count(const void *state);
+int lp_prefs_volume(const void *state);        /* 0 … 100, or -1 while unknown */
+const char *lp_prefs_timezone(const void *state);
 
 #endif

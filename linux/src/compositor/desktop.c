@@ -28,7 +28,7 @@
 #define MUI_CLOCK_W 160
 #define MUI_CLOCK_H ((int)LP_SIZE_MENUBAR_HEIGHT)
 
-static void format_clock(char *out, size_t n) {
+static void format_clock(char *out, size_t n, int hours24) {
     time_t now = time(NULL);
     struct tm tm;
     localtime_r(&now, &tm);
@@ -36,7 +36,8 @@ static void format_clock(char *out, size_t n) {
     strftime(day, sizeof day, "%a", &tm);
     int hour = tm.tm_hour % 12;
     if (hour == 0) hour = 12;
-    snprintf(hm, sizeof hm, "%d:%02d %s", hour, tm.tm_min, tm.tm_hour < 12 ? "AM" : "PM");
+    if (hours24) snprintf(hm, sizeof hm, "%02d:%02d", tm.tm_hour, tm.tm_min);   /* System Settings › General */
+    else snprintf(hm, sizeof hm, "%d:%02d %s", hour, tm.tm_min, tm.tm_hour < 12 ? "AM" : "PM");
     snprintf(out, n, "%s %s", day, hm);
 }
 
@@ -138,7 +139,7 @@ static void paint_clock(lp_ctx *ctx, struct mui_chrome *chrome, void *data) {
 static int clock_tick(void *data) {
     struct mui_server *server = data;
     char text[32];
-    format_clock(text, sizeof text);
+    format_clock(text, sizeof text, server->desktop.settings.clock_24h);
     if (strcmp(text, server->clock_text) != 0) {
         snprintf(server->clock_text, sizeof server->clock_text, "%s", text);
         if (clock_visible(server)) {
@@ -218,8 +219,27 @@ static int reap(int signo, void *data) {
     return 0;
 }
 
+static int desktop_displays(lp_desktop *d, lp_display *out, int max) {
+    struct mui_server *server = d->host;
+    int n = 0;
+    struct mui_output *output;
+    wl_list_for_each(output, &server->outputs, link) {
+        if (n >= max) break;
+        struct wlr_output *w = output->wlr_output;
+        lp_display *x = &out[n++];
+        memset(x, 0, sizeof *x);
+        snprintf(x->name, sizeof x->name, "%s", w->name ? w->name : "");
+        snprintf(x->description, sizeof x->description, "%s%s%s", w->make ? w->make : "", w->make && w->model ? " " : "", w->model ? w->model : "");
+        x->width = w->width;
+        x->height = w->height;
+        x->refresh_hz = (float)w->refresh / 1000.0f;
+        x->scale = w->scale;
+    }
+    return n;
+}
+
 void mui_desktop_init(struct mui_server *server) {
-    format_clock(server->clock_text, sizeof server->clock_text);
+    format_clock(server->clock_text, sizeof server->clock_text, server->desktop.settings.clock_24h);
     struct wl_event_loop *loop = wl_display_get_event_loop(server->display);
     server->clock_timer = wl_event_loop_add_timer(loop, clock_tick, server);
     time_t now = time(NULL);
@@ -231,6 +251,7 @@ void mui_desktop_init(struct mui_server *server) {
     server->desktop.request_close = desktop_request_close;
     server->desktop.on_app_dirty = desktop_app_dirty;
     server->desktop.on_drag = desktop_on_drag;
+    server->desktop.displays = desktop_displays;
     mui_sources_init(server);
     mui_files_init(server);
     server->desktop.open_menu = -1;
@@ -256,6 +277,8 @@ void mui_desktop_finish(struct mui_server *server) {
 }
 
 void mui_desktop_settings_changed(struct mui_server *server) {
+    mui_input_apply_settings(server);
+    format_clock(server->clock_text, sizeof server->clock_text, server->desktop.settings.clock_24h);
     struct mui_window *win;
     wl_list_for_each(win, &server->windows, link) { mui_chrome_damage_all(&win->chrome); mui_chrome_repaint(&win->chrome, mui_now_ms()); }
     if (server->clock) {

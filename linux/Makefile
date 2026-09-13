@@ -24,7 +24,7 @@ WAYLAND_SCANNER ?= $(shell $(PKG_CONFIG) --variable=wayland_scanner wayland-scan
 WAYLAND_PROTOCOLS ?= $(shell $(PKG_CONFIG) --variable=pkgdatadir wayland-protocols 2>/dev/null)
 
 LIB_PKGS := cairo pangocairo fontconfig pixman-1 xkbcommon
-DESKTOP_PKGS := wlroots wayland-server
+DESKTOP_PKGS := wlroots wayland-server libinput
 HAVE_WLROOTS := $(shell $(PKG_CONFIG) --exists $(DESKTOP_PKGS) 2>/dev/null && echo 1)
 # The molten wallpaper renders offscreen through EGL + GLES2. Optional: without
 # it lp_molten.c compiles to stubs and the procedural wallpaper stands in.

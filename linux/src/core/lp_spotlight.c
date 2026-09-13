@@ -44,7 +44,7 @@ int lp_spotlight_items(const lp_desktop *d, lp_spotlight_item *out, int max) {
         snprintf(it->subtitle, sizeof it->subtitle, "Application");
         it->icon = app->icon < LP_ICON_COUNT ? app->icon : LP_ICON_DOCUMENT;
         it->object = app->object;
-        it->dock = app->dock;
+        it->dock = lp_desktop_in_dock(d, app);
         it->index = i;
         for (int w = 0; w < d->wm.count; w++) if (strcmp(d->wm.windows[w].app_id, app->id) == 0) it->running = 1;
     }

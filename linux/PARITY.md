@@ -51,7 +51,7 @@ README, or when a file under `web/src/lib` or `web/src/desktop` is missing from 
 | `desktop/wm/store.ts`, `desktop/wm/useWM.ts` | `lp_desktop_dispatch` + `on_change` (the host syncs from the change mask) | ≈ no subscriptions: one host, one callback |
 | `desktop/settings.ts` | `lp_settings.h`, `src/core/lp_settings.c` (`$XDG_CONFIG_HOME/maryui/settings.conf`) | ≈ **D6** raster wallpaper stored, not rendered; plus `clock`, C-only (**D13**) |
 | `desktop/menus.ts` | `include/maryui/lp_menus.h` (the models), `lp_desktop_build_menus` in `src/core/lp_desktop.c` | ≈ **D11** plus File › New Terminal (`spawn("foot")`), a Go menu, and the focused app's entries (`lp_app.menu_entries`); both sides draw them as Spotlight's pills |
-| `desktop/apps/registry.ts` | `lp_desktop_register_builtin_apps`, `lp_app.h` (`name`, `icon`, `hidden`, `internal`, `dock`, `raw_ctrl`, `open`, `command`, `menu_entries`, `notify`) | ≈ **D11** **D15** finder, gallery, about, textedit (hidden: Spotlight only), info (internal: opened by the Finder), and the Linux-only system apps: calculator, preview (hidden: Spotlight and the Finder), terminal (hidden: Spotlight and File › New Terminal), activity, diskutil, media (the Media Player; hidden: Spotlight and the Finder), calendar; `dock` pins Finder, TextEdit, Preview, Terminal, the Media Player and Calendar |
+| `desktop/apps/registry.ts` | `lp_desktop_register_builtin_apps`, `lp_app.h` (`name`, `icon`, `hidden`, `internal`, `dock`, `raw_ctrl`, `open`, `command`, `menu_entries`, `notify`) | ≈ **D11** **D15** finder, gallery, about, textedit (hidden: Spotlight only), info (internal: opened by the Finder), and the Linux-only system apps: calculator, preview (hidden: Spotlight and the Finder), terminal (hidden: Spotlight and File › New Terminal), activity, diskutil, media (the Media Player; hidden: Spotlight and the Finder), calendar, settings (System Settings); `dock` pins Finder, TextEdit, Preview, Terminal, the Media Player, Calendar and System Settings, and System Settings › Dock can choose the set (`settings.dock`, `lp_desktop_in_dock`) |
 | `desktop/spotlight.ts` | `include/maryui/lp_spotlight.h`, `src/core/lp_spotlight.c`, `lp_desktop_spotlight_*` in `src/core/lp_desktop.c`, `tests/test_spotlight.c` | ≈ **D15** 9/9 cases: the dock for a blank query (the pinned apps only), ranking (prefix, word prefix, substring), windows as items, wrap, cap 8; the C tests add the Ctrl+Space / Esc / Enter key cases and seven for the command pills |
 | `desktop/SpotlightHost.tsx` | `src/compositor/spotlight.c` (one chrome in the `z.spotlight` layer sized for the no-menu panel so typing never reallocates, `mui_spotlight_resize` when a pill opens, `lp-spotlight-in` tween, hit-test inside the panel, outside-press closes); the view is `lp_desktop_spotlight_view` | ≈ **D9** the Terminal tile |
 | `desktop/Desktop.tsx` | `src/compositor/desktop.c` (the ambient clock, the context menu, pointer/keyboard routing), `src/core/lp_desktop.c` (commands, keys) | ≈ **D13** the clock; opens Finder + Gallery at start like the web, windows use the whole output, hit-testing skips shadows like CSS |
@@ -123,8 +123,9 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
 | — | `tests/test_job.c` (status, output, a signal death, a missing program, no event loop, cancelling, a 123 KB flood); `tests/test_disks.c` (sysfs, udev and mounts fixtures: a virtual disk's system partitions, a USB stick's encoded label and escaped mount point, a blank SD card, skipped devices, the udisksctl commands); `tests/test_diskutil.c` (the app headless with a stand-in runner: what each selection offers, Unmount/Mount results and refusals, Eject's script, Show in Finder, a DRAW pass) |
 | — | `tests/test_media.c` (time labels and folder queues everywhere; with GStreamer, clips made in the test — VP8/WebM, WAV, tagged Ogg — for the first frame, playing to the end and again, seeking and volume, tags, a damaged file, and the app playing on into the next file in its folder) |
 | — | `tests/test_calendar.c` (leap years, weekdays, day and month steps, the grid, typed dates and times, 23- and 25-hour days under a POSIX zone, the app's navigation, editor validation and a DRAW pass of each view; with libical, a save/load round trip, a weekly repeat across the clocks going back, another program's read-only file with a counted yearly rule, and the app saving and deleting) |
+| — | `tests/test_sysinfo.c` (cpuinfo for a Pi 5, the Mac's virtual CPU and x86, meminfo, key=value, `ip -brief address`, iwctl's coloured list, `wpctl get-volume`); `tests/test_prefs.c` (the app with a stand-in runner: links then Wi-Fi scan and join, volume with a queued change, time zones refused, host names refused, the layout saved, the dock changing Spotlight, every pane painted, and the settings file's defaults and bounds) |
 
-238 C cases in all (220 on a Mac, which runs a stand-in case where libvterm, GStreamer and libical are missing).
+252 C cases in all (234 on a Mac, which runs a stand-in case where libvterm, GStreamer and libical are missing).
 
 ## Deviations
 
@@ -275,6 +276,14 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   repeat stays at 9:00 when the clocks change, and repeats are expanded with libical's recurrence iterator for
   the range on screen. Another program's files are read but never rewritten, the folder is watched, and a
   timer moves Today at midnight.
+  **System Settings** (`src/apps/prefs.c` over `lp_sysinfo.h`; `tests/test_sysinfo.c`, `tests/test_prefs.c`) gathers
+  the desktop's preferences — the View menu's, plus key repeat, keyboard layout, pointer speed, natural
+  scrolling, 24-hour time and the dock's apps, all new `settings.conf` keys the compositor applies to every
+  keyboard and pointer (`mui_input_apply_settings`, libinput for the pointer) — and the system's: Sound through
+  `wpctl`, Network through `ip` and `iwctl` (MaryPi adds iwd with networkd addressing), Date & Time through
+  `timedatectl`, the computer's name through `hostnamectl`, each an `lp_job` whose output `lp_sysinfo` parses.
+  Displays are read from the compositor (`lp_desktop.displays`) and are not changed. MaryPi's polkit rule lets
+  the sudo group take these actions without an agent, which the session does not have.
 - **Close animation.** `lp-window-close` (scale .96 + fade over `motion.fast`, `CLOSE` after
   fast + 80 ms) runs for built-in windows. A client that unmaps is gone at once — the compositor
   has no pixels left to fade.

@@ -3,6 +3,8 @@
  * Clients repeat held keys themselves from the seat's repeat info; a key a
  * chrome consumed is repeated here with the same rate and delay.
  * Ctrl+Alt+Backspace ends the session so a development VM is never stuck. */
+#include <libinput.h>
+#include <wlr/backend/libinput.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <linux/input-event-codes.h>
@@ -88,18 +90,82 @@ static void keyboard_handle_destroy(struct wl_listener *listener, void *data) {
     free(keyboard);
 }
 
+/* MARK: - Following System Settings */
+
+struct mui_pointer {
+    struct wl_list link;
+    struct wlr_input_device *device;
+    struct wl_listener destroy;
+};
+
+/* The layout ("us(dvorak)" is layout us, variant dvorak) and the repeat. keymap_too: the layout changed or the keyboard is new. */
+static void keyboard_apply(struct mui_server *server, struct wlr_keyboard *kb, int keymap_too) {
+    const lp_settings *s = &server->desktop.settings;
+    if (keymap_too) {
+        char layout[32], variant[32] = "";
+        snprintf(layout, sizeof layout, "%s", s->keyboard_layout);
+        char *paren = strchr(layout, '(');
+        if (paren) {
+            snprintf(variant, sizeof variant, "%s", paren + 1);
+            variant[strcspn(variant, ")")] = 0;
+            *paren = 0;
+        }
+        struct xkb_rule_names names = { .layout = layout[0] ? layout : NULL, .variant = variant[0] ? variant : NULL };
+        struct xkb_context *context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
+        struct xkb_keymap *keymap = xkb_keymap_new_from_names(context, &names, XKB_KEYMAP_COMPILE_NO_FLAGS);
+        if (!keymap) {
+            wlr_log(WLR_ERROR, "input: the keyboard layout \"%s\" did not compile; keeping the default", s->keyboard_layout);
+            keymap = xkb_keymap_new_from_names(context, NULL, XKB_KEYMAP_COMPILE_NO_FLAGS);
+        }
+        if (keymap) { wlr_keyboard_set_keymap(kb, keymap); xkb_keymap_unref(keymap); }
+        xkb_context_unref(context);
+    }
+    wlr_keyboard_set_repeat_info(kb, s->key_repeat_rate, s->key_repeat_delay);
+}
+
+static void pointer_apply(struct mui_server *server, struct wlr_input_device *device) {
+    if (!wlr_input_device_is_libinput(device)) return;   /* the VM's tablet is absolute: nothing to accelerate */
+    struct libinput_device *li = wlr_libinput_get_device_handle(device);
+    if (!li) return;
+    const lp_settings *s = &server->desktop.settings;
+    if (libinput_device_config_accel_is_available(li)) libinput_device_config_accel_set_speed(li, s->pointer_speed);
+    if (libinput_device_config_scroll_has_natural_scroll(li)) libinput_device_config_scroll_set_natural_scroll_enabled(li, s->natural_scroll);
+}
+
+static void pointer_destroy(struct wl_listener *listener, void *data) {
+    struct mui_pointer *pointer = wl_container_of(listener, pointer, destroy);
+    wl_list_remove(&pointer->destroy.link);
+    wl_list_remove(&pointer->link);
+    free(pointer);
+}
+
+static void new_pointer(struct mui_server *server, struct wlr_input_device *device) {
+    struct mui_pointer *pointer = calloc(1, sizeof *pointer);
+    if (!pointer) return;
+    pointer->device = device;
+    pointer->destroy.notify = pointer_destroy;
+    wl_signal_add(&device->events.destroy, &pointer->destroy);
+    wl_list_insert(&server->pointers, &pointer->link);
+    pointer_apply(server, device);
+}
+
+void mui_input_apply_settings(struct mui_server *server) {
+    static char applied[sizeof server->desktop.settings.keyboard_layout] = "\x01";   /* nothing yet: the first call compiles */
+    int layout_changed = strcmp(applied, server->desktop.settings.keyboard_layout) != 0;
+    snprintf(applied, sizeof applied, "%s", server->desktop.settings.keyboard_layout);
+    struct mui_keyboard *keyboard;
+    wl_list_for_each(keyboard, &server->keyboards, link) keyboard_apply(server, keyboard->wlr_keyboard, layout_changed);
+    struct mui_pointer *pointer;
+    wl_list_for_each(pointer, &server->pointers, link) pointer_apply(server, pointer->device);
+}
+
 static void new_keyboard(struct mui_server *server, struct wlr_input_device *device) {
     struct wlr_keyboard *wlr_keyboard = wlr_keyboard_from_input_device(device);
     struct mui_keyboard *keyboard = calloc(1, sizeof(*keyboard));
     keyboard->server = server;
     keyboard->wlr_keyboard = wlr_keyboard;
 
-    struct xkb_context *context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
-    struct xkb_keymap *keymap = xkb_keymap_new_from_names(context, NULL, XKB_KEYMAP_COMPILE_NO_FLAGS);
-    wlr_keyboard_set_keymap(wlr_keyboard, keymap);
-    xkb_keymap_unref(keymap);
-    xkb_context_unref(context);
-    wlr_keyboard_set_repeat_info(wlr_keyboard, 25, 600);
+    keyboard_apply(server, wlr_keyboard, 1);
 
     keyboard->modifiers.notify = keyboard_handle_modifiers;
     wl_signal_add(&wlr_keyboard->events.modifiers, &keyboard->modifiers);
@@ -121,6 +187,7 @@ void mui_input_handle_new(struct wl_listener *listener, void *data) {
         break;
     case WLR_INPUT_DEVICE_POINTER:
         wlr_cursor_attach_input_device(server->cursor, device);
+        new_pointer(server, device);
         break;
     default:
         break;
@@ -209,6 +276,7 @@ void mui_input_finish(struct mui_server *server) {
 
 void mui_input_init(struct mui_server *server) {
     wl_list_init(&server->keyboards);
+    wl_list_init(&server->pointers);
     server->key_repeat.timer = wl_event_loop_add_timer(wl_display_get_event_loop(server->display), repeat_fire, server);
     server->new_input.notify = mui_input_handle_new;
     wl_signal_add(&server->backend->events.new_input, &server->new_input);

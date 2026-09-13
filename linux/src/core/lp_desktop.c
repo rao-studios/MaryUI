@@ -36,6 +36,7 @@ void lp_desktop_register_builtin_apps(lp_desktop *d) {
     lp_desktop_register_app(d, &lp_app_diskutil);
     lp_desktop_register_app(d, &lp_app_player);
     lp_desktop_register_app(d, &lp_app_calendar);
+    lp_desktop_register_app(d, &lp_app_prefs);
 }
 
 const lp_app *lp_desktop_find_app(const lp_desktop *d, const char *app_id) {
@@ -165,6 +166,32 @@ void lp_desktop_remove_source(lp_desktop *d, lp_source *source) {
     if (source && d->remove_source) d->remove_source(d, source);
 }
 
+static int list_has(const char *list, const char *id) {
+    size_t n = strlen(id);
+    for (const char *p = list; (p = strstr(p, id)); p += n) {
+        if ((p == list || p[-1] == ',') && (p[n] == ',' || p[n] == 0)) return 1;
+    }
+    return 0;
+}
+
+int lp_desktop_in_dock(const lp_desktop *d, const lp_app *app) {
+    return d->settings.dock[0] ? list_has(d->settings.dock, app->id) : app->dock;
+}
+
+void lp_desktop_set_in_dock(lp_desktop *d, const char *app_id, int on) {
+    char list[sizeof d->settings.dock] = "";
+    for (int i = 0; i < d->app_count; i++) {
+        const lp_app *app = d->apps[i];
+        int in = strcmp(app->id, app_id) == 0 ? on : lp_desktop_in_dock(d, app);
+        if (!in || app->internal) continue;
+        size_t len = strlen(list);
+        snprintf(list + len, sizeof list - len, "%s%s", len ? "," : "", app->id);
+    }
+    /* an empty dock is a choice too, not a return to each app's own flag */
+    snprintf(d->settings.dock, sizeof d->settings.dock, "%s", list[0] ? list : ",");
+    lp_desktop_settings_changed(d);
+}
+
 void lp_desktop_open_popup(lp_desktop *d, const char *window_id, float x, float y, const lp_menu_model *model) {
     d->menus[LP_DESKTOP_MENU_POPUP] = *model;
     d->menus[LP_DESKTOP_MENU_POPUP].id = "popup";
@@ -181,6 +208,8 @@ static void settings_changed(lp_desktop *d) {
     lp_settings_save(&d->settings);
     if (d->on_settings) d->on_settings(d);
 }
+
+void lp_desktop_settings_changed(lp_desktop *d) { settings_changed(d); }
 
 int lp_desktop_run_command(lp_desktop *d, enum lp_command command, int arg) {
     const lp_window_record *focused = lp_wm_focused(&d->wm);

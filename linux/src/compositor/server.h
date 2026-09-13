@@ -157,6 +157,7 @@ struct mui_server {
     struct wl_event_source *clock_timer;
     char clock_text[32];
     struct wl_list keyboards; /* struct mui_keyboard */
+    struct wl_list pointers;  /* struct mui_pointer (input.c): System Settings reconfigures them */
     struct wl_listener new_input;
     struct wl_listener cursor_motion, cursor_motion_absolute, cursor_button, cursor_axis, cursor_frame;
     struct wl_listener request_set_cursor, request_set_selection;
@@ -260,6 +261,8 @@ void mui_drag_window_gone(struct mui_server *server, struct mui_chrome *chrome);
 /* Directory watching (files.c): lp_desktop.watch over inotify. */
 void mui_files_init(struct mui_server *server);
 void mui_files_finish(struct mui_server *server);
+/* Keyboards and pointers follow the settings: repeat, layout, pointer speed, natural scrolling (input.c). */
+void mui_input_apply_settings(struct mui_server *server);
 /* Event sources for the built-in apps (sources.c): lp_desktop.add_fd / add_timer on the wl_event_loop. */
 void mui_sources_init(struct mui_server *server);
 /* Schedules a frame on every output; the motion engine's wake callback (output.c). */

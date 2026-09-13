@@ -52,6 +52,14 @@ struct lp_desktop;
 typedef void (*lp_desktop_change_fn)(struct lp_desktop *d, uint64_t changed);
 typedef void (*lp_desktop_spawn_fn)(struct lp_desktop *d, const char *command);
 
+/* A display as System Settings shows it (lp_desktop.displays). */
+typedef struct lp_display {
+    char name[32];              /* "Virtual-1", "HDMI-A-1" */
+    char description[96];       /* make and model */
+    int width, height;
+    float refresh_hz, scale;
+} lp_display;
+
 /* Event sources an app asks the host for: a terminal's pty, a player's frame
  * eventfd, a monitor's refresh tick. The compositor backs them with its
  * wl_event_loop (the mask bits are WL_EVENT_*'s), the tests with
@@ -95,14 +103,16 @@ typedef struct lp_desktop {
     lp_source *(*add_timer)(struct lp_desktop *d, lp_source_fn fn, void *data);
     void (*update_timer)(struct lp_desktop *d, lp_source *source, int ms);
     void (*remove_source)(struct lp_desktop *d, lp_source *source);
+    /* The displays the host drives (System Settings › Displays); NULL when it has none to tell of. */
+    int (*displays)(struct lp_desktop *d, lp_display *out, int max);
     void *host;
 } lp_desktop;
 
 void lp_desktop_init(lp_desktop *d, lp_rect bounds, void *host);
 void lp_desktop_register_app(lp_desktop *d, const lp_app *app);
 /* Registers finder, gallery, about, textedit (hidden: Spotlight only), info (internal)
- * and the system apps (calculator, preview, terminal, activity, diskutil, media, calendar); Finder, TextEdit,
- * Preview, Terminal, the Media Player and Calendar are pinned. */
+ * and the system apps (calculator, preview, terminal, activity, diskutil, media, calendar, settings); Finder,
+ * TextEdit, Preview, Terminal, the Media Player, Calendar and System Settings are pinned. */
 void lp_desktop_register_builtin_apps(lp_desktop *d);
 /* Runs the WM reducer, syncs app instances, calls on_change. Returns the change mask. */
 uint64_t lp_desktop_dispatch(lp_desktop *d, const lp_wm_action *action);
@@ -121,6 +131,11 @@ lp_source *lp_desktop_add_fd(lp_desktop *d, int fd, uint32_t mask, lp_source_fn 
 lp_source *lp_desktop_add_timer(lp_desktop *d, int ms, lp_source_fn fn, void *data);
 void lp_desktop_update_timer(lp_desktop *d, lp_source *source, int ms);
 void lp_desktop_remove_source(lp_desktop *d, lp_source *source);
+/* An app changed d->settings: save them and tell the host, which applies them (keyboards, pointers, the clock). */
+void lp_desktop_settings_changed(lp_desktop *d);
+/* Whether a blank Spotlight shows app: settings.dock when a person chose, else the app's own dock flag. */
+int lp_desktop_in_dock(const lp_desktop *d, const lp_app *app);
+void lp_desktop_set_in_dock(lp_desktop *d, const char *app_id, int on);
 /* Opens a context menu for a window at (x, y) in its chrome coordinates. */
 void lp_desktop_open_popup(lp_desktop *d, const char *window_id, float x, float y, const lp_menu_model *model);
 const lp_app *lp_desktop_find_app(const lp_desktop *d, const char *app_id);

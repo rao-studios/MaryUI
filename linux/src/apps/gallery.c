@@ -162,13 +162,14 @@ static void controls_tab(struct gallery *g, lp_ctx *ctx, lp_rect *c) {
     note(ctx, c, "Ctrl+Space opens it on the desktop: the search bar is the dock, and — there is no menu bar any more — "
                  "a blank query also shows the frontmost app's commands as pills; click one to open it. Typing filters apps and windows.");
     /* the pinned dock (lp_app.dock); the other apps are one query away */
-    static const lp_spotlight_item dock[6] = {
+    static const lp_spotlight_item dock[7] = {
         { .kind = LP_SPOT_APP, .id = "finder", .title = "Finder", .subtitle = "Application", .icon = LP_ICON_FOLDER, .object = "appFinder", .index = 0, .running = 1, .dock = 1 },
         { .kind = LP_SPOT_APP, .id = "textedit", .title = "TextEdit", .subtitle = "Application", .icon = LP_ICON_PENCIL, .index = 3, .dock = 1 },
         { .kind = LP_SPOT_APP, .id = "preview", .title = "Preview", .subtitle = "Application", .icon = LP_ICON_IMAGE, .object = "docImage", .index = 6, .dock = 1 },
         { .kind = LP_SPOT_APP, .id = "terminal", .title = "Terminal", .subtitle = "Application", .icon = LP_ICON_TERMINAL, .object = "terminal", .index = 7, .running = 1, .dock = 1 },
         { .kind = LP_SPOT_APP, .id = "media", .title = "Media Player", .subtitle = "Application", .icon = LP_ICON_PLAY, .object = "appMusic", .index = 10, .dock = 1 },
         { .kind = LP_SPOT_APP, .id = "calendar", .title = "Calendar", .subtitle = "Application", .icon = LP_ICON_CLOCK, .object = "appCalendar", .index = 11, .dock = 1 },
+        { .kind = LP_SPOT_APP, .id = "settings", .title = "System Settings", .subtitle = "Application", .icon = LP_ICON_GEAR, .index = 12, .dock = 1 },
     };
     /* A static stand-in for lp_desktop_build_menus, so the preview does not
      * reach into the real desktop's state (ControlsTab.tsx does the same). */
@@ -180,7 +181,7 @@ static void controls_tab(struct gallery *g, lp_ctx *ctx, lp_rect *c) {
     };
     static int preview_menu = -1;
     static lp_text_buffer query;
-    lp_spotlight_view view = { .query = &query, .items = dock, .count = 6, .selection = 1, .width = fminf(LP_SIZE_SPOTLIGHT_WIDTH, c->w),
+    lp_spotlight_view view = { .query = &query, .items = dock, .count = 7, .selection = 1, .width = fminf(LP_SIZE_SPOTLIGHT_WIDTH, c->w),
         .menus = menus, .menu_count = 3, .open_menu = preview_menu, .menu_active = -1,
         .context_name = "Gallery", .context_icon = LP_ICON_DROP };
     lp_size ps = lp_spotlight_measure(&view);
