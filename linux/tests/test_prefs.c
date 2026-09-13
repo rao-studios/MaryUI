@@ -476,6 +476,106 @@ LP_TEST(sound_says_when_there_is_no_microphone) {
     lp_desktop_close_window(&d, id);
 }
 
+static void give_voices(void) {
+    static const struct { const char *id, *name, *language; int custom; } V[] = {
+        { "fr_marie_neutral", "Marie", "fr", 0 }, { "fr_marie_happy", "Marie", "fr", 0 }, { "en_paul_neutral", "Paul", "en", 0 },
+        { "en_paul_sad", "Paul", "en", 0 }, { "gb_jane_neutral", "Jane", "en", 0 }, { "019b2bd7-96e7-7219", "My voice", "fr", 1 },
+    };
+    d.mary.voice_count = 0;
+    for (size_t i = 0; i < sizeof V / sizeof *V; i++) {
+        lp_mary_voice *v = &d.mary.voices[d.mary.voice_count++];
+        memset(v, 0, sizeof *v);
+        snprintf(v->id, sizeof v->id, "%s", V[i].id);
+        snprintf(v->name, sizeof v->name, "%s", V[i].name);
+        snprintf(v->language, sizeof v->language, "%s", V[i].language);
+        v->custom = V[i].custom;
+    }
+    d.mary.voices_state = LP_MARY_VOICES_LISTED;
+}
+
+static int entry_named(const char *label) {
+    const lp_menu_model *menu = &d.menus[LP_DESKTOP_MENU_POPUP];
+    for (int i = 0; i < menu->count; i++) if (strcmp(menu->entries[i].label, label) == 0) return i;
+    return -1;
+}
+
+static const char *heard(int fd) {
+    static char buf[4096];
+    size_t n = 0;
+    ssize_t got;
+    while (n < sizeof buf - 1 && (got = recv(fd, buf + n, sizeof buf - 1 - n, MSG_DONTWAIT)) > 0) n += (size_t)got;
+    buf[n] = 0;
+    return buf;
+}
+
+LP_TEST(choosing_a_voice_saves_it_and_tells_maryd) {
+    char id[12];
+    void *p = open_prefs(id);
+    lp_desktop_run_command(&d, LP_CMD_APP, LP_PREFS_MARY);
+    if (!lp_mary_available()) {
+        lp_desktop_close_window(&d, id);
+        return;
+    }
+    int sv[2];
+    LP_ASSERT_EQ(socketpair(AF_UNIX, SOCK_STREAM, 0, sv), 0);
+    d.mary.fd = sv[0];
+    d.mary.key_present = 1;
+    give_voices();
+    LP_ASSERT_STR(d.settings.mary_voice, "fr_marie_neutral");
+    lp_prefs_open_voice_menu(p, 0);
+    LP_ASSERT_EQ(d.open_menu, LP_DESKTOP_MENU_POPUP);
+    const lp_menu_model *menu = &d.menus[LP_DESKTOP_MENU_POPUP];
+    LP_ASSERT_STR(menu->entries[0].label, "Marie — French");
+    LP_ASSERT(menu->entries[0].checked);
+    int jane = entry_named("Jane — English"), paul = entry_named("Paul — English"), yours = entry_named("Your voices"), mine = entry_named("My voice — French");
+    LP_ASSERT(jane > 0 && paul > jane && yours > paul && mine > yours);   /* by language and name, the account's own last */
+    LP_ASSERT(yours > 0 && menu->entries[yours].disabled);
+    settings_calls = 0;
+    lp_desktop_select_menu_entry(&d, paul);
+    LP_ASSERT_STR(d.settings.mary_voice, "en_paul_neutral");            /* the mood carries over when the voice has it */
+    LP_ASSERT(settings_calls >= 1);
+    const char *out = heard(sv[1]);
+    LP_ASSERT(strstr(out, "\"type\":\"config\"") && strstr(out, "\"voice\":\"en_paul_neutral\""));
+    LP_ASSERT_STR(lp_settings_load().mary_voice, "en_paul_neutral");
+
+    lp_prefs_open_voice_menu(p, 1);
+    LP_ASSERT_EQ(d.menus[LP_DESKTOP_MENU_POPUP].count, 2);            /* Paul has Neutral and Sad */
+    int sad = entry_named("Sad"), neutral = entry_named("Neutral");
+    LP_ASSERT(sad >= 0 && neutral >= 0 && d.menus[LP_DESKTOP_MENU_POPUP].entries[neutral].checked);
+    lp_desktop_select_menu_entry(&d, sad);
+    LP_ASSERT_STR(d.settings.mary_voice, "en_paul_sad");
+
+    lp_prefs_open_voice_menu(p, 0);
+    jane = entry_named("Jane — English");
+    d.mary.voice_count = 1;                                            /* the list shrank while the menu was open */
+    lp_desktop_select_menu_entry(&d, jane);
+    LP_ASSERT_STR(d.settings.mary_voice, "gb_jane_neutral");           /* still what the menu showed: Jane has no Sad */
+    give_voices();
+    lp_prefs_open_voice_menu(p, 0);
+    lp_desktop_select_menu_entry(&d, 0);
+    LP_ASSERT_STR(d.settings.mary_voice, "fr_marie_neutral");
+    lp_prefs_open_voice_menu(p, 1);
+    LP_ASSERT_EQ(d.menus[LP_DESKTOP_MENU_POPUP].count, 6);            /* Marie's six moods */
+    lp_desktop_close_menu(&d);
+
+    heard(sv[1]);
+    lp_prefs_mary_play_sample(p);
+    out = heard(sv[1]);
+    LP_ASSERT(strstr(out, "\"type\":\"voice.sample\"") && strstr(out, "\"voice_id\":\"fr_marie_neutral\"") && strstr(out, "Bonjour"));
+    d.mary.sample_state = LP_MARY_SAMPLE_PLAYING;
+    lp_prefs_mary_play_sample(p);                                      /* pressed again while it speaks: Stop */
+    LP_ASSERT(strstr(heard(sv[1]), "\"type\":\"stop\"") != NULL);
+    snprintf(d.settings.mary_voice, sizeof d.settings.mary_voice, "en_paul_neutral");
+    d.mary.sample_state = LP_MARY_SAMPLE_DONE;
+    lp_prefs_mary_play_sample(p);
+    LP_ASSERT(strstr(heard(sv[1]), "Hello! This is how I will sound.") != NULL);   /* in the voice's language */
+    lp_mary_free(&d.mary);
+    close(sv[1]);
+    snprintf(d.settings.mary_voice, sizeof d.settings.mary_voice, "fr_marie_neutral");
+    lp_desktop_settings_changed(&d);
+    lp_desktop_close_window(&d, id);
+}
+
 int main(void) {
     const char *tmp = getenv("TMPDIR");
     snprintf(root, sizeof root, "%s/lp_prefs_XXXXXX", tmp && *tmp ? tmp : "/tmp");
@@ -496,6 +596,7 @@ int main(void) {
     LP_RUN(every_pane_lays_out_in_two_flush_left_columns);
     LP_RUN(sound_lists_the_devices_and_switches_the_default);
     LP_RUN(sound_says_when_there_is_no_microphone);
+    LP_RUN(choosing_a_voice_saves_it_and_tells_maryd);
     LP_RUN(settings_keep_their_defaults_and_bounds);
     lp_files_delete_tree(root);
     LP_TEST_MAIN_END();

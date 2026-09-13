@@ -27,6 +27,7 @@
 #include "maryui/lp_desktop.h"
 #include "maryui/lp_draw.h"
 #include "maryui/lp_job.h"
+#include "maryui/lp_popup.h"
 #include "maryui/lp_proc.h"
 #include "maryui/lp_sysinfo.h"
 #include "maryui/lp_text.h"
@@ -82,6 +83,9 @@ struct prefs {
     /* Mary: the key only until Save hands it to maryd, then zeroed */
     lp_text_buffer mary_key;
     char mary_status[160];
+    char voice_menu[LP_MENU_MAX_ENTRIES][64];   /* the voice each Voice menu entry chooses, as the menu was opened */
+    char mood_menu[8][64];                      /* and each Mood entry */
+    lp_rect voice_popup, mood_popup;            /* where the menus open, as the last pass laid them out */
     lp_prefs_trace_fn trace;        /* tests: where each part of a pane is laid out */
     void *trace_user;
 };
@@ -272,6 +276,13 @@ static void refresh_pane(struct prefs *p) {
     if (!started) p->refresh_pending = 1;
 }
 
+/* Mistral's voices, once each time the Mary pane shows, when maryd can ask for them. */
+static void ask_voices(struct prefs *p) {
+    lp_mary *m = p->desk ? &p->desk->mary : NULL;
+    if (m && lp_mary_connected(m) && m->key_present && (m->voices_state == LP_MARY_VOICES_UNKNOWN || m->voices_state == LP_MARY_VOICES_FAILED))
+        lp_mary_list_voices(m);
+}
+
 static void show_pane(struct prefs *p, int pane) {
     if (pane < 0 || pane >= PANE_COUNT) return;
     p->pane = pane;
@@ -280,6 +291,7 @@ static void show_pane(struct prefs *p, int pane) {
     if (pane == LP_PREFS_ABOUT) { lp_sysinfo_about(&p->about); lp_text_buffer_set(&p->hostname_field, p->about.hostname); }
     if (pane == LP_PREFS_KEYBOARD && p->desk) lp_text_buffer_set(&p->layout_field, p->desk->settings.keyboard_layout);
     meter(p, pane == LP_PREFS_SOUND);
+    if (pane == LP_PREFS_MARY) ask_voices(p);
     refresh_pane(p);
     if (pane == LP_PREFS_NETWORK && p->desk) {
         if (!p->ticker) p->ticker = lp_desktop_add_timer(p->desk, NETWORK_REFRESH_MS, on_tick, p);
@@ -380,9 +392,12 @@ static void join(struct prefs *p, int network, const char *passphrase) {
     }
 }
 
+static int voice_command(struct prefs *p, lp_desktop *d, int cmd);
+
+/* A pane by its number (the View menu, open_pane), or a choice from the Voice and Mood menus. */
 static void prefs_command(void *state, lp_desktop *d, int cmd) {
     struct prefs *p = state;
-    if (p) show_pane(p, cmd);
+    if (p && !voice_command(p, d, cmd)) show_pane(p, cmd);
 }
 
 /* MARK: - Painting helpers */
@@ -876,6 +891,209 @@ static void mary_key_status(const struct prefs *p, const lp_mary *m, char *out, 
     else snprintf(out, n, "No key yet: Mary needs one to talk to Mistral. It is kept by sewnd, never here.");
 }
 
+/* MARK: Mary's voice */
+
+static const char *const MOODS[] = { "neutral", "sad", "happy", "excited", "curious", "angry" };
+
+/* The language a character speaks: a listed voice's, else its id's prefix (fr_marie: fr; gb_jane: en). */
+static void voice_language(const lp_mary *m, const char *character, char *out, size_t n) {
+    for (int i = 0; m && i < m->voice_count; i++) {
+        char c[64], mood[16];
+        lp_mary_voice_split(m->voices[i].id, c, sizeof c, mood, sizeof mood);
+        if (strcmp(c, character) == 0 && m->voices[i].language[0]) {
+            snprintf(out, n, "%s", m->voices[i].language);
+            return;
+        }
+    }
+    const char *cut = strchr(character, '_');
+    if (cut && cut - character == 2) snprintf(out, n, "%.2s", strncmp(character, "gb", 2) == 0 ? "en" : character);
+    else snprintf(out, n, "%s", "");
+}
+
+static const char *language_name(const char *code) {
+    static const struct { const char *code, *name; } NAMES[] = {
+        { "fr", "French" }, { "en", "English" }, { "es", "Spanish" }, { "de", "German" }, { "it", "Italian" },
+        { "pt", "Portuguese" }, { "nl", "Dutch" }, { "hi", "Hindi" }, { "ar", "Arabic" },
+    };
+    for (size_t i = 0; code[0] && i < sizeof NAMES / sizeof *NAMES; i++) if (strncasecmp(code, NAMES[i].code, 2) == 0) return NAMES[i].name;
+    return NULL;
+}
+
+/* A character as a person reads it: a listed voice's name, else its id's middle, fr_marie as Marie. */
+static void voice_label(const lp_mary *m, const char *character, char *out, size_t n) {
+    char name[64] = "", language[16];
+    for (int i = 0; m && i < m->voice_count && !name[0]; i++) {
+        char c[64], mood[16];
+        lp_mary_voice_split(m->voices[i].id, c, sizeof c, mood, sizeof mood);
+        if (strcmp(c, character) == 0) snprintf(name, sizeof name, "%s", m->voices[i].name);
+    }
+    if (!name[0]) {
+        const char *cut = strchr(character, '_');
+        snprintf(name, sizeof name, "%s", cut && cut[1] ? cut + 1 : character);
+        name[0] = (char)toupper((unsigned char)name[0]);
+    }
+    voice_language(m, character, language, sizeof language);
+    const char *said = language_name(language);
+    if (said) snprintf(out, n, "%s — %s", name, said);
+    else snprintf(out, n, "%s", name);
+}
+
+/* The moods a character has among the voices listed. Marie has all six, listed or not: she is Mary's own voice. */
+static int character_moods(const lp_mary *m, const char *character, const char **moods, int max) {
+    int count = 0;
+    for (size_t k = 0; k < sizeof MOODS / sizeof *MOODS && count < max; k++) {
+        int has = strcmp(character, "fr_marie") == 0;
+        for (int i = 0; !has && m && i < m->voice_count; i++) {
+            char c[64], mood[16];
+            has = lp_mary_voice_split(m->voices[i].id, c, sizeof c, mood, sizeof mood) && strcmp(c, character) == 0 && strcmp(mood, MOODS[k]) == 0;
+        }
+        if (has) moods[count++] = MOODS[k];
+    }
+    return count;
+}
+
+/* A character's voice in the mood asked for, else neutral, else its first; a voice with no moods is its id. */
+static void compose_voice(const lp_mary *m, const char *character, const char *want, char *out, size_t n) {
+    const char *moods[8], *pick = NULL;
+    int count = character_moods(m, character, moods, 8);
+    for (int i = 0; i < count && !pick; i++) if (strcmp(moods[i], want) == 0) pick = moods[i];
+    for (int i = 0; i < count && !pick; i++) if (strcmp(moods[i], "neutral") == 0) pick = moods[i];
+    if (!pick && count) pick = moods[0];
+    /* an id too long to take a mood keeps no mood */
+    if (!pick || snprintf(out, n, "%s_%s", character, pick) >= (int)n) snprintf(out, n, "%s", character);
+}
+
+static void set_voice(struct prefs *p, lp_desktop *d, const char *voice) {
+    if (!voice[0] || strcmp(d->settings.mary_voice, voice) == 0) return;
+    snprintf(d->settings.mary_voice, sizeof d->settings.mary_voice, "%s", voice);
+    lp_desktop_settings_changed(d);
+    lp_desktop_publish_mary_config(d);             /* maryd speaks in it from the next sentence */
+}
+
+struct voice_choice {
+    char character[64], voice[64], label[64], language[16];
+    int custom;
+};
+
+/* Mistral's voices before the account's own, then by language and name. */
+static int voice_after(const struct voice_choice *a, const struct voice_choice *b) {
+    if (a->custom != b->custom) return a->custom > b->custom;
+    int by_language = strcmp(a->language, b->language);
+    return by_language ? by_language > 0 : strcmp(a->label, b->label) > 0;
+}
+
+/* The Voice (0) or Mood (1) menu under its pop-up. What each entry chooses is kept as the menu showed it, so a
+ * list that changes while the menu is open cannot change what a click means. */
+static void open_voice_menu(struct prefs *p, lp_desktop *d, int which) {
+    if (!d) return;
+    const lp_mary *m = &d->mary;
+    char current[64], mood[16];
+    lp_mary_voice_split(d->settings.mary_voice, current, sizeof current, mood, sizeof mood);
+    lp_menu_model menu = { .id = "popup", .label = "", .count = 0 };
+    memset(p->voice_menu, 0, sizeof p->voice_menu);
+    memset(p->mood_menu, 0, sizeof p->mood_menu);
+    if (which == 0) {
+        struct voice_choice choices[LP_MENU_MAX_ENTRIES];
+        int n = 0;
+        for (int i = -1; i < m->voice_count && n < LP_MENU_MAX_ENTRIES - 2; i++) {
+            char character[64], ignored[16];
+            if (i < 0) snprintf(character, sizeof character, "fr_marie");       /* Marie is always first */
+            else lp_mary_voice_split(m->voices[i].id, character, sizeof character, ignored, sizeof ignored);
+            int seen = 0;
+            for (int k = 0; k < n && !seen; k++) seen = strcmp(choices[k].character, character) == 0;
+            if (seen) continue;
+            struct voice_choice *c = &choices[n++];
+            snprintf(c->character, sizeof c->character, "%s", character);
+            compose_voice(m, character, mood[0] ? mood : "neutral", c->voice, sizeof c->voice);
+            voice_label(m, character, c->label, sizeof c->label);
+            voice_language(m, character, c->language, sizeof c->language);
+            c->custom = i >= 0 && m->voices[i].custom;
+        }
+        for (int a = 2; a < n; a++) {
+            struct voice_choice key = choices[a];
+            int b = a - 1;
+            while (b >= 1 && voice_after(&choices[b], &key)) {
+                choices[b + 1] = choices[b];
+                b--;
+            }
+            choices[b + 1] = key;
+        }
+        for (int i = 0, headed = 0; i < n && menu.count < LP_MENU_MAX_ENTRIES; i++) {
+            if (choices[i].custom && !headed) {
+                if (menu.count + 3 > LP_MENU_MAX_ENTRIES) break;
+                menu.entries[menu.count++] = (lp_menu_entry){ .separator = 1 };
+                lp_menu_entry *header = &menu.entries[menu.count++];
+                *header = (lp_menu_entry){ .disabled = 1 };
+                snprintf(header->label, sizeof header->label, "Your voices");
+                headed = 1;
+            }
+            int slot = menu.count;
+            lp_menu_entry *e = &menu.entries[menu.count++];
+            *e = (lp_menu_entry){ .command = LP_CMD_APP, .arg = LP_PREFS_CHOOSE_VOICE + slot, .checked = strcmp(choices[i].character, current) == 0 };
+            snprintf(e->label, sizeof e->label, "%s", choices[i].label);
+            snprintf(p->voice_menu[slot], sizeof p->voice_menu[slot], "%s", choices[i].voice);
+        }
+    } else {
+        const char *moods[8];
+        int count = character_moods(m, current, moods, 8);
+        if (!count) return;
+        for (int i = 0; i < count; i++) {
+            lp_menu_entry *e = &menu.entries[menu.count++];
+            *e = (lp_menu_entry){ .command = LP_CMD_APP, .arg = LP_PREFS_CHOOSE_MOOD + i, .checked = strcmp(moods[i], mood[0] ? mood : "neutral") == 0 };
+            snprintf(e->label, sizeof e->label, "%c%s", toupper((unsigned char)moods[i][0]), moods[i] + 1);
+            if (snprintf(p->mood_menu[i], sizeof p->mood_menu[i], "%s_%s", current, moods[i]) >= (int)sizeof p->mood_menu[i]) p->mood_menu[i][0] = 0;
+        }
+    }
+    lp_rect at = which ? p->mood_popup : p->voice_popup;
+    lp_desktop_open_popup(d, p->window_id, at.x, at.y + at.h + 2, &menu);
+}
+
+/* A choice from one of those menus: 1 when the command was one. */
+static int voice_command(struct prefs *p, lp_desktop *d, int cmd) {
+    const char *voice;
+    if (cmd >= LP_PREFS_CHOOSE_MOOD && cmd < LP_PREFS_CHOOSE_MOOD + 8) voice = p->mood_menu[cmd - LP_PREFS_CHOOSE_MOOD];
+    else if (cmd >= LP_PREFS_CHOOSE_VOICE && cmd < LP_PREFS_CHOOSE_VOICE + LP_MENU_MAX_ENTRIES) voice = p->voice_menu[cmd - LP_PREFS_CHOOSE_VOICE];
+    else return 0;
+    if (d) set_voice(p, d, voice);
+    return 1;
+}
+
+/* A sentence in the voice's own language, with nothing in it that sounds like her name. */
+static const char *sample_text(const char *language) {
+    static const struct { const char *code, *text; } SAMPLES[] = {
+        { "fr", "Bonjour ! Voici la voix que j’aurai." }, { "en", "Hello! This is how I will sound." },
+        { "es", "¡Hola! Así sonará mi voz." }, { "de", "Hallo! So werde ich klingen." },
+        { "it", "Ciao! Questa sarà la mia voce." }, { "pt", "Olá! Esta será a minha voz." }, { "nl", "Hallo! Zo ga ik klinken." },
+    };
+    for (size_t i = 0; language[0] && i < sizeof SAMPLES / sizeof *SAMPLES; i++)
+        if (strncasecmp(language, SAMPLES[i].code, 2) == 0) return SAMPLES[i].text;
+    return "Hello! This is how I will sound.";
+}
+
+static void play_sample(struct prefs *p, lp_desktop *d) {
+    if (!d) return;
+    lp_mary *m = &d->mary;
+    if (m->sample_state == LP_MARY_SAMPLE_ASKING || m->sample_state == LP_MARY_SAMPLE_PLAYING) {
+        lp_mary_stop(m);                            /* Stop: maryd ends the sample */
+        return;
+    }
+    char character[64], mood[16], language[16];
+    lp_mary_voice_split(d->settings.mary_voice, character, sizeof character, mood, sizeof mood);
+    voice_language(m, character, language, sizeof language);
+    lp_mary_sample_voice(m, d->settings.mary_voice, sample_text(language));
+}
+
+static void voice_status(const lp_mary *m, char *out, size_t n) {
+    out[0] = 0;
+    if (!m || !lp_mary_connected(m)) snprintf(out, n, "Her voices can be heard once Mary is running.");
+    else if (m->sample_state == LP_MARY_SAMPLE_ASKING) snprintf(out, n, "Asking Mistral…");
+    else if (m->sample_state == LP_MARY_SAMPLE_PLAYING) snprintf(out, n, "Speaking…");
+    else if (m->sample_state == LP_MARY_SAMPLE_FAILED) snprintf(out, n, "Not spoken: %s", m->sample_message[0] ? m->sample_message : "it failed");
+    else if (!m->key_present) snprintf(out, n, "Marie is Mary’s own voice. Add a key to hear Mistral’s others.");
+    else if (m->voices_state == LP_MARY_VOICES_ASKING) snprintf(out, n, "Asking Mistral for its voices…");
+    else if (m->voices_state == LP_MARY_VOICES_FAILED) snprintf(out, n, "Only Marie for now: %s", m->voices_message);
+}
+
 static float pane_mary(lp_ctx *ctx, struct prefs *p, lp_desktop *d, float x, float y, float w, lp_id base) {
     heading(ctx, "Mary", x, &y, w);
     const lp_mary *m = d ? &d->mary : NULL;
@@ -897,6 +1115,37 @@ static float pane_mary(lp_ctx *ctx, struct prefs *p, lp_desktop *d, float x, flo
     char status[240];
     mary_key_status(p, m, status, sizeof status);
     note(ctx, status, x + LABEL_W, &y, w - LABEL_W);
+
+    section(ctx, "Voice", x, &y, w);
+    {
+        char character[64], mood[16], choice[96], mood_label[24];
+        lp_mary_voice_split(d ? d->settings.mary_voice : "fr_marie_neutral", character, sizeof character, mood, sizeof mood);
+        voice_label(m, character, choice, sizeof choice);
+        label(ctx, "Voice", x, y);
+        lp_size vs = lp_popup_button_measure(ctx, choice);
+        p->voice_popup = control_at(LP_RECT(x + LABEL_W, y + (ROW_H - vs.h) / 2, fmax(180, vs.w), vs.h));
+        if (lp_popup_button(ctx, lp_id_index(base, 410), p->voice_popup, choice, !d)) open_voice_menu(p, d, 0);
+        y += ROW_H + LP_SPACE_1;
+        const char *moods[8];
+        if (character_moods(m, character, moods, 8) > 1) {
+            snprintf(mood_label, sizeof mood_label, "%s", mood[0] ? mood : "neutral");
+            mood_label[0] = (char)toupper((unsigned char)mood_label[0]);
+            label(ctx, "Mood", x, y);
+            lp_size ms = lp_popup_button_measure(ctx, mood_label);
+            p->mood_popup = control_at(LP_RECT(x + LABEL_W, y + (ROW_H - ms.h) / 2, fmax(120, ms.w), ms.h));
+            if (lp_popup_button(ctx, lp_id_index(base, 411), p->mood_popup, mood_label, !d)) open_voice_menu(p, d, 1);
+            y += ROW_H + LP_SPACE_1;
+        }
+        int sampling = m && (m->sample_state == LP_MARY_SAMPLE_ASKING || m->sample_state == LP_MARY_SAMPLE_PLAYING);
+        lp_button_opts so = { LP_BUTTON_DEFAULT, LP_CONTROL_SM, sampling ? LP_ICON_STOP : LP_ICON_PLAY, 0, !(m && lp_mary_connected(m) && m->key_present) };
+        const char *sample_label = sampling ? "Stop" : "Play Sample";
+        lp_size bs = lp_button_measure(ctx, sample_label, so);
+        if (lp_button(ctx, lp_id_index(base, 412), control_at(LP_RECT(x + LABEL_W, y + (ROW_H - bs.h) / 2, bs.w, bs.h)), sample_label, so)) play_sample(p, d);
+        y += ROW_H;
+        char said[240];
+        voice_status(m, said, sizeof said);
+        note(ctx, said, x + LABEL_W, &y, w - LABEL_W);
+    }
 
     section(ctx, "Listening", x, &y, w);
     int wake = d ? d->settings.mary_wake : 1;
@@ -1071,7 +1320,11 @@ static int prefs_model_changed(void *state, lp_desktop *d, unsigned model, unsig
         if (what & (LP_AUDIO_CHANGED_DEFAULTS | LP_AUDIO_CHANGED_CONNECTION)) refresh_pane(p);
         return 1;
     }
-    return model == LP_MODEL_MARY && p->pane == LP_PREFS_MARY;
+    if (model == LP_MODEL_MARY && p->pane == LP_PREFS_MARY) {
+        if (what & (LP_MARY_CHANGED_CONNECTION | LP_MARY_CHANGED_KEY)) ask_voices(p);   /* maryd is back, or a key is in */
+        return 1;
+    }
+    return 0;
 }
 
 const lp_app lp_app_prefs = {
@@ -1113,6 +1366,8 @@ void lp_prefs_set_input_volume(void *state, int volume) { set_input_volume(state
 void lp_prefs_choose_device(void *state, int direction, int index) { choose_device(state, direction ? LP_AUDIO_INPUT : LP_AUDIO_OUTPUT, index); }
 int lp_prefs_input_volume(const void *state) { const struct prefs *p = state; return p->input_known ? (int)p->input_volume : -1; }
 int lp_prefs_metering(const void *state) { return ((const struct prefs *)state)->metering; }
+void lp_prefs_open_voice_menu(void *state, int which) { struct prefs *p = state; open_voice_menu(p, p->desk, which); }
+void lp_prefs_mary_play_sample(void *state) { struct prefs *p = state; play_sample(p, p->desk); }
 void lp_prefs_mary_set_key_text(void *state, const char *text) { lp_text_buffer_set(&((struct prefs *)state)->mary_key, text); }
 void lp_prefs_mary_save_key(void *state) { save_mary_key(state); }
 const char *lp_prefs_mary_status(const void *state) { return ((const struct prefs *)state)->mary_status; }

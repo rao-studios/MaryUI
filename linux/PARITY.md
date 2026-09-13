@@ -318,7 +318,10 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   character — the text, the selection highlight and the caret are all measured on the bullets — for System
   Settings' Mistral API key. It pastes, but it never copies or cuts (D21). The Mary pane (System Settings › Assistant) keeps the key only until Save hands it to maryd
   (`lp_mary_set_key`) and zeroes the field whatever happened; Verify asks maryd to check it with Mistral;
-  “Listen for Hey Mary” is `mary_wake` in settings.conf; and every app that declares skills gets a group —
+  “Listen for Hey Mary” is `mary_wake` in settings.conf; Voice chooses her voice (`mary_voice`) from Mistral's
+  list, Marie first, with a pop-up button for the voice and another for its mood (`lp_popup_button`, which lives
+  in src/ui because the web's `<select>` has no component to mirror), and Play Sample speaks a sentence in the
+  voice's own language through maryd; and every app that declares skills gets a group —
   whether Mary may use it, when she asks first, and a switch per skill (D20). The web has neither.
 - **D20 — apps have skills, and Mary uses them through the apps.** Linux only. An `lp_app` declares what
   Mary can do with it (`skills`: an id, a title, a one-line summary, a JSON Schema for the arguments, and

@@ -206,6 +206,11 @@ const char *lp_prefs_mary_status(const void *state);
 const char *lp_prefs_mary_key_bytes(const void *state, size_t *n);
 /* How far the pane is scrolled, in pixels (0 at its top; switching panes goes back there). */
 float lp_prefs_scroll(const void *state);
+/* Mary's voice: the command a Voice or Mood menu entry runs (plus its place in the menu), opening the Voice (0) or
+ * Mood (1) menu as a click on its pop-up does, and pressing Play Sample (Stop while one plays). */
+enum { LP_PREFS_CHOOSE_VOICE = 1000, LP_PREFS_CHOOSE_MOOD = 1100 };
+void lp_prefs_open_voice_menu(void *state, int which);
+void lp_prefs_mary_play_sample(void *state);
 /* A pane is two flush-left columns: labels and each group's title start at the heading's edge, and the controls
  * this far in. As a pane is laid out (in either pass) its parts are reported here, for tests. */
 #define LP_PREFS_LABEL_W 150

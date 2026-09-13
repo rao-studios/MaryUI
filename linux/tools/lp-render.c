@@ -222,6 +222,13 @@ static int render_app(const lp_app *app, int tab, const char *path) {
         d.mary.key_verified_at = 1757700000000LL;
         lp_skill_set_app_ask(&d.skill_policy, "media", LP_SKILL_ASK_ALWAYS);
         lp_prefs_mary_set_key_text(state, "a-new-key-being-typed");
+        static const lp_mary_voice voices[] = {
+            { "fr_marie_neutral", "Marie", "fr", 0 }, { "fr_marie_happy", "Marie", "fr", 0 },
+            { "en_paul_neutral", "Paul", "en", 0 }, { "gb_jane_neutral", "Jane", "en", 0 },
+        };
+        memcpy(d.mary.voices, voices, sizeof voices);
+        d.mary.voice_count = (int)(sizeof voices / sizeof *voices);
+        d.mary.voices_state = LP_MARY_VOICES_LISTED;
     }
     if (app == &lp_app_prefs && state && prefs_pane >= 0) app->command(state, &d, prefs_pane);
     if (app == &lp_app_prefs && state && prefs_pane == LP_PREFS_SOUND) lp_audio_set_level(&d.audio, 0.62f);   /* someone talking */
