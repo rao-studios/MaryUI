@@ -12,6 +12,7 @@
 #include "maryui/components/lp_layout_components.h"
 #include "maryui/components/lp_liquid_bubble.h"
 #include "maryui/components/lp_monogram.h"
+#include "maryui/lp_brush.h"
 #include "maryui/lp_bubble.h"
 #include "maryui/lp_draw.h"
 #include "maryui/lp_settings.h"
@@ -24,8 +25,14 @@
 #define TEXT_INSET LP_SPACE_4
 #define RULE_W 2
 #define RULE_GAP 10
-#define LINE_GAP 6                      /* a question and its answer */
-#define EXCHANGE_GAP 16                 /* one exchange and the next */
+#define LINE_GAP 12                     /* a question and its answer */
+#define EXCHANGE_GAP 28                 /* one exchange and the next (the Mac's utterance gap) */
+#define PARAGRAPH_GAP 16                /* between a reply's paragraphs */
+#define PASSAGE_SIZE 18                 /* Mary's passages: font.display italic, kerned 0.3, 7 px between lines, ink at 0.75 */
+#define PASSAGE_KERN 0.3f
+#define PASSAGE_LINE 7
+#define PASSAGE_INK 0.75f
+#define USER_SIZE 16
 #define DOT 6
 #define METER_BARS 24
 #define METER_STEP 4                    /* a 2px bar and a 2px gap */
@@ -146,49 +153,125 @@ static float paragraph(cairo_t *cr, const char *text, size_t len, const lp_text_
     return h;
 }
 
-/* The dialogue from (x, y0) in a column `w` wide: laid out, and drawn when `draw`. Returns its height. */
-static float dialogue(lp_ctx *ctx, const lp_mary *m, float x, float y0, float w, int draw) {
+/* The byte offset of code point `cp` in `text` (clamped to len). */
+static size_t byte_at(const char *text, size_t len, int cp) {
+    size_t i = 0;
+    for (int seen = 0; i < len && seen < cp; i++) if (((unsigned char)text[i] & 0xC0) != 0x80) seen++;
+    while (i < len && ((unsigned char)text[i] & 0xC0) == 0x80) i++;
+    return i;
+}
+
+/* What the pointer is over, asked in the EVENT pass. */
+struct probe {
+    float x, y;
+    int message, owner;     /* the highlighted passage under the pointer, or -1 */
+};
+
+/* Mary's passage: the reply as paragraphs on paper, with a brush stroke under every credited line
+ * (ContributionHighlightText.swift, PARITY D26/D27). Returns its height. */
+static float passage(lp_ctx *ctx, const lp_mary_message *msg, int message_index, float alpha, float x, float y0, float w, int draw,
+                     struct probe *probe) {
     cairo_t *cr = ctx->cr;
-    lp_accent accent = lp_settings_accent(ctx->settings);
+    lp_text_style st = lp_text_style_default();
+    st.font = LP_FONT_DISPLAY;
+    st.size_px = PASSAGE_SIZE;
+    st.italic = 1;
+    st.letter_spacing = PASSAGE_KERN;
+    st.line_spacing = PASSAGE_LINE;
+    st.color = LP_INK_PRIMARY;
+    st.color.a *= PASSAGE_INK * alpha;
+    /* A reply still arriving ends in a caret that blinks; laid out with it either way, so the text never re-wraps. */
+    size_t n = msg->len;
+    char *text = msg->text, *with_caret = NULL;
+    if (msg->streaming && (with_caret = malloc(n + 4))) {
+        memcpy(with_caret, msg->text, n);
+        memcpy(with_caret + n, fmod(ctx->now_ms, 2 * CARET_MS) < CARET_MS ? "\xE2\x96\x8F" : "\xE2\x80\x80", 3);
+        with_caret[n + 3] = 0;
+        text = with_caret;
+        n += 3;
+    }
+    int instant = ctx->settings && ctx->settings->reduced_motion;
+    if (draw && msg->span_count && msg->highlighted_ms <= 0) ((lp_mary_message *)msg)->highlighted_ms = ctx->now_ms;   /* the strokes begin now */
+    float y = y0;
+    size_t pstart = 0;
+    int stroke_index = 0, cp_start = 0, fading = 0;
+    while (pstart <= n) {
+        /* the paragraph: up to the next blank line */
+        const char *sep = pstart < n ? strstr(text + pstart, "\n\n") : NULL;
+        size_t pend = sep ? (size_t)(sep - text) : n;
+        int cp_end = cp_start;
+        for (size_t i = pstart; i < pend; i++) if (((unsigned char)text[i] & 0xC0) != 0x80) cp_end++;
+        lp_text_layout *l = lp_text_layout_new(cr, text + pstart, (int)(pend - pstart), &st, w);
+        float h = l ? lp_text_layout_size(l).h : 0;
+        if (l && msg->span_count) {
+            for (int si = 0; si < msg->span_count; si++) {
+                const lp_mary_span *span = &msg->spans[si];
+                int lo = span->lower > cp_start ? span->lower : cp_start, hi = span->upper < cp_end ? span->upper : cp_end;
+                if (lo >= hi) continue;
+                size_t b0 = byte_at(text + pstart, pend - pstart, lo - cp_start), b1 = byte_at(text + pstart, pend - pstart, hi - cp_start);
+                lp_rect rects[32];
+                int count = lp_text_layout_range_rects(l, (int)b0, (int)b1, rects, 32);
+                char span_id[96];
+                snprintf(span_id, sizeof span_id, "%s#%d-%d", msg->owners[span->owner].id, lo - cp_start, hi - cp_start);
+                for (int k = 0; k < count; k++) {
+                    lp_rect r = LP_RECT(x + rects[k].x - LP_BRUSH_INFLATE_W / 2.0f, y + rects[k].y - LP_BRUSH_INFLATE_H / 2.0f,
+                                        rects[k].w + LP_BRUSH_INFLATE_W, rects[k].h + LP_BRUSH_INFLATE_H);
+                    if (probe && lp_rect_contains(r, probe->x, probe->y)) { probe->message = message_index; probe->owner = span->owner; }
+                    if (draw) {
+                        float opacity = lp_brush_opacity(ctx->now_ms, msg->highlighted_ms, stroke_index, instant);
+                        if (opacity < 1) fading = 1;
+                        lp_color c = lp_brush_color(msg->owners[span->owner].id);
+                        c.a = LP_BRUSH_ALPHA * opacity * alpha;
+                        lp_brush_path(cr, r, lp_brush_seed(span_id, k));
+                        lp_set_color(cr, c);
+                        cairo_fill(cr);
+                    }
+                    stroke_index++;
+                }
+            }
+        }
+        if (l && draw) lp_text_layout_draw(cr, l, x, y, st.color);
+        if (l) lp_text_layout_free(l);
+        y += h;
+        if (!sep) break;
+        y += PARAGRAPH_GAP;
+        pstart = pend + 2;
+        cp_start = cp_end + 2;
+    }
+    free(with_caret);
+    if (fading) lp_want_frame_rect(ctx, LP_RECT(x, y0, w, y - y0));
+    return y - y0;
+}
+
+/* The dialogue from (x, y0) in a column `w` wide: laid out, and drawn when `draw`. Returns its height. */
+static float dialogue(lp_ctx *ctx, const lp_mary *m, float x, float y0, float w, int draw, struct probe *probe) {
+    cairo_t *cr = ctx->cr;
     int age[LP_MARY_MESSAGES];
     for (int i = m->message_count - 1, later = 0; i >= 0; i--) {
         age[i] = later;
         if (m->messages[i].role == LP_MARY_USER) later++;
     }
+    lp_color gold = lp_brush_palette(0);
     float y = y0 + LP_SPACE_3;
     for (int i = 0; i < m->message_count; i++) {
         const lp_mary_message *msg = &m->messages[i];
         float alpha = exchange_alpha(age[i]);
         if (i > 0) y += msg->role == LP_MARY_USER ? EXCHANGE_GAP : LINE_GAP;
-        lp_text_style st = lp_text_style_default();
         if (msg->role == LP_MARY_USER) {
-            st.size_px = LP_TEXT_SM;
+            /* what you said: a small sans line behind Mary's gold rule */
+            lp_text_style st = lp_text_style_default();
+            st.size_px = USER_SIZE;
             st.color = LP_INK_SECONDARY;
             st.color.a *= alpha;
             float h = paragraph(cr, msg->text, msg->len, &st, x + RULE_W + RULE_GAP, y, w - RULE_W - RULE_GAP, draw);
             if (draw) {
-                lp_color rule = accent.base;
-                rule.a *= 0.55f * alpha;
+                lp_color rule = gold;
+                rule.a *= 0.8f * alpha;
                 lp_fill_solid(cr, LP_RECT(x, y, RULE_W, h), rule, 1);
             }
             y += h;
         } else {
-            st.size_px = LP_TEXT_MD;
-            st.color = LP_INK_PRIMARY;
-            st.color.a *= alpha;
-            /* A reply still arriving ends in a caret that blinks; laid out with it either way, so the text never re-wraps. */
-            size_t n = msg->len;
-            char *text = msg->text;
-            char *with_caret = NULL;
-            if (msg->streaming && (with_caret = malloc(n + 4))) {
-                memcpy(with_caret, msg->text, n);
-                memcpy(with_caret + n, fmod(ctx->now_ms, 2 * CARET_MS) < CARET_MS ? "\xE2\x96\x8F" : "\xE2\x80\x80", 3);
-                with_caret[n + 3] = 0;
-                text = with_caret;
-                n += 3;
-            }
-            y += paragraph(cr, text, n, &st, x, y, w, draw);
-            free(with_caret);
+            y += passage(ctx, msg, i, alpha, x, y, w, draw, probe);
             if (msg->note) {
                 /* the words came but the voice did not: say why, quietly, under them */
                 char said[300];
@@ -205,12 +288,12 @@ static float dialogue(lp_ctx *ctx, const lp_mary *m, float x, float y0, float w,
         /* What Mary has heard so far: pending, in the tertiary ink, behind a fainter rule. */
         if (m->message_count) y += EXCHANGE_GAP;
         lp_text_style st = lp_text_style_default();
-        st.size_px = LP_TEXT_SM;
+        st.size_px = USER_SIZE;
         st.color = LP_INK_TERTIARY;
         float h = paragraph(cr, m->partial, strlen(m->partial), &st, x + RULE_W + RULE_GAP, y, w - RULE_W - RULE_GAP, draw);
         if (draw) {
-            lp_color rule = accent.base;
-            rule.a *= 0.3f;
+            lp_color rule = gold;
+            rule.a *= 0.35f;
             lp_fill_solid(cr, LP_RECT(x, y, RULE_W, h), rule, 1);
         }
         y += h;
@@ -230,7 +313,7 @@ static float dialogue(lp_ctx *ctx, const lp_mary *m, float x, float y0, float w,
     return y - y0 + LP_SPACE_3;
 }
 
-void lp_spotlight_chat(lp_ctx *ctx, const lp_spotlight_view *v, lp_rect panel, float y) {
+void lp_spotlight_chat(lp_ctx *ctx, const lp_spotlight_view *v, lp_rect panel, float y, lp_spotlight_result *res) {
     const lp_mary *m = v->mary;
     if (!m) return;
     int draw = ctx->pass == LP_PASS_DRAW && ctx->cr;
@@ -250,7 +333,7 @@ void lp_spotlight_chat(lp_ctx *ctx, const lp_spotlight_view *v, lp_rect panel, f
 
     if (draw) {
         int at_end = scroll->y >= content_h - well.h - 1;
-        content_h = empty ? well.h : dialogue(ctx, m, 0, 0, column, 0);
+        content_h = empty ? well.h : dialogue(ctx, m, 0, 0, column, 0, NULL);
         if (at_end) scroll->y = 1e9f;   /* stay on the newest words as they arrive */
         cairo_save(cr);
         lp_path_rrect(cr, well, radius);
@@ -266,7 +349,19 @@ void lp_spotlight_chat(lp_ctx *ctx, const lp_spotlight_view *v, lp_rect panel, f
                                                 : "Mary will be back as soon as maryd is running again.";
         lp_text_draw(cr, hint, LP_RECT(well.x + TEXT_INSET, well.y, column, well.h), &st, LP_ALIGN_CENTER);
     } else if (draw) {
-        dialogue(ctx, m, origin.x + TEXT_INSET, origin.y, column, 1);
+        dialogue(ctx, m, origin.x + TEXT_INSET, origin.y, column, 1, NULL);
+    } else if (!empty && lp_hit(ctx, well) && !isnan(ctx->in.mx)) {
+        /* the pointer over a credited passage: a hand, and a click opens "From the thread" */
+        struct probe probe = { ctx->in.mx, ctx->in.my, -1, -1 };
+        dialogue(ctx, m, origin.x + TEXT_INSET, origin.y, column, 0, &probe);
+        if (probe.message >= 0) {
+            ctx->cursor = LP_CURSOR_POINTER;
+            if ((ctx->in.pressed & LP_BUTTON_LEFT) && res) {
+                res->contribution_message = probe.message;
+                res->contribution_owner = probe.owner;
+                ctx->dirty = 1;
+            }
+        }
     }
     lp_scroll_end(ctx);
     if (draw) {

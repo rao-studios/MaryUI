@@ -10,6 +10,6 @@ void lp_spotlight_ask_orb(lp_ctx *ctx, lp_rect bar, const lp_spotlight_view *vie
 /* What the bar says while the conversation is up: it follows Mary's state. */
 const char *lp_spotlight_chat_placeholder(const lp_spotlight_view *view);
 /* The status row and the well of dialogue, from y (under the bar's divider) to the panel's bottom padding. */
-void lp_spotlight_chat(lp_ctx *ctx, const lp_spotlight_view *view, lp_rect panel, float y);
+void lp_spotlight_chat(lp_ctx *ctx, const lp_spotlight_view *view, lp_rect panel, float y, lp_spotlight_result *res);
 
 #endif

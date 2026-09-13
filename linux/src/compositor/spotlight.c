@@ -1,3 +1,4 @@
+#include <stdio.h>
 /* Spotlight on the scene: one fixed-size chrome in the top layer that follows
  * desktop.spotlight (open, query, selection), appears with lp-spotlight-in,
  * and is hit only inside the painted panel (its shadow falls through). */
@@ -42,6 +43,14 @@ static void paint_spotlight(lp_ctx *ctx, struct mui_chrome *chrome, void *data) 
     if (res.ask_pressed) {
         lp_desktop_ask_mary(d);             /* ask, listen or stop; the conversation takes the panel */
         mui_spotlight_resize(server);
+        ctx->dirty = 1;
+    }
+    if (res.contribution_message >= 0) {
+        /* a credited passage was tapped: "From the thread" for that owner (PARITY D27) */
+        char target[32];
+        snprintf(target, sizeof target, "m%d:o%d", res.contribution_message, res.contribution_owner);
+        lp_desktop_open_app_with(d, "contribution", target, NULL, NULL);
+        mui_spotlight_request_sync(server);
         ctx->dirty = 1;
     }
     if (res.hovered >= 0 && res.hovered != d->spotlight.selection) { d->spotlight.selection = res.hovered; ctx->dirty = 1; }

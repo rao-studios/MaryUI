@@ -66,6 +66,14 @@ extern const lp_app lp_app_player;
 extern const lp_app lp_app_calendar;
 extern const lp_app lp_app_prefs;
 extern const lp_app lp_app_thread;
+extern const lp_app lp_app_contribution;
+
+/* "From the thread" (PARITY D27), for tests. */
+int lp_contribution_owner(const void *state);
+int lp_contribution_sources(const void *state);
+const char *lp_contribution_source_name(const void *state, int i);
+const char *lp_contribution_source_preview(const void *state, int i);
+float lp_contribution_royalty(const void *state);
 
 /* TextEdit: replaces the document (for previews). */
 void lp_textedit_set_text(void *state, const char *name, const char *text);

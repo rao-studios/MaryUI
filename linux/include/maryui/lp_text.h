@@ -26,6 +26,7 @@ typedef struct lp_text_style {
     float letter_spacing;    /* px */
     int uppercase;
     int ellipsize;           /* clip long text with … at the rect's width */
+    float line_spacing;      /* px added between wrapped lines (Mary's passages: 7) */
 } lp_text_style;
 
 /* The body default: font.ui, text.md, regular, ink.primary. */

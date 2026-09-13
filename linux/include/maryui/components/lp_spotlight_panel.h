@@ -68,6 +68,9 @@ typedef struct lp_spotlight_result {
     int entry_hovered;   /* entry of the open menu under the pointer, else -1 */
     int entry_selected;  /* entry chosen this event, else -1 */
     int ask_pressed;     /* the Ask Mary orb was clicked this event */
+    /* A highlighted passage was clicked this event (PARITY D27): which message of the conversation, and
+     * which of its owners; -1 otherwise. The host opens "From the thread" on it. */
+    int contribution_message, contribution_owner;
     lp_rect panel;       /* where the panel was painted */
 } lp_spotlight_result;
 

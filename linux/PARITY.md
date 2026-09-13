@@ -380,6 +380,23 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   re-extract), **Schemas** (one card per record family), **Ledger** (every event, by kind) and **Retrieval**
   (what each search returned, in rank order, each a link into the Library). `lp-render --thread TAB` draws it
   over fixtures. The web has none of it.
+- **D26 — Mary's dialogue on paper.** Linux only. Spotlight's conversation draws Mary's replies the way the
+  Mac's session window does (`ContributionHighlightText.swift`): `font.display` italic at 18 px, kerned 0.3,
+  7 px between lines, the ink at 0.75; paragraphs split on blank lines 16 px apart, exchanges 28 apart, earlier
+  exchanges at 0.72 and 0.5; what you said is a 16 px sans line behind a 2 px gold rule. `lp_text_style`
+  gained `line_spacing` for it. The web has no conversation.
+- **D27 — the highlights, and "From the thread".** Linux only. A reply's `reply.end` carries Gita's
+  contribution (owners, their documents and influence, their spans as code points into the visible reply)
+  and what was retrieved; `lp_mary_message_credit` keeps them on the message. Under every credited line
+  the panel paints a brush stroke (`lp_brush`: BrushStroke.swift's geometry — two steps, a wobble of a
+  quarter of the height, a skew in ±0.8, tapered tips, quadratic edges — seeded by djb2 of the span's id
+  XOR the line index through splitmix64, so it is the same stroke on every redraw), inflated 12 × 8, in the
+  owner's colour (five, anchored on Mary's gold, by the owner id's djb2) at 0.20 alpha, fading in over 0.7 s
+  with a 0.15 s stagger down the reply (at once under reduced motion). The pointer becomes a hand over a
+  stroke and a click opens "From the thread" (`src/apps/contribution.c`, 440 × 480): the owner's royalty,
+  documents and passages, the thread id, then the sources by influence — name, group capsule, share, a 4 px
+  bar, a three-line italic preview read from threadd — each with Open in Thread. `lp-render --spotlight-chat
+  highlighted` and `--contribution` draw them over fixtures. The web has neither.
 - **Close animation.** `lp-window-close` (scale .96 + fade over `motion.fast`, `CLOSE` after
   fast + 80 ms) runs for built-in windows. A client that unmaps is gone at once — the compositor
   has no pixels left to fade.

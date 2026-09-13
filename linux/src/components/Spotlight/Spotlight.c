@@ -253,7 +253,7 @@ static void commands(lp_ctx *ctx, const lp_spotlight_view *v, lp_rect panel, flo
 }
 
 void lp_spotlight_panel(lp_ctx *ctx, float x, float y, const lp_spotlight_view *v, lp_spotlight_result *out) {
-    lp_spotlight_result res = { .hovered = -1, .activated = -1, .menu_pressed = -1, .menu_hovered = -1,
+    lp_spotlight_result res = { .hovered = -1, .activated = -1, .menu_pressed = -1, .menu_hovered = -1, .contribution_message = -1, .contribution_owner = -1,
                                 .entry_hovered = -1, .entry_selected = -1 };
     lp_size size = lp_spotlight_measure(v);
     lp_rect panel = LP_RECT(x, y, size.w, size.h);
@@ -287,7 +287,7 @@ void lp_spotlight_panel(lp_ctx *ctx, float x, float y, const lp_spotlight_view *
     cy += 1;
 
     if (v->chat) {
-        lp_spotlight_chat(ctx, v, panel, cy);
+        lp_spotlight_chat(ctx, v, panel, cy, &res);
     } else if (lp_spotlight_query_is_blank(q->text)) {
         /* The dock: one centred row of tiles */
         int n = v->count;

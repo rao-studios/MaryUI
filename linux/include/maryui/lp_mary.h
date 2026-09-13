@@ -3,7 +3,7 @@
  * $XDG_RUNTIME_DIR/mary/mary.sock with newline-delimited JSON:
  *
  *   maryd → desktop   hello{state, key_present, wake, voice, tail}, wake, state{state}, level{rms},
- *                     transcript{text, final}, reply.delta{text}, reply.end{cancelled},
+ *                     transcript{text, final}, reply.delta{text}, reply.end{cancelled, contribution, retrieved},
  *                     key.status{present, verified_at, ok?, message?}, error{stage, message},
  *                     skill.invoke{call_id, app, skill, args}, voices{ok, voices | message},
  *                     voice.sample{voice_id, state, message?}
@@ -46,12 +46,38 @@ typedef enum lp_mary_state {
 
 typedef enum lp_mary_role { LP_MARY_USER, LP_MARY_REPLY } lp_mary_role;
 
+/* A credited passage of a reply (Gita's span, PARITY D27): code points into the reply's text. */
+typedef struct lp_mary_span {
+    int owner;              /* index into the reply's owners */
+    int lower, upper;
+} lp_mary_span;
+
+/* Who a reply drew on (Gita's owner). */
+typedef struct lp_mary_owner {
+    char id[64];            /* "<thread_id>|<owner_id>", the highlight's colour key */
+    char thread_id[48];
+    char owner_id[64];
+    float royalty;
+    int documents;
+} lp_mary_owner;
+
+#define LP_MARY_OWNERS 8
+
 typedef struct lp_mary_message {
     lp_mary_role role;
     char *text;             /* heap, NUL-terminated */
     size_t len;
     int streaming;          /* a reply still arriving */
     char *note;             /* heap: why this reply was not heard; NULL when it was */
+    /* A reply's credits, from reply.end: the owners, their spans, and (json-c, opaque here) the whole
+     * contribution and the retrieved list for the "From the thread" window. */
+    lp_mary_owner owners[LP_MARY_OWNERS];
+    int owner_count;
+    lp_mary_span *spans;    /* heap, in reading order */
+    int span_count;
+    void *contribution;     /* struct json_object *, or NULL */
+    void *retrieved;        /* struct json_object *, or NULL */
+    double highlighted_ms;  /* when the strokes began to fade in (the panel's clock); 0 until first drawn */
 } lp_mary_message;
 
 /* One of Mistral's voices, as maryd lists them. */
@@ -158,5 +184,10 @@ int lp_mary_send_line(lp_mary *m, const char *json);
 
 /* Bytes from maryd, as the client's reader hands them over (and a test). */
 void lp_mary_feed(lp_mary *m, const char *bytes, size_t n);
+/* Gives a message its credits from a contribution object ({owners:[{thread_id, owner_id, royalty, document_ids,
+ * spans:[{lower, upper}]}]}) and a retrieved list; both are kept (referenced). Also for fixtures. */
+void lp_mary_message_credit(lp_mary_message *msg, void *contribution, void *retrieved);
+/* The owner whose span covers code point `index` of the reply, else -1. */
+int lp_mary_span_owner_at(const lp_mary_message *msg, int index);
 
 #endif

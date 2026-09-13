@@ -48,12 +48,21 @@ static void changed(lp_mary *m, unsigned what) {
     if (m->desk && (what & ~(unsigned)LP_MARY_CHANGED_LEVEL)) lp_desktop_models_changed(m->desk, LP_MODEL_MARY, what);
 }
 
+static void free_credits(lp_mary_message *msg);
+
 static void clear_messages(lp_mary *m) {
     for (int i = 0; i < m->message_count; i++) {
         free(m->messages[i].text);
         free(m->messages[i].note);
+        free_credits(&m->messages[i]);
     }
     m->message_count = 0;
+}
+
+int lp_mary_span_owner_at(const lp_mary_message *msg, int index) {
+    for (int i = 0; i < msg->span_count; i++)
+        if (index >= msg->spans[i].lower && index < msg->spans[i].upper) return msg->spans[i].owner;
+    return -1;
 }
 
 static void disconnect(lp_mary *m, int retry);
@@ -120,14 +129,67 @@ static int has(struct json_object *o, const char *key, json_type type, struct js
     return json_object_object_get_ex(o, key, out) && json_object_is_type(*out, type);
 }
 
+static void free_credits(lp_mary_message *msg) {
+    free(msg->spans);
+    if (msg->contribution) json_object_put(msg->contribution);
+    if (msg->retrieved) json_object_put(msg->retrieved);
+    msg->spans = NULL;
+    msg->span_count = msg->owner_count = 0;
+    msg->contribution = msg->retrieved = NULL;
+    msg->highlighted_ms = 0;
+}
+
+void lp_mary_message_credit(lp_mary_message *msg, void *contribution_v, void *retrieved_v) {
+    struct json_object *contribution = contribution_v, *retrieved = retrieved_v, *owners, *v;
+    free_credits(msg);
+    if (contribution) msg->contribution = json_object_get(contribution);
+    if (retrieved) msg->retrieved = json_object_get(retrieved);
+    if (!has(contribution, "owners", json_type_array, &owners)) return;
+    size_t n = json_object_array_length(owners);
+    int cap = 0;
+    for (size_t i = 0; i < n && msg->owner_count < LP_MARY_OWNERS; i++) {
+        struct json_object *o = json_object_array_get_idx(owners, i), *spans;
+        lp_mary_owner *owner = &msg->owners[msg->owner_count];
+        memset(owner, 0, sizeof *owner);
+        snprintf(owner->thread_id, sizeof owner->thread_id, "%s", str(o, "thread_id") ? str(o, "thread_id") : "");
+        snprintf(owner->owner_id, sizeof owner->owner_id, "%s", str(o, "owner_id") ? str(o, "owner_id") : "");
+        snprintf(owner->id, sizeof owner->id, "%s|%s", owner->thread_id, owner->owner_id);
+        owner->royalty = json_object_object_get_ex(o, "royalty", &v) ? (float)json_object_get_double(v) : 0;
+        owner->documents = has(o, "document_ids", json_type_array, &v) ? (int)json_object_array_length(v) : 0;
+        if (has(o, "spans", json_type_array, &spans)) {
+            for (size_t k = 0; k < json_object_array_length(spans); k++) {
+                struct json_object *span = json_object_array_get_idx(spans, k), *lo, *hi;
+                if (!json_object_object_get_ex(span, "lower", &lo) || !json_object_object_get_ex(span, "upper", &hi)) continue;
+                if (msg->span_count == cap) {
+                    cap = cap ? cap * 2 : 8;
+                    lp_mary_span *grown = realloc(msg->spans, (size_t)cap * sizeof *grown);
+                    if (!grown) break;
+                    msg->spans = grown;
+                }
+                msg->spans[msg->span_count++] = (lp_mary_span){ msg->owner_count, json_object_get_int(lo), json_object_get_int(hi) };
+            }
+        }
+        msg->owner_count++;
+    }
+    /* reading order, so the stagger sweeps down the reply the same way every time */
+    for (int i = 1; i < msg->span_count; i++)
+        for (int k = i; k > 0 && msg->spans[k].lower < msg->spans[k - 1].lower; k--) {
+            lp_mary_span t = msg->spans[k];
+            msg->spans[k] = msg->spans[k - 1];
+            msg->spans[k - 1] = t;
+        }
+}
+
 static lp_mary_message *push(lp_mary *m, lp_mary_role role, const char *text, int streaming) {
     if (m->message_count == LP_MARY_MESSAGES) {
         free(m->messages[0].text);
         free(m->messages[0].note);
+        free_credits(&m->messages[0]);
         memmove(m->messages, m->messages + 1, (LP_MARY_MESSAGES - 1) * sizeof *m->messages);
         m->message_count--;
     }
     lp_mary_message *msg = &m->messages[m->message_count];
+    memset(msg, 0, sizeof *msg);
     msg->text = strdup(text ? text : "");
     if (!msg->text) return NULL;
     msg->len = strlen(msg->text);
@@ -238,6 +300,12 @@ static void handle(lp_mary *m, struct json_object *msg) {
         changed(m, LP_MARY_CHANGED_MESSAGES);
     } else if (strcmp(type, "reply.end") == 0) {
         for (int i = 0; i < m->message_count; i++) m->messages[i].streaming = 0;
+        lp_mary_message *last = m->message_count ? &m->messages[m->message_count - 1] : NULL;
+        struct json_object *contribution = NULL, *retrieved = NULL;
+        if (has(msg, "contribution", json_type_object, &contribution) && last && last->role == LP_MARY_REPLY) {
+            has(msg, "retrieved", json_type_array, &retrieved);
+            lp_mary_message_credit(last, contribution, retrieved);
+        }
         changed(m, LP_MARY_CHANGED_MESSAGES);
     } else if (strcmp(type, "key.status") == 0) {
         if (has(msg, "present", json_type_boolean, &v)) m->key_present = json_object_get_boolean(v);
@@ -551,6 +619,13 @@ int lp_mary_send_line(lp_mary *m, const char *json) {
 #else
 
 int lp_mary_available(void) { return 0; }
+static void free_credits(lp_mary_message *msg) {
+    free(msg->spans);
+    msg->spans = NULL;
+    msg->span_count = msg->owner_count = 0;
+    msg->contribution = msg->retrieved = NULL;
+}
+void lp_mary_message_credit(lp_mary_message *msg, void *contribution, void *retrieved) { (void)contribution; (void)retrieved; free_credits(msg); }
 int lp_mary_start(lp_mary *m, const char *path) { return -ENOSYS; }
 int lp_mary_ask(lp_mary *m, const char *text) { return -ENOTCONN; }
 int lp_mary_listen(lp_mary *m) { return -ENOTCONN; }

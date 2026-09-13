@@ -62,6 +62,7 @@ static PangoLayout *make_layout_ex(cairo_t *cr, const char *text, int len, const
     pango_attr_list_unref(attrs);
 
     pango_layout_set_single_paragraph_mode(layout, single_paragraph ? TRUE : FALSE);
+    if (style->line_spacing != 0) pango_layout_set_spacing(layout, (int)(style->line_spacing * PANGO_SCALE));
     if (wrap && width > 0) {
         pango_layout_set_width(layout, (int)(width * PANGO_SCALE));
         pango_layout_set_wrap(layout, PANGO_WRAP_WORD_CHAR);
@@ -86,7 +87,7 @@ typedef struct layout_entry {
     /* Everything about the style that changes the shaped result. Colour and
      * emboss are applied at draw time and are deliberately not keyed on. */
     enum lp_font font;
-    float size_px, letter_spacing, width;
+    float size_px, letter_spacing, line_spacing, width;
     int weight, italic, tabular_nums, uppercase, ellipsize;
     unsigned used;
 } layout_entry;
@@ -106,7 +107,7 @@ static PangoLayout *make_layout(cairo_t *cr, const char *text, const lp_text_sty
     for (int i = 0; i < layout_cache_count; i++) {
         layout_entry *e = &layout_cache[i];
         if (e->hash != h || e->font != style->font || e->size_px != style->size_px || e->weight != style->weight ||
-            e->italic != style->italic || e->tabular_nums != style->tabular_nums || e->letter_spacing != style->letter_spacing ||
+            e->italic != style->italic || e->tabular_nums != style->tabular_nums || e->letter_spacing != style->letter_spacing || e->line_spacing != style->line_spacing ||
             e->uppercase != style->uppercase || e->ellipsize != style->ellipsize || e->width != width)
             continue;
         if (strcmp(e->text, text) != 0) continue;
@@ -138,6 +139,7 @@ static PangoLayout *make_layout(cairo_t *cr, const char *text, const lp_text_sty
     e->italic = style->italic;
     e->tabular_nums = style->tabular_nums;
     e->letter_spacing = style->letter_spacing;
+    e->line_spacing = style->line_spacing;
     e->uppercase = style->uppercase;
     e->ellipsize = style->ellipsize;
     e->width = width;

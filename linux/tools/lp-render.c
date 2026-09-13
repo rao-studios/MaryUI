@@ -23,6 +23,10 @@
 #include "maryui/lp_molten.h"
 #include "maryui/lp_wallpaper.h"
 
+#ifdef HAVE_JSONC
+#include <json-c/json.h>
+#endif
+
 static int usage(int status) {
     fprintf(status ? stderr : stdout,
         "usage: lp-render --brush <out.png>              the 512px brushed-platinum tile\n"
@@ -46,7 +50,8 @@ static int usage(int status) {
         "       lp-render --prefs-pane PANE <out.png>    System Settings on one pane (general|dock|displays|keyboard|sound|network|time|users|about|mary), with fixtures\n"
         "       lp-render --spotlight [QUERY] <out.png>  Spotlight over the desktop: the dock and its command pills, or the results for QUERY\n"
         "       lp-render --spotlight-menu NAME <out.png>  the same with the NAME pill open (rao|file|edit|view|go|window|help)\n"
-        "       lp-render --spotlight-chat STATE <out.png>  Spotlight on the conversation with Mary: idle|listening|thinking|streaming|speaking|error|nokey|offline\n"
+        "       lp-render --spotlight-chat STATE <out.png>  Spotlight on the conversation with Mary: idle|listening|thinking|streaming|speaking|error|nokey|offline|highlighted\n"
+        "       lp-render --contribution <out.png>       \"From the thread\": what a highlighted passage drew on, with fixtures\n"
         "       lp-render --all <dir>                    every preview into <dir>\n"
         "       lp-render --version\n");
     return status;
@@ -241,7 +246,7 @@ static int render_app(const lp_app *app, int tab, const char *path) {
     lp_desktop_init(&d, LP_RECT(0, 0, w, h), NULL);
     lp_desktop_register_builtin_apps(&d);
     if (app == &lp_app_thread) thread_fixtures(&d);
-    void *state = app->create ? app->create(&d, "w1") : NULL;
+    void *state = app->create && app != &lp_app_contribution ? app->create(&d, "w1") : NULL;   /* "From the thread" paints its fixture when stateless */
     if (tab > 0 && state && app != &lp_app_thread) *(int *)state = tab; /* the gallery's first field is its tab */
     if (app == &lp_app_thread && state) {
         lp_thread_app_set_runner(state, NULL);
@@ -378,7 +383,7 @@ static void chat_line(lp_mary *m, lp_mary_role role, const char *text, int strea
 /* Spotlight on the conversation with Mary (Linux, PARITY D18), in one state, from a fixture:
  * idle, listening, thinking, streaming, speaking, error, nokey or offline. */
 static int render_spotlight_chat(const char *state, const char *path) {
-    static const char *const states[] = { "idle", "listening", "thinking", "streaming", "speaking", "error", "nokey", "offline" };
+    static const char *const states[] = { "idle", "listening", "thinking", "streaming", "speaking", "error", "nokey", "offline", "highlighted" };
     int which = -1;
     for (int i = 0; i < (int)(sizeof states / sizeof *states); i++) if (strcmp(state, states[i]) == 0) which = i;
     if (which < 0) { fprintf(stderr, "lp-render: no chat state named %s\n", state); return 1; }
@@ -413,6 +418,30 @@ static int render_spotlight_chat(const char *state, const char *path) {
     case 4: m->state = LP_MARY_SPEAKING; chat_line(m, LP_MARY_USER, "What's the weather like in Lyon this weekend?", 0);
         chat_line(m, LP_MARY_REPLY, "Mostly sunny on Saturday, with a high of 24 degrees. Sunday turns cloudy after lunch, so the morning is the time for the market.", 1); break;
     case 5: m->state = LP_MARY_ERROR; snprintf(m->error, sizeof m->error, "Mistral refused the key. Check it in Settings › Mary."); break;
+    case 8: {
+        /* a reply that drew on two sources (PARITY D27): its passages carry their brush strokes */
+        chat_line(m, LP_MARY_USER, "What did I write about the spring trip?", 0);
+        chat_line(m, LP_MARY_REPLY,
+                  "You kept a note that Paris is the capital of France, and that the Marais is where you wanted the hotel. "
+                  "You settled on April for the dates, after the rain and before the crowds.\n\n"
+                  "Someone else once wrote that the bakeries near the Marais open before seven, which is worth knowing for the mornings.", 0);
+#ifdef HAVE_JSONC
+        struct json_object *contribution = json_tokener_parse(
+            "{\"owners\":[{\"thread_id\":\"6b0c7a2e-1f4d-4a8e-9c3b-2d5e7f8a9b0c\",\"owner_id\":\"mary\",\"document_ids\":[\"file-2b3c4d5e6f7a8b9c\",\"1122334455667788990011\"],"
+            "\"influence\":{\"file-2b3c4d5e6f7a8b9c\":0.7,\"1122334455667788990011\":0.3},\"royalty\":0.62,\"spans\":[{\"lower\":0,\"upper\":105},{\"lower\":105,\"upper\":175}]},"
+            "{\"thread_id\":\"9d1e2f3a-4b5c-6d7e-8f90-a1b2c3d4e5f6\",\"owner_id\":\"someone\",\"document_ids\":[\"doc-bakeries\"],\"influence\":{\"doc-bakeries\":1},\"royalty\":0.38,"
+            "\"spans\":[{\"lower\":177,\"upper\":296}]}]}");
+        struct json_object *retrieved = json_tokener_parse(
+            "[{\"document_id\":\"file-2b3c4d5e6f7a8b9c\",\"group_id\":\"files-mary\",\"name\":\"notes.txt\",\"family\":\"file\",\"lane\":\"personal\",\"score\":4.2},"
+            "{\"document_id\":\"1122334455667788990011\",\"group_id\":\"memory-mary\",\"name\":\"Paris in spring\",\"family\":\"memory\",\"lane\":\"personal\",\"score\":5.0},"
+            "{\"document_id\":\"doc-bakeries\",\"group_id\":\"shared\",\"name\":\"Bakeries of the Marais\",\"family\":\"file\",\"lane\":\"personal\",\"score\":6.1}]");
+        lp_mary_message_credit(&m->messages[m->message_count - 1], contribution, retrieved);
+        m->messages[m->message_count - 1].highlighted_ms = 1;      /* long ago: the strokes are fully in */
+        json_object_put(contribution);
+        json_object_put(retrieved);
+#endif
+        break;
+    }
     default: break;
     }
     lp_ctx ctx = { 0 };
@@ -427,7 +456,7 @@ static int render_spotlight_chat(const char *state, const char *path) {
     float x = (w - size.w) / 2, y = h * LP_SPOTLIGHT_Y_FRACTION - LP_SIZE_SPOTLIGHT_BAR_HEIGHT / 2 - LP_SPOTLIGHT_PAD;
     lp_spotlight_panel(&ctx, x, y, &view, NULL);
     lp_ctx_end(&ctx);
-    for (int i = 0; i < m->message_count; i++) free(m->messages[i].text);
+    lp_mary_free(m);
     cairo_destroy(cr);
     int rc = write_png(s, path);
     cairo_surface_destroy(s);
@@ -463,6 +492,7 @@ int main(int argc, char **argv) {
     if (strcmp(argv[1], "--activity") == 0 && argc == 3) return render_app(&lp_app_activity, 0, argv[2]);
     if (strcmp(argv[1], "--diskutil") == 0 && argc == 3) return render_app(&lp_app_diskutil, 0, argv[2]);
     if (strcmp(argv[1], "--thread") == 0 && argc == 4) { thread_tab = argv[2]; return render_app(&lp_app_thread, 0, argv[3]); }
+    if (strcmp(argv[1], "--contribution") == 0 && argc == 3) return render_app(&lp_app_contribution, 0, argv[2]);
     if (strcmp(argv[1], "--player") == 0 && argc == 3) return render_app(&lp_app_player, 0, argv[2]);
     if (strcmp(argv[1], "--calendar") == 0 && argc == 3) return render_app(&lp_app_calendar, 0, argv[2]);
     if (strcmp(argv[1], "--prefs-mary") == 0 && argc == 3) { prefs_pane = LP_PREFS_MARY; return render_app(&lp_app_prefs, 0, argv[2]); }
