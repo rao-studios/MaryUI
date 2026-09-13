@@ -83,7 +83,8 @@ LP_TEST(plain_return_still_opens_the_selection) {
     LP_ASSERT(!d.spotlight.open);
     LP_ASSERT(!d.spotlight_chat);
     LP_ASSERT_EQ(d.instance_count, before + 1);
-    LP_ASSERT_STR(sent(), "");
+    LP_ASSERT(strstr(sent(), "\"type\":\"ask\"") == NULL);        /* nothing asked; the new window did publish the world (D28) */
+    LP_ASSERT(d.world.published >= 1);                                  /* the new window published the world (D28) */
     teardown();
 }
 

@@ -14,6 +14,7 @@ static void on_mary(lp_desktop *d, unsigned what) {
     if ((what & LP_MARY_CHANGED_CONNECTION) && lp_mary_connected(&d->mary)) {
         lp_desktop_publish_skills(d);
         lp_desktop_publish_mary_config(d);
+        lp_desktop_publish_world(d);        /* what is on screen (PARITY D28), then on every change and poll */
     }
     if (what & LP_MARY_WAKE) {
         lp_desktop_mary_wake(d);
@@ -39,5 +40,6 @@ void mui_mary_init(struct mui_server *server) {
 
 void mui_mary_finish(struct mui_server *server) {
     server->desktop.on_mary = NULL;
+    lp_world_free(&server->desktop);
     lp_mary_free(&server->desktop.mary);
 }

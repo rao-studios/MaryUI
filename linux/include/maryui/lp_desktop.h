@@ -19,6 +19,7 @@
 #include "maryui/lp_spotlight.h"
 #include "maryui/lp_thread.h"
 #include "maryui/lp_wm.h"
+#include "maryui/lp_world.h"
 
 #define LP_DESKTOP_MAX_APPS 24
 #define LP_DESKTOP_MENU_COUNT 7           /* Rao, File, Edit, View, Go, Window, Help */
@@ -95,6 +96,7 @@ typedef struct lp_desktop {
     lp_mary mary;             /* the conversation with maryd, shown in Spotlight */
     lp_thread thread;         /* the hard drive's memory, from threadd (the Thread app, Disk Utility, Get Info; PARITY D25) */
     lp_audio audio;           /* PipeWire's speakers and microphones (System Settings › Sound, PARITY D23) */
+    lp_world world;           /* what the desktop publishes to Mary about what is on screen (PARITY D28) */
     int spotlight_chat;       /* Spotlight shows that conversation instead of the dock (Linux, PARITY D18) */
     lp_scroll_state spotlight_chat_scroll;
     lp_skill_policy skill_policy;  /* what Mary may do with each app (skills.conf, PARITY D20) */
@@ -128,8 +130,8 @@ typedef struct lp_desktop {
 void lp_desktop_init(lp_desktop *d, lp_rect bounds, void *host);
 void lp_desktop_register_app(lp_desktop *d, const lp_app *app);
 /* Registers finder, gallery, about, textedit (hidden: Spotlight only), info (internal)
- * and the system apps (calculator, preview, terminal, activity, diskutil, media, calendar, settings, thread); Finder,
- * TextEdit, Preview, Terminal, the Media Player, Calendar, System Settings and Threads are pinned. */
+ * and the system apps (calculator, preview, terminal, activity, diskutil, media, calendar, settings, thread, ambient);
+ * Finder, TextEdit, Preview, Terminal, the Media Player, Calendar, System Settings and Threads are pinned. */
 void lp_desktop_register_builtin_apps(lp_desktop *d);
 /* Runs the WM reducer, syncs app instances, calls on_change. Returns the change mask. */
 uint64_t lp_desktop_dispatch(lp_desktop *d, const lp_wm_action *action);

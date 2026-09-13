@@ -1180,6 +1180,34 @@ static void finder_paint(void *state, lp_ctx *ctx, lp_rect body, lp_desktop *d) 
 
 /* MARK: - Introspection (tests) */
 
+/* What Mary sees of the Finder (PARITY D28): the folder, its visible entries, the one under the cursor, the selection. */
+static int finder_surface(void *state, lp_desktop *d, lp_app_surface *out) {
+    struct finder *f = state;
+    if (!f) return 0;
+    lp_files_display_name(f->path, out->document_name, sizeof out->document_name);
+    snprintf(out->document_path, sizeof out->document_path, "%s", f->path);
+    lp_app_surface_add(out, "searchfield", "search field", f->query.len ? f->query.text : "Search", 0, 1);
+    lp_app_surface_add(out, "button", "button", "Back", 0, f->hist_pos > 0);
+    for (int v = 0; v < f->nvis; v++) {
+        const lp_file_entry *e = &f->list.entries[f->vis[v]];
+        lp_app_surface_add(out, e->is_dir ? "folder" : "file", e->is_dir ? "folder" : "file", e->name, f->vis[v] == f->cursor, 1);
+    }
+    int selected = selected_count(f);
+    if (selected) {
+        char names[600] = "";
+        for (int i = 0, n = 0; i < f->list.count && n < 8; i++) {
+            if (!f->sel[i]) continue;
+            if (n++) strncat(names, ", ", sizeof names - strlen(names) - 1);
+            strncat(names, f->list.entries[i].name, sizeof names - strlen(names) - 1);
+        }
+        char text[720];
+        snprintf(text, sizeof text, "Selected %d item%s: %s", selected, selected == 1 ? "" : "s", names);
+        out->document_text = strdup(text);
+        out->document_total = 0;
+    }
+    return 1;
+}
+
 const char *lp_finder_path(const void *state) { return ((const struct finder *)state)->path; }
 int lp_finder_visible_count(const void *state) { return ((const struct finder *)state)->nvis; }
 const char *lp_finder_visible_name(const void *state, int v) {
@@ -1200,4 +1228,5 @@ const lp_app lp_app_finder = {
     .id = "finder", .title = "Rao", .name = "Finder", .dock = 1, .icon = LP_ICON_FOLDER, .object = "appFinder", .default_rect = { 72, 72, 720, 460 }, .min_size = { 420, 240 }, .singleton = 0, .resizable = 1,
     .create = finder_create, .paint = finder_paint, .destroy = finder_destroy,
     .open = finder_open, .command = finder_command, .menu_entries = finder_menu_entries, .notify = finder_notify, .title_of = finder_title_of,
+    .surface = finder_surface, .surface_poll_s = 30,
 };

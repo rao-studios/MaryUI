@@ -1296,6 +1296,30 @@ static float pane_mary(lp_ctx *ctx, struct prefs *p, lp_desktop *d, float x, flo
                   after_toggle, row_y, aside_w);
         }
     }
+
+    section(ctx, "Ambient", x, &y, w);
+    note(ctx, "What each app tells Mary about what is on its screen, so she knows what is in front of you without looking (PARITY D28).", x, &y, w);
+    static const struct { const char *id, *publishes; } PUBLISHES[] = {
+        { "textedit", "the document, a window of its text, what you have selected" },
+        { "finder", "the folder, its entries, what is selected" },
+        { "preview", "the image or PDF, the page, the zoom" },
+        { "calendar", "the day and view shown, how many events, an event being edited" },
+        { "media", "the file, whether it plays, its place in the folder" },
+        { "terminal", "the last screen rows, as text" },
+        { "settings", "the pane that is open" },
+        { "calculator", "the display" },
+    };
+    for (int a = 0; a < d->app_count; a++) {
+        const lp_app *app = d->apps[a];
+        if (!app->surface) continue;
+        const char *what = "its front window";
+        for (size_t i = 0; i < sizeof PUBLISHES / sizeof *PUBLISHES; i++) if (strcmp(PUBLISHES[i].id, app->id) == 0) what = PUBLISHES[i].publishes;
+        char every[160];
+        snprintf(every, sizeof every, "%s \xC2\xB7 every %d s, and whenever a turn asks", what, app->surface_poll_s > 0 ? app->surface_poll_s : LP_WORLD_POLL_S);
+        label(ctx, app->name ? app->name : app->title, x, y);
+        aside(ctx, every, x + LABEL_W, y, w - LABEL_W);
+        y += ROW_H;
+    }
     return y;
 }
 
@@ -1382,6 +1406,19 @@ static void prefs_destroy(void *state) {
     free(p);
 }
 
+/* What Mary sees of System Settings (PARITY D28): the pane that is open, and the others. */
+static int prefs_surface(void *state, lp_desktop *d, lp_app_surface *out) {
+    struct prefs *p = state;
+    if (!p) return 0;
+    int pane = p->pane >= 0 && p->pane < PANE_COUNT ? p->pane : 0;
+    snprintf(out->document_name, sizeof out->document_name, "%s", PANES[pane].name);
+    char text[120];
+    snprintf(text, sizeof text, "The %s pane is open", PANES[pane].name);
+    out->document_text = strdup(text);
+    for (int i = 0; i < PANE_COUNT; i++) lp_app_surface_add(out, "row", "pane", PANES[i].name, i == pane, 1);
+    return 1;
+}
+
 /* MARK: - Mary's skills (PARITY D20) */
 
 /* LP_PREFS_* order: the words Mary names a pane by. */
@@ -1440,6 +1477,7 @@ const lp_app lp_app_prefs = {
     .create = prefs_create, .paint = prefs_paint, .destroy = prefs_destroy,
     .command = prefs_command, .menu_entries = prefs_menu_entries,
     .skills = prefs_skills, .skill_count = 1, .perform = prefs_perform, .model_changed = prefs_model_changed,
+    .surface = prefs_surface, .surface_poll_s = 120,
 };
 
 /* MARK: - Tests, and the pane's own actions */

@@ -126,6 +126,61 @@ static void textedit_menu_entries(void *state, lp_desktop *d, int menu, lp_menu_
     e->shortcut = "⌘S"; e->command = LP_CMD_APP; e->arg = LP_TEXTEDIT_SAVE;
 }
 
+/* Code points before a byte offset, and the byte offset of a code point. */
+static int points_before(const char *s, int byte) {
+    int n = 0;
+    for (int i = 0; i < byte && s[i]; i++) if ((s[i] & 0xC0) != 0x80) n++;
+    return n;
+}
+static int byte_of_point(const char *s, int point) {
+    int i = 0, n = 0;
+    while (s[i] && n < point) { i++; while ((s[i] & 0xC0) == 0x80) i++; n++; }
+    return i;
+}
+
+/* What Mary sees of the editor (PARITY D28): the document, a window of its text around the selection or the
+ * caret, and the selection itself. */
+static int textedit_surface(void *state, lp_desktop *d, lp_app_surface *out) {
+    struct textedit *t = state;
+    if (!t) return 0;
+    const char *name = t->name.len ? t->name.text : "Untitled";
+    snprintf(out->window_title, sizeof out->window_title, "%s", name);
+    snprintf(out->document_name, sizeof out->document_name, "%s", name);
+    if (t->path[0]) snprintf(out->document_path, sizeof out->document_path, "%s", t->path);
+    const lp_text_doc *doc = &t->area.doc;
+    const char *text = doc->text ? doc->text : "";
+    int start = 0, end = 0;
+    lp_text_doc_selection(doc, &start, &end);
+    out->document_total = lp_text_doc_char_count(doc);
+    int centre = points_before(text, start), lo = centre - LP_SURFACE_TEXT_WINDOW / 2;
+    if (lo < 0) lo = 0;
+    int hi = lo + LP_SURFACE_TEXT_WINDOW;
+    if (hi > out->document_total) hi = out->document_total;
+    int lo_byte = byte_of_point(text, lo), hi_byte = byte_of_point(text, hi);
+    out->document_text = strndup(text + lo_byte, (size_t)(hi_byte - lo_byte));
+    out->document_lower = lo;
+    out->document_upper = hi;
+    if (end > start) {
+        out->selection_text = strndup(text + start, (size_t)(end - start));
+        out->selection_lower = points_before(text, start);
+        out->selection_upper = points_before(text, end);
+        out->selection_editable = 1;
+    }
+    lp_app_surface_add(out, "textfield", "text field", name, 0, 1);
+    lp_app_surface_add(out, "textarea", "text area", "Document", 1, 1);
+    lp_app_surface_add(out, "button", "button", "Save", 0, t->dir[0] != 0);
+    return 1;
+}
+
+void lp_textedit_select(void *state, int start, int end) {
+    struct textedit *t = state;
+    if (!t) return;
+    if (start < 0) start = 0;
+    if (end > t->area.doc.len) end = t->area.doc.len;
+    t->area.doc.anchor = start;
+    t->area.doc.cursor = end;
+}
+
 static void textedit_destroy(void *state) {
     struct textedit *t = state;
     if (!t) return;
@@ -215,6 +270,7 @@ const lp_app lp_app_textedit = {
     .default_rect = { 200, 120, 560, 420 }, .min_size = { 320, 220 }, .singleton = 0, .resizable = 1,
     .create = textedit_create, .paint = textedit_paint, .destroy = textedit_destroy,
     .open = textedit_open, .command = textedit_command, .menu_entries = textedit_menu_entries,
+    .surface = textedit_surface, .surface_poll_s = 15,
 };
 
 /* MARK: - Introspection (tests) */

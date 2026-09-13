@@ -326,14 +326,34 @@ static void preview_destroy(void *state) {
     free(p);
 }
 
+static int preview_surface(void *state, lp_desktop *d, lp_app_surface *out);
 const lp_app lp_app_preview = {
     .id = "preview", .title = "Preview", .name = "Preview", .icon = LP_ICON_IMAGE, .object = "docImage", .hidden = 1, .dock = 1,
     .default_rect = { NAN, NAN, 720, 540 }, .min_size = { 360, 280 }, .singleton = 0, .resizable = 1,
     .create = preview_create, .paint = preview_paint, .destroy = preview_destroy,
     .open = preview_open, .command = preview_command, .menu_entries = preview_menu_entries,
+    .surface = preview_surface, .surface_poll_s = 30,
 };
 
 /* MARK: - Introspection (tests) */
+
+/* What Mary sees of Preview (PARITY D28): the document, the page, the zoom. */
+static int preview_surface(void *state, lp_desktop *d, lp_app_surface *out) {
+    struct preview *p = state;
+    if (!p || !p->path[0]) return 0;
+    snprintf(out->document_name, sizeof out->document_name, "%s", lp_files_basename(p->path));
+    snprintf(out->document_path, sizeof out->document_path, "%s", p->path);
+    char text[200];
+    snprintf(text, sizeof text, "%s, page %d, %s%.0f%%%s", p->err ? "could not be opened" : "showing", p->page + 1,
+             p->fit ? "fit to the window at " : "at ", p->scale * 100, p->turns ? ", rotated" : "");
+    out->document_text = strdup(text);
+    lp_app_surface_add(out, "image", "image", lp_files_basename(p->path), 1, 1);
+    lp_app_surface_add(out, "button", "button", "Previous Page", 0, p->page > 0);
+    lp_app_surface_add(out, "button", "button", "Next Page", 0, 1);
+    lp_app_surface_add(out, "button", "button", "Zoom In", 0, 1);
+    lp_app_surface_add(out, "button", "button", "Zoom Out", 0, 1);
+    return 1;
+}
 
 const char *lp_preview_path(const void *state) { return ((const struct preview *)state)->path; }
 int lp_preview_error(const void *state) { return ((const struct preview *)state)->err; }

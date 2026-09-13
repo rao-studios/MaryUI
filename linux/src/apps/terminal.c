@@ -422,15 +422,46 @@ static void terminal_menu_entries(void *state, lp_desktop *d, int menu, lp_menu_
     }
 }
 
+static int terminal_surface(void *state, lp_desktop *d, lp_app_surface *out);
 const lp_app lp_app_terminal = {
     .id = "terminal", .title = "Terminal", .name = "Terminal", .icon = LP_ICON_TERMINAL, .object = "terminal",
     .hidden = 1, .dock = 1, .raw_ctrl = 1,
     .default_rect = { NAN, NAN, 680, 460 }, .min_size = { 320, 200 }, .singleton = 0, .resizable = 1,
     .create = terminal_create, .paint = terminal_paint, .destroy = terminal_destroy,
     .command = terminal_command, .menu_entries = terminal_menu_entries,
+    .surface = terminal_surface, .surface_poll_s = 30,
 };
 
 /* MARK: - Previews and tests */
+
+/* What Mary sees of the Terminal (PARITY D28): the last screen rows, as text. */
+static int terminal_surface(void *state, lp_desktop *d, lp_app_surface *out) {
+    struct terminal *t = state;
+    if (!t || !t->term) return 0;
+    int rows = t->rows > 0 ? t->rows : 24, cols = t->cols > 0 ? t->cols : 80;
+    if (rows > 40) rows = 40;
+    size_t cap = (size_t)rows * ((size_t)cols * 4 + 2) + 1;
+    char *text = malloc(cap), row[1024];
+    if (!text) return 0;
+    size_t used = 0;
+    int last = -1;
+    for (int r = 0; r < rows; r++) {
+        lp_terminal_row_text(t, r, row, sizeof row);
+        size_t n = strlen(row);
+        while (n && row[n - 1] == ' ') row[--n] = 0;
+        if (n) last = r;
+        if (used + n + 2 >= cap) break;
+        memcpy(text + used, row, n);
+        used += n;
+        text[used++] = '\n';
+    }
+    if (last < 0) { free(text); text = strdup(""); used = 0; }
+    text[used] = 0;
+    out->document_text = text;
+    snprintf(out->document_name, sizeof out->document_name, "%s", t->exited ? "shell (exited)" : "shell");
+    lp_app_surface_add(out, "textarea", "terminal", "Shell", 1, !t->exited);
+    return 1;
+}
 
 void lp_terminal_feed(void *state, const char *bytes) {
     struct terminal *k = state;

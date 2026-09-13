@@ -151,15 +151,32 @@ static void *calculator_create(lp_desktop *d, const char *window_id) {
 
 static void calculator_destroy(void *state) { free(state); }
 
+static int calculator_surface(void *state, lp_desktop *d, lp_app_surface *out);
 const lp_app lp_app_calculator = {
     .id = "calculator", .title = "Calculator", .name = "Calculator", .icon = LP_ICON_GRID, .object = "appCalculator",
     /* 300 wide: the title bar keeps 84px either side of its title, and "Calculator" needs the rest */
     .default_rect = { NAN, NAN, 300, 420 }, .min_size = { 300, 420 }, .singleton = 1, .resizable = 0,
     .create = calculator_create, .paint = calculator_paint, .destroy = calculator_destroy,
     .command = calculator_command, .menu_entries = calculator_menu_entries,
+    .surface = calculator_surface, .surface_poll_s = 60,
 };
 
 /* MARK: - Introspection (tests) */
+
+/* What Mary sees of the Calculator (PARITY D28): the display. */
+static int calculator_surface(void *state, lp_desktop *d, lp_app_surface *out) {
+    struct calculator *c = state;
+    if (!c) return 0;
+    char display[64];
+    lp_calc_display(&c->calc, display, sizeof display);
+    char text[96];
+    snprintf(text, sizeof text, "Display: %s", display);
+    out->document_text = strdup(text);
+    lp_app_surface_add(out, "textfield", "display", display, 1, 1);
+    lp_app_surface_add(out, "button", "button", "AC", 0, 1);
+    lp_app_surface_add(out, "button", "button", "=", 0, 1);
+    return 1;
+}
 
 const lp_calc *lp_calculator_calc(const void *state) { return &((const struct calculator *)state)->calc; }
 void lp_calculator_type(void *state, const char *keys) { if (state) lp_calc_paste(&((struct calculator *)state)->calc, keys, -1); }

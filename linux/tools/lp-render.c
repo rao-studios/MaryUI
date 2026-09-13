@@ -52,6 +52,7 @@ static int usage(int status) {
         "       lp-render --spotlight-menu NAME <out.png>  the same with the NAME pill open (rao|file|edit|view|go|window|help)\n"
         "       lp-render --spotlight-chat STATE <out.png>  Spotlight on the conversation with Mary: idle|listening|thinking|streaming|speaking|error|nokey|offline|highlighted\n"
         "       lp-render --contribution <out.png>       \"From the thread\": what a highlighted passage drew on, with fixtures\n"
+        "       lp-render --ambient TAB <out.png>        Ambient on one tab (world|realms|routes|runs), with fixtures\n"
         "       lp-render --all <dir>                    every preview into <dir>\n"
         "       lp-render --version\n");
     return status;
@@ -189,6 +190,17 @@ static int fixture_displays(lp_desktop *d, lp_display *out, int max) {
 }
 
 static const char *thread_tab;    /* --thread: Threads opens on this tab, with fixtures fed to its client */
+static const char *ambient_tab;   /* --ambient: Ambient opens on this tab, with fixtures fed to Mary's client */
+
+#include "../tests/lp_ambient_fixture.h"
+
+/* What maryd would answer the Ambient app, so it renders the same on every machine. */
+static void ambient_fixtures(lp_desktop *d) {
+    int sv[2];
+    d->mary.fd = socketpair(AF_UNIX, SOCK_STREAM, 0, sv) == 0 ? sv[0] : 0;
+    lp_mary_feed(&d->mary, LP_AMBIENT_STATE_LINE, strlen(LP_AMBIENT_STATE_LINE));
+    lp_mary_feed(&d->mary, LP_AMBIENT_TRACE_LINE, strlen(LP_AMBIENT_TRACE_LINE));
+}
 
 /* What threadd would answer, so the Threads app renders the same on every machine. */
 static void thread_fixtures(lp_desktop *d) {
@@ -246,8 +258,10 @@ static int render_app(const lp_app *app, int tab, const char *path) {
     lp_desktop_init(&d, LP_RECT(0, 0, w, h), NULL);
     lp_desktop_register_builtin_apps(&d);
     if (app == &lp_app_thread) thread_fixtures(&d);
+    if (app == &lp_app_ambient) ambient_fixtures(&d);
     void *state = app->create && app != &lp_app_contribution ? app->create(&d, "w1") : NULL;   /* "From the thread" paints its fixture when stateless */
     if (tab > 0 && state && app != &lp_app_thread) *(int *)state = tab; /* the gallery's first field is its tab */
+    if (app == &lp_app_ambient && state) app->open(state, &d, ambient_tab ? ambient_tab : "world");
     if (app == &lp_app_thread && state) {
         lp_thread_app_set_runner(state, NULL);
         app->open(state, &d, thread_tab && strcmp(thread_tab, "document") == 0 ? "document:file-2b3c4d5e6f7a8b9c" : thread_tab ? thread_tab : "drive");
@@ -493,6 +507,7 @@ int main(int argc, char **argv) {
     if (strcmp(argv[1], "--diskutil") == 0 && argc == 3) return render_app(&lp_app_diskutil, 0, argv[2]);
     if (strcmp(argv[1], "--thread") == 0 && argc == 4) { thread_tab = argv[2]; return render_app(&lp_app_thread, 0, argv[3]); }
     if (strcmp(argv[1], "--contribution") == 0 && argc == 3) return render_app(&lp_app_contribution, 0, argv[2]);
+    if (strcmp(argv[1], "--ambient") == 0 && argc == 4) { ambient_tab = argv[2]; return render_app(&lp_app_ambient, 0, argv[3]); }
     if (strcmp(argv[1], "--player") == 0 && argc == 3) return render_app(&lp_app_player, 0, argv[2]);
     if (strcmp(argv[1], "--calendar") == 0 && argc == 3) return render_app(&lp_app_calendar, 0, argv[2]);
     if (strcmp(argv[1], "--prefs-mary") == 0 && argc == 3) { prefs_pane = LP_PREFS_MARY; return render_app(&lp_app_prefs, 0, argv[2]); }

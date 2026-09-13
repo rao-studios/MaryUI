@@ -358,7 +358,7 @@ LP_TEST(spotlight_skips_internal_apps) {
     lp_spotlight_item items[LP_SPOTLIGHT_MAX_ITEMS];
     int n = lp_spotlight_items(&d, items, LP_SPOTLIGHT_MAX_ITEMS);
     for (int i = 0; i < n; i++) { LP_ASSERT(strcmp(items[i].id, "info") != 0); LP_ASSERT(strcmp(items[i].id, "stub") != 0); }
-    LP_ASSERT_EQ(n, 13); /* finder, gallery, about, textedit, calculator, preview, terminal, activity, diskutil, media, calendar, settings, thread */
+    LP_ASSERT_EQ(n, 14); /* finder, gallery, about, textedit, calculator, preview, terminal, activity, diskutil, media, calendar, settings, thread, ambient */
 }
 
 static int view_entry(const char *label) {

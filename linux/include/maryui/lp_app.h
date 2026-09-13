@@ -12,6 +12,7 @@
 struct lp_desktop;
 struct lp_skill;
 struct lp_job;
+struct lp_app_surface;
 
 typedef struct lp_app {
     const char *id;
@@ -50,6 +51,12 @@ typedef struct lp_app {
     int (*perform)(void *state, struct lp_desktop *desktop, const char *skill, const char *args_json, char *result, size_t n);
     /* A desktop-wide model changed (LP_MODEL_*, with its CHANGED bits): 1 repaints the window. NULL: it shows none. */
     int (*model_changed)(void *state, struct lp_desktop *desktop, unsigned model, unsigned what);
+    /* What is on screen in this window, for Mary (lp_world.h, PARITY D28): the document it shows and a window of
+     * its text, the elements it offers, the selection. Fills `out` (zeroed by the caller) and returns 1; 0 when
+     * there is nothing to say. NULL: the app has no surface. `surface_poll_s` is how often the desktop republishes
+     * it unasked (0: LP_WORLD_POLL_S). */
+    int (*surface)(void *state, struct lp_desktop *desktop, struct lp_app_surface *out);
+    int surface_poll_s;
 } lp_app;
 
 extern const lp_app lp_app_about;
@@ -67,6 +74,18 @@ extern const lp_app lp_app_calendar;
 extern const lp_app lp_app_prefs;
 extern const lp_app lp_app_thread;
 extern const lp_app lp_app_contribution;
+extern const lp_app lp_app_ambient;
+
+/* Ambient (PARITY D29): its tabs as commands, and its state for tests and renders. */
+enum lp_ambient_command { LP_AMBIENT_TAB_WORLD, LP_AMBIENT_TAB_REALMS, LP_AMBIENT_TAB_ROUTES, LP_AMBIENT_TAB_RUNS, LP_AMBIENT_RELOAD, LP_AMBIENT_COPY_REPORT };
+int lp_ambient_app_tab(const void *state);
+void lp_ambient_app_set_tab(void *state, int tab);
+int lp_ambient_app_places(const void *state);
+const char *lp_ambient_app_place_name(const void *state, int i);
+int lp_ambient_app_routes(const void *state);            /* the rows the Routes tab shows after its filter */
+const char *lp_ambient_app_route_intent(const void *state, int i);
+void lp_ambient_app_set_filter(void *state, const char *intent);   /* NULL: every intent */
+const char *lp_ambient_app_status(const void *state);
 
 /* "From the thread" (PARITY D27), for tests. */
 int lp_contribution_owner(const void *state);
@@ -75,8 +94,9 @@ const char *lp_contribution_source_name(const void *state, int i);
 const char *lp_contribution_source_preview(const void *state, int i);
 float lp_contribution_royalty(const void *state);
 
-/* TextEdit: replaces the document (for previews). */
+/* TextEdit: replaces the document (for previews), and selects a range of it (bytes; for tests). */
 void lp_textedit_set_text(void *state, const char *name, const char *text);
+void lp_textedit_select(void *state, int start, int end);
 const char *lp_textedit_path(const void *state);
 const char *lp_textedit_name(const void *state);
 const char *lp_textedit_text(const void *state);

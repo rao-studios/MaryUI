@@ -6,10 +6,13 @@
  *                     transcript{text, final}, reply.delta{text}, reply.end{cancelled, contribution, retrieved},
  *                     key.status{present, verified_at, ok?, message?}, error{stage, message},
  *                     skill.invoke{call_id, app, skill, args}, voices{ok, voices | message},
- *                     voice.sample{voice_id, state, message?}
+ *                     voice.sample{voice_id, state, message?}, world.request, app.state{call_id, app},
+ *                     ambient{state}, trace{records}, trace.report{text}
  *   desktop → maryd   ask{text}, listen, stop, dismiss, key.set{key}, key.verify,
  *                     config{wake?, voice?}, voices.list, voice.sample{voice_id, text?},
- *                     skills{apps}, skill.result{call_id, ok, result | error}
+ *                     skills{apps}, skill.result{call_id, ok, result | error},
+ *                     world{…}, selection{…}, selection.clear{…}, app.state.result{…} (lp_world.h),
+ *                     ambient.state, trace.list, trace.report
  *
  * An error whose stage is speech or speaker says why the last reply was not heard: it becomes that reply's
  * note, and Mary's state stays what maryd says it is.
@@ -102,11 +105,16 @@ enum {
     LP_MARY_WAKE = 64,                  /* "Hey Mary": open Spotlight, listening */
     LP_MARY_CHANGED_VOICES = 128,       /* the list of voices, or asking for it */
     LP_MARY_CHANGED_SAMPLE = 256,       /* a sample's progress */
+    LP_MARY_CHANGED_AMBIENT = 512,      /* the ambient state (the Ambient app's World and Realms) */
+    LP_MARY_CHANGED_TRACE = 1024,       /* the trace (Routes and Runs), or its report */
 };
 
 /* A skill call from maryd (U4 answers it); args_json is "null" when there are none. */
 typedef void (*lp_mary_skill_fn)(struct lp_desktop *d, const char *call_id, const char *app, const char *skill,
                                  const char *args_json);
+/* maryd asked for the world (a turn is starting), or for one app's surface (PARITY D28). */
+typedef void (*lp_mary_world_fn)(struct lp_desktop *d);
+typedef void (*lp_mary_app_state_fn)(struct lp_desktop *d, const char *call_id, const char *app);
 
 typedef struct lp_mary {
     struct lp_desktop *desk;
@@ -144,6 +152,14 @@ typedef struct lp_mary {
     size_t out_len, out_cap;
 
     lp_mary_skill_fn on_skill_invoke;
+    lp_mary_world_fn on_world_request;
+    lp_mary_app_state_fn on_app_state;
+    /* The ambient world as maryd holds it (ambient.state → ambient{state}) and every turn's route (trace.list →
+     * trace{records}), json-c objects the Ambient app reads (opaque here); NULL until they came. And the last
+     * RouteReport text (trace.report). */
+    void *ambient;
+    void *trace;
+    char *trace_report;
 } lp_mary;
 
 /* 1 when the client is compiled in. */
@@ -179,6 +195,10 @@ int lp_mary_voice_split(const char *voice_id, char *character, size_t cn, char *
 /* Sends key.set and zeroes `key` and every copy the client made, sent or not. Mistral
  * keys are letters and digits; anything else is refused with -EINVAL (and zeroed too). */
 int lp_mary_set_key(lp_mary *m, char *key, size_t len);
+/* The Ambient app's requests: ambient.state, trace.list, trace.report (the answers set LP_MARY_CHANGED_AMBIENT / _TRACE). */
+int lp_mary_ambient_state(lp_mary *m);
+int lp_mary_list_trace(lp_mary *m);
+int lp_mary_trace_report(lp_mary *m);
 /* One message as a JSON object's text, sent as a line: skills{apps}, skill.result. */
 int lp_mary_send_line(lp_mary *m, const char *json);
 

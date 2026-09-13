@@ -61,14 +61,14 @@ LP_TEST(ranks_prefix_matches_first) {
     setup();
     lp_spotlight_item r[LP_SPOTLIGHT_MAX_RESULTS];
     int n = results("a", r);
-    LP_ASSERT_EQ(n, 8);
+    LP_ASSERT_EQ(n, 8);          /* the results are capped: Calendar no longer makes the cut */
     LP_ASSERT_STR(r[0].title, "About");
     LP_ASSERT_STR(r[1].title, "Activity Monitor");
-    LP_ASSERT_STR(r[2].title, "Gallery");
-    LP_ASSERT_STR(r[3].title, "Calculator");
-    LP_ASSERT_STR(r[4].title, "Terminal");
-    LP_ASSERT_STR(r[5].title, "Media Player");
-    LP_ASSERT_STR(r[6].title, "Calendar");
+    LP_ASSERT_STR(r[2].title, "Ambient");
+    LP_ASSERT_STR(r[3].title, "Gallery");
+    LP_ASSERT_STR(r[4].title, "Calculator");
+    LP_ASSERT_STR(r[5].title, "Terminal");
+    LP_ASSERT_STR(r[6].title, "Media Player");
 }
 
 LP_TEST(is_case_insensitive) {

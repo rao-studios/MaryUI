@@ -11,6 +11,10 @@
 #include "maryui/lp_desktop.h"
 #include "maryui/lp_mary.h"
 
+#ifdef HAVE_JSONC
+#include <json-c/json.h>
+#endif
+
 static const char *const state_names[] = { "idle", "listening", "hearing", "transcribing", "thinking", "speaking", "error" };
 
 const char *lp_mary_state_name(lp_mary_state s) {
@@ -73,6 +77,13 @@ void lp_mary_free(lp_mary *m) {
     if (m->retry) lp_desktop_remove_source(m->desk, m->retry);
     m->retry = NULL;
     clear_messages(m);
+#ifdef HAVE_JSONC
+    if (m->ambient) json_object_put(m->ambient);
+    if (m->trace) json_object_put(m->trace);
+#endif
+    m->ambient = m->trace = NULL;
+    free(m->trace_report);
+    m->trace_report = NULL;
     free(m->in);
     if (m->out) wipe(m->out, m->out_cap);
     free(m->out);
@@ -361,6 +372,34 @@ static void handle(lp_mary *m, struct json_object *msg) {
         changed(m, LP_MARY_CHANGED_SAMPLE);
     } else if (strcmp(type, "skill.invoke") == 0) {
         skill_invoke(m, msg);
+    } else if (strcmp(type, "world.request") == 0) {
+        if (m->on_world_request) m->on_world_request(m->desk);
+    } else if (strcmp(type, "app.state") == 0) {
+        const char *call_id = str(msg, "call_id"), *app = str(msg, "app");
+        if (m->on_app_state && call_id) m->on_app_state(m->desk, call_id, app);
+        else if (call_id) {
+            struct json_object *r = typed("app.state.result");
+            json_object_object_add(r, "call_id", json_object_new_string(call_id));
+            json_object_object_add(r, "ok", json_object_new_boolean(0));
+            json_object_object_add(r, "error", json_object_new_string("unknown"));
+            send_object(m, r);
+        }
+    } else if (strcmp(type, "ambient") == 0) {
+        if (has(msg, "state", json_type_object, &v)) {
+            if (m->ambient) json_object_put(m->ambient);
+            m->ambient = json_object_get(v);
+            changed(m, LP_MARY_CHANGED_AMBIENT);
+        }
+    } else if (strcmp(type, "trace") == 0) {
+        if (has(msg, "records", json_type_array, &v)) {
+            if (m->trace) json_object_put(m->trace);
+            m->trace = json_object_get(v);
+            changed(m, LP_MARY_CHANGED_TRACE);
+        }
+    } else if (strcmp(type, "trace.report") == 0) {
+        free(m->trace_report);
+        m->trace_report = strdup(str(msg, "text") ? str(msg, "text") : "");
+        changed(m, LP_MARY_CHANGED_TRACE);
     }
 }
 
@@ -547,6 +586,9 @@ static int simple(lp_mary *m, const char *type) {
 }
 
 int lp_mary_listen(lp_mary *m) { return simple(m, "listen"); }
+int lp_mary_ambient_state(lp_mary *m) { return simple(m, "ambient.state"); }
+int lp_mary_list_trace(lp_mary *m) { return simple(m, "trace.list"); }
+int lp_mary_trace_report(lp_mary *m) { return simple(m, "trace.report"); }
 int lp_mary_stop(lp_mary *m) { return simple(m, "stop"); }
 int lp_mary_dismiss(lp_mary *m) { return simple(m, "dismiss"); }
 int lp_mary_verify_key(lp_mary *m) { return simple(m, "key.verify"); }
@@ -629,6 +671,9 @@ void lp_mary_message_credit(lp_mary_message *msg, void *contribution, void *retr
 int lp_mary_start(lp_mary *m, const char *path) { return -ENOSYS; }
 int lp_mary_ask(lp_mary *m, const char *text) { return -ENOTCONN; }
 int lp_mary_listen(lp_mary *m) { return -ENOTCONN; }
+int lp_mary_ambient_state(lp_mary *m) { return -ENOTCONN; }
+int lp_mary_list_trace(lp_mary *m) { return -ENOTCONN; }
+int lp_mary_trace_report(lp_mary *m) { return -ENOTCONN; }
 int lp_mary_stop(lp_mary *m) { return -ENOTCONN; }
 int lp_mary_dismiss(lp_mary *m) { return -ENOTCONN; }
 int lp_mary_verify_key(lp_mary *m) { return -ENOTCONN; }

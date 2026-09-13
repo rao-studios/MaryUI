@@ -708,15 +708,40 @@ static int calendar_perform(void *state, lp_desktop *d, const char *skill, const
     return used + 2 < n ? 0 : -ENOBUFS;
 }
 
+static int calendar_surface(void *state, lp_desktop *d, lp_app_surface *out);
 const lp_app lp_app_calendar = {
     .id = "calendar", .title = "Calendar", .name = "Calendar", .icon = LP_ICON_CLOCK, .object = "appCalendar", .dock = 1,
     .default_rect = { NAN, NAN, 900, 600 }, .min_size = { 640, 440 }, .singleton = 1, .resizable = 1,
     .create = calendar_create, .paint = calendar_paint, .destroy = calendar_destroy,
     .command = calendar_command, .menu_entries = calendar_menu_entries, .notify = calendar_notify,
     .skills = calendar_skills, .skill_count = 1, .perform = calendar_perform,
+    .surface = calendar_surface, .surface_poll_s = 60,
 };
 
 /* MARK: - Tests */
+
+/* What Mary sees of Calendar (PARITY D28): the day, the view, how many events, and the editor when one is open. */
+static int calendar_surface(void *state, lp_desktop *d, lp_app_surface *out) {
+    struct calendar_app *c = state;
+    if (!c) return 0;
+    static const char *const VIEWS[] = { "Day", "Week", "Month" };
+    static const char *const MONTHS[] = { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
+    int view = c->view >= 0 && c->view < 3 ? c->view : 0;
+    snprintf(out->document_name, sizeof out->document_name, "%s %d", c->shown.month >= 1 && c->shown.month <= 12 ? MONTHS[c->shown.month - 1] : "", c->shown.year);
+    char text[240];
+    snprintf(text, sizeof text, "Showing the %s view around %04d-%02d-%02d; %d event%s in the calendar%s", VIEWS[view], c->shown.year, c->shown.month, c->shown.day,
+             c->cal.count, c->cal.count == 1 ? "" : "s", c->editing ? "; editing an event" : "");
+    out->document_text = strdup(text);
+    lp_app_surface_add(out, "button", "button", "Today", 0, 1);
+    for (int i = 0; i < 3; i++) lp_app_surface_add(out, "button", "button", VIEWS[i], !c->editing && i == view, 1);
+    lp_app_surface_add(out, "button", "button", "New Event", 0, 1);
+    if (c->editing) {
+        lp_app_surface_add(out, "textfield", "text field", c->title.len ? c->title.text : "Title", 1, 1);
+        lp_app_surface_add(out, "textfield", "text field", "Location", 0, 1);
+        lp_app_surface_add(out, "button", "button", "Save", 0, 1);
+    }
+    return 1;
+}
 
 void lp_calendar_app_set_dir(void *state, const char *dir) {
     struct calendar_app *c = state;

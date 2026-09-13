@@ -19,6 +19,9 @@ void lp_desktop_init(lp_desktop *d, lp_rect bounds, void *host) {
     lp_thread_init(&d->thread, d);
     lp_audio_init(&d->audio, d);
     d->mary.on_skill_invoke = lp_desktop_on_skill_invoke;
+    d->mary.on_world_request = lp_desktop_on_world_request;
+    d->mary.on_app_state = lp_desktop_on_app_state;
+    lp_world_init(&d->world);
     lp_skill_policy_load(&d->skill_policy);
     d->host = host;
     snprintf(d->about_label, sizeof d->about_label, "About %s", d->branding.pretty_name);
@@ -56,6 +59,7 @@ void lp_desktop_register_builtin_apps(lp_desktop *d) {
     lp_desktop_register_app(d, &lp_app_prefs);
     lp_desktop_register_app(d, &lp_app_thread);
     lp_desktop_register_app(d, &lp_app_contribution);
+    lp_desktop_register_app(d, &lp_app_ambient);
 }
 
 const lp_app *lp_desktop_find_app(const lp_desktop *d, const char *app_id) {
@@ -98,6 +102,8 @@ uint64_t lp_desktop_dispatch(lp_desktop *d, const lp_wm_action *action) {
     if (!changed) return 0;
     if (changed & (LP_WM_CHANGED_OPENED | LP_WM_CHANGED_CLOSED)) sync_instances(d);
     if (d->on_change) d->on_change(d, changed);
+    /* Mary's world follows the focus, the windows and their titles (never a move or a resize). */
+    if ((changed & (LP_WM_CHANGED_FOCUS | LP_WM_CHANGED_OPENED | LP_WM_CHANGED_CLOSED)) || action->type == LP_WM_SET_TITLE) lp_desktop_world_changed(d);
     return changed;
 }
 

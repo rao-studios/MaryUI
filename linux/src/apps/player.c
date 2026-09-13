@@ -388,15 +388,36 @@ static int player_perform(void *state, lp_desktop *d, const char *skill, const c
     return 0;
 }
 
+static int player_surface(void *state, lp_desktop *d, lp_app_surface *out);
 const lp_app lp_app_player = {
     .id = "media", .title = "Media Player", .name = "Media Player", .icon = LP_ICON_PLAY, .object = "appMusic", .hidden = 1, .dock = 1,
     .default_rect = { NAN, NAN, 640, 440 }, .min_size = { 420, 300 }, .singleton = 0, .resizable = 1,
     .create = player_create, .paint = player_paint, .destroy = player_destroy,
     .open = player_open, .command = player_command, .menu_entries = player_menu_entries,
     .skills = player_skills, .skill_count = 1, .perform = player_perform,
+    .surface = player_surface, .surface_poll_s = 15,
 };
 
 /* MARK: - Tests */
+
+/* What Mary sees of the Media Player (PARITY D28): the file, whether it plays, its place in the queue. */
+static int player_surface(void *state, lp_desktop *d, lp_app_surface *out) {
+    struct player *p = state;
+    if (!p || !p->path[0]) return 0;
+    snprintf(out->document_name, sizeof out->document_name, "%s", lp_files_basename(p->path));
+    snprintf(out->document_path, sizeof out->document_path, "%s", p->path);
+    enum lp_media_state st = p->media ? lp_media_state(p->media) : LP_MEDIA_FAILED;
+    const char *word = p->err ? "could not be opened" : st == LP_MEDIA_PLAYING ? "playing" : st == LP_MEDIA_PAUSED ? "paused" : st == LP_MEDIA_ENDED ? "ended" : st == LP_MEDIA_LOADING ? "loading" : "not playing";
+    char text[300];
+    snprintf(text, sizeof text, "%s, %d of %d in the folder, volume %.0f%%", word, p->queue_at + 1, p->queue_count, p->volume);
+    out->document_text = strdup(text);
+    lp_app_surface_add(out, "button", "button", st == LP_MEDIA_PLAYING ? "Pause" : "Play", 1, !p->err);
+    lp_app_surface_add(out, "button", "button", "Previous", 0, p->queue_at > 0);
+    lp_app_surface_add(out, "button", "button", "Next", 0, p->queue_at + 1 < p->queue_count);
+    lp_app_surface_add(out, "slider", "slider", "Position", 0, !p->err);
+    lp_app_surface_add(out, "slider", "slider", "Volume", 0, 1);
+    return 1;
+}
 
 const char *lp_player_path(const void *state) { return ((const struct player *)state)->path; }
 int lp_player_state(const void *state) {

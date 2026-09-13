@@ -87,7 +87,7 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
 
 | Web | C header | Status |
 |---|---|---|
-| Surface | `components/lp_surface.h` | ✓ variants raised/flat/well/bar/titlebar/body (`LP_VARIANT_*`), brush overlay, sheen band |
+| Surface | `components/lp_app_surface.h` | ✓ variants raised/flat/well/bar/titlebar/body (`LP_VARIANT_*`), brush overlay, sheen band |
 | Monogram | `components/lp_monogram.h` | ✓ |
 | MenuItem | `components/lp_menu_item.h` (`lp_menu_list` rows, `lp_menu_popup` the context menu's panel) | ≈ **D7** backdrop blur, **D11** the popup |
 | TitleBar | `components/lp_title_bar.h` | ✓ title centred between 84 px insets, inactive drains |
@@ -397,6 +397,30 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   documents and passages, the thread id, then the sources by influence — name, group capsule, share, a 4 px
   bar, a three-line italic preview read from threadd — each with Open in Thread. `lp-render --spotlight-chat
   highlighted` and `--contribution` draw them over fixtures. The web has neither.
+- **D28 — the world Mary holds.** Linux only. On the Mac every application is watched through the
+  accessibility tree; on MaryOS each app says for itself what is on its screen. `lp_app.surface` fills an
+  `lp_app_surface` (`include/maryui/lp_world.h`): the front window's title, the document it shows and a window
+  of its text around the caret or selection (TextEdit), the folder and its entries (the Finder), the page
+  and zoom (Preview), the day and view (Calendar), the file and whether it plays (the Media Player), the
+  last screen rows (Terminal), the open pane (System Settings), the display (Calculator), the elements it
+  offers and the one with focus. `src/core/lp_world.c` sends the whole world to maryd (`world{places, focus,
+  windows}`) on every focus, open, close or title change, coalesced over 50 ms; every `surface_poll_s`
+  (15–120 s, the fastest app with a window); and whenever maryd asks (`world.request`, at the start of a
+  turn). A text selection in the front window is a handoff of its own (`selection{…}`, once per selection,
+  `selection.clear` when it goes), and maryd can ask one app for its surface (`app.state` →
+  `app.state.result`). Settings › Mary › *Ambient* lists what each app publishes and how often. The web
+  has no assistant to tell.
+- **D29 — the Ambient app.** Linux only. `src/apps/ambient.c` is the Mac's ambient panes over what maryd
+  holds (`ambient.state`, `trace.list`, `trace.report`; `lp_mary` keeps the answers): **World** — one card
+  per place with its surface line as the prompt sees it, seen how long ago, the facts held there as mention
+  lines, the focus / co-active / glanced capsules, and the selection; **Realms** — the last turn's need,
+  candidates (conformance, eyes, evidence and its age) and the chosen place, then the last twenty turns;
+  **Routes** — intent chips filter every turn's route, field for field as the Mac's RouteReport prints them
+  (lead, named, worlds, ranking, attention, writing target, questions, abilities, threads with their
+  storage lanes, needs, prompt chars, packages, skills, verdicts) with what retrieval asked and got back;
+  **Runs** — the skills a turn invoked, their status, effect, arguments, result and timing, and the
+  confirmation state. Copy Report puts the RouteReport text on the clipboard. `lp-render --ambient TAB`
+  draws it over fixtures (`tests/lp_ambient_fixture.h`). The web has none of it.
 - **Close animation.** `lp-window-close` (scale .96 + fade over `motion.fast`, `CLOSE` after
   fast + 80 ms) runs for built-in windows. A client that unmaps is gone at once — the compositor
   has no pixels left to fade.
