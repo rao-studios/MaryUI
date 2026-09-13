@@ -33,7 +33,7 @@ LP_TEST(empty_query_shows_dock) {
     LP_ASSERT_EQ(r[3].kind, LP_SPOT_APP);
     LP_ASSERT_STR(r[4].title, "Media Player");
     LP_ASSERT_STR(r[5].title, "Calendar");
-    LP_ASSERT_STR(r[6].title, "System Settings");
+    LP_ASSERT_STR(r[6].title, "Settings");
     LP_ASSERT_EQ(r[0].running, 1);
     LP_ASSERT_EQ(r[1].running, 0);
     for (int i = 0; i < n; i++) LP_ASSERT(r[i].kind != LP_SPOT_WINDOW);
@@ -47,7 +47,9 @@ LP_TEST(filters_apps_by_title_prefix_and_substring) {
     LP_ASSERT_EQ(n, 3);
     LP_ASSERT_STR(r[0].title, "TextEdit");
     LP_ASSERT_STR(r[1].title, "Terminal");
-    LP_ASSERT_STR(r[2].title, "System Settings");   /* "sys-te-m": inside the name */
+    LP_ASSERT_STR(r[2].title, "Settings");          /* "sys-te-m": inside the name it also goes by, System Settings */
+    LP_ASSERT(results("system", r) >= 1);
+    LP_ASSERT_STR(r[0].title, "Settings");          /* the name it no longer shows still finds it */
     n = results("edit", r);
     LP_ASSERT_EQ(n, 1);
     LP_ASSERT_STR(r[0].title, "TextEdit");

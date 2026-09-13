@@ -41,6 +41,7 @@ int lp_spotlight_items(const lp_desktop *d, lp_spotlight_item *out, int max) {
         it->kind = LP_SPOT_APP;
         snprintf(it->id, sizeof it->id, "%s", app->id);
         snprintf(it->title, sizeof it->title, "%s", app->name ? app->name : app->title);
+        if (app->aka) snprintf(it->also, sizeof it->also, "%s", app->aka);
         snprintf(it->subtitle, sizeof it->subtitle, "Application");
         it->icon = app->icon < LP_ICON_COUNT ? app->icon : LP_ICON_DOCUMENT;
         it->object = app->object;
@@ -87,6 +88,12 @@ static int rank(const char *title, const char *q) {
     return strstr(t, q) ? 2 : -1;
 }
 
+/* The shown name first; failing that, the other name it goes by (Settings is still found by "system"). */
+static int item_rank(const lp_spotlight_item *it, const char *q) {
+    int r = rank(it->title, q);
+    return r < 0 && it->also[0] ? rank(it->also, q) : r;
+}
+
 int lp_spotlight_results(const lp_spotlight_item *items, int n, const char *query, lp_spotlight_item *out, int max) {
     char trimmed[256], q[256];
     trim(query ? query : "", trimmed, sizeof trimmed);
@@ -97,7 +104,7 @@ int lp_spotlight_results(const lp_spotlight_item *items, int n, const char *quer
         return count;
     }
     for (int r = 0; r <= 2; r++) {
-        for (int i = 0; i < n && count < max; i++) if (rank(items[i].title, q) == r) out[count++] = items[i];
+        for (int i = 0; i < n && count < max; i++) if (item_rank(&items[i], q) == r) out[count++] = items[i];
     }
     return count;
 }

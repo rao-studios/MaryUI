@@ -131,10 +131,15 @@ static void tile(lp_ctx *ctx, lp_id id, lp_rect cell, const lp_spotlight_item *i
     } else if (lp_is_hot(ctx, id)) {
         lp_fill_solid(cr, cell, LP_RGBA(0, 0, 0, 0.04f), LP_RADIUS_SM);
     }
-    /* the icon scales with a narrowed cell; the label keeps its line, so the row's rhythm and height do not change */
+    /* Laid out from the bottom, so the running dot keeps air inside the cell's highlight (it sat on the
+     * edge): the dot, the label over it, and the icon centred in what is left above. The icon scales
+     * with a narrowed cell. */
     float scale = cell.w / LP_SPOTLIGHT_CELL_W;
+    lp_rect dot = LP_RECT(cell.x + cell.w / 2 - 2, cell.y + cell.h - 4 - 4, 4, 4);
+    lp_rect label = LP_RECT(cell.x + 1, dot.y - 2 - 14, cell.w - 2, 14);
+    float above = label.y - LP_SPACE_1 - cell.y;
     float plate = roundf(LP_SIZE_SPOTLIGHT_TILE * scale);
-    lp_rect ic = LP_RECT(cell.x + (cell.w - plate) / 2, cell.y + 6 + (LP_SIZE_SPOTLIGHT_TILE - plate), plate, plate);
+    lp_rect ic = LP_RECT(cell.x + (cell.w - plate) / 2, roundf(cell.y + (above - plate) / 2), plate, plate);
     /* No raised plate: hover and selection belong to the cell around the icon,
      * which is what the plate was being mistaken for. At 36 the mark is above
      * the glyph tier, so an app with an object of its name is drawn as one. */
@@ -147,12 +152,11 @@ static void tile(lp_ctx *ctx, lp_id id, lp_rect cell, const lp_spotlight_item *i
     lp_text_style st = lp_text_style_default();
     st.size_px = LP_TEXT_XS;
     st.ellipsize = 1;
-    lp_rect label = LP_RECT(cell.x + 1, cell.y + 6 + LP_SIZE_SPOTLIGHT_TILE + LP_SPACE_1, cell.w - 2, 14);
-    /* a name a narrowed cell cannot hold steps down a little before it would ellipsize ("System Settings") */
-    /* re-measured at each step: hinted advances do not shrink in proportion to the size */
+    /* a name a narrowed cell cannot hold steps down a little before it would ellipsize, re-measured at each
+     * step because hinted advances do not shrink in proportion to the size */
     while (st.size_px > 9 && lp_text_measure(cr, it->title, &st).w > label.w) st.size_px -= 0.5f;
     lp_text_draw(cr, it->title, label, &st, LP_ALIGN_CENTER);
-    if (it->running) lp_fill_solid(cr, LP_RECT(cell.x + cell.w / 2 - 2, label.y + label.h + 2, 4, 4), accent.base, 2);
+    if (it->running) lp_fill_solid(cr, dot, accent.base, 2);
 }
 
 /*

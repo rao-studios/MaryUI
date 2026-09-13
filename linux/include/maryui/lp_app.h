@@ -15,6 +15,7 @@ typedef struct lp_app {
     const char *id;
     const char *title;      /* the window title */
     const char *name;       /* the display name in Spotlight (NULL: the title) */
+    const char *aka;        /* another name Spotlight finds it by (Settings: "System Settings"), or NULL */
     lp_icon icon;           /* the Spotlight tile (LP_ICON_COUNT: a document) */
     const char *object;     /* the object-tier mark when it is not the glyph's own name (lp_objects.h) */
     int hidden;             /* reachable from Spotlight only: not in Window › Open … */

@@ -676,7 +676,7 @@ static void prefs_destroy(void *state) {
 }
 
 const lp_app lp_app_prefs = {
-    .id = "settings", .title = "System Settings", .name = "System Settings", .icon = LP_ICON_GEAR, .dock = 1,
+    .id = "settings", .title = "System Settings", .name = "Settings", .aka = "System Settings", .icon = LP_ICON_GEAR, .dock = 1,
     .default_rect = { NAN, NAN, 800, 540 }, .min_size = { 660, 440 }, .singleton = 1, .resizable = 1,
     .create = prefs_create, .paint = prefs_paint, .destroy = prefs_destroy,
     .command = prefs_command, .menu_entries = prefs_menu_entries,

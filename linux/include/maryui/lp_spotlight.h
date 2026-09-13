@@ -16,6 +16,7 @@ typedef struct lp_spotlight_item {
     enum lp_spotlight_kind kind;
     char id[32];          /* app id, window id, or command id */
     char title[128];
+    char also[64];        /* another name the query matches: an app's aka ("System Settings") */
     char subtitle[64];    /* "Application", "Window · Finder", "Command" */
     lp_icon icon;
     const char *object;       /* the object-tier mark, when the glyph's name is not it */
