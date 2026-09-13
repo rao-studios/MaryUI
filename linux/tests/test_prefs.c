@@ -477,9 +477,14 @@ LP_TEST(sound_says_when_there_is_no_microphone) {
 }
 
 static void give_voices(void) {
+    /* As Mistral lists them: one voice per mood, the mood in the id (Paul's cheerful is not one of Mary's six), or only
+     * in the name (Oliver's ids are ids), and a voice of the account's own. */
     static const struct { const char *id, *name, *language; int custom; } V[] = {
-        { "fr_marie_neutral", "Marie", "fr", 0 }, { "fr_marie_happy", "Marie", "fr", 0 }, { "en_paul_neutral", "Paul", "en", 0 },
-        { "en_paul_sad", "Paul", "en", 0 }, { "gb_jane_neutral", "Jane", "en", 0 }, { "019b2bd7-96e7-7219", "My voice", "fr", 1 },
+        { "fr_marie_neutral", "Marie", "fr", 0 }, { "fr_marie_happy", "Marie - Happy", "fr", 0 },
+        { "en_paul_neutral", "Paul - Neutral", "en", 0 }, { "en_paul_sad", "Paul - Sad", "en", 0 },
+        { "en_paul_cheerful", "Paul - Cheerful", "en", 0 }, { "gb_jane_neutral", "Jane", "en", 0 },
+        { "7f3c-0001", "Oliver (Neutral)", "en", 0 }, { "7f3c-0002", "Oliver (Confident)", "en", 0 },
+        { "019b2bd7-96e7-7219", "My voice", "fr", 1 },
     };
     d.mary.voice_count = 0;
     for (size_t i = 0; i < sizeof V / sizeof *V; i++) {
@@ -522,14 +527,22 @@ LP_TEST(choosing_a_voice_saves_it_and_tells_maryd) {
     d.mary.key_present = 1;
     give_voices();
     LP_ASSERT_STR(d.settings.mary_voice, "fr_marie_neutral");
+
     lp_prefs_open_voice_menu(p, 0);
     LP_ASSERT_EQ(d.open_menu, LP_DESKTOP_MENU_POPUP);
     const lp_menu_model *menu = &d.menus[LP_DESKTOP_MENU_POPUP];
+    LP_ASSERT_EQ(menu->count, 7);                                       /* Marie, Jane, Oliver, Paul, a rule, a header, mine */
     LP_ASSERT_STR(menu->entries[0].label, "Marie — French");
     LP_ASSERT(menu->entries[0].checked);
-    int jane = entry_named("Jane — English"), paul = entry_named("Paul — English"), yours = entry_named("Your voices"), mine = entry_named("My voice — French");
-    LP_ASSERT(jane > 0 && paul > jane && yours > paul && mine > yours);   /* by language and name, the account's own last */
-    LP_ASSERT(yours > 0 && menu->entries[yours].disabled);
+    int jane = entry_named("Jane — English"), oliver = entry_named("Oliver — English"), paul = entry_named("Paul — English");
+    int yours = entry_named("Your voices"), mine = entry_named("My voice — French");
+    LP_ASSERT(jane == 1 && oliver == 2 && paul == 3 && yours == 5 && mine == 6);
+    LP_ASSERT(menu->entries[yours].disabled);
+    for (int i = 0; i < menu->count; i++)
+        if (strstr(menu->entries[i].label, "Neutral") || strstr(menu->entries[i].label, "Sad") || strstr(menu->entries[i].label, "Cheerful") ||
+            strstr(menu->entries[i].label, "Confident") || strstr(menu->entries[i].label, "Happy"))
+            LP_FAIL("a mood in the Voice menu: %s", menu->entries[i].label);
+
     settings_calls = 0;
     lp_desktop_select_menu_entry(&d, paul);
     LP_ASSERT_STR(d.settings.mary_voice, "en_paul_neutral");            /* the mood carries over when the voice has it */
@@ -539,23 +552,32 @@ LP_TEST(choosing_a_voice_saves_it_and_tells_maryd) {
     LP_ASSERT_STR(lp_settings_load().mary_voice, "en_paul_neutral");
 
     lp_prefs_open_voice_menu(p, 1);
-    LP_ASSERT_EQ(d.menus[LP_DESKTOP_MENU_POPUP].count, 2);            /* Paul has Neutral and Sad */
-    int sad = entry_named("Sad"), neutral = entry_named("Neutral");
-    LP_ASSERT(sad >= 0 && neutral >= 0 && d.menus[LP_DESKTOP_MENU_POPUP].entries[neutral].checked);
-    lp_desktop_select_menu_entry(&d, sad);
-    LP_ASSERT_STR(d.settings.mary_voice, "en_paul_sad");
+    LP_ASSERT_EQ(d.menus[LP_DESKTOP_MENU_POPUP].count, 3);            /* Paul has Neutral, Sad and Cheerful */
+    int neutral = entry_named("Neutral"), cheerful = entry_named("Cheerful");
+    LP_ASSERT(neutral == 0 && cheerful >= 0 && d.menus[LP_DESKTOP_MENU_POPUP].entries[neutral].checked);
+    lp_desktop_select_menu_entry(&d, cheerful);
+    LP_ASSERT_STR(d.settings.mary_voice, "en_paul_cheerful");
 
     lp_prefs_open_voice_menu(p, 0);
+    lp_desktop_select_menu_entry(&d, entry_named("Oliver — English"));
+    LP_ASSERT_STR(d.settings.mary_voice, "7f3c-0001");                   /* Oliver has no Cheerful: his neutral, by its id */
+    lp_prefs_open_voice_menu(p, 1);
+    LP_ASSERT_EQ(d.menus[LP_DESKTOP_MENU_POPUP].count, 2);
+    lp_desktop_select_menu_entry(&d, entry_named("Confident"));
+    LP_ASSERT_STR(d.settings.mary_voice, "7f3c-0002");
+    lp_prefs_open_voice_menu(p, 0);
+    LP_ASSERT(d.menus[LP_DESKTOP_MENU_POPUP].entries[entry_named("Oliver — English")].checked);   /* known by its id */
+
     jane = entry_named("Jane — English");
     d.mary.voice_count = 1;                                            /* the list shrank while the menu was open */
     lp_desktop_select_menu_entry(&d, jane);
-    LP_ASSERT_STR(d.settings.mary_voice, "gb_jane_neutral");           /* still what the menu showed: Jane has no Sad */
+    LP_ASSERT_STR(d.settings.mary_voice, "gb_jane_neutral");           /* still what the menu showed */
     give_voices();
     lp_prefs_open_voice_menu(p, 0);
     lp_desktop_select_menu_entry(&d, 0);
     LP_ASSERT_STR(d.settings.mary_voice, "fr_marie_neutral");
     lp_prefs_open_voice_menu(p, 1);
-    LP_ASSERT_EQ(d.menus[LP_DESKTOP_MENU_POPUP].count, 6);            /* Marie's six moods */
+    LP_ASSERT_EQ(d.menus[LP_DESKTOP_MENU_POPUP].count, 6);            /* Marie's six moods, her listed Happy among them */
     lp_desktop_close_menu(&d);
 
     heard(sv[1]);
@@ -565,10 +587,10 @@ LP_TEST(choosing_a_voice_saves_it_and_tells_maryd) {
     d.mary.sample_state = LP_MARY_SAMPLE_PLAYING;
     lp_prefs_mary_play_sample(p);                                      /* pressed again while it speaks: Stop */
     LP_ASSERT(strstr(heard(sv[1]), "\"type\":\"stop\"") != NULL);
-    snprintf(d.settings.mary_voice, sizeof d.settings.mary_voice, "en_paul_neutral");
+    snprintf(d.settings.mary_voice, sizeof d.settings.mary_voice, "7f3c-0002");
     d.mary.sample_state = LP_MARY_SAMPLE_DONE;
     lp_prefs_mary_play_sample(p);
-    LP_ASSERT(strstr(heard(sv[1]), "Hello! This is how I will sound.") != NULL);   /* in the voice's language */
+    LP_ASSERT(strstr(heard(sv[1]), "Hello! This is how I will sound.") != NULL);   /* Oliver speaks English */
     lp_mary_free(&d.mary);
     close(sv[1]);
     snprintf(d.settings.mary_voice, sizeof d.settings.mary_voice, "fr_marie_neutral");

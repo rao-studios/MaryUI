@@ -146,8 +146,9 @@ int lp_mary_send_config(lp_mary *m, int wake, const char *voice);
 int lp_mary_list_voices(lp_mary *m);
 /* voice.sample: one text spoken in a voice (text NULL: maryd's own sentence); its progress is sample_state. */
 int lp_mary_sample_voice(lp_mary *m, const char *voice_id, const char *text);
-/* A voice id as a character and a mood, as Mary's VoiceCharacter reads fr_marie_happy: "fr_marie" and "happy".
- * 1 when it ends in one of neutral, sad, happy, excited, curious, angry; 0 (the whole id, no mood) otherwise. */
+/* A voice id as a character and a mood, as Mistral spells its presets <language>_<name>_<mood>: fr_marie_happy is
+ * "fr_marie" and "happy", en_paul_cheerful "en_paul" and "cheerful". 1 when the id has that shape; 0 (the whole id,
+ * no mood) otherwise, as an id of a voice of the account's own. */
 int lp_mary_voice_split(const char *voice_id, char *character, size_t cn, char *mood, size_t mn);
 /* Sends key.set and zeroes `key` and every copy the client made, sent or not. Mistral
  * keys are letters and digits; anything else is refused with -EINVAL (and zeroed too). */

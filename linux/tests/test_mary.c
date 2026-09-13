@@ -415,13 +415,18 @@ LP_TEST(a_voice_id_names_a_character_and_a_mood) {
     LP_ASSERT_EQ(lp_mary_voice_split("fr_marie_happy", character, sizeof character, mood, sizeof mood), 1);
     LP_ASSERT_STR(character, "fr_marie");
     LP_ASSERT_STR(mood, "happy");
-    LP_ASSERT_EQ(lp_mary_voice_split("gb_jane_neutral", character, sizeof character, mood, sizeof mood), 1);
-    LP_ASSERT_STR(character, "gb_jane");
+    LP_ASSERT_EQ(lp_mary_voice_split("en_paul_cheerful", character, sizeof character, mood, sizeof mood), 1);   /* any mood Mistral has */
+    LP_ASSERT_STR(character, "en_paul");
+    LP_ASSERT_STR(mood, "cheerful");
+    LP_ASSERT_EQ(lp_mary_voice_split("en_oliver_very_calm", character, sizeof character, mood, sizeof mood), 1);
+    LP_ASSERT_STR(character, "en_oliver");
+    LP_ASSERT_STR(mood, "very_calm");
     LP_ASSERT_EQ(lp_mary_voice_split("0fda0527-d5e8-4996", character, sizeof character, mood, sizeof mood), 0);
     LP_ASSERT_STR(character, "0fda0527-d5e8-4996");
     LP_ASSERT_STR(mood, "");
-    LP_ASSERT_EQ(lp_mary_voice_split("en_paul_calm", character, sizeof character, mood, sizeof mood), 0);   /* not a mood Mary knows */
-    LP_ASSERT_EQ(lp_mary_voice_split("_happy", character, sizeof character, mood, sizeof mood), 0);          /* no character */
+    LP_ASSERT_EQ(lp_mary_voice_split("fr_marie", character, sizeof character, mood, sizeof mood), 0);            /* no mood */
+    LP_ASSERT_EQ(lp_mary_voice_split("_happy", character, sizeof character, mood, sizeof mood), 0);              /* no language */
+    LP_ASSERT_EQ(lp_mary_voice_split("fr__happy", character, sizeof character, mood, sizeof mood), 0);           /* no name */
     LP_ASSERT_EQ(lp_mary_voice_split(NULL, character, sizeof character, mood, sizeof mood), 0);
 }
 

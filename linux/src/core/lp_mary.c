@@ -35,12 +35,10 @@ int lp_mary_connected(const lp_mary *m) { return m->fd >= 0; }
 int lp_mary_active(const lp_mary *m) { return m->state >= LP_MARY_LISTENING && m->state <= LP_MARY_SPEAKING; }
 
 int lp_mary_voice_split(const char *voice_id, char *character, size_t cn, char *mood, size_t mn) {
-    static const char *const MOODS[] = { "neutral", "sad", "happy", "excited", "curious", "angry" };
-    const char *id = voice_id ? voice_id : "", *cut = strrchr(id, '_');
-    int split = 0;
-    for (size_t i = 0; cut && cut > id && i < sizeof MOODS / sizeof *MOODS; i++) split |= strcmp(cut + 1, MOODS[i]) == 0;
-    if (cn) snprintf(character, cn, "%.*s", split ? (int)(cut - id) : (int)strlen(id), id);
-    if (mn) snprintf(mood, mn, "%s", split ? cut + 1 : "");
+    const char *id = voice_id ? voice_id : "", *first = strchr(id, '_'), *second = first ? strchr(first + 1, '_') : NULL;
+    int split = first && first > id && second && second > first + 1 && second[1];
+    if (cn) snprintf(character, cn, "%.*s", split ? (int)(second - id) : (int)strlen(id), id);
+    if (mn) snprintf(mood, mn, "%s", split ? second + 1 : "");
     return split;
 }
 
