@@ -48,6 +48,8 @@ typedef struct lp_text_field_opts {
     int round;
     int large;                  /* Spotlight's bar: text.lg, a 16px icon (the rect sets the height) */
     int disabled;
+    float trailing_w;           /* room kept clear at the right end for an accessory the caller draws (Spotlight's Ask Mary orb) */
+    int icon_monogram;          /* the leading mark is Mary's monogram rather than `icon` (Spotlight's chat) */
 } lp_text_field_opts;
 void lp_text_buffer_set(lp_text_buffer *b, const char *text);
 /* Sets the text with all of it selected, the way the Finder starts a rename. */

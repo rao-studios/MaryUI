@@ -66,3 +66,18 @@ which menus and which context line, so the compositor and `lp-render` cannot dri
 once so that typing never reallocates — opening a pill is a deliberate click, and `mui_spotlight_resize` sizes the
 chrome for it. That split matters: `mui_spotlight_sync` frees the chrome when Spotlight closes, so anything that
 closes it must go through `mui_spotlight_request_sync` instead.
+
+## Mary (Linux, PARITY D18)
+
+When `lp_spotlight_view.mary` is set the bar carries the Ask Mary orb (`size.spotlight-accessory`) in the room
+`lp_text_field_opts.trailing_w` keeps clear, and a click comes back as `lp_spotlight_result.ask_pressed`, which
+the host hands to `lp_desktop_ask_mary`. When `view.chat` is set, `SpotlightChat.c` replaces the dock, the
+results and the commands with the conversation: a status row (dot, what Mary is doing, the microphone's meter,
+"esc to stop") over a well of dialogue on paper that scrolls through `view.chat_scroll` and stays on the newest
+exchange. The panel is `size.spotlight-chat` tall under the bar in chat mode, and `lp_spotlight_max_size` says
+so, so a host sizes it once. While Mary listens, thinks or speaks, or a reply is still streaming, the panel asks
+for frames over the conversation only.
+
+```sh
+lp-render --spotlight-chat idle|listening|thinking|streaming|speaking|error|nokey|offline out.png
+```

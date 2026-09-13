@@ -88,6 +88,8 @@ typedef struct lp_desktop {
     int menu_active;          /* highlighted entry of the open menu, -1 */
     lp_spotlight spotlight;   /* Ctrl+Space: the search bar and dock */
     lp_mary mary;             /* the conversation with maryd, shown in Spotlight */
+    int spotlight_chat;       /* Spotlight shows that conversation instead of the dock (Linux, PARITY D18) */
+    lp_scroll_state spotlight_chat_scroll;
     char about_label[160];
     lp_desktop_change_fn on_change;   /* the WM changed: the host syncs its windows */
     void (*on_settings)(struct lp_desktop *d);
@@ -158,6 +160,14 @@ void lp_desktop_spotlight_activate(lp_desktop *d, int index);
 /* The bar edited the query: re-rank from the top, and close the open command
  * menu, which shows only while the query is blank. */
 void lp_desktop_spotlight_query_changed(lp_desktop *d);
+/* Mary in Spotlight (Linux, PARITY D18). With text in the bar, asks it and shows the conversation;
+ * with a blank bar, opens the microphone, or stops Mary while she listens, thinks or speaks. The
+ * Ask Mary orb and Ctrl/Logo+Return both come here. Returns 1. */
+int lp_desktop_ask_mary(lp_desktop *d);
+/* "Hey Mary": Spotlight opens on the conversation. */
+void lp_desktop_mary_wake(lp_desktop *d);
+/* Back to the dock; the conversation is kept, and Mary is dismissed if she was busy. */
+void lp_desktop_leave_chat(lp_desktop *d);
 /* Everything the panel paints for this desktop: the results plus the command
  * pills and the "Searching <app>" line. The host fills in width/focus_bar/max_h. */
 lp_spotlight_view lp_desktop_spotlight_view(lp_desktop *d, const lp_spotlight_item *items, int count);

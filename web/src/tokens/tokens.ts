@@ -326,6 +326,8 @@ export const tokens = {
     spotlightBarHeight: "44px",
     spotlightTile: "56px",
     spotlightCell: "96px",
+    spotlightChat: "320px",
+    spotlightAccessory: "28px",
   },
   font: {
     ui: ["-apple-system","BlinkMacSystemFont","SF Pro Text","Helvetica Neue","Helvetica","Arial","Inter","sans-serif"],
@@ -655,6 +657,8 @@ export const tokenNames = [
   "size-spotlight-bar-height",
   "size-spotlight-tile",
   "size-spotlight-cell",
+  "size-spotlight-chat",
+  "size-spotlight-accessory",
   "font-ui",
   "font-display",
   "font-mono",

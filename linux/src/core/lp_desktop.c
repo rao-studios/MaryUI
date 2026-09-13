@@ -526,6 +526,9 @@ lp_spotlight_view lp_desktop_spotlight_view(lp_desktop *d, const lp_spotlight_it
         .menu_active = d->menu_active,
         .context_name = f ? (app ? (app->name ? app->name : app->title) : f->app_id) : NULL,
         .context_icon = app ? app->icon : LP_ICON_DOCUMENT,
+        .mary = lp_mary_available() ? &d->mary : NULL,
+        .chat = d->spotlight_chat,
+        .chat_scroll = &d->spotlight_chat_scroll,
     };
 }
 
@@ -543,6 +546,38 @@ void lp_desktop_spotlight_activate(lp_desktop *d, int index) {
     }
 }
 
+/* MARK: - Mary (PARITY D18) */
+
+static void newest(lp_desktop *d) { d->spotlight_chat_scroll.y = 1e9f; }   /* lp_scroll_begin clamps it to the end */
+
+int lp_desktop_ask_mary(lp_desktop *d) {
+    const char *text = d->spotlight.query.text;
+    if (!lp_spotlight_query_is_blank(text)) {
+        /* Kept in the bar when maryd is away, so nothing typed is lost. */
+        if (lp_mary_ask(&d->mary, text) == 0) lp_spotlight_set_query(&d->spotlight, "");
+    } else if (lp_mary_active(&d->mary)) {
+        lp_mary_stop(&d->mary);
+    } else {
+        lp_mary_listen(&d->mary);
+    }
+    lp_desktop_close_menu(d);
+    d->spotlight_chat = 1;
+    newest(d);
+    return 1;
+}
+
+void lp_desktop_mary_wake(lp_desktop *d) {
+    if (!d->spotlight.open) lp_spotlight_open(&d->spotlight);
+    lp_desktop_close_menu(d);
+    d->spotlight_chat = 1;
+    newest(d);
+}
+
+void lp_desktop_leave_chat(lp_desktop *d) {
+    if (d->spotlight_chat && lp_mary_active(&d->mary)) lp_mary_dismiss(&d->mary);
+    d->spotlight_chat = 0;
+}
+
 /* MARK: - Keys */
 
 int lp_desktop_key(lp_desktop *d, uint32_t keysym, uint32_t mods) {
@@ -550,10 +585,30 @@ int lp_desktop_key(lp_desktop *d, uint32_t keysym, uint32_t mods) {
     if (mod && keysym == XKB_KEY_space) {
         lp_desktop_close_menu(d);
         lp_spotlight_toggle(&d->spotlight);
+        if (!d->spotlight.open) lp_desktop_leave_chat(d);
         return 1;
     }
     if (d->spotlight.open) {
         lp_spotlight_item results[LP_SPOTLIGHT_MAX_RESULTS];
+        int enter = keysym == XKB_KEY_Return || keysym == XKB_KEY_KP_Enter;
+        if (enter && mod && lp_mary_available()) return lp_desktop_ask_mary(d);
+        if (d->spotlight_chat) {
+            switch (keysym) {
+            case XKB_KEY_Return: case XKB_KEY_KP_Enter:
+                if (!lp_spotlight_query_is_blank(d->spotlight.query.text)) lp_desktop_ask_mary(d);
+                return 1;
+            case XKB_KEY_Up:
+                d->spotlight_chat_scroll.y = d->spotlight_chat_scroll.y > LP_SPOTLIGHT_CHAT_STEP ? d->spotlight_chat_scroll.y - LP_SPOTLIGHT_CHAT_STEP : 0;
+                return 1;
+            case XKB_KEY_Down: d->spotlight_chat_scroll.y += LP_SPOTLIGHT_CHAT_STEP; return 1;
+            case XKB_KEY_Escape:
+                if (lp_mary_active(&d->mary)) { lp_mary_stop(&d->mary); return 1; }   /* first Esc stops her */
+                lp_spotlight_close(&d->spotlight);
+                d->spotlight_chat = 0;
+                return 1;
+            default: return 0;   /* the bar types the next question */
+            }
+        }
         /*
          * A command pill is open: it owns the arrows and Enter, the way the
          * dropdown under the menu bar used to. Two deliberate differences from

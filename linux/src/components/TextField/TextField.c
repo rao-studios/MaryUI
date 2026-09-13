@@ -3,6 +3,7 @@
 #include <xkbcommon/xkbcommon-keysyms.h>
 
 #include "maryui/components/lp_controls.h"
+#include "maryui/components/lp_monogram.h"
 #include "maryui/lp_draw.h"
 #include "maryui/lp_icon.h"
 #include "maryui/lp_settings.h"
@@ -99,11 +100,12 @@ int lp_text_field(lp_ctx *ctx, lp_id id, lp_rect r, lp_text_buffer *b, lp_text_f
     lp_draw_inset_shadows(cr, r, radius, LP_SHADOW_EMBOSS_WELL, LP_SHADOW_EMBOSS_WELL_COUNT);
     if (ctx->focus == id && !o.disabled) lp_draw_focus_ring(cr, r, radius, accent.focus_ring, 3);
     float x = r.x + pad, icon_px = o.large ? 16 : 14;
-    if (o.icon < LP_ICON_COUNT) { lp_icon_draw(cr, o.icon, x, r.y + (r.h - icon_px) / 2, icon_px, 0, LP_INK_TERTIARY); x += icon_px + (o.large ? LP_SPACE_2 : LP_SPACE_1); }
+    if (o.icon_monogram) { lp_monogram_paint(cr, LP_RECT(x, r.y + (r.h - icon_px) / 2, icon_px, icon_px), LP_MONOGRAM_FLAT, LP_INK_TERTIARY); x += icon_px + (o.large ? LP_SPACE_2 : LP_SPACE_1); }
+    else if (o.icon < LP_ICON_COUNT) { lp_icon_draw(cr, o.icon, x, r.y + (r.h - icon_px) / 2, icon_px, 0, LP_INK_TERTIARY); x += icon_px + (o.large ? LP_SPACE_2 : LP_SPACE_1); }
     lp_text_style st = lp_text_style_default();
     if (o.large) st.size_px = LP_TEXT_LG;
     st.ellipsize = 1;
-    lp_rect text_rect = LP_RECT(x, r.y, r.x + r.w - pad - x, r.h);
+    lp_rect text_rect = LP_RECT(x, r.y, r.x + r.w - pad - x - o.trailing_w, r.h);
     cairo_save(cr);
     cairo_rectangle(cr, text_rect.x, text_rect.y, text_rect.w, text_rect.h);
     cairo_clip(cr);

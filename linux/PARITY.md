@@ -297,6 +297,18 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   shade (`lp_liquid_bubble_respond`, `lp_bubble_spec.darken`). The web keeps its traffic-light hover
   bridge, which C does not have (D8). The timing comes from `lp_ctx.hot_since_ms` / `last_hot*` and
   `held*`, which the core records whenever the hover or the press moves.
+- **D18 — Spotlight talks to Mary.** Linux only. An Ask Mary orb (`size.spotlight-accessory`) sits inside the
+  bar's right end, and Ctrl/⌘+Return asks with whatever is in the bar; plain Return still opens the selection.
+  Asking, pressing the orb on a blank bar (the microphone), or maryd's "Hey Mary" puts the panel in chat mode:
+  the dock, the results and the command pills give way to a status row and a well of dialogue on paper — what
+  you said small behind a thin accent rule, Mary's reply as body text under it, older exchanges fading (1,
+  0.72, 0.5), the live transcript pending in tertiary ink, three breathing dots while she thinks and a blinking
+  caret while her reply streams. The panel is `size.spotlight-chat` tall under the bar however long the
+  conversation runs, so the host sizes it once. In chat mode Return asks, the arrows scroll, the first Esc
+  stops Mary and the second closes; the conversation is still there when Spotlight opens again. The model and
+  maryd's client are `lp_mary` (json-c: without it there is no orb), the keys `lp_desktop_ask_mary` /
+  `lp_desktop_mary_wake`, the drawing `SpotlightChat.c`; `lp_text_field_opts.trailing_w` and `.icon_monogram`
+  exist for it. The web has no maryd and no chat.
 - **Close animation.** `lp-window-close` (scale .96 + fade over `motion.fast`, `CLOSE` after
   fast + 80 ms) runs for built-in windows. A client that unmaps is gone at once — the compositor
   has no pixels left to fade.

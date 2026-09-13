@@ -253,6 +253,8 @@
   --lp-size-spotlight-bar-height: 44px;
   --lp-size-spotlight-tile: 56px;
   --lp-size-spotlight-cell: 96px;
+  --lp-size-spotlight-chat: 320px;
+  --lp-size-spotlight-accessory: 28px;
   --lp-font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, Inter, sans-serif;
   --lp-font-display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, P052, serif;
   --lp-font-mono: SFMono-Regular, ui-monospace, Menlo, Consolas, "JetBrains Mono", monospace;

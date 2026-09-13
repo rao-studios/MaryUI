@@ -16,6 +16,7 @@
 #include "maryui/lp_shadow.h"
 #include "maryui/lp_text.h"
 #include "maryui/lp_tokens.h"
+#include "spotlight_chat.h"
 
 #define EMPTY_H 40
 #define LIST_PAD LP_SPACE_1
@@ -104,6 +105,10 @@ static float commands_height(const lp_spotlight_view *v, float width, int open) 
 lp_size lp_spotlight_measure(const lp_spotlight_view *v) {
     int dock = lp_spotlight_query_is_blank(v->query ? v->query->text : "");
     float w = width_of(v);
+    if (v->chat) {
+        float h = PANEL_V_PAD + LP_SIZE_SPOTLIGHT_BAR_HEIGHT + LP_SIZE_SPOTLIGHT_CHAT;
+        return (lp_size){ w, v->max_h > 0 && h > v->max_h ? v->max_h : h };
+    }
     float h = PANEL_V_PAD + LP_SIZE_SPOTLIGHT_BAR_HEIGHT + (dock ? dock_height() : results_height(v->count));
     if (dock) h += commands_height(v, w, open_menu_of(v));
     if (v->max_h > 0 && h > v->max_h) h = v->max_h;
@@ -112,6 +117,8 @@ lp_size lp_spotlight_measure(const lp_spotlight_view *v) {
 
 lp_size lp_spotlight_max_size(const lp_spotlight_view *v) {
     float w = width_of(v);
+    /* The conversation is one fixed height: the panel is sized once when it opens on it. */
+    if (v->chat) return (lp_size){ w, PANEL_V_PAD + LP_SIZE_SPOTLIGHT_BAR_HEIGHT + LP_SIZE_SPOTLIGHT_CHAT };
     float dock = dock_height() + commands_height(v, w, -1);
     float results = results_height(LP_SPOTLIGHT_MAX_RESULTS);
     return (lp_size){ w, PANEL_V_PAD + LP_SIZE_SPOTLIGHT_BAR_HEIGHT + (dock > results ? dock : results) };
@@ -267,7 +274,11 @@ void lp_spotlight_panel(lp_ctx *ctx, float x, float y, const lp_spotlight_view *
     static lp_text_buffer scratch;
     lp_text_buffer *q = v->query ? v->query : &scratch;
     res.query_changed = lp_text_field(ctx, LP_SPOTLIGHT_QUERY_ID, bar, q,
-        (lp_text_field_opts){ .placeholder = v->placeholder ? v->placeholder : LP_SPOTLIGHT_PLACEHOLDER, .icon = LP_ICON_SEARCH, .round = 1, .large = 1 });
+        (lp_text_field_opts){ .placeholder = v->placeholder ? v->placeholder : v->chat ? lp_spotlight_chat_placeholder(v) : LP_SPOTLIGHT_PLACEHOLDER,
+                              .icon = LP_ICON_SEARCH, .icon_monogram = v->chat, .round = 1, .large = 1,
+                              .trailing_w = v->mary ? LP_SIZE_SPOTLIGHT_ACCESSORY : 0 });
+    /* Ask Mary (Linux, PARITY D18): an orb inside the bar's right end. */
+    if (v->mary) lp_spotlight_ask_orb(ctx, bar, v, &res);
     /* A press on a tile or row clears the field's focus; the bar keeps it while the panel is up. */
     if (ctx->pass == LP_PASS_EVENT && v->focus_bar) ctx->focus = LP_SPOTLIGHT_QUERY_ID;
 
@@ -275,7 +286,9 @@ void lp_spotlight_panel(lp_ctx *ctx, float x, float y, const lp_spotlight_view *
     if (draw) lp_fill_solid(cr, LP_RECT(panel.x + LP_SPOTLIGHT_PAD, cy, panel.w - 2 * LP_SPOTLIGHT_PAD, 1), LP_EDGE_DIVIDER, 0);
     cy += 1;
 
-    if (lp_spotlight_query_is_blank(q->text)) {
+    if (v->chat) {
+        lp_spotlight_chat(ctx, v, panel, cy);
+    } else if (lp_spotlight_query_is_blank(q->text)) {
         /* The dock: one centred row of tiles */
         int n = v->count;
         float cell_w = dock_cell_w(panel.w, n);

@@ -41,6 +41,7 @@ static int usage(int status) {
         "       lp-render --prefs <out.png>              System Settings on its General pane\n"
         "       lp-render --spotlight [QUERY] <out.png>  Spotlight over the desktop: the dock and its command pills, or the results for QUERY\n"
         "       lp-render --spotlight-menu NAME <out.png>  the same with the NAME pill open (rao|file|edit|view|go|window|help)\n"
+        "       lp-render --spotlight-chat STATE <out.png>  Spotlight on the conversation with Mary: idle|listening|thinking|streaming|speaking|error|nokey|offline\n"
         "       lp-render --all <dir>                    every preview into <dir>\n"
         "       lp-render --version\n");
     return status;
@@ -258,6 +259,73 @@ static int render_spotlight(const char *query, const char *menu, const char *pat
     return rc;
 }
 
+static void chat_line(lp_mary *m, lp_mary_role role, const char *text, int streaming) {
+    lp_mary_message *msg = &m->messages[m->message_count++];
+    msg->role = role;
+    msg->text = strdup(text);
+    msg->len = strlen(text);
+    msg->streaming = streaming;
+}
+
+/* Spotlight on the conversation with Mary (Linux, PARITY D18), in one state, from a fixture:
+ * idle, listening, thinking, streaming, speaking, error, nokey or offline. */
+static int render_spotlight_chat(const char *state, const char *path) {
+    static const char *const states[] = { "idle", "listening", "thinking", "streaming", "speaking", "error", "nokey", "offline" };
+    int which = -1;
+    for (int i = 0; i < (int)(sizeof states / sizeof *states); i++) if (strcmp(state, states[i]) == 0) which = i;
+    if (which < 0) { fprintf(stderr, "lp-render: no chat state named %s\n", state); return 1; }
+    int w = 1280, h = 800;
+    cairo_surface_t *s = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, w, h);
+    cairo_t *cr = cairo_create(s);
+    cairo_surface_t *wp = lp_wallpaper_render(w, h);
+    cairo_set_source_surface(cr, wp, 0, 0);
+    cairo_paint(cr);
+    cairo_surface_destroy(wp);
+    lp_wallpaper_vignette(cr, w, h);
+    lp_desktop d;
+    lp_desktop_init(&d, LP_RECT(0, 0, w, h), NULL);
+    lp_desktop_register_builtin_apps(&d);
+    lp_desktop_open_app(&d, "finder");
+    lp_spotlight_open(&d.spotlight);
+    d.spotlight_chat = 1;
+    lp_mary *m = &d.mary;
+    m->fd = which == 7 ? -1 : 0;           /* "connected" to nothing: a render never sends */
+    m->key_present = which != 6;
+    if (which != 6 && which != 7) {
+        chat_line(m, LP_MARY_USER, "What's the capital of France?", 0);
+        chat_line(m, LP_MARY_REPLY, "Paris — and it has been, give or take a king or two, since the tenth century.", 0);
+        chat_line(m, LP_MARY_USER, "And how far is it from Lyon?", 0);
+        chat_line(m, LP_MARY_REPLY, "About 390 kilometres. The TGV does it in two hours, which beats driving.", 0);
+    }
+    switch (which) {
+    case 1: m->state = LP_MARY_LISTENING; m->level = 0.03f; snprintf(m->partial, sizeof m->partial, "What's the weather like in Lyon this"); break;
+    case 2: m->state = LP_MARY_THINKING; chat_line(m, LP_MARY_USER, "What's the weather like in Lyon this weekend?", 0); break;
+    case 3: m->state = LP_MARY_THINKING; chat_line(m, LP_MARY_USER, "What's the weather like in Lyon this weekend?", 0);
+        chat_line(m, LP_MARY_REPLY, "Mostly sunny on Saturday, with a high of", 1); break;
+    case 4: m->state = LP_MARY_SPEAKING; chat_line(m, LP_MARY_USER, "What's the weather like in Lyon this weekend?", 0);
+        chat_line(m, LP_MARY_REPLY, "Mostly sunny on Saturday, with a high of 24 degrees. Sunday turns cloudy after lunch, so the morning is the time for the market.", 1); break;
+    case 5: m->state = LP_MARY_ERROR; snprintf(m->error, sizeof m->error, "Mistral refused the key. Check it in Settings › Mary."); break;
+    default: break;
+    }
+    lp_ctx ctx = { 0 };
+    ctx.settings = &d.settings;
+    ctx.sheen_x = 0.5f;
+    ctx.active_window = 1;
+    ctx.focus = LP_SPOTLIGHT_QUERY_ID;
+    lp_ctx_begin(&ctx, LP_PASS_DRAW, cr, NULL, LP_RECT(0, 0, w, h), 1200);
+    lp_spotlight_view view = lp_desktop_spotlight_view(&d, NULL, 0);
+    view.mary = m;                          /* even in a build without json-c */
+    lp_size size = lp_spotlight_max_size(&view);
+    float x = (w - size.w) / 2, y = h * LP_SPOTLIGHT_Y_FRACTION - LP_SIZE_SPOTLIGHT_BAR_HEIGHT / 2 - LP_SPOTLIGHT_PAD;
+    lp_spotlight_panel(&ctx, x, y, &view, NULL);
+    lp_ctx_end(&ctx);
+    for (int i = 0; i < m->message_count; i++) free(m->messages[i].text);
+    cairo_destroy(cr);
+    int rc = write_png(s, path);
+    cairo_surface_destroy(s);
+    return rc;
+}
+
 static int parse_size(const char *text, int *w, int *h) {
     return sscanf(text, "%dx%d", w, h) == 2 && *w > 0 && *h > 0;
 }
@@ -292,6 +360,7 @@ int main(int argc, char **argv) {
     if (strcmp(argv[1], "--spotlight") == 0 && argc == 3) return render_spotlight(NULL, NULL, argv[2]);
     if (strcmp(argv[1], "--spotlight") == 0 && argc == 4) return render_spotlight(argv[2], NULL, argv[3]);
     if (strcmp(argv[1], "--spotlight-menu") == 0 && argc == 4) return render_spotlight(NULL, argv[2], argv[3]);
+    if (strcmp(argv[1], "--spotlight-chat") == 0 && argc == 4) return render_spotlight_chat(argv[2], argv[3]);
     if (strcmp(argv[1], "--all") == 0 && argc == 3) {
         if (ensure_dir(argv[2]) != 0) return 1;
         char path[1024];
@@ -344,6 +413,8 @@ int main(int argc, char **argv) {
         rc |= render_spotlight(NULL, "file", path);
         snprintf(path, sizeof path, "%s/spotlight-results.png", argv[2]);
         rc |= render_spotlight("te", NULL, path);
+        snprintf(path, sizeof path, "%s/spotlight-chat.png", argv[2]);
+        rc |= render_spotlight_chat("speaking", path);
         return rc;
     }
     return usage(2);

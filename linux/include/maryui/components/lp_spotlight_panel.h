@@ -10,6 +10,8 @@
 #ifndef MARYUI_LP_SPOTLIGHT_PANEL_H
 #define MARYUI_LP_SPOTLIGHT_PANEL_H
 
+#include "maryui/components/lp_layout_components.h"
+#include "maryui/lp_mary.h"
 #include "maryui/lp_menus.h"
 #include "maryui/lp_spotlight.h"
 #include "maryui/lp_ui.h"
@@ -27,6 +29,9 @@
 #define LP_SPOTLIGHT_MAX_PILLS 8
 /* The panel's outer shadow reaches this far around it (shadow.menu). */
 #define LP_SPOTLIGHT_SHADOW_EXTENT 40
+/* Mary's conversation (Linux, PARITY D18): the status row over the well, and one arrow key's scroll. */
+#define LP_SPOTLIGHT_CHAT_STATUS_H 28
+#define LP_SPOTLIGHT_CHAT_STEP 40
 
 typedef struct lp_spotlight_view {
     lp_text_buffer *query;            /* edited in place by the bar */
@@ -47,6 +52,11 @@ typedef struct lp_spotlight_view {
     /* The panel never grows past this (0: unbounded). An open menu absorbs the
      * whole reduction and clips; the bar, the dock and the pills never do. */
     float max_h;
+    /* Mary (Linux, PARITY D18). NULL: no Ask Mary orb in the bar (built without json-c). */
+    const lp_mary *mary;
+    /* The conversation replaces the dock, the results and the commands, size.spotlight-chat tall under the bar. */
+    int chat;
+    lp_scroll_state *chat_scroll;     /* how far the dialogue is scrolled; NULL: always the newest */
 } lp_spotlight_view;
 
 typedef struct lp_spotlight_result {
@@ -57,6 +67,7 @@ typedef struct lp_spotlight_result {
     int menu_hovered;    /* command pill under the pointer, else -1 */
     int entry_hovered;   /* entry of the open menu under the pointer, else -1 */
     int entry_selected;  /* entry chosen this event, else -1 */
+    int ask_pressed;     /* the Ask Mary orb was clicked this event */
     lp_rect panel;       /* where the panel was painted */
 } lp_spotlight_result;
 
