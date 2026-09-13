@@ -16,10 +16,19 @@ void lp_desktop_init(lp_desktop *d, lp_rect bounds, void *host) {
     d->menu_active = -1;
     lp_spotlight_init(&d->spotlight);
     lp_mary_init(&d->mary, d);
+    lp_audio_init(&d->audio, d);
     d->mary.on_skill_invoke = lp_desktop_on_skill_invoke;
     lp_skill_policy_load(&d->skill_policy);
     d->host = host;
     snprintf(d->about_label, sizeof d->about_label, "About %s", d->branding.pretty_name);
+}
+
+void lp_desktop_models_changed(lp_desktop *d, unsigned model, unsigned what) {
+    for (int i = 0; d && i < d->instance_count; i++) {
+        lp_app_instance *in = &d->instances[i];
+        if (!in->app || !in->app->model_changed || !in->state) continue;
+        if (in->app->model_changed(in->state, d, model, what) && d->on_app_dirty) d->on_app_dirty(d, in->window_id);
+    }
 }
 
 void lp_desktop_register_app(lp_desktop *d, const lp_app *app) {

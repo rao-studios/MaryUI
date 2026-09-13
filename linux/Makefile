@@ -61,7 +61,8 @@ $(eval $(call optional_pkgs,GST,gstreamer-1.0 gstreamer-app-1.0 gstreamer-video-
 $(eval $(call optional_pkgs,ICAL,libical))                                            # Calendar
 $(eval $(call optional_pkgs,SDBUS,libsystemd))                                        # Settings, Disk Utility
 $(eval $(call optional_pkgs,JSONC,json-c))                                            # Mary: the conversation with maryd
-OPTIONAL_MISSING := $(strip $(foreach n,VTERM PIXBUF POPPLER GST ICAL SDBUS JSONC,$(if $(HAVE_$(n)),,$(n))))
+$(eval $(call optional_pkgs,PIPEWIRE,libpipewire-0.3))                                # Settings › Sound: speakers and microphones
+OPTIONAL_MISSING := $(strip $(foreach n,VTERM PIXBUF POPPLER GST ICAL SDBUS JSONC PIPEWIRE,$(if $(HAVE_$(n)),,$(n))))
 DESKTOP_CFLAGS := $(shell $(PKG_CONFIG) --cflags $(DESKTOP_PKGS) 2>/dev/null) -DWLR_USE_UNSTABLE -I$(O)/protocols
 DESKTOP_LIBS := $(shell $(PKG_CONFIG) --libs $(DESKTOP_PKGS) 2>/dev/null)
 

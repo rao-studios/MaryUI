@@ -10,6 +10,7 @@
 
 #include "maryui/components/lp_spotlight_panel.h"
 #include "maryui/lp_app.h"
+#include "maryui/lp_audio.h"
 #include "maryui/lp_drag.h"
 #include "maryui/lp_mary.h"
 #include "maryui/lp_menus.h"
@@ -91,6 +92,7 @@ typedef struct lp_desktop {
     int menu_active;          /* highlighted entry of the open menu, -1 */
     lp_spotlight spotlight;   /* Ctrl+Space: the search bar and dock */
     lp_mary mary;             /* the conversation with maryd, shown in Spotlight */
+    lp_audio audio;           /* PipeWire's speakers and microphones (System Settings › Sound, PARITY D23) */
     int spotlight_chat;       /* Spotlight shows that conversation instead of the dock (Linux, PARITY D18) */
     lp_scroll_state spotlight_chat_scroll;
     lp_skill_policy skill_policy;  /* what Mary may do with each app (skills.conf, PARITY D20) */
@@ -156,6 +158,10 @@ void lp_desktop_open_popup(lp_desktop *d, const char *window_id, float x, float 
 void lp_desktop_open_text_menu(lp_desktop *d, const char *window_id, const lp_text_menu_request *request);
 const lp_app *lp_desktop_find_app(const lp_desktop *d, const char *app_id);
 lp_app_instance *lp_desktop_instance(lp_desktop *d, const char *window_id);
+/* The desktop-wide models an app can show, and a change to one (`what` is that model's CHANGED bits): each
+ * window whose app answers lp_app.model_changed with 1 is repainted through on_app_dirty. */
+enum { LP_MODEL_MARY = 1, LP_MODEL_AUDIO = 2 };
+void lp_desktop_models_changed(lp_desktop *d, unsigned model, unsigned what);
 /* Rebuilds d->menus from the current state (menus.ts). */
 void lp_desktop_build_menus(lp_desktop *d);
 int lp_desktop_run_command(lp_desktop *d, enum lp_command command, int arg);

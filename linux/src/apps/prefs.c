@@ -948,12 +948,18 @@ static int prefs_perform(void *state, lp_desktop *d, const char *skill, const ch
     return 0;
 }
 
+/* The Mary pane shows lp_mary and Sound shows lp_audio: a change to either repaints the window while it shows. */
+static int prefs_model_changed(void *state, lp_desktop *d, unsigned model, unsigned what) {
+    const struct prefs *p = state;
+    return (model == LP_MODEL_MARY && p->pane == LP_PREFS_MARY) || (model == LP_MODEL_AUDIO && p->pane == LP_PREFS_SOUND);
+}
+
 const lp_app lp_app_prefs = {
     .id = "settings", .title = "System Settings", .name = "Settings", .aka = "System Settings", .icon = LP_ICON_GEAR, .dock = 1,
     .default_rect = { NAN, NAN, 800, 540 }, .min_size = { 660, 440 }, .singleton = 1, .resizable = 1,
     .create = prefs_create, .paint = prefs_paint, .destroy = prefs_destroy,
     .command = prefs_command, .menu_entries = prefs_menu_entries,
-    .skills = prefs_skills, .skill_count = 1, .perform = prefs_perform,
+    .skills = prefs_skills, .skill_count = 1, .perform = prefs_perform, .model_changed = prefs_model_changed,
 };
 
 /* MARK: - Tests, and the pane's own actions */

@@ -36,6 +36,8 @@ int lp_mary_active(const lp_mary *m) { return m->state >= LP_MARY_LISTENING && m
 
 static void changed(lp_mary *m, unsigned what) {
     if (m->desk && m->desk->on_mary) m->desk->on_mary(m->desk, what);
+    /* and any window showing Mary (Settings › Mary); the microphone's level only moves Spotlight's meter */
+    if (m->desk && (what & ~(unsigned)LP_MARY_CHANGED_LEVEL)) lp_desktop_models_changed(m->desk, LP_MODEL_MARY, what);
 }
 
 static void clear_messages(lp_mary *m) {

@@ -266,6 +266,7 @@ void mui_desktop_init(struct mui_server *server) {
     server->desktop.displays = desktop_displays;
     mui_sources_init(server);
     mui_mary_init(server);      /* after the event sources it rides */
+    mui_audio_init(server);     /* PipeWire's devices, on the same sources */
     /* In `maryos vm run` the Mac's clipboard arrives on a virtio port; elsewhere there is none. */
     const char *port = getenv("MARYUI_CLIPBOARD_PORT");
     lp_clipboard_port_init(&server->clipboard_port);
@@ -277,6 +278,7 @@ void mui_desktop_init(struct mui_server *server) {
 }
 
 void mui_desktop_finish(struct mui_server *server) {
+    mui_audio_finish(server);
     mui_mary_finish(server);
     lp_clipboard_port_close(&server->clipboard_port);
     if (server->clock_timer) wl_event_source_remove(server->clock_timer);

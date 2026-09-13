@@ -342,6 +342,15 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   `org.maryos.clipboard` (a u32 little-endian byte count, then UTF-8); `lp_clipboard_port` reads it on the
   desktop's event loop and makes each message the text clipboard D21 pastes from. Host to guest only; on
   a Pi there is no port and nothing happens. The web has the browser's clipboard.
+- **D23 — the desktop knows PipeWire's speakers and microphones.** Linux only. `lp_audio` (libpipewire,
+  optional as `HAVE_PIPEWIRE`) follows the session's PipeWire from a thread of its own: the Audio/Sink and
+  Audio/Source nodes with their names and kinds (Built-in, USB, Bluetooth, HDMI, Virtual), and the default
+  metadata WirePlumber keeps, handed to the desktop's thread through a wake pipe once PipeWire has told
+  everything, and followed again when PipeWire restarts. While anyone holds a lease (`lp_audio_meter`) a
+  capture stream meters the default microphone, rising at once and falling back over 300 ms. Changes reach
+  the windows that show them through `lp_desktop_models_changed` and `lp_app.model_changed`, which System
+  Settings answers for its Sound pane (and its Mary pane, for `lp_mary`). Choosing a device, volume and mute
+  stay `wpctl`'s. The web has no audio devices.
 - **Close animation.** `lp-window-close` (scale .96 + fade over `motion.fast`, `CLOSE` after
   fast + 80 ms) runs for built-in windows. A client that unmaps is gone at once — the compositor
   has no pixels left to fade.

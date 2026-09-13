@@ -47,6 +47,8 @@ typedef struct lp_app {
     const struct lp_skill *skills;
     int skill_count;
     int (*perform)(void *state, struct lp_desktop *desktop, const char *skill, const char *args_json, char *result, size_t n);
+    /* A desktop-wide model changed (LP_MODEL_*, with its CHANGED bits): 1 repaints the window. NULL: it shows none. */
+    int (*model_changed)(void *state, struct lp_desktop *desktop, unsigned model, unsigned what);
 } lp_app;
 
 extern const lp_app lp_app_about;
