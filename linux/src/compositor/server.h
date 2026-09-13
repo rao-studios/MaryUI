@@ -265,6 +265,9 @@ void mui_files_finish(struct mui_server *server);
 void mui_input_apply_settings(struct mui_server *server);
 /* Event sources for the built-in apps (sources.c): lp_desktop.add_fd / add_timer on the wl_event_loop. */
 void mui_sources_init(struct mui_server *server);
+/* Mary (mary.c): lp_mary on the event loop, and Spotlight following it (PARITY D18). */
+void mui_mary_init(struct mui_server *server);
+void mui_mary_finish(struct mui_server *server);
 /* Schedules a frame on every output; the motion engine's wake callback (output.c). */
 void mui_server_schedule_frame(struct mui_server *server);
 /* Damages every output whole (after scaled/cropped nodes return to normal). */

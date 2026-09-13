@@ -59,6 +59,7 @@ void mui_engine_wake(void *user) {
 static int ambient_pending(struct mui_server *server) {
     struct mui_window *win;
     wl_list_for_each(win, &server->windows, link) if (mui_chrome_wants_frame(&win->chrome)) return 1;
+    if (server->spotlight && mui_chrome_wants_frame(server->spotlight)) return 1;
     return 0;
 }
 

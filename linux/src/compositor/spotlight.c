@@ -39,6 +39,11 @@ static void paint_spotlight(lp_ctx *ctx, struct mui_chrome *chrome, void *data) 
         mui_spotlight_resize(server);           /* the commands section may have gone with it */
         ctx->dirty = 1;
     }
+    if (res.ask_pressed) {
+        lp_desktop_ask_mary(d);             /* ask, listen or stop; the conversation takes the panel */
+        mui_spotlight_resize(server);
+        ctx->dirty = 1;
+    }
     if (res.hovered >= 0 && res.hovered != d->spotlight.selection) { d->spotlight.selection = res.hovered; ctx->dirty = 1; }
 
     /* The command pills. Press opens, as a pull-down menu does. */

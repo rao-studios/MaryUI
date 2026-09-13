@@ -253,12 +253,14 @@ void mui_desktop_init(struct mui_server *server) {
     server->desktop.on_drag = desktop_on_drag;
     server->desktop.displays = desktop_displays;
     mui_sources_init(server);
+    mui_mary_init(server);      /* after the event sources it rides */
     mui_files_init(server);
     server->desktop.open_menu = -1;
     lp_desktop_build_menus(&server->desktop);
 }
 
 void mui_desktop_finish(struct mui_server *server) {
+    mui_mary_finish(server);
     if (server->clock_timer) wl_event_source_remove(server->clock_timer);
     server->clock_timer = NULL;
     if (server->repaint_idle) wl_event_source_remove(server->repaint_idle);
@@ -512,6 +514,7 @@ int mui_desktop_pointer_event(struct mui_server *server, double lx, double ly, i
     /* A press outside Spotlight's panel closes it; the press carries on to what is beneath. */
     if ((pressed & LP_BUTTON_LEFT) && d->spotlight.open && chrome != server->spotlight) {
         lp_spotlight_close(&d->spotlight);
+        lp_desktop_leave_chat(d);
         mui_spotlight_sync(server);
     }
 
@@ -617,6 +620,7 @@ int mui_desktop_key(struct mui_server *server, uint32_t keysym, uint32_t modifie
     }
     int had_menu = d->open_menu;
     int was_open = d->spotlight.open;
+    int had_chat = d->spotlight_chat;
     server->key_to_chrome = 0;
     int handled = pressed ? lp_desktop_key(d, keysym, modifiers) : 0;
     if (was_open || d->spotlight.open) {
@@ -629,7 +633,7 @@ int mui_desktop_key(struct mui_server *server, uint32_t keysym, uint32_t modifie
         }
         /* ←/→ can have switched pills, and typing can have closed one: size the
          * panel before the sync repaints it. */
-        if (had_menu != d->open_menu) mui_spotlight_resize(server);
+        if (had_menu != d->open_menu || had_chat != d->spotlight_chat) mui_spotlight_resize(server);   /* Ctrl+Return: into the conversation */
         mui_spotlight_sync(server);
         if (had_menu >= 0 || d->open_menu >= 0) sync_popup_chrome(server);
         return 1;
@@ -722,5 +726,10 @@ void mui_desktop_ambient_tick(struct mui_server *server) {
     struct mui_window *win;
     wl_list_for_each(win, &server->windows, link) {
         if (mui_chrome_wants_frame(&win->chrome)) { mui_chrome_damage(&win->chrome, mui_chrome_ambient_rect(&win->chrome)); mui_chrome_repaint(&win->chrome, mui_now_ms()); }
+    }
+    /* Spotlight's conversation breathes while Mary listens, thinks or speaks. */
+    if (server->spotlight && mui_chrome_wants_frame(server->spotlight)) {
+        mui_chrome_damage(server->spotlight, mui_chrome_ambient_rect(server->spotlight));
+        mui_chrome_repaint(server->spotlight, mui_now_ms());
     }
 }
