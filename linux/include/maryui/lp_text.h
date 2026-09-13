@@ -18,6 +18,7 @@ typedef struct lp_text_style {
     enum lp_font font;
     float size_px;
     int weight;              /* 400, 500, 600, 700 */
+    int italic;              /* the face's italic (Mary's passages: font.display italic) */
     lp_color color;
     int emboss;              /* draw a 1px highlight below the ink */
     lp_color emboss_color;

@@ -19,7 +19,7 @@
 #include "maryui/lp_spotlight.h"
 #include "maryui/lp_wm.h"
 
-#define LP_DESKTOP_MAX_APPS 16
+#define LP_DESKTOP_MAX_APPS 24
 #define LP_DESKTOP_MENU_COUNT 7           /* Rao, File, Edit, View, Go, Window, Help */
 #define LP_DESKTOP_MENU_POPUP LP_DESKTOP_MENU_COUNT /* open_menu for the context menu (menus[7]) */
 enum lp_menu_slot { LP_MENU_RAO, LP_MENU_FILE, LP_MENU_EDIT, LP_MENU_VIEW, LP_MENU_GO, LP_MENU_WINDOW, LP_MENU_HELP };

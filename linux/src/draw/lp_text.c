@@ -41,6 +41,7 @@ static PangoLayout *make_layout_ex(cairo_t *cr, const char *text, int len, const
     pango_font_description_set_family(desc, lp_font_families(style->font));
     pango_font_description_set_absolute_size(desc, style->size_px * PANGO_SCALE);
     pango_font_description_set_weight(desc, (PangoWeight)style->weight);
+    if (style->italic) pango_font_description_set_style(desc, PANGO_STYLE_ITALIC);
     pango_layout_set_font_description(layout, desc);
     pango_font_description_free(desc);
 
@@ -86,7 +87,7 @@ typedef struct layout_entry {
      * emboss are applied at draw time and are deliberately not keyed on. */
     enum lp_font font;
     float size_px, letter_spacing, width;
-    int weight, tabular_nums, uppercase, ellipsize;
+    int weight, italic, tabular_nums, uppercase, ellipsize;
     unsigned used;
 } layout_entry;
 
@@ -105,7 +106,7 @@ static PangoLayout *make_layout(cairo_t *cr, const char *text, const lp_text_sty
     for (int i = 0; i < layout_cache_count; i++) {
         layout_entry *e = &layout_cache[i];
         if (e->hash != h || e->font != style->font || e->size_px != style->size_px || e->weight != style->weight ||
-            e->tabular_nums != style->tabular_nums || e->letter_spacing != style->letter_spacing ||
+            e->italic != style->italic || e->tabular_nums != style->tabular_nums || e->letter_spacing != style->letter_spacing ||
             e->uppercase != style->uppercase || e->ellipsize != style->ellipsize || e->width != width)
             continue;
         if (strcmp(e->text, text) != 0) continue;
@@ -134,6 +135,7 @@ static PangoLayout *make_layout(cairo_t *cr, const char *text, const lp_text_sty
     e->font = style->font;
     e->size_px = style->size_px;
     e->weight = style->weight;
+    e->italic = style->italic;
     e->tabular_nums = style->tabular_nums;
     e->letter_spacing = style->letter_spacing;
     e->uppercase = style->uppercase;
@@ -145,15 +147,17 @@ static PangoLayout *make_layout(cairo_t *cr, const char *text, const lp_text_sty
 
 float lp_text_cap_middle(cairo_t *cr, const lp_text_style *style) {
     enum { SLOTS = 16 };
-    static struct { enum lp_font font; float size_px; int weight; float middle; } cache[SLOTS];
+    static struct { enum lp_font font; float size_px; int weight, italic; float middle; } cache[SLOTS];
     static int count, next;
     for (int i = 0; i < count; i++) {
-        if (cache[i].font == style->font && cache[i].size_px == style->size_px && cache[i].weight == style->weight) return cache[i].middle;
+        if (cache[i].font == style->font && cache[i].size_px == style->size_px && cache[i].weight == style->weight &&
+            cache[i].italic == style->italic) return cache[i].middle;
     }
     lp_text_style probe = lp_text_style_default();
     probe.font = style->font;
     probe.size_px = style->size_px;
     probe.weight = style->weight;
+    probe.italic = style->italic;
     PangoLayout *layout = make_layout_ex(cr ? cr : scratch_cr(), "H", -1, &probe, 0, 1, 0);
     PangoRectangle ink, logical;
     pango_layout_get_extents(layout, &ink, &logical);
@@ -163,6 +167,7 @@ float lp_text_cap_middle(cairo_t *cr, const lp_text_style *style) {
     cache[slot].font = style->font;
     cache[slot].size_px = style->size_px;
     cache[slot].weight = style->weight;
+    cache[slot].italic = style->italic;
     cache[slot].middle = middle;
     return middle;
 }
