@@ -51,7 +51,7 @@ README, or when a file under `web/src/lib` or `web/src/desktop` is missing from 
 | `desktop/wm/store.ts`, `desktop/wm/useWM.ts` | `lp_desktop_dispatch` + `on_change` (the host syncs from the change mask) | ≈ no subscriptions: one host, one callback |
 | `desktop/settings.ts` | `lp_settings.h`, `src/core/lp_settings.c` (`$XDG_CONFIG_HOME/maryui/settings.conf`) | ≈ **D6** raster wallpaper stored, not rendered; plus `clock`, C-only (**D13**) |
 | `desktop/menus.ts` | `include/maryui/lp_menus.h` (the models), `lp_desktop_build_menus` in `src/core/lp_desktop.c` | ≈ **D11** plus File › New Terminal (`spawn("foot")`), a Go menu, and the focused app's entries (`lp_app.menu_entries`); both sides draw them as Spotlight's pills |
-| `desktop/apps/registry.ts` | `lp_desktop_register_builtin_apps`, `lp_app.h` (`name`, `icon`, `hidden`, `internal`, `dock`, `raw_ctrl`, `open`, `command`, `menu_entries`, `notify`) | ≈ **D11** **D15** finder, gallery, about, textedit (hidden: Spotlight only), info (internal: opened by the Finder), and the Linux-only system apps: calculator, preview (hidden: Spotlight and the Finder), terminal (hidden: Spotlight and File › New Terminal), activity, diskutil; `dock` pins Finder, TextEdit, Preview and Terminal |
+| `desktop/apps/registry.ts` | `lp_desktop_register_builtin_apps`, `lp_app.h` (`name`, `icon`, `hidden`, `internal`, `dock`, `raw_ctrl`, `open`, `command`, `menu_entries`, `notify`) | ≈ **D11** **D15** finder, gallery, about, textedit (hidden: Spotlight only), info (internal: opened by the Finder), and the Linux-only system apps: calculator, preview (hidden: Spotlight and the Finder), terminal (hidden: Spotlight and File › New Terminal), activity, diskutil, media (the Media Player; hidden: Spotlight and the Finder), calendar; `dock` pins Finder, TextEdit, Preview, Terminal, the Media Player and Calendar |
 | `desktop/spotlight.ts` | `include/maryui/lp_spotlight.h`, `src/core/lp_spotlight.c`, `lp_desktop_spotlight_*` in `src/core/lp_desktop.c`, `tests/test_spotlight.c` | ≈ **D15** 9/9 cases: the dock for a blank query (the pinned apps only), ranking (prefix, word prefix, substring), windows as items, wrap, cap 8; the C tests add the Ctrl+Space / Esc / Enter key cases and seven for the command pills |
 | `desktop/SpotlightHost.tsx` | `src/compositor/spotlight.c` (one chrome in the `z.spotlight` layer sized for the no-menu panel so typing never reallocates, `mui_spotlight_resize` when a pill opens, `lp-spotlight-in` tween, hit-test inside the panel, outside-press closes); the view is `lp_desktop_spotlight_view` | ≈ **D9** the Terminal tile |
 | `desktop/Desktop.tsx` | `src/compositor/desktop.c` (the ambient clock, the context menu, pointer/keyboard routing), `src/core/lp_desktop.c` (commands, keys) | ≈ **D13** the clock; opens Finder + Gallery at start like the web, windows use the whole output, hit-testing skips shadows like CSS |
@@ -121,8 +121,10 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
 | — | `tests/test_pty.c` (the pty: size and TERM, cwd, input and resize, exit, hang-up, the job in front — runs on macOS too); `tests/test_term.c` (with libvterm: cells and attributes, key bytes, damage, scrollback and selection text, titles, rewrap, bracketed paste, the bell and the alternate screen, and the app running a real shell and hanging it up); `test_desktop.c` adds `ctrl_chords_reach_the_terminal_and_super_reaches_the_desktop` |
 | — | `tests/test_proc.c` (the /proc model over a fixture: totals, a comm with parentheses, a kernel thread, a name cut at 15, CPU shares and a reused pid, sorting, search, formatting, SIGTERM/SIGKILL on a real child); `tests/test_activity.c` (the app headless: list, search, the shaded-window refresh, the Quit sheet's Esc/Return/Force Quit with an injected signal, and what cannot be quit) |
 | — | `tests/test_job.c` (status, output, a signal death, a missing program, no event loop, cancelling, a 123 KB flood); `tests/test_disks.c` (sysfs, udev and mounts fixtures: a virtual disk's system partitions, a USB stick's encoded label and escaped mount point, a blank SD card, skipped devices, the udisksctl commands); `tests/test_diskutil.c` (the app headless with a stand-in runner: what each selection offers, Unmount/Mount results and refusals, Eject's script, Show in Finder, a DRAW pass) |
+| — | `tests/test_media.c` (time labels and folder queues everywhere; with GStreamer, clips made in the test — VP8/WebM, WAV, tagged Ogg — for the first frame, playing to the end and again, seeking and volume, tags, a damaged file, and the app playing on into the next file in its folder) |
+| — | `tests/test_calendar.c` (leap years, weekdays, day and month steps, the grid, typed dates and times, 23- and 25-hour days under a POSIX zone, the app's navigation, editor validation and a DRAW pass of each view; with libical, a save/load round trip, a weekly repeat across the clocks going back, another program's read-only file with a counted yearly rule, and the app saving and deleting) |
 
-218 C cases in all (208 on a Mac, where libvterm's ten are one "not in this build" case).
+238 C cases in all (220 on a Mac, which runs a stand-in case where libvterm, GStreamer and libical are missing).
 
 ## Deviations
 
@@ -258,6 +260,21 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   polkit rules still decide who may. This replaces the plan's sd-bus client for udisks: the listing is
   fixture-testable anywhere, and the actions are the ones a person would type. Eject unmounts each mounted
   volume and powers the drive off in one job; volumes the system runs from are never offered.
+  **Media Player** (`src/apps/player.c` over `lp_media.h`, `tests/test_media.c`) plays one file through
+  GStreamer's `playbin` — audio to the default sink, PipeWire in the image — and then the next audio or
+  video file in its folder. Video frames come from an `appsink` as BGRx, which is Cairo's RGB24 byte for byte,
+  and are fitted on black (fast filtering while playing, good when paused); audio shows the cover art
+  (`lp_image_decode`) and tags. GStreamer's threads only write to a pipe the desktop watches through
+  `lp_desktop_add_fd`; frames and bus messages are taken on the desktop's thread, and a 250 ms tick for the
+  scrubber runs only while something plays. Each frame repaints the body: fine for the VM's pixman at small
+  sizes, and the first thing to measure on a Pi.
+  **Calendar** (`src/apps/calendar.c` over `lp_calendar.h`, `tests/test_calendar.c`) shows Month, Week and Day
+  views with an inspector beside them. The date arithmetic is plain C (Hinnant's civil-day conversions, the
+  six-week grid, DST-safe `mktime` for every local midnight, the locale's first weekday from glibc); events
+  are `.ics` files in `$XDG_DATA_HOME/maryui/calendar` through libical, written as floating local time so a
+  repeat stays at 9:00 when the clocks change, and repeats are expanded with libical's recurrence iterator for
+  the range on screen. Another program's files are read but never rewritten, the folder is watched, and a
+  timer moves Today at midnight.
 - **Close animation.** `lp-window-close` (scale .96 + fade over `motion.fast`, `CLOSE` after
   fast + 80 ms) runs for built-in windows. A client that unmaps is gone at once — the compositor
   has no pixels left to fade.

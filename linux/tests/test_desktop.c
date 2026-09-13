@@ -41,7 +41,6 @@ static void on_dirty(lp_desktop *desk, const char *id) { dirty_calls++; snprintf
 static void on_drag(lp_desktop *desk, int begin) { drag_calls += begin ? 1 : 10; }
 static char spawned[64];
 static void on_spawn(lp_desktop *desk, const char *command) { snprintf(spawned, sizeof spawned, "%s", command); }
-static lp_app media_app;   /* the stub under an id the desktop routes to */
 
 static void write_file(const char *rel, const char *text, size_t n) {
     char path[1024];
@@ -96,9 +95,6 @@ LP_TEST(routes_pictures_and_media_to_their_viewers_once_registered) {
     snprintf(pdf, sizeof pdf, "%s/Documents/paper.pdf", root);
     snprintf(mp3, sizeof mp3, "%s/Documents/song.mp3", root);
     snprintf(mp4, sizeof mp4, "%s/Documents/clip.mp4", root);
-    LP_ASSERT_EQ(lp_desktop_open_path(&d, mp4), 0);   /* nothing plays it yet */
-    media_app = stub; media_app.id = "media"; media_app.title = "Media Player";
-    lp_desktop_register_app(&d, &media_app);
     const char *const paths[4] = { png, pdf, mp3, mp4 };
     const char *const apps[4] = { "preview", "preview", "media", "media" };
     for (int i = 0; i < 4; i++) {
@@ -106,7 +102,7 @@ LP_TEST(routes_pictures_and_media_to_their_viewers_once_registered) {
         const lp_window_record *w = &d.wm.windows[d.wm.count - 1];
         LP_ASSERT_STR(w->app_id, apps[i]);
         lp_app_instance *inst = lp_desktop_instance(&d, w->id);
-        LP_ASSERT_STR(i < 2 ? lp_preview_path(inst->state) : opened_path, paths[i]);
+        LP_ASSERT_STR(i < 2 ? lp_preview_path(inst->state) : lp_player_path(inst->state), paths[i]);
     }
     LP_ASSERT_EQ(d.wm.count, 4);
 }
@@ -351,7 +347,7 @@ LP_TEST(spotlight_skips_internal_apps) {
     lp_spotlight_item items[LP_SPOTLIGHT_MAX_ITEMS];
     int n = lp_spotlight_items(&d, items, LP_SPOTLIGHT_MAX_ITEMS);
     for (int i = 0; i < n; i++) { LP_ASSERT(strcmp(items[i].id, "info") != 0); LP_ASSERT(strcmp(items[i].id, "stub") != 0); }
-    LP_ASSERT_EQ(n, 9); /* finder, gallery, about, textedit, calculator, preview, terminal, activity, diskutil */
+    LP_ASSERT_EQ(n, 11); /* finder, gallery, about, textedit, calculator, preview, terminal, activity, diskutil, media, calendar */
 }
 
 static int view_entry(const char *label) {

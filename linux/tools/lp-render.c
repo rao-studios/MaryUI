@@ -36,6 +36,8 @@ static int usage(int status) {
         "       lp-render --terminal <out.png>           Terminal with a short sample session\n"
         "       lp-render --activity <out.png>           Activity Monitor over this machine's /proc\n"
         "       lp-render --diskutil <out.png>           Disk Utility over this machine's drives\n"
+        "       lp-render --player <out.png>             the Media Player with nothing open\n"
+        "       lp-render --calendar <out.png>           Calendar on this month\n"
         "       lp-render --spotlight [QUERY] <out.png>  Spotlight over the desktop: the dock and its command pills, or the results for QUERY\n"
         "       lp-render --spotlight-menu NAME <out.png>  the same with the NAME pill open (rao|file|edit|view|go|window|help)\n"
         "       lp-render --all <dir>                    every preview into <dir>\n"
@@ -283,6 +285,8 @@ int main(int argc, char **argv) {
     if (strcmp(argv[1], "--terminal") == 0 && argc == 3) return render_app(&lp_app_terminal, 0, argv[2]);
     if (strcmp(argv[1], "--activity") == 0 && argc == 3) return render_app(&lp_app_activity, 0, argv[2]);
     if (strcmp(argv[1], "--diskutil") == 0 && argc == 3) return render_app(&lp_app_diskutil, 0, argv[2]);
+    if (strcmp(argv[1], "--player") == 0 && argc == 3) return render_app(&lp_app_player, 0, argv[2]);
+    if (strcmp(argv[1], "--calendar") == 0 && argc == 3) return render_app(&lp_app_calendar, 0, argv[2]);
     if (strcmp(argv[1], "--spotlight") == 0 && argc == 3) return render_spotlight(NULL, NULL, argv[2]);
     if (strcmp(argv[1], "--spotlight") == 0 && argc == 4) return render_spotlight(argv[2], NULL, argv[3]);
     if (strcmp(argv[1], "--spotlight-menu") == 0 && argc == 4) return render_spotlight(NULL, argv[2], argv[3]);
@@ -326,6 +330,10 @@ int main(int argc, char **argv) {
         rc |= render_app(&lp_app_activity, 0, path);
         snprintf(path, sizeof path, "%s/diskutil.png", argv[2]);
         rc |= render_app(&lp_app_diskutil, 0, path);
+        snprintf(path, sizeof path, "%s/player.png", argv[2]);
+        rc |= render_app(&lp_app_player, 0, path);
+        snprintf(path, sizeof path, "%s/calendar.png", argv[2]);
+        rc |= render_app(&lp_app_calendar, 0, path);
         snprintf(path, sizeof path, "%s/spotlight.png", argv[2]);
         rc |= render_spotlight(NULL, NULL, path);
         snprintf(path, sizeof path, "%s/spotlight-menu.png", argv[2]);

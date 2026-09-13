@@ -51,6 +51,8 @@ extern const lp_app lp_app_preview;
 extern const lp_app lp_app_terminal;
 extern const lp_app lp_app_activity;
 extern const lp_app lp_app_diskutil;
+extern const lp_app lp_app_player;
+extern const lp_app lp_app_calendar;
 
 /* TextEdit: replaces the document (for previews). */
 void lp_textedit_set_text(void *state, const char *name, const char *text);
@@ -133,5 +135,32 @@ int lp_diskutil_can(const void *state, int command);
 int lp_diskutil_busy(const void *state);
 const char *lp_diskutil_status(const void *state);
 void lp_diskutil_refresh(void *state);
+
+enum lp_player_command {
+    LP_PLAYER_PLAY_PAUSE, LP_PLAYER_PREVIOUS, LP_PLAYER_NEXT, LP_PLAYER_SKIP_BACK, LP_PLAYER_SKIP_FORWARD,
+    LP_PLAYER_VOLUME_UP, LP_PLAYER_VOLUME_DOWN, LP_PLAYER_SHOW_IN_FINDER,
+};
+/* The Media Player (app id "media"), for tests: its file, its state (an lp_media_state, or -errno when the
+ * file would not open), and its place in the folder's queue. */
+const char *lp_player_path(const void *state);
+int lp_player_state(const void *state);
+int lp_player_queue_position(const void *state, int *count);
+
+enum lp_calendar_command {
+    LP_CALENDAR_NEW_EVENT, LP_CALENDAR_VIEW_DAY, LP_CALENDAR_VIEW_WEEK, LP_CALENDAR_VIEW_MONTH, LP_CALENDAR_TODAY,
+    LP_CALENDAR_PREVIOUS, LP_CALENDAR_NEXT, LP_CALENDAR_SAVE_EVENT, LP_CALENDAR_DELETE_EVENT, LP_CALENDAR_CANCEL_EDIT,
+};
+/* Calendar, for tests: another calendar folder, the day shown, the view (0 day, 1 week, 2 month), the editor
+ * filled in as a person would type it, and what it says back. */
+void lp_calendar_app_set_dir(void *state, const char *dir);
+void lp_calendar_app_show(void *state, int year, int month, int day);
+void lp_calendar_app_shown(const void *state, int *year, int *month, int *day);
+int lp_calendar_app_view(const void *state);
+int lp_calendar_app_editing(const void *state);
+int lp_calendar_app_event_count(const void *state);
+const char *lp_calendar_app_message(const void *state);
+void lp_calendar_app_fill(void *state, const char *title, const char *start_date, const char *start_time,
+                          const char *end_date, const char *end_time, int all_day, int repeat);
+void lp_calendar_app_edit(void *state, int index);
 
 #endif

@@ -47,6 +47,38 @@ static cairo_surface_t *surface_from_pixbuf(GdkPixbuf *pb) {
 }
 #endif
 
+#ifndef HAVE_PIXBUF
+struct png_bytes { const unsigned char *data; size_t len, at; };
+static cairo_status_t read_png_bytes(void *closure, unsigned char *out, unsigned int length) {
+    struct png_bytes *b = closure;
+    if (b->at + length > b->len) return CAIRO_STATUS_READ_ERROR;
+    memcpy(out, b->data + b->at, length);
+    b->at += length;
+    return CAIRO_STATUS_SUCCESS;
+}
+#endif
+
+cairo_surface_t *lp_image_decode(const unsigned char *data, size_t len) {
+    if (!data || !len) return NULL;
+    cairo_surface_t *s = NULL;
+#ifdef HAVE_PIXBUF
+    GdkPixbufLoader *loader = gdk_pixbuf_loader_new();
+    GError *err = NULL;
+    int ok = gdk_pixbuf_loader_write(loader, data, len, &err);
+    if (err) { g_error_free(err); err = NULL; }
+    ok = gdk_pixbuf_loader_close(loader, &err) && ok;   /* closed either way, or the loader leaks */
+    if (err) g_error_free(err);
+    GdkPixbuf *pb = ok ? gdk_pixbuf_loader_get_pixbuf(loader) : NULL;
+    if (pb) s = surface_from_pixbuf(pb);
+    g_object_unref(loader);
+#else
+    struct png_bytes bytes = { data, len, 0 };
+    s = cairo_image_surface_create_from_png_stream(read_png_bytes, &bytes);
+#endif
+    if (s && !surface_ok(s)) { cairo_surface_destroy(s); s = NULL; }
+    return s;
+}
+
 static int open_picture(lp_image_doc *doc, const char *path) {
 #ifdef HAVE_PIXBUF
     int w = 0, h = 0;

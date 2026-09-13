@@ -34,6 +34,9 @@ void lp_image_close(lp_image_doc *doc);
 lp_size lp_image_page_size(const lp_image_doc *doc, int page);
 /* Draws the page into r, turned quarter_turns clockwise; r is the turned box. */
 void lp_image_draw(cairo_t *cr, lp_image_doc *doc, int page, lp_rect r, int quarter_turns);
+/* An encoded picture held in memory (a song's cover art): gdk-pixbuf's formats, or PNG alone
+ * without it. A new ARGB32 surface, or NULL when it will not decode. */
+cairo_surface_t *lp_image_decode(const unsigned char *data, size_t len);
 
 lp_size lp_image_rotated(lp_size s, int quarter_turns);
 /* The scale that fits content, turned, inside viewport less padding on each side; never above 1. */

@@ -34,6 +34,8 @@ void lp_desktop_register_builtin_apps(lp_desktop *d) {
     lp_desktop_register_app(d, &lp_app_terminal);
     lp_desktop_register_app(d, &lp_app_activity);
     lp_desktop_register_app(d, &lp_app_diskutil);
+    lp_desktop_register_app(d, &lp_app_player);
+    lp_desktop_register_app(d, &lp_app_calendar);
 }
 
 const lp_app *lp_desktop_find_app(const lp_desktop *d, const char *app_id) {

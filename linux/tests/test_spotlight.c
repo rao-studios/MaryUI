@@ -25,16 +25,18 @@ LP_TEST(empty_query_shows_dock) {
     lp_desktop_open_app(&d, "finder");
     lp_spotlight_item r[LP_SPOTLIGHT_MAX_RESULTS];
     int n = results("", r);
-    LP_ASSERT_EQ(n, 4);   /* the pinned apps only: Gallery, About and Calculator are found by typing */
+    LP_ASSERT_EQ(n, 6);   /* the pinned apps only: Gallery, About, Calculator and the utilities are found by typing */
     LP_ASSERT_STR(r[0].title, "Finder");
     LP_ASSERT_STR(r[1].title, "TextEdit");
     LP_ASSERT_STR(r[2].title, "Preview");
     LP_ASSERT_STR(r[3].title, "Terminal");
     LP_ASSERT_EQ(r[3].kind, LP_SPOT_APP);
+    LP_ASSERT_STR(r[4].title, "Media Player");
+    LP_ASSERT_STR(r[5].title, "Calendar");
     LP_ASSERT_EQ(r[0].running, 1);
     LP_ASSERT_EQ(r[1].running, 0);
     for (int i = 0; i < n; i++) LP_ASSERT(r[i].kind != LP_SPOT_WINDOW);
-    LP_ASSERT_EQ(results("   ", r), 4);
+    LP_ASSERT_EQ(results("   ", r), 6);
 }
 
 LP_TEST(filters_apps_by_title_prefix_and_substring) {
@@ -54,12 +56,14 @@ LP_TEST(ranks_prefix_matches_first) {
     setup();
     lp_spotlight_item r[LP_SPOTLIGHT_MAX_RESULTS];
     int n = results("a", r);
-    LP_ASSERT_EQ(n, 5);
+    LP_ASSERT_EQ(n, 7);
     LP_ASSERT_STR(r[0].title, "About");
     LP_ASSERT_STR(r[1].title, "Activity Monitor");
     LP_ASSERT_STR(r[2].title, "Gallery");
     LP_ASSERT_STR(r[3].title, "Calculator");
     LP_ASSERT_STR(r[4].title, "Terminal");
+    LP_ASSERT_STR(r[5].title, "Media Player");
+    LP_ASSERT_STR(r[6].title, "Calendar");
 }
 
 LP_TEST(is_case_insensitive) {
@@ -138,7 +142,7 @@ LP_TEST(ctrl_space_toggles_and_escape_closes) {
     LP_ASSERT_EQ(d.spotlight.selection, 1);
     LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_Up, 0), 1);
     LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_Up, 0), 1);
-    LP_ASSERT_EQ(d.spotlight.selection, 3);
+    LP_ASSERT_EQ(d.spotlight.selection, 5);
     LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_x, 0), 0); /* the bar's */
     LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_w, LP_MOD_CTRL), 0); /* window shortcuts are suspended */
     LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_Escape, 0), 1);
