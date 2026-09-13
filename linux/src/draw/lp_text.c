@@ -143,6 +143,30 @@ static PangoLayout *make_layout(cairo_t *cr, const char *text, const lp_text_sty
     return layout;
 }
 
+float lp_text_cap_middle(cairo_t *cr, const lp_text_style *style) {
+    enum { SLOTS = 16 };
+    static struct { enum lp_font font; float size_px; int weight; float middle; } cache[SLOTS];
+    static int count, next;
+    for (int i = 0; i < count; i++) {
+        if (cache[i].font == style->font && cache[i].size_px == style->size_px && cache[i].weight == style->weight) return cache[i].middle;
+    }
+    lp_text_style probe = lp_text_style_default();
+    probe.font = style->font;
+    probe.size_px = style->size_px;
+    probe.weight = style->weight;
+    PangoLayout *layout = make_layout_ex(cr ? cr : scratch_cr(), "H", -1, &probe, 0, 1, 0);
+    PangoRectangle ink, logical;
+    pango_layout_get_extents(layout, &ink, &logical);
+    g_object_unref(layout);
+    float middle = (float)((ink.y + ink.height / 2.0) / PANGO_SCALE);
+    int slot = count < SLOTS ? count++ : (next++ % SLOTS);
+    cache[slot].font = style->font;
+    cache[slot].size_px = style->size_px;
+    cache[slot].weight = style->weight;
+    cache[slot].middle = middle;
+    return middle;
+}
+
 lp_size lp_text_measure(cairo_t *cr, const char *text, const lp_text_style *style) {
     PangoLayout *layout = make_layout(cr, text, style, 0);
     PangoRectangle ink, logical;
@@ -157,7 +181,8 @@ void lp_text_draw(cairo_t *cr, const char *text, lp_rect r, const lp_text_style 
     double x = r.x;
     if (align == LP_ALIGN_CENTER) x = r.x + (r.w - logical.width) / 2.0;
     else if (align == LP_ALIGN_END) x = r.x + r.w - logical.width;
-    double y = r.y + (r.h - logical.height) / 2.0;
+    /* the capitals' middle on the rect's: Nimbus Sans's line box would leave them 2px high */
+    double y = r.y + r.h / 2.0 - lp_text_cap_middle(cr, style);
     x = floor(x + 0.5);
     y = floor(y + 0.5);
     if (style->emboss) {
@@ -288,6 +313,8 @@ int lp_text_layout_range_rects(const lp_text_layout *l, int start, int end, lp_r
     pango_layout_iter_free(iter);
     return n;
 }
+
+float lp_text_layout_baseline(const lp_text_layout *l) { return (float)pango_layout_get_baseline(l->layout) / PANGO_SCALE; }
 
 void lp_text_layout_draw(cairo_t *cr, const lp_text_layout *l, float x, float y, lp_color color) {
     cairo_move_to(cr, x, y);

@@ -1,6 +1,7 @@
 /* Text through Pango: the three token font stacks (fontconfig picks the first
- * installed family, so the web's macOS names fall through to Inter, P052 and
- * JetBrains Mono on Linux), absolute pixel sizes, weights, the embossed
+ * family it can serve: on Linux the UI stack's Helvetica is Nimbus Sans, through
+ * fonts-urw-base35's alias, before Inter is reached; P052 and JetBrains Mono
+ * stand in for the others), absolute pixel sizes, weights, the embossed
  * label idiom (`text-shadow: 0 1px 0 ink.emboss`), tabular figures,
  * letter-spacing, ellipsis. */
 #ifndef MARYUI_LP_TEXT_H
@@ -30,8 +31,12 @@ typedef struct lp_text_style {
 lp_text_style lp_text_style_default(void);
 
 lp_size lp_text_measure(cairo_t *cr, const char *text, const lp_text_style *style);
-/* Draws vertically centred in `r`, horizontally per `align`. */
+/* Draws with its capitals centred vertically in `r` (not its line box, whose ascent and descent are the
+ * font's own), horizontally per `align`. */
 void lp_text_draw(cairo_t *cr, const char *text, lp_rect r, const lp_text_style *style, enum lp_align align);
+/* How far below the top of a line the middle of a style's capitals sits (the ink of "H"), cached per
+ * font, size and weight: what lp_text_draw centres, for anything that places text by hand. */
+float lp_text_cap_middle(cairo_t *cr, const lp_text_style *style);
 /* Draws with the baseline origin at (x, y) — for glyph-level layouts. */
 void lp_text_draw_at(cairo_t *cr, const char *text, float x, float y, const lp_text_style *style);
 
@@ -60,5 +65,7 @@ int lp_text_layout_move_line(const lp_text_layout *l, int index, int delta, floa
 /* The rectangles covering bytes [start, end), one or more per line. Returns the count. */
 int lp_text_layout_range_rects(const lp_text_layout *l, int start, int end, lp_rect *out, int max);
 void lp_text_layout_draw(cairo_t *cr, const lp_text_layout *l, float x, float y, lp_color color);
+/* The first line's baseline below the layout's top. */
+float lp_text_layout_baseline(const lp_text_layout *l);
 
 #endif

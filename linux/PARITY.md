@@ -284,6 +284,13 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   `timedatectl`, the computer's name through `hostnamectl`, each an `lp_job` whose output `lp_sysinfo` parses.
   Displays are read from the compositor (`lp_desktop.displays`) and are not changed. MaryPi's polkit rule lets
   the sudo group take these actions without an agent, which the session does not have.
+- **D16 — text centres on its capitals.** CSS centres a line box, and with the web's SF Pro a line
+  box's middle and its capitals' middle are within a fraction of a pixel. Pango on Linux resolves the
+  UI stack to Nimbus Sans (fontconfig's Helvetica), whose ascent and descent put the capitals 2px
+  above the box's middle, so text in every field, segment, button and pill sat high. `lp_text_draw`
+  therefore centres the ink middle of "H" for the style (`lp_text_cap_middle`, cached per font, size
+  and weight), which reads as the web does whatever font fontconfig picks; TextArea's placeholder
+  sits on the layout's real baseline (`lp_text_layout_baseline`) rather than 0.78 of the line.
 - **Close animation.** `lp-window-close` (scale .96 + fade over `motion.fast`, `CLOSE` after
   fast + 80 ms) runs for built-in windows. A client that unmaps is gone at once — the compositor
   has no pixels left to fade.
