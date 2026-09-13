@@ -10,6 +10,8 @@
 
 static void on_mary(lp_desktop *d, unsigned what) {
     struct mui_server *server = d->host;
+    /* maryd (re)connected: tell it what each app lets Mary do. */
+    if ((what & LP_MARY_CHANGED_CONNECTION) && lp_mary_connected(&d->mary)) lp_desktop_publish_skills(d);
     if (what & LP_MARY_WAKE) {
         lp_desktop_mary_wake(d);
         if (!server->spotlight) {

@@ -7,6 +7,8 @@
 #ifndef MARYUI_LP_SETTINGS_H
 #define MARYUI_LP_SETTINGS_H
 
+#include <stddef.h>
+
 #include "maryui/lp_molten.h"
 #include "maryui/lp_types.h"
 
@@ -45,6 +47,8 @@ typedef struct lp_ramp {
 
 lp_settings lp_settings_defaults(void);
 /* Reads the file when it exists; defaults otherwise. */
+/* $XDG_CONFIG_HOME/maryui/<name> (else ~/.config/maryui/<name>), creating the folder when mkdirs is set. */
+void lp_config_path(const char *name, char *out, size_t n, int mkdirs);
 lp_settings lp_settings_load(void);
 int lp_settings_save(const lp_settings *s);
 lp_accent lp_settings_accent(const lp_settings *s);

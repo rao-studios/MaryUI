@@ -309,6 +309,17 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   maryd's client are `lp_mary` (json-c: without it there is no orb), the keys `lp_desktop_ask_mary` /
   `lp_desktop_mary_wake`, the drawing `SpotlightChat.c`; `lp_text_field_opts.trailing_w` and `.icon_monogram`
   exist for it. The web has no maryd and no chat.
+- **D20 — apps have skills, and Mary uses them through the apps.** Linux only. An `lp_app` declares what
+  Mary can do with it (`skills`: an id, a title, a one-line summary, a JSON Schema for the arguments, and
+  whether it reads, acts or cannot be undone) and performs one with `perform`, the same code its menus run —
+  nothing reads the screen or synthesises input. System Settings keeps a policy per app in `skills.conf`
+  (`<app>=on|off`, `<app>.ask=never|changes|always`, `<app>.<skill>=on|off`), and before any `perform` runs
+  `lp_desktop_skill_decide` applies the rule maryd mirrors: unknown, denied, needs confirmation (destructive,
+  asks always, or asks before changes and the skill acts), otherwise allowed. The desktop publishes
+  `skills{apps}` to maryd on connect and after every policy change, and answers `skill.invoke` with
+  `skill.result`. Settings (`open_pane`, which only shows a pane), the Media Player (`play_pause`) and Calendar
+  (`events_today`, read from the model with no window) carry the first skills. There is no confirmation UI
+  yet, so a call that needs one is refused as `needs_confirmation`. The web has no Mary.
 - **Close animation.** `lp-window-close` (scale .96 + fade over `motion.fast`, `CLOSE` after
   fast + 80 ms) runs for built-in windows. A client that unmaps is gone at once — the compositor
   has no pixels left to fade.

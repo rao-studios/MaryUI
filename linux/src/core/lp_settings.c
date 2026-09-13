@@ -16,7 +16,7 @@ lp_settings lp_settings_defaults(void) {
                           .clock = 1, .key_repeat_rate = 25, .key_repeat_delay = 600 };
 }
 
-static void config_path(char *out, size_t n, int mkdirs) {
+void lp_config_path(const char *name, char *out, size_t n, int mkdirs) {
     const char *xdg = getenv("XDG_CONFIG_HOME");
     char dir[1024];
     if (xdg && *xdg) snprintf(dir, sizeof dir, "%s/maryui", xdg);
@@ -28,8 +28,10 @@ static void config_path(char *out, size_t n, int mkdirs) {
         if (slash) { *slash = 0; mkdir(parent, 0755); }
         mkdir(dir, 0755);
     }
-    snprintf(out, n, "%s/settings.conf", dir);
+    snprintf(out, n, "%s/%s", dir, name);
 }
+
+static void config_path(char *out, size_t n, int mkdirs) { lp_config_path("settings.conf", out, n, mkdirs); }
 
 lp_settings lp_settings_load(void) {
     lp_settings s = lp_settings_defaults();

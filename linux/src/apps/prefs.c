@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -675,11 +676,49 @@ static void prefs_destroy(void *state) {
     free(p);
 }
 
+/* MARK: - Mary's skills (PARITY D20) */
+
+/* LP_PREFS_* order: the words Mary names a pane by. */
+static const char *const PANE_SLUGS[] = { "general", "dock", "displays", "keyboard", "sound", "network", "time", "users", "about" };
+
+static const lp_skill prefs_skills[] = {
+    { "open_pane", "Open a pane", "Opens System Settings on one of its panes; it changes no setting.",
+      "{\"type\":\"object\",\"properties\":{\"pane\":{\"type\":\"string\",\"enum\":[\"general\",\"dock\",\"displays\",\"keyboard\",\"sound\",\"network\",\"time\",\"users\",\"about\"]}},\"required\":[\"pane\"]}",
+      LP_SKILL_READ },
+};
+
+static int prefs_perform(void *state, lp_desktop *d, const char *skill, const char *args, char *result, size_t n) {
+    char name[32];
+    if (strcmp(skill, "open_pane") != 0) return -ENOENT;
+    if (!lp_skill_arg_string(args, "pane", name, sizeof name)) {
+        snprintf(result, n, "Which pane? general, dock, displays, keyboard, sound, network, time, users or about.");
+        return -EINVAL;
+    }
+    int pane = -1;
+    for (int i = 0; i < PANE_COUNT && pane < 0; i++)
+        if (strcasecmp(name, PANE_SLUGS[i]) == 0 || strcasecmp(name, PANES[i].name) == 0) pane = i;
+    if (pane < 0) {
+        snprintf(result, n, "System Settings has no pane called %.31s.", name);
+        return -EINVAL;
+    }
+    lp_desktop_open_app(d, "settings");     /* one window: opened, or brought forward */
+    struct prefs *p = lp_desktop_app_state(d, "settings");
+    if (!p) {
+        snprintf(result, n, "System Settings would not open.");
+        return -EIO;
+    }
+    prefs_command(p, d, pane);
+    if (d->on_app_dirty) d->on_app_dirty(d, p->window_id);
+    snprintf(result, n, "{\"pane\":\"%s\"}", PANE_SLUGS[pane]);
+    return 0;
+}
+
 const lp_app lp_app_prefs = {
     .id = "settings", .title = "System Settings", .name = "Settings", .aka = "System Settings", .icon = LP_ICON_GEAR, .dock = 1,
     .default_rect = { NAN, NAN, 800, 540 }, .min_size = { 660, 440 }, .singleton = 1, .resizable = 1,
     .create = prefs_create, .paint = prefs_paint, .destroy = prefs_destroy,
     .command = prefs_command, .menu_entries = prefs_menu_entries,
+    .skills = prefs_skills, .skill_count = 1, .perform = prefs_perform,
 };
 
 /* MARK: - Tests, and the pane's own actions */

@@ -369,11 +369,31 @@ static void player_destroy(void *state) {
     free(p);
 }
 
+/* MARK: - Mary's skills (PARITY D20) */
+
+static const lp_skill player_skills[] = {
+    { "play_pause", "Play or pause", "Plays what the Media Player has open, or pauses it.", NULL, LP_SKILL_ACT },
+};
+
+static int player_perform(void *state, lp_desktop *d, const char *skill, const char *args, char *result, size_t n) {
+    struct player *p = state;
+    if (strcmp(skill, "play_pause") != 0) return -ENOENT;
+    if (!p || !p->media) {
+        snprintf(result, n, "Nothing is open in the Media Player.");
+        return -ENOENT;
+    }
+    player_command(p, d, LP_PLAYER_PLAY_PAUSE);
+    dirty(p);
+    snprintf(result, n, "{\"playing\":%s}", lp_media_state(p->media) == LP_MEDIA_PLAYING ? "true" : "false");
+    return 0;
+}
+
 const lp_app lp_app_player = {
     .id = "media", .title = "Media Player", .name = "Media Player", .icon = LP_ICON_PLAY, .object = "appMusic", .hidden = 1, .dock = 1,
     .default_rect = { NAN, NAN, 640, 440 }, .min_size = { 420, 300 }, .singleton = 0, .resizable = 1,
     .create = player_create, .paint = player_paint, .destroy = player_destroy,
     .open = player_open, .command = player_command, .menu_entries = player_menu_entries,
+    .skills = player_skills, .skill_count = 1, .perform = player_perform,
 };
 
 /* MARK: - Tests */

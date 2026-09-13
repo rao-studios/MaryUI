@@ -10,6 +10,7 @@
 #include "maryui/lp_ui.h"
 
 struct lp_desktop;
+struct lp_skill;
 
 typedef struct lp_app {
     const char *id;
@@ -40,6 +41,12 @@ typedef struct lp_app {
     int (*notify)(void *state, struct lp_desktop *desktop, const char *dir);
     /* The title a fresh window should carry when none was given (the Finder: its folder's name). */
     void (*title_of)(void *state, char *out, size_t n);
+    /* What Mary can do with the app (lp_skill.h, PARITY D20): its skills, and the hook that performs one —
+     * the same code its menus run. state is NULL while the app has no window; perform opens one when the
+     * skill needs it. 0 with the result as JSON text in `result` (or ""), or -errno with a sentence there. */
+    const struct lp_skill *skills;
+    int skill_count;
+    int (*perform)(void *state, struct lp_desktop *desktop, const char *skill, const char *args_json, char *result, size_t n);
 } lp_app;
 
 extern const lp_app lp_app_about;

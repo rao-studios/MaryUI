@@ -667,11 +667,53 @@ static void calendar_destroy(void *state) {
     free(c);
 }
 
+/* MARK: - Mary's skills (PARITY D20) */
+
+static const lp_skill calendar_skills[] = {
+    { "events_today", "Today's events", "Lists today's events with their times and places, from the calendar on disk.", NULL, LP_SKILL_READ },
+};
+
+/* Read from the model, not the window: Mary can ask without Calendar being open. */
+static int calendar_perform(void *state, lp_desktop *d, const char *skill, const char *args, char *result, size_t n) {
+    if (strcmp(skill, "events_today") != 0) return -ENOENT;
+    if (!lp_calendar_available()) {
+        snprintf(result, n, "Calendar was built without libical.");
+        return -ENOSYS;
+    }
+    char dir[512];
+    lp_calendar_default_dir(dir, sizeof dir);
+    lp_calendar cal;
+    memset(&cal, 0, sizeof cal);
+    lp_calendar_load(&cal, dir);           /* no folder yet: no events */
+    lp_date today = lp_date_today();
+    lp_occurrence *occ = NULL;
+    int count = lp_calendar_occurrences(&cal, lp_date_at(today, 0), lp_date_at(lp_date_add_days(today, 1), 0), &occ);
+    size_t used = (size_t)snprintf(result, n, "{\"date\":\"%04d-%02d-%02d\",\"events\":[", today.year, today.month, today.day);
+    for (int i = 0; i < count && used < n; i++) {
+        const lp_event *e = &cal.events[occ[i].event];
+        char title[400], place[400], start[8], end[8];
+        struct tm tm;
+        time_t t = occ[i].start;
+        strftime(start, sizeof start, "%H:%M", localtime_r(&t, &tm));
+        t = occ[i].end;
+        strftime(end, sizeof end, "%H:%M", localtime_r(&t, &tm));
+        lp_skill_json_escape(e->title, title, sizeof title);
+        lp_skill_json_escape(e->location, place, sizeof place);
+        used += (size_t)snprintf(result + used, n - used, "%s{\"title\":\"%s\",\"start\":\"%s\",\"end\":\"%s\",\"all_day\":%s,\"location\":\"%s\"}",
+                                 i ? "," : "", title, start, end, e->all_day ? "true" : "false", place);
+    }
+    if (used < n) snprintf(result + used, n - used, "]}");
+    free(occ);
+    lp_calendar_free(&cal);
+    return used + 2 < n ? 0 : -ENOBUFS;
+}
+
 const lp_app lp_app_calendar = {
     .id = "calendar", .title = "Calendar", .name = "Calendar", .icon = LP_ICON_CLOCK, .object = "appCalendar", .dock = 1,
     .default_rect = { NAN, NAN, 900, 600 }, .min_size = { 640, 440 }, .singleton = 1, .resizable = 1,
     .create = calendar_create, .paint = calendar_paint, .destroy = calendar_destroy,
     .command = calendar_command, .menu_entries = calendar_menu_entries, .notify = calendar_notify,
+    .skills = calendar_skills, .skill_count = 1, .perform = calendar_perform,
 };
 
 /* MARK: - Tests */

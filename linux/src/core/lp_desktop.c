@@ -16,6 +16,8 @@ void lp_desktop_init(lp_desktop *d, lp_rect bounds, void *host) {
     d->menu_active = -1;
     lp_spotlight_init(&d->spotlight);
     lp_mary_init(&d->mary, d);
+    d->mary.on_skill_invoke = lp_desktop_on_skill_invoke;
+    lp_skill_policy_load(&d->skill_policy);
     d->host = host;
     snprintf(d->about_label, sizeof d->about_label, "About %s", d->branding.pretty_name);
 }

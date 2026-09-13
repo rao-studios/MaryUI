@@ -14,6 +14,7 @@
 #include "maryui/lp_mary.h"
 #include "maryui/lp_menus.h"
 #include "maryui/lp_settings.h"
+#include "maryui/lp_skill.h"
 #include "maryui/lp_spotlight.h"
 #include "maryui/lp_wm.h"
 
@@ -90,6 +91,7 @@ typedef struct lp_desktop {
     lp_mary mary;             /* the conversation with maryd, shown in Spotlight */
     int spotlight_chat;       /* Spotlight shows that conversation instead of the dock (Linux, PARITY D18) */
     lp_scroll_state spotlight_chat_scroll;
+    lp_skill_policy skill_policy;  /* what Mary may do with each app (skills.conf, PARITY D20) */
     char about_label[160];
     lp_desktop_change_fn on_change;   /* the WM changed: the host syncs its windows */
     void (*on_settings)(struct lp_desktop *d);
