@@ -282,7 +282,11 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   keyboard and pointer (`mui_input_apply_settings`, libinput for the pointer) — and the system's: Sound through
   `wpctl`, Network through `ip` and `iwctl` (MaryPi adds iwd with networkd addressing), Date & Time through
   `timedatectl`, the computer's name through `hostnamectl`, each an `lp_job` whose output `lp_sysinfo` parses.
-  Displays are read from the compositor (`lp_desktop.displays`) and are not changed. MaryPi's polkit rule lets
+  Displays are read from the compositor (`lp_desktop.displays`) and are not changed. Every pane is two flush-left columns: labels, and each group's
+  title (small, semibold and upper case, as the sidebar titles its own), start at the heading's edge, and the
+  controls line up after them (`LP_PREFS_LABEL_W`); what an action said sits in a footer under the pane rather
+  than over it. `lp_prefs_trace` reports a pane's layout to its tests, and `lp-render --prefs-pane` draws any
+  pane with fixtures. MaryPi's polkit rule lets
   the sudo group take these actions without an agent, which the session does not have.
 - **D16 — text centres on its capitals.** CSS centres a line box, and with the web's SF Pro a line
   box's middle and its capitals' middle are within a fraction of a pixel. Pango on Linux resolves the

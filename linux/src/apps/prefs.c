@@ -32,7 +32,8 @@
 #include "maryui/lp_text.h"
 #include "maryui/lp_tokens.h"
 
-#define LABEL_W 170
+#define LABEL_W LP_PREFS_LABEL_W
+#define FOOTER_H 28
 #define ROW_H 30
 #define NETWORK_REFRESH_MS 5000
 
@@ -78,6 +79,8 @@ struct prefs {
     /* Mary: the key only until Save hands it to maryd, then zeroed */
     lp_text_buffer mary_key;
     char mary_status[160];
+    lp_prefs_trace_fn trace;        /* tests: where each part of a pane is laid out */
+    void *trace_user;
 };
 
 static const struct { const char *name; lp_icon icon; const char *section; } PANES[] = {
@@ -166,7 +169,6 @@ static void job_done(int status, const char *output, void *user) {
         int muted;
         p->sound_known = status == 0 && lp_sysinfo_parse_volume(output, &volume, &muted);
         if (p->sound_known) { p->volume = (float)fmin(100, round(volume * 100)); p->muted = muted; }
-        else snprintf(p->message, sizeof p->message, "PipeWire is not answering, so sound cannot be changed here.");
         break;
     }
     case JOB_VOLUME_SET:
@@ -328,35 +330,101 @@ static void prefs_command(void *state, lp_desktop *d, int cmd) {
 
 /* MARK: - Painting helpers */
 
+/* Every pane is two flush-left columns: labels, and each group's title, start at the heading's edge, and the
+ * controls line up LABEL_W in. What a pane lays out is reported to lp_prefs_trace as it goes. */
+static struct prefs *painting;          /* the pane being laid out */
+static int group_open;                  /* a group has begun since the heading */
+
+static void trace_part(enum lp_prefs_part part, lp_rect r, const char *text) {
+    if (painting && painting->trace) painting->trace(part, r, text, painting->trace_user);
+}
+
 static void heading(lp_ctx *ctx, const char *text, float x, float *y, float w) {
+    lp_rect r = LP_RECT(x, *y, w, 28);
+    trace_part(LP_PREFS_PART_HEADING, r, text);
+    group_open = 0;
     if (ctx->pass == LP_PASS_DRAW && ctx->cr) {
         lp_text_style st = lp_text_style_default();
         st.size_px = LP_TEXT_XL;
         st.weight = LP_TEXT_WEIGHT_BOLD;
         st.emboss = 1;
-        lp_text_draw(ctx->cr, text, LP_RECT(x, *y, w, 28), &st, LP_ALIGN_START);
+        lp_text_draw(ctx->cr, text, r, &st, LP_ALIGN_START);
     }
     *y += 28 + LP_SPACE_4;
 }
 
+/* A group's title, set as the sidebar sets its own (lp_sidebar_section): small, semibold, upper case. */
+static void section(lp_ctx *ctx, const char *title, float x, float *y, float w) {
+    if (group_open) *y += LP_SPACE_4;
+    group_open = 1;
+    lp_rect r = LP_RECT(x, *y, w, 16);
+    trace_part(LP_PREFS_PART_SECTION, r, title);
+    if (ctx->pass == LP_PASS_DRAW && ctx->cr) {
+        lp_text_style st = lp_text_style_default();
+        st.size_px = LP_TEXT_XS;
+        st.weight = LP_TEXT_WEIGHT_SEMIBOLD;
+        st.letter_spacing = LP_TEXT_XS * 0.04f;
+        st.uppercase = 1;
+        st.color = LP_INK_TERTIARY;
+        lp_text_draw(ctx->cr, title, r, &st, LP_ALIGN_START);
+    }
+    *y += 16 + LP_SPACE_1;
+}
+
+/* A smaller group inside a section: one app among Mary's skills. */
+static void subheading(lp_ctx *ctx, const char *text, float x, float *y, float w) {
+    *y += LP_SPACE_2;
+    lp_rect r = LP_RECT(x, *y, w, 20);
+    trace_part(LP_PREFS_PART_SECTION, r, text);
+    if (ctx->pass == LP_PASS_DRAW && ctx->cr) {
+        lp_text_style st = lp_text_style_default();
+        st.weight = LP_TEXT_WEIGHT_BOLD;
+        st.emboss = 1;
+        lp_text_draw(ctx->cr, text, r, &st, LP_ALIGN_START);
+    }
+    *y += 20 + LP_SPACE_1;
+}
+
 static void label(lp_ctx *ctx, const char *text, float x, float y) {
+    lp_rect r = LP_RECT(x, y, LABEL_W - LP_SPACE_3, ROW_H);
+    trace_part(LP_PREFS_PART_LABEL, r, text);
     if (ctx->pass != LP_PASS_DRAW || !ctx->cr) return;
     lp_text_style st = lp_text_style_default();
     st.size_px = LP_TEXT_SM;
     st.color = LP_INK_SECONDARY;
-    lp_text_draw(ctx->cr, text, LP_RECT(x, y, LABEL_W - LP_SPACE_3, ROW_H), &st, LP_ALIGN_END);
+    st.ellipsize = 1;
+    lp_text_draw(ctx->cr, text, r, &st, LP_ALIGN_START);
+}
+
+/* A row's first control, in the second column. */
+static lp_rect control_at(lp_rect r) {
+    trace_part(LP_PREFS_PART_CONTROL, r, NULL);
+    return r;
 }
 
 static void value_text(lp_ctx *ctx, const char *text, float x, float y, float w) {
+    lp_rect r = LP_RECT(x, y, w, ROW_H);
+    trace_part(LP_PREFS_PART_CONTROL, r, text);
     if (ctx->pass != LP_PASS_DRAW || !ctx->cr) return;
     lp_text_style st = lp_text_style_default();
     st.size_px = LP_TEXT_SM;
+    st.ellipsize = 1;
+    lp_text_draw(ctx->cr, text, r, &st, LP_ALIGN_START);
+}
+
+/* Quiet words after a row's control: what a skill does, what a switch listens for. */
+static void aside(lp_ctx *ctx, const char *text, float x, float y, float w) {
+    if (ctx->pass != LP_PASS_DRAW || !ctx->cr || w <= 0) return;
+    lp_text_style st = lp_text_style_default();
+    st.size_px = LP_TEXT_XS;
+    st.color = LP_INK_TERTIARY;
     st.ellipsize = 1;
     lp_text_draw(ctx->cr, text, LP_RECT(x, y, w, ROW_H), &st, LP_ALIGN_START);
 }
 
 static void note(lp_ctx *ctx, const char *text, float x, float *y, float w) {
     if (!text[0]) return;
+    trace_part(LP_PREFS_PART_NOTE, LP_RECT(x, *y, w, ROW_H), text);
     if (ctx->pass == LP_PASS_DRAW && ctx->cr) {
         lp_text_style st = lp_text_style_default();
         st.size_px = LP_TEXT_XS;
@@ -370,21 +438,24 @@ static void note(lp_ctx *ctx, const char *text, float x, float *y, float w) {
 static int segmented_row(lp_ctx *ctx, lp_id id, const char *name, float x, float *y, const lp_segment *options, int n, int *index) {
     label(ctx, name, x, *y);
     lp_size s = lp_segmented_measure(ctx, options, n, LP_CONTROL_SM);
-    int changed = lp_segmented(ctx, id, x + LABEL_W, *y + (ROW_H - s.h) / 2, options, n, index, LP_CONTROL_SM);
+    lp_rect r = control_at(LP_RECT(x + LABEL_W, *y + (ROW_H - s.h) / 2, s.w, s.h));
+    int changed = lp_segmented(ctx, id, r.x, r.y, options, n, index, LP_CONTROL_SM);
     *y += ROW_H + LP_SPACE_1;
     return changed;
 }
 
 static int toggle_row(lp_ctx *ctx, lp_id id, const char *name, float x, float *y, int *on) {
     label(ctx, name, x, *y);
-    int changed = lp_toggle(ctx, id, x + LABEL_W, *y + (ROW_H - 20) / 2, on, 0);
+    lp_rect r = control_at(LP_RECT(x + LABEL_W, *y + (ROW_H - 20) / 2, LP_TOGGLE_W, LP_TOGGLE_H));
+    int changed = lp_toggle(ctx, id, r.x, r.y, on, 0);
     *y += ROW_H + LP_SPACE_1;
     return changed;
 }
 
 static int slider_row(lp_ctx *ctx, lp_id id, const char *name, float x, float *y, float w, float *value, lp_slider_opts opts) {
     label(ctx, name, x, *y);
-    int changed = lp_slider(ctx, id, LP_RECT(x + LABEL_W, *y + (ROW_H - LP_SLIDER_H) / 2, fmin(320, w - LABEL_W), LP_SLIDER_H), value, opts);
+    lp_rect r = control_at(LP_RECT(x + LABEL_W, *y + (ROW_H - LP_SLIDER_H) / 2, fmin(320, w - LABEL_W), LP_SLIDER_H));
+    int changed = lp_slider(ctx, id, r, value, opts);
     *y += ROW_H + LP_SPACE_1;
     return changed;
 }
@@ -396,6 +467,7 @@ static void run(lp_desktop *d, enum lp_command command, int arg) { if (d) lp_des
 static float pane_general(lp_ctx *ctx, struct prefs *p, lp_desktop *d, float x, float y, float w, lp_id base) {
     lp_settings s = d ? d->settings : lp_settings_defaults();
     heading(ctx, "General", x, &y, w);
+    section(ctx, "Appearance", x, &y, w);
     static const lp_segment ACCENTS[2] = { { "Blue", LP_ICON_COUNT }, { "Graphite", LP_ICON_COUNT } };
     int accent = s.accent;
     if (segmented_row(ctx, lp_id_index(base, 1), "Accent", x, &y, ACCENTS, 2, &accent)) run(d, LP_CMD_SET_ACCENT, accent);
@@ -408,10 +480,11 @@ static float pane_general(lp_ctx *ctx, struct prefs *p, lp_desktop *d, float x, 
     static const lp_segment TONES[2] = { { "Platinum", LP_ICON_COUNT }, { "Faithful", LP_ICON_COUNT } };
     int tone = s.molten_tone == LP_MOLTEN_FAITHFUL;
     if (segmented_row(ctx, lp_id_index(base, 4), "Molten tone", x, &y, TONES, 2, &tone)) run(d, LP_CMD_SET_MOLTEN_TONE, tone ? LP_MOLTEN_FAITHFUL : LP_MOLTEN_PLATINUM);
-    y += LP_SPACE_2;
     int reduced = s.reduced_motion, goo = s.goo, clock = s.clock, hours24 = s.clock_24h;
+    section(ctx, "Motion", x, &y, w);
     if (toggle_row(ctx, lp_id_index(base, 5), "Reduce motion", x, &y, &reduced)) run(d, LP_CMD_TOGGLE_REDUCED_MOTION, 0);
     if (toggle_row(ctx, lp_id_index(base, 6), "Liquid merge", x, &y, &goo)) run(d, LP_CMD_TOGGLE_GOO, 0);
+    section(ctx, "Clock", x, &y, w);
     if (toggle_row(ctx, lp_id_index(base, 7), "Show the clock", x, &y, &clock)) run(d, LP_CMD_TOGGLE_CLOCK, 0);
     if (toggle_row(ctx, lp_id_index(base, 8), "24-hour time", x, &y, &hours24) && d) { d->settings.clock_24h = hours24; lp_desktop_settings_changed(d); }
     return y;
@@ -419,13 +492,17 @@ static float pane_general(lp_ctx *ctx, struct prefs *p, lp_desktop *d, float x, 
 
 static float pane_dock(lp_ctx *ctx, struct prefs *p, lp_desktop *d, float x, float y, float w, lp_id base) {
     heading(ctx, "Dock", x, &y, w);
+    section(ctx, "Apps in the Dock", x, &y, w);
     note(ctx, "A blank Spotlight shows these apps. Every app is still one search away.", x, &y, w);
     if (!d) return y;
+    label(ctx, "Show", x, y);
     for (int i = 0; i < d->app_count; i++) {
         const lp_app *app = d->apps[i];
         if (app->internal) continue;
+        const char *name = app->name ? app->name : app->title;
         int on = lp_desktop_in_dock(d, app);
-        if (lp_checkbox(ctx, lp_id_index(base, 20 + i), x + LP_SPACE_2, y + (ROW_H - 16) / 2, &on, app->name ? app->name : app->title, 0)) {
+        lp_rect r = control_at(LP_RECT(x + LABEL_W, y + (ROW_H - 16) / 2, lp_checkbox_measure(ctx, name).w, 16));
+        if (lp_checkbox(ctx, lp_id_index(base, 20 + i), r.x, r.y, &on, name, 0)) {
             lp_desktop_set_in_dock(d, app->id, on);
             ctx->dirty = 1;
         }
@@ -441,10 +518,12 @@ static float pane_displays(lp_ctx *ctx, struct prefs *p, lp_desktop *d, float x,
     if (n == 0) { note(ctx, "The desktop reports no displays here.", x, &y, w); return y; }
     for (int i = 0; i < n; i++) {
         char text[160];
-        label(ctx, "Display", x, y);
-        snprintf(text, sizeof text, "%s%s%s", displays[i].name, displays[i].description[0] ? " — " : "", displays[i].description);
-        value_text(ctx, text, x + LABEL_W, y, w - LABEL_W);
-        y += ROW_H;
+        section(ctx, displays[i].name, x, &y, w);
+        if (displays[i].description[0]) {
+            label(ctx, "Model", x, y);
+            value_text(ctx, displays[i].description, x + LABEL_W, y, w - LABEL_W);
+            y += ROW_H;
+        }
         label(ctx, "Resolution", x, y);
         snprintf(text, sizeof text, "%d × %d at %.0f Hz", displays[i].width, displays[i].height, displays[i].refresh_hz);
         value_text(ctx, text, x + LABEL_W, y, w - LABEL_W);
@@ -452,8 +531,9 @@ static float pane_displays(lp_ctx *ctx, struct prefs *p, lp_desktop *d, float x,
         label(ctx, "Scale", x, y);
         snprintf(text, sizeof text, "%.0f%%", displays[i].scale * 100);
         value_text(ctx, text, x + LABEL_W, y, w - LABEL_W);
-        y += ROW_H + LP_SPACE_3;
+        y += ROW_H;
     }
+    y += LP_SPACE_2;
     note(ctx, "Each display runs at its preferred mode. A virtual machine's window has one fixed size.", x, &y, w);
     return y;
 }
@@ -466,6 +546,7 @@ static float pane_keyboard(lp_ctx *ctx, struct prefs *p, lp_desktop *d, float x,
     heading(ctx, "Keyboard & Mouse", x, &y, w);
     lp_settings s = d ? d->settings : lp_settings_defaults();
     float rate = (float)s.key_repeat_rate, delay = (float)s.key_repeat_delay, speed = s.pointer_speed;
+    section(ctx, "Keyboard", x, &y, w);
     if (slider_row(ctx, lp_id_index(base, 40), "Key repeat", x, &y, w, &rate, (lp_slider_opts){ .min = 1, .max = 50, .step = 1, .show_value = 1, .format = format_repeat }) && d) {
         d->settings.key_repeat_rate = (int)lround(rate);
         lp_desktop_settings_changed(d);
@@ -475,15 +556,15 @@ static float pane_keyboard(lp_ctx *ctx, struct prefs *p, lp_desktop *d, float x,
         lp_desktop_settings_changed(d);
     }
     label(ctx, "Layout", x, y);
-    lp_text_field(ctx, lp_id_index(base, 42), LP_RECT(x + LABEL_W, y + (ROW_H - LP_SIZE_CONTROL_HEIGHT) / 2, 140, LP_SIZE_CONTROL_HEIGHT), &p->layout_field,
+    lp_text_field(ctx, lp_id_index(base, 42), control_at(LP_RECT(x + LABEL_W, y + (ROW_H - LP_SIZE_CONTROL_HEIGHT) / 2, 140, LP_SIZE_CONTROL_HEIGHT)), &p->layout_field,
                   (lp_text_field_opts){ .placeholder = "us", .icon = LP_ICON_COUNT });
     lp_button_opts bo = { LP_BUTTON_DEFAULT, LP_CONTROL_SM, LP_ICON_COUNT, 0, 0 };
     lp_size bs = lp_button_measure(ctx, "Use", bo);
     if (lp_button(ctx, lp_id_index(base, 43), LP_RECT(x + LABEL_W + 140 + LP_SPACE_2, y + (ROW_H - bs.h) / 2, bs.w, bs.h), "Use", bo) && d)
         lp_prefs_set_layout(p, p->layout_field.text);
-    y += ROW_H + LP_SPACE_1;
+    y += ROW_H;
     note(ctx, "An XKB layout: us, gb, de, fr, or a variant such as us(dvorak). Empty is the system's own.", x + LABEL_W, &y, w - LABEL_W);
-    y += LP_SPACE_2;
+    section(ctx, "Pointer", x, &y, w);
     if (slider_row(ctx, lp_id_index(base, 44), "Pointer speed", x, &y, w, &speed, (lp_slider_opts){ .min = -1, .max = 1, .step = 0.1f, .show_value = 1, .format = format_speed }) && d) {
         d->settings.pointer_speed = speed;
         lp_desktop_settings_changed(d);
@@ -498,9 +579,13 @@ static float pane_keyboard(lp_ctx *ctx, struct prefs *p, lp_desktop *d, float x,
 
 static float pane_sound(lp_ctx *ctx, struct prefs *p, lp_desktop *d, float x, float y, float w, lp_id base) {
     heading(ctx, "Sound", x, &y, w);
-    if (!p->sound_known) { note(ctx, p->job ? "Asking PipeWire…" : p->message, x, &y, w); return y; }
+    if (!p->sound_known) {
+        note(ctx, p->job ? "Asking PipeWire…" : "PipeWire is not answering, so sound cannot be changed here.", x, &y, w);
+        return y;
+    }
+    section(ctx, "Output", x, &y, w);
     float volume = p->volume;
-    if (slider_row(ctx, lp_id_index(base, 50), "Output volume", x, &y, w, &volume, (lp_slider_opts){ .min = 0, .max = 100, .step = 1, .show_value = 1 }))
+    if (slider_row(ctx, lp_id_index(base, 50), "Volume", x, &y, w, &volume, (lp_slider_opts){ .min = 0, .max = 100, .step = 1, .show_value = 1 }))
         set_volume(p, (int)lround(volume));
     int muted = p->muted;
     if (toggle_row(ctx, lp_id_index(base, 51), "Mute", x, &y, &muted)) set_mute(p, muted);
@@ -509,6 +594,7 @@ static float pane_sound(lp_ctx *ctx, struct prefs *p, lp_desktop *d, float x, fl
 
 static float pane_network(lp_ctx *ctx, struct prefs *p, lp_desktop *d, float x, float y, float w, lp_id base) {
     heading(ctx, "Network", x, &y, w);
+    section(ctx, "Connections", x, &y, w);
     if (p->nlinks == 0) note(ctx, p->job ? "Looking…" : "No network links.", x, &y, w);
     for (int i = 0; i < p->nlinks; i++) {
         const lp_net_link *l = &p->links[i];
@@ -520,15 +606,25 @@ static float pane_network(lp_ctx *ctx, struct prefs *p, lp_desktop *d, float x, 
         y += ROW_H;
     }
     const lp_net_link *wifi = wireless_link(p);
-    y += LP_SPACE_3;
+    section(ctx, "Wi-Fi", x, &y, w);
     if (!wifi) { note(ctx, "This computer has no Wi-Fi.", x, &y, w); return y; }
+    float tx = x + LABEL_W, tw = w - LABEL_W;
+    if (p->nnetworks == 0) {
+        label(ctx, "Networks", x, y);
+        value_text(ctx, p->job ? "Looking…" : "None in range.", tx, y, tw);
+        return y + ROW_H;
+    }
+    label(ctx, "Networks", x, y - (ROW_H - LP_LIST_ROW_H) / 2);
+    trace_part(LP_PREFS_PART_TABLE, LP_RECT(tx, y, tw, LP_LIST_ROW_H * p->nnetworks), NULL);
     for (int i = 0; i < p->nnetworks; i++) {
         const lp_wifi_network *n = &p->networks[i];
-        char bars[8] = "", right[48];
-        for (int b = 0; b < 4; b++) strcat(bars, b < n->signal ? "▮" : "▯");
-        snprintf(right, sizeof right, "%s  %s%s", bars, strcmp(n->security, "open") == 0 ? "open" : "secured", n->connected ? " · joined" : "");
+        /* In words: the UI font has no block glyphs to draw bars with. */
+        static const char *const SIGNAL[] = { "Weak", "Weak", "Fair", "Good", "Excellent" };
+        char right[48];
+        snprintf(right, sizeof right, "%s · %s", n->connected ? "Joined" : strcmp(n->security, "open") == 0 ? "Open" : "Secured",
+                 SIGNAL[n->signal < 0 ? 0 : n->signal > 4 ? 4 : n->signal]);
         const char *const columns[1] = { right };
-        if (lp_list_row(ctx, lp_id_index(base, 60 + i), LP_RECT(x, y, w, LP_LIST_ROW_H), LP_ICON_WIFI, n->ssid, columns, 1, p->wifi_selected == i, i % 2)) {
+        if (lp_list_row(ctx, lp_id_index(base, 60 + i), LP_RECT(tx, y, tw, LP_LIST_ROW_H), LP_ICON_WIFI, n->ssid, columns, 1, p->wifi_selected == i, i % 2)) {
             p->wifi_selected = i;
             ctx->dirty = 1;
         }
@@ -541,19 +637,22 @@ static float pane_network(lp_ctx *ctx, struct prefs *p, lp_desktop *d, float x, 
         if (n->connected) {
             bo.variant = LP_BUTTON_DEFAULT;
             lp_size bs = lp_button_measure(ctx, "Disconnect", bo);
-            if (lp_button(ctx, lp_id_index(base, 100), LP_RECT(x, y, bs.w, bs.h), "Disconnect", bo)) {
+            if (lp_button(ctx, lp_id_index(base, 100), control_at(LP_RECT(tx, y, bs.w, bs.h)), "Disconnect", bo)) {
                 const char *const argv[] = { "iwctl", "station", wifi->name, "disconnect", NULL };
                 start(p, JOB_WIFI_DISCONNECT, argv);
             }
         } else {
-            float fx = x;
+            float fx = tx;
             if (strcmp(n->security, "open") != 0) {
-                lp_text_field(ctx, lp_id_index(base, 101), LP_RECT(x, y, 220, LP_SIZE_CONTROL_HEIGHT), &p->passphrase, (lp_text_field_opts){ .placeholder = "Password", .icon = LP_ICON_LOCK });
+                lp_text_field(ctx, lp_id_index(base, 101), control_at(LP_RECT(tx, y, 220, LP_SIZE_CONTROL_HEIGHT)), &p->passphrase, (lp_text_field_opts){ .placeholder = "Password", .icon = LP_ICON_LOCK });
                 fx += 220 + LP_SPACE_2;
             }
             lp_size bs = lp_button_measure(ctx, "Join", bo);
-            if (lp_button(ctx, lp_id_index(base, 102), LP_RECT(fx, y, bs.w, bs.h), "Join", bo) && !p->job) join(p, p->wifi_selected, p->passphrase.text);
+            lp_rect join_r = LP_RECT(fx, y, bs.w, bs.h);
+            if (fx == tx) control_at(join_r);
+            if (lp_button(ctx, lp_id_index(base, 102), join_r, "Join", bo) && !p->job) join(p, p->wifi_selected, p->passphrase.text);
         }
+        y += LP_SIZE_CONTROL_HEIGHT;
     }
     return y;
 }
@@ -565,19 +664,22 @@ static float pane_time(lp_ctx *ctx, struct prefs *p, lp_desktop *d, float x, flo
     localtime_r(&now, &tm);
     char text[96];
     strftime(text, sizeof text, "%A, %B %d, %Y  %H:%M", &tm);
+    section(ctx, "Time", x, &y, w);
     label(ctx, "Now", x, y);
     value_text(ctx, text, x + LABEL_W, y, w - LABEL_W);
-    y += ROW_H + LP_SPACE_2;
+    y += ROW_H;
+    int ntp = p->ntp;
+    if (p->time_known && toggle_row(ctx, lp_id_index(base, 72), "Set automatically", x, &y, &ntp)) set_ntp(p, ntp);
+    section(ctx, "Time Zone", x, &y, w);
     label(ctx, "Time zone", x, y);
-    lp_text_field(ctx, lp_id_index(base, 70), LP_RECT(x + LABEL_W, y + (ROW_H - LP_SIZE_CONTROL_HEIGHT) / 2, 220, LP_SIZE_CONTROL_HEIGHT), &p->zone_field,
+    lp_text_field(ctx, lp_id_index(base, 70), control_at(LP_RECT(x + LABEL_W, y + (ROW_H - LP_SIZE_CONTROL_HEIGHT) / 2, 220, LP_SIZE_CONTROL_HEIGHT)), &p->zone_field,
                   (lp_text_field_opts){ .placeholder = "Europe/London", .icon = LP_ICON_COUNT });
     lp_button_opts bo = { LP_BUTTON_DEFAULT, LP_CONTROL_SM, LP_ICON_COUNT, 0, !p->time_known || p->job != NULL };
     lp_size bs = lp_button_measure(ctx, "Set", bo);
     if (lp_button(ctx, lp_id_index(base, 71), LP_RECT(x + LABEL_W + 220 + LP_SPACE_2, y + (ROW_H - bs.h) / 2, bs.w, bs.h), "Set", bo) && !bo.disabled) apply_zone(p);
     y += ROW_H + LP_SPACE_1;
-    int ntp = p->ntp;
-    if (p->time_known && toggle_row(ctx, lp_id_index(base, 72), "Set automatically", x, &y, &ntp)) set_ntp(p, ntp);
     if (d) {
+        section(ctx, "Clock", x, &y, w);
         int hours24 = d->settings.clock_24h;
         if (toggle_row(ctx, lp_id_index(base, 73), "24-hour time", x, &y, &hours24)) { d->settings.clock_24h = hours24; lp_desktop_settings_changed(d); }
     }
@@ -591,35 +693,39 @@ static float pane_users(lp_ctx *ctx, struct prefs *p, lp_desktop *d, float x, fl
     if (pw && pw->pw_gecos) { snprintf(full, sizeof full, "%s", pw->pw_gecos); full[strcspn(full, ",")] = 0; }
     struct group *sudo = getgrnam("sudo");
     if (sudo && pw) for (char **m = sudo->gr_mem; *m; m++) if (strcmp(*m, pw->pw_name) == 0) snprintf(admin, sizeof admin, "Yes");
+    section(ctx, "Account", x, &y, w);
     label(ctx, "Name", x, y); value_text(ctx, full[0] ? full : (pw ? pw->pw_name : "?"), x + LABEL_W, y, w - LABEL_W); y += ROW_H;
     label(ctx, "Account", x, y); value_text(ctx, pw ? pw->pw_name : "?", x + LABEL_W, y, w - LABEL_W); y += ROW_H;
     label(ctx, "Home", x, y); value_text(ctx, pw ? pw->pw_dir : "?", x + LABEL_W, y, w - LABEL_W); y += ROW_H;
-    label(ctx, "Administrator", x, y); value_text(ctx, admin, x + LABEL_W, y, w - LABEL_W); y += ROW_H + LP_SPACE_3;
+    label(ctx, "Administrator", x, y); value_text(ctx, admin, x + LABEL_W, y, w - LABEL_W); y += ROW_H;
     lp_button_opts bo = { LP_BUTTON_DEFAULT, LP_CONTROL_SM, LP_ICON_LOCK, 0, !(d && d->spawn) };
     lp_size bs = lp_button_measure(ctx, "Change Password…", bo);
-    if (lp_button(ctx, lp_id_index(base, 80), LP_RECT(x + LABEL_W, y, bs.w, bs.h), "Change Password…", bo) && d && d->spawn)
+    label(ctx, "Password", x, y);
+    if (lp_button(ctx, lp_id_index(base, 80), control_at(LP_RECT(x + LABEL_W, y + (ROW_H - bs.h) / 2, bs.w, bs.h)), "Change Password…", bo) && d && d->spawn)
         d->spawn(d, "foot --title='Change Password' passwd");   /* passwd wants a terminal of its own */
-    return y;
+    return y + ROW_H;
 }
 
 static float pane_about(lp_ctx *ctx, struct prefs *p, lp_desktop *d, float x, float y, float w, lp_id base) {
     heading(ctx, "About", x, &y, w);
     const lp_about *a = &p->about;
     char text[200], memory[32];
+    section(ctx, "This Computer", x, &y, w);
     label(ctx, "System", x, y); value_text(ctx, a->os, x + LABEL_W, y, w - LABEL_W); y += ROW_H;
     if (a->model[0]) { label(ctx, "Computer", x, y); value_text(ctx, a->model, x + LABEL_W, y, w - LABEL_W); y += ROW_H; }
     snprintf(text, sizeof text, "%s × %d", a->cpu, a->cores);
     label(ctx, "Processor", x, y); value_text(ctx, text, x + LABEL_W, y, w - LABEL_W); y += ROW_H;
     lp_proc_format_bytes(a->memory, memory, sizeof memory);
     label(ctx, "Memory", x, y); value_text(ctx, memory, x + LABEL_W, y, w - LABEL_W); y += ROW_H;
-    label(ctx, "Kernel", x, y); value_text(ctx, a->kernel, x + LABEL_W, y, w - LABEL_W); y += ROW_H + LP_SPACE_3;
+    label(ctx, "Kernel", x, y); value_text(ctx, a->kernel, x + LABEL_W, y, w - LABEL_W); y += ROW_H;
+    section(ctx, "Name", x, &y, w);
     label(ctx, "Computer name", x, y);
-    lp_text_field(ctx, lp_id_index(base, 90), LP_RECT(x + LABEL_W, y + (ROW_H - LP_SIZE_CONTROL_HEIGHT) / 2, 200, LP_SIZE_CONTROL_HEIGHT), &p->hostname_field,
+    lp_text_field(ctx, lp_id_index(base, 90), control_at(LP_RECT(x + LABEL_W, y + (ROW_H - LP_SIZE_CONTROL_HEIGHT) / 2, 200, LP_SIZE_CONTROL_HEIGHT)), &p->hostname_field,
                   (lp_text_field_opts){ .placeholder = "maryos", .icon = LP_ICON_COUNT });
     lp_button_opts bo = { LP_BUTTON_DEFAULT, LP_CONTROL_SM, LP_ICON_COUNT, 0, p->job != NULL };
     lp_size bs = lp_button_measure(ctx, "Rename", bo);
     if (lp_button(ctx, lp_id_index(base, 91), LP_RECT(x + LABEL_W + 200 + LP_SPACE_2, y + (ROW_H - bs.h) / 2, bs.w, bs.h), "Rename", bo) && !p->job) apply_hostname(p);
-    return y;
+    return y + ROW_H;
 }
 
 /* MARK: - Mary (PARITY D19, D20) */
@@ -657,22 +763,14 @@ static void mary_key_status(const struct prefs *p, const lp_mary *m, char *out, 
     else snprintf(out, n, "No key yet: Mary needs one to talk to Mistral. It is kept by sewnd, never here.");
 }
 
-static void subheading(lp_ctx *ctx, const char *text, float x, float *y, float w) {
-    if (ctx->pass == LP_PASS_DRAW && ctx->cr) {
-        lp_text_style st = lp_text_style_default();
-        st.weight = LP_TEXT_WEIGHT_BOLD;
-        st.emboss = 1;
-        lp_text_draw(ctx->cr, text, LP_RECT(x, *y, w, 20), &st, LP_ALIGN_START);
-    }
-    *y += 20 + LP_SPACE_2;
-}
-
 static float pane_mary(lp_ctx *ctx, struct prefs *p, lp_desktop *d, float x, float y, float w, lp_id base) {
     heading(ctx, "Mary", x, &y, w);
     const lp_mary *m = d ? &d->mary : NULL;
-    label(ctx, "Mistral API key", x, y);
+    float after_toggle = x + LABEL_W + LP_TOGGLE_W + LP_SPACE_3, aside_w = w - LABEL_W - LP_TOGGLE_W - LP_SPACE_3;
+    section(ctx, "Mistral", x, &y, w);
+    label(ctx, "API key", x, y);
     float field_w = fmin(280, w - LABEL_W - 170);
-    lp_text_field(ctx, lp_id_index(base, 400), LP_RECT(x + LABEL_W, y + (ROW_H - LP_SIZE_CONTROL_HEIGHT) / 2, field_w, LP_SIZE_CONTROL_HEIGHT), &p->mary_key,
+    lp_text_field(ctx, lp_id_index(base, 400), control_at(LP_RECT(x + LABEL_W, y + (ROW_H - LP_SIZE_CONTROL_HEIGHT) / 2, field_w, LP_SIZE_CONTROL_HEIGHT)), &p->mary_key,
                   (lp_text_field_opts){ .placeholder = m && m->key_present ? "Paste a new key to replace it" : "Paste your key", .icon = LP_ICON_COUNT, .secure = 1 });
     lp_button_opts save = { LP_BUTTON_PRIMARY, LP_CONTROL_SM, LP_ICON_COUNT, 0, p->mary_key.len == 0 };
     lp_size ss = lp_button_measure(ctx, "Save", save);
@@ -686,26 +784,29 @@ static float pane_mary(lp_ctx *ctx, struct prefs *p, lp_desktop *d, float x, flo
     char status[240];
     mary_key_status(p, m, status, sizeof status);
     note(ctx, status, x + LABEL_W, &y, w - LABEL_W);
+
+    section(ctx, "Listening", x, &y, w);
     int wake = d ? d->settings.mary_wake : 1;
-    if (toggle_row(ctx, lp_id_index(base, 403), "Listen for “Hey Mary”", x, &y, &wake) && d) {
+    float row_y = y;
+    if (toggle_row(ctx, lp_id_index(base, 403), "“Hey Mary”", x, &y, &wake) && d) {
         d->settings.mary_wake = wake;
         lp_desktop_settings_changed(d);
         lp_mary_set_wake(&d->mary, wake);
     }
+    aside(ctx, "Listens for her name while the desktop is idle", after_toggle, row_y, aside_w);
     if (!d) return y;
 
-    y += LP_SPACE_3;
-    subheading(ctx, "What Mary can do with each app", x, &y, w);
+    section(ctx, "Skills", x, &y, w);
+    note(ctx, "What Mary may do with each app, and when she asks you first.", x, &y, w);
     static const lp_segment ASK[3] = { { "Never", LP_ICON_COUNT }, { "Before changes", LP_ICON_COUNT }, { "Always", LP_ICON_COUNT } };
     int group = 0;
     for (int a = 0; a < d->app_count; a++) {
         const lp_app *app = d->apps[a];
         if (!app->skill_count || !app->perform) continue;
         lp_id gid = lp_id_index(base, 500 + 20 * group++);
-        char text[96];
-        snprintf(text, sizeof text, "Use %s", app->name ? app->name : app->title);
+        subheading(ctx, app->name ? app->name : app->title, x, &y, w);
         int on = lp_skill_app_enabled(&d->skill_policy, app->id);
-        if (toggle_row(ctx, gid, text, x, &y, &on)) {
+        if (toggle_row(ctx, gid, "Allow Mary", x, &y, &on)) {
             lp_skill_set_app_enabled(&d->skill_policy, app->id, on);
             lp_desktop_skill_policy_changed(d);
         }
@@ -716,16 +817,15 @@ static float pane_mary(lp_ctx *ctx, struct prefs *p, lp_desktop *d, float x, flo
         }
         for (int s = 0; s < app->skill_count && s < 16; s++) {
             const lp_skill *sk = &app->skills[s];
-            float row_y = y;
+            row_y = y;
             int enabled = lp_skill_enabled(&d->skill_policy, app->id, sk->id);
             if (toggle_row(ctx, lp_id_index(gid, 2 + s), sk->title, x, &y, &enabled)) {
                 lp_skill_set_enabled(&d->skill_policy, app->id, sk->id, enabled);
                 lp_desktop_skill_policy_changed(d);
             }
-            snprintf(text, sizeof text, "%s", sk->effect == LP_SKILL_READ ? "Looks, changes nothing" : sk->effect == LP_SKILL_ACT ? "Changes something" : "Cannot be undone");
-            value_text(ctx, text, x + LABEL_W + 52, row_y, w - LABEL_W - 52);
+            aside(ctx, sk->effect == LP_SKILL_READ ? "Looks, changes nothing" : sk->effect == LP_SKILL_ACT ? "Changes something" : "Cannot be undone",
+                  after_toggle, row_y, aside_w);
         }
-        y += LP_SPACE_2;
     }
     return y;
 }
@@ -745,8 +845,11 @@ static void prefs_paint(void *state, lp_ctx *ctx, lp_rect body, lp_desktop *d) {
         }
     }
     if (ctx->pass == LP_PASS_DRAW && ctx->cr) lp_fill_solid(ctx->cr, area, LP_SURFACE_BODY, 0);
+    /* What the last action said sits in a footer under the pane, never over it. */
+    lp_rect footer = p->message[0] ? lp_rect_cut_bottom(&area, FOOTER_H) : LP_RECT(0, 0, 0, 0);
     lp_rect in = lp_rect_inset(area, LP_SPACE_6, LP_SPACE_5);
     /* A pane taller than the window scrolls under the wheel; each pane says where it ended. */
+    painting = p;
     lp_rect origin = lp_scroll_begin(ctx, lp_id_index(base, 900), area, (lp_size){ area.w, p->content_h }, &p->scroll);
     float x = in.x, y = in.y + (origin.y - area.y), w = in.w, end = y;
     switch (p->pane) {
@@ -762,13 +865,15 @@ static void prefs_paint(void *state, lp_ctx *ctx, lp_rect body, lp_desktop *d) {
     case LP_PREFS_MARY: end = pane_mary(ctx, p, desk, x, y, w, base); break;
     }
     lp_scroll_end(ctx);
+    painting = NULL;
     p->content_h = end - origin.y + LP_SPACE_5;
-    if (ctx->pass == LP_PASS_DRAW && ctx->cr && p->message[0] && p->pane != LP_PREFS_SOUND) {
+    if (footer.h > 0 && ctx->pass == LP_PASS_DRAW && ctx->cr) {
+        lp_fill_solid(ctx->cr, LP_RECT(footer.x, footer.y, footer.w, 1), LP_EDGE_DIVIDER, 0);
         lp_text_style st = lp_text_style_default();
         st.size_px = LP_TEXT_SM;
         st.color = LP_INK_SECONDARY;
         st.ellipsize = 1;
-        lp_text_draw(ctx->cr, p->message, LP_RECT(in.x, in.y + in.h - 20, in.w, 20), &st, LP_ALIGN_START);
+        lp_text_draw(ctx->cr, p->message, LP_RECT(footer.x + LP_SPACE_6, footer.y + 1, footer.w - 2 * LP_SPACE_6, footer.h - 1), &st, LP_ALIGN_START);
     }
 }
 
@@ -887,3 +992,14 @@ const char *lp_prefs_mary_key_bytes(const void *state, size_t *n) {
     return p->mary_key.text;
 }
 float lp_prefs_scroll(const void *state) { return ((const struct prefs *)state)->scroll.y; }
+void lp_prefs_trace(void *state, lp_prefs_trace_fn fn, void *user) {
+    struct prefs *p = state;
+    p->trace = fn;
+    p->trace_user = user;
+}
+int lp_prefs_pane_named(const char *name) {
+    for (int i = 0; name && i < PANE_COUNT; i++)
+        if (strcasecmp(name, PANE_SLUGS[i]) == 0 || strcasecmp(name, PANES[i].name) == 0) return i;
+    return -1;
+}
+const char *lp_prefs_pane_slug(int pane) { return pane >= 0 && pane < PANE_COUNT ? PANE_SLUGS[pane] : NULL; }

@@ -198,5 +198,15 @@ const char *lp_prefs_mary_status(const void *state);
 const char *lp_prefs_mary_key_bytes(const void *state, size_t *n);
 /* How far the pane is scrolled, in pixels (0 at its top; switching panes goes back there). */
 float lp_prefs_scroll(const void *state);
+/* A pane is two flush-left columns: labels and each group's title start at the heading's edge, and the controls
+ * this far in. As a pane is laid out (in either pass) its parts are reported here, for tests. */
+#define LP_PREFS_LABEL_W 150
+enum lp_prefs_part { LP_PREFS_PART_HEADING, LP_PREFS_PART_SECTION, LP_PREFS_PART_LABEL, LP_PREFS_PART_CONTROL,
+                     LP_PREFS_PART_NOTE, LP_PREFS_PART_TABLE };
+typedef void (*lp_prefs_trace_fn)(enum lp_prefs_part part, lp_rect r, const char *text, void *user);
+void lp_prefs_trace(void *state, lp_prefs_trace_fn fn, void *user);
+/* A pane by its slug ("sound") or its name ("Sound"): its LP_PREFS_* number, or -1; and a pane's slug, or NULL. */
+int lp_prefs_pane_named(const char *name);
+const char *lp_prefs_pane_slug(int pane);
 
 #endif

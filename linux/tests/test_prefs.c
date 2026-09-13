@@ -285,6 +285,87 @@ static void pass(void *p, lp_input in, double now) {
     lp_ctx_end(&ctx);
 }
 
+static int fake_displays(lp_desktop *desk, lp_display *out, int max) {
+    if (max < 1) return 0;
+    *out = (lp_display){ "Virtual-1", "Apple Virtualization display", 1280, 800, 60, 1 };
+    return 1;
+}
+
+struct laid_out {
+    int n;
+    struct { enum lp_prefs_part part; lp_rect r; char text[48]; } parts[256];
+};
+
+static void on_part(enum lp_prefs_part part, lp_rect r, const char *text, void *user) {
+    struct laid_out *t = user;
+    if (t->n >= 256) return;
+    t->parts[t->n].part = part;
+    t->parts[t->n].r = r;
+    snprintf(t->parts[t->n].text, sizeof t->parts[0].text, "%s", text ? text : "");
+    t->n++;
+}
+
+static int off(float a, float b) { return a - b > 0.5f || b - a > 0.5f; }
+
+LP_TEST(every_pane_lays_out_in_two_flush_left_columns) {
+    char id[12];
+    void *p = open_prefs(id);
+    d.displays = fake_displays;
+    static struct laid_out t;
+    lp_prefs_trace(p, on_part, &t);
+    for (int pane = 0; pane <= LP_PREFS_MARY; pane++) {
+        lp_desktop_run_command(&d, LP_CMD_APP, pane);
+        if (pane == LP_PREFS_SOUND) finish(0, "Volume: 0.40\n");
+        if (pane == LP_PREFS_NETWORK) {
+            finish(0, "enp0s1 UP 192.168.64.2/24\nwlan0 UP 10.0.0.5/24\n");
+            finish(0, "");
+            finish(0, "  Network name   Security   Signal\n----\n  > Home     psk    ****\n    Cafe     open   **\n");
+        }
+        if (pane == LP_PREFS_TIME) finish(0, "Timezone=Europe/Paris\nNTP=yes\n");
+        t.n = 0;
+        pass(p, (lp_input){ .mx = -1, .my = -1 }, 3000 + pane);
+        float first = -1;
+        int groups = 0, controls = 0;
+        for (int i = 0; i < t.n; i++) if (t.parts[i].part == LP_PREFS_PART_HEADING) first = t.parts[i].r.x;
+        if (first < 0) { LP_FAIL("pane %d has no heading", pane); continue; }
+        float second = first + LP_PREFS_LABEL_W;
+        for (int i = 0; i < t.n; i++) {
+            float at = t.parts[i].r.x;
+            const char *text = t.parts[i].text;
+            switch (t.parts[i].part) {
+            case LP_PREFS_PART_HEADING:
+                break;
+            case LP_PREFS_PART_SECTION:
+                groups++;
+                if (off(at, first)) LP_FAIL("pane %d: the group \"%s\" starts at %.1f, not %.1f", pane, text, at, first);
+                break;
+            case LP_PREFS_PART_LABEL:
+                if (off(at, first)) LP_FAIL("pane %d: the label \"%s\" starts at %.1f, not %.1f", pane, text, at, first);
+                if (t.parts[i].r.w > LP_PREFS_LABEL_W - LP_SPACE_3 + 0.5f) LP_FAIL("pane %d: the label \"%s\" reaches the controls", pane, text);
+                break;
+            case LP_PREFS_PART_CONTROL:
+            case LP_PREFS_PART_TABLE:
+                controls++;
+                if (off(at, second)) LP_FAIL("pane %d: a control (%s) starts at %.1f, not %.1f", pane, text, at, second);
+                break;
+            case LP_PREFS_PART_NOTE:
+                if (off(at, first) && off(at, second)) LP_FAIL("pane %d: the note \"%s\" starts at %.1f", pane, text, at);
+                break;
+            }
+        }
+        if (!groups) LP_FAIL("pane %d has no groups", pane);
+        if (!controls) LP_FAIL("pane %d has no controls", pane);
+    }
+    lp_prefs_trace(p, NULL, NULL);
+    d.displays = NULL;
+    LP_ASSERT_EQ(lp_prefs_pane_named("sound"), LP_PREFS_SOUND);
+    LP_ASSERT_EQ(lp_prefs_pane_named("Date & Time"), LP_PREFS_TIME);
+    LP_ASSERT_EQ(lp_prefs_pane_named("bluetooth"), -1);
+    LP_ASSERT_STR(lp_prefs_pane_slug(LP_PREFS_MARY), "mary");
+    LP_ASSERT(lp_prefs_pane_slug(LP_PREFS_MARY + 1) == NULL);
+    lp_desktop_close_window(&d, id);
+}
+
 LP_TEST(a_pane_taller_than_the_window_scrolls) {
     char id[12];
     void *p = open_prefs(id);
@@ -319,6 +400,7 @@ int main(void) {
     LP_RUN(every_pane_paints);
     LP_RUN(mary_hands_the_key_over_once_and_keeps_no_copy);
     LP_RUN(a_pane_taller_than_the_window_scrolls);
+    LP_RUN(every_pane_lays_out_in_two_flush_left_columns);
     LP_RUN(settings_keep_their_defaults_and_bounds);
     lp_files_delete_tree(root);
     LP_TEST_MAIN_END();
