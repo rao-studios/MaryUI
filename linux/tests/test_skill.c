@@ -238,6 +238,73 @@ LP_TEST(settings_media_and_calendar_carry_the_first_skills) {
 #endif
 }
 
+#ifdef HAVE_JSONC
+LP_TEST(textedit_the_finder_the_calculator_and_the_desktop_carry_their_skills) {
+    setup();
+    lp_desktop_register_builtin_apps(&d);
+    char result[LP_SKILL_RESULT_MAX];
+    int status = 1;
+    /* the Calculator reads without a window */
+    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "calculator", "calculate", "{\"expression\":\"12*3\"}", result, sizeof result, &status), LP_SKILL_ALLOWED);
+    LP_ASSERT_EQ(status, 0);
+    LP_ASSERT(strstr(result, "\"value\":\"36\"") != NULL);
+    /* the desktop's own: nothing open yet */
+    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "desktop", "list_windows", NULL, result, sizeof result, &status), LP_SKILL_ALLOWED);
+    LP_ASSERT_STR(result, "{\"count\":0,\"windows\":[]}");
+    lp_skill_set_app_ask(&d.skill_policy, "desktop", LP_SKILL_ASK_NEVER);
+    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "desktop", "close_front_window", NULL, result, sizeof result, &status), LP_SKILL_NEEDS_CONFIRMATION);   /* destructive: always asked */
+    LP_ASSERT_EQ(lp_desktop_skill_decide(&d, "desktop", "shade_front_window"), LP_SKILL_ALLOWED);
+    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "desktop", "bring_forward", "{\"app\":\"Calculator\"}", result, sizeof result, &status), LP_SKILL_ALLOWED);
+    LP_ASSERT_EQ(status, 0);
+    LP_ASSERT(lp_desktop_app_state(&d, "calculator") != NULL);
+    lp_desktop_perform_skill(&d, "desktop", "list_windows", NULL, result, sizeof result, &status);
+    LP_ASSERT(strstr(result, "\"count\":1") && strstr(result, "\"app\":\"calculator\"") && strstr(result, "\"front\":true"));
+    /* TextEdit: read what is open, insert at the end, and the read shows it */
+    lp_skill_set_app_ask(&d.skill_policy, "textedit", LP_SKILL_ASK_NEVER);
+    char id[12];
+    LP_ASSERT(lp_desktop_open_app_with(&d, "textedit", NULL, NULL, id));
+    lp_textedit_set_text(lp_desktop_instance(&d, id)->state, "Tides", "The tide comes in.");
+    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "textedit", "insert_text", "{\"text\":\" Twice a day.\",\"where\":\"end\"}", result, sizeof result, &status), LP_SKILL_ALLOWED);
+    LP_ASSERT_EQ(status, 0);
+    LP_ASSERT(strstr(result, "\"landed\":true") != NULL);
+    LP_ASSERT_STR(lp_textedit_text(lp_desktop_instance(&d, id)->state), "The tide comes in. Twice a day.");
+    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "textedit", "read", NULL, result, sizeof result, &status), LP_SKILL_ALLOWED);
+    LP_ASSERT(strstr(result, "\"name\":\"Tides\"") && strstr(result, "\"text\":\"The tide comes in. Twice a day.\""));
+    lp_desktop_perform_skill(&d, "textedit", "replace_selection", "{\"text\":\"x\"}", result, sizeof result, &status);
+    LP_ASSERT_EQ(status, -EINVAL);                                  /* nothing selected */
+    lp_textedit_select(lp_desktop_instance(&d, id)->state, 0, 8);
+    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "textedit", "replace_selection", "{\"text\":\"A wave\"}", result, sizeof result, &status), LP_SKILL_ALLOWED);
+    LP_ASSERT_STR(lp_textedit_text(lp_desktop_instance(&d, id)->state), "A wave comes in. Twice a day.");
+    /* the Finder refuses what is not there */
+    lp_desktop_perform_skill(&d, "finder", "reveal", "{\"path\":\"~/no-such-file-here\"}", result, sizeof result, &status);
+    LP_ASSERT_EQ(status, -ENOENT);
+    /* the message carries the schema words */
+    char *line = lp_desktop_skills_json(&d);
+    LP_ASSERT(line != NULL);
+    if (line) {
+        struct json_object *msg = json_tokener_parse(line);
+        struct json_object *apps = field(msg, "apps");
+        int found = 0;
+        for (size_t i = 0; i < json_object_array_length(apps); i++) {
+            struct json_object *app = json_object_array_get_idx(apps, i);
+            if (strcmp(json_object_get_string(field(app, "id")), "textedit") != 0) continue;
+            found = 1;
+            LP_ASSERT_STR(json_object_get_string(field(app, "discipline")), "writing");
+            LP_ASSERT_STR(json_object_get_string(field(app, "paradigm")), "applicationExpertise");
+            struct json_object *skills = field(app, "skills"), *insert = json_object_array_get_idx(skills, 1);
+            LP_ASSERT_EQ(json_object_array_length(skills), 4);
+            LP_ASSERT_STR(json_object_get_string(field(insert, "kind")), "effectful");
+            LP_ASSERT_STR(json_object_get_string(field(insert, "access")), "reversible");
+            LP_ASSERT_EQ(json_object_array_length(field(field(insert, "triggers"), "tokens")), 4);
+            LP_ASSERT(json_object_is_type(field(field(insert, "spoken"), "where"), json_type_object));
+        }
+        LP_ASSERT(found);
+        json_object_put(msg);
+        free(line);
+    }
+}
+#endif
+
 LP_TEST(events_today_reads_the_calendar_without_opening_it) {
     if (!lp_calendar_available()) return;
     setup();
@@ -278,6 +345,7 @@ int main(void) {
     LP_RUN(settings_media_and_calendar_carry_the_first_skills);
     LP_RUN(events_today_reads_the_calendar_without_opening_it);
 #ifdef HAVE_JSONC
+    LP_RUN(textedit_the_finder_the_calculator_and_the_desktop_carry_their_skills);
     LP_RUN(the_skills_message_carries_each_app_and_its_policy);
     LP_RUN(skill_invoke_is_answered_with_skill_result);
 #endif

@@ -254,7 +254,7 @@ static void commands(lp_ctx *ctx, const lp_spotlight_view *v, lp_rect panel, flo
 
 void lp_spotlight_panel(lp_ctx *ctx, float x, float y, const lp_spotlight_view *v, lp_spotlight_result *out) {
     lp_spotlight_result res = { .hovered = -1, .activated = -1, .menu_pressed = -1, .menu_hovered = -1, .contribution_message = -1, .contribution_owner = -1,
-                                .entry_hovered = -1, .entry_selected = -1 };
+                                .entry_hovered = -1, .entry_selected = -1, .run_message = -1, .confirm_answer = -1 };
     lp_size size = lp_spotlight_measure(v);
     lp_rect panel = LP_RECT(x, y, size.w, size.h);
     res.panel = panel;

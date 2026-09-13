@@ -60,6 +60,8 @@ void lp_desktop_register_builtin_apps(lp_desktop *d) {
     lp_desktop_register_app(d, &lp_app_thread);
     lp_desktop_register_app(d, &lp_app_contribution);
     lp_desktop_register_app(d, &lp_app_ambient);
+    lp_desktop_register_app(d, &lp_app_abilities);
+    lp_desktop_register_app(d, &lp_app_desktop);
 }
 
 const lp_app *lp_desktop_find_app(const lp_desktop *d, const char *app_id) {
@@ -649,12 +651,14 @@ int lp_desktop_key(lp_desktop *d, uint32_t keysym, uint32_t mods) {
             switch (keysym) {
             case XKB_KEY_Return: case XKB_KEY_KP_Enter:
                 if (!lp_spotlight_query_is_blank(d->spotlight.query.text)) lp_desktop_ask_mary(d);
+                else if (d->mary.confirm.active) lp_mary_confirm_reply(&d->mary, 1);      /* the card: Return allows (PARITY D30) */
                 return 1;
             case XKB_KEY_Up:
                 d->spotlight_chat_scroll.y = d->spotlight_chat_scroll.y > LP_SPOTLIGHT_CHAT_STEP ? d->spotlight_chat_scroll.y - LP_SPOTLIGHT_CHAT_STEP : 0;
                 return 1;
             case XKB_KEY_Down: d->spotlight_chat_scroll.y += LP_SPOTLIGHT_CHAT_STEP; return 1;
             case XKB_KEY_Escape:
+                if (d->mary.confirm.active) { lp_mary_confirm_reply(&d->mary, 0); return 1; }   /* the card: Esc declines */
                 if (lp_mary_active(&d->mary)) { lp_mary_stop(&d->mary); return 1; }   /* first Esc stops her */
                 lp_spotlight_close(&d->spotlight);
                 d->spotlight_chat = 0;

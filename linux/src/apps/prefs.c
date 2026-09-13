@@ -1424,10 +1424,16 @@ static int prefs_surface(void *state, lp_desktop *d, lp_app_surface *out) {
 /* LP_PREFS_* order: the words Mary names a pane by. */
 static const char *const PANE_SLUGS[] = { "general", "dock", "displays", "keyboard", "sound", "network", "time", "users", "about", "mary" };
 
+static const char *const PREFS_TOKENS[] = { "settings", "preferences", "pane" };
+static const char *const PREFS_PHRASES[] = { "open settings", "open system settings", "show me the settings" };
+static const char *const PREFS_CLASSES[] = { "pane", "setting" };
 static const lp_skill prefs_skills[] = {
-    { "open_pane", "Open a pane", "Opens System Settings on one of its panes; it changes no setting.",
-      "{\"type\":\"object\",\"properties\":{\"pane\":{\"type\":\"string\",\"enum\":[\"general\",\"dock\",\"displays\",\"keyboard\",\"sound\",\"network\",\"time\",\"users\",\"about\"]}},\"required\":[\"pane\"]}",
-      LP_SKILL_READ },
+    { .id = "open_pane", .title = "Open a pane", .summary = "Opens System Settings on one of its panes; it changes no setting.",
+      .params = "{\"type\":\"object\",\"properties\":{\"pane\":{\"type\":\"string\",\"enum\":[\"general\",\"dock\",\"displays\",\"keyboard\",\"sound\",\"network\",\"time\",\"users\",\"about\"]}},\"required\":[\"pane\"]}",
+      .effect = LP_SKILL_READ, .kind = "cognitive", .access = "seamless", .triggers = PREFS_TOKENS, .trigger_count = 3,
+      .phrases = PREFS_PHRASES, .phrase_count = 3, .target_classes = PREFS_CLASSES, .target_class_count = 2,
+      .spoken = "{\"pane\":{\"general\":[\"general\"],\"dock\":[\"dock\",\"the dock\"],\"displays\":[\"displays\",\"display\",\"screen\"],\"keyboard\":[\"keyboard\",\"mouse\",\"keyboard and mouse\"],"
+                "\"sound\":[\"sound\",\"audio\",\"volume\"],\"network\":[\"network\",\"wifi\",\"wi-fi\"],\"time\":[\"time\",\"date\",\"date and time\"],\"users\":[\"users\",\"accounts\"],\"about\":[\"about\"]}}" },
 };
 
 static int prefs_perform(void *state, lp_desktop *d, const char *skill, const char *args, char *result, size_t n) {
@@ -1478,6 +1484,7 @@ const lp_app lp_app_prefs = {
     .command = prefs_command, .menu_entries = prefs_menu_entries,
     .skills = prefs_skills, .skill_count = 1, .perform = prefs_perform, .model_changed = prefs_model_changed,
     .surface = prefs_surface, .surface_poll_s = 120,
+    .summary = "Every setting of the machine, pane by pane.", .discipline = "system-control", .paradigm = "systemControl",
 };
 
 /* MARK: - Tests, and the pane's own actions */

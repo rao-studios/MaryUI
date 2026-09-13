@@ -371,8 +371,13 @@ static void player_destroy(void *state) {
 
 /* MARK: - Mary's skills (PARITY D20) */
 
+static const char *const PLAY_TOKENS[] = { "play", "pause", "resume", "music" };
+static const char *const PLAY_PHRASES[] = { "play the music", "pause the music", "play it", "pause it" };
+static const char *const PLAY_CLASSES[] = { "media", "song" };
 static const lp_skill player_skills[] = {
-    { "play_pause", "Play or pause", "Plays what the Media Player has open, or pauses it.", NULL, LP_SKILL_ACT },
+    { .id = "play_pause", .title = "Play or pause", .summary = "Plays what the Media Player has open, or pauses it.",
+      .effect = LP_SKILL_ACT, .kind = "effectful", .access = "reversible", .triggers = PLAY_TOKENS, .trigger_count = 4,
+      .phrases = PLAY_PHRASES, .phrase_count = 4, .target_classes = PLAY_CLASSES, .target_class_count = 2 },
 };
 
 static int player_perform(void *state, lp_desktop *d, const char *skill, const char *args, char *result, size_t n) {
@@ -396,6 +401,7 @@ const lp_app lp_app_player = {
     .open = player_open, .command = player_command, .menu_entries = player_menu_entries,
     .skills = player_skills, .skill_count = 1, .perform = player_perform,
     .surface = player_surface, .surface_poll_s = 15,
+    .summary = "Plays music and video from the drive.", .discipline = "multimedia",
 };
 
 /* MARK: - Tests */

@@ -80,8 +80,10 @@ void lp_mary_free(lp_mary *m) {
 #ifdef HAVE_JSONC
     if (m->ambient) json_object_put(m->ambient);
     if (m->trace) json_object_put(m->trace);
+    if (m->triage) json_object_put(m->triage);
 #endif
-    m->ambient = m->trace = NULL;
+    m->ambient = m->trace = m->triage = NULL;
+    memset(&m->confirm, 0, sizeof m->confirm);
     free(m->trace_report);
     m->trace_report = NULL;
     free(m->in);
@@ -312,12 +314,30 @@ static void handle(lp_mary *m, struct json_object *msg) {
     } else if (strcmp(type, "reply.end") == 0) {
         for (int i = 0; i < m->message_count; i++) m->messages[i].streaming = 0;
         lp_mary_message *last = m->message_count ? &m->messages[m->message_count - 1] : NULL;
-        struct json_object *contribution = NULL, *retrieved = NULL;
+        struct json_object *contribution = NULL, *retrieved = NULL, *runs = NULL;
         if (has(msg, "contribution", json_type_object, &contribution) && last && last->role == LP_MARY_REPLY) {
             has(msg, "retrieved", json_type_array, &retrieved);
             lp_mary_message_credit(last, contribution, retrieved);
         }
-        changed(m, LP_MARY_CHANGED_MESSAGES);
+        if (has(msg, "runs", json_type_array, &runs) && last && last->role == LP_MARY_REPLY) {
+            last->run_count = 0;
+            for (size_t i = 0; i < json_object_array_length(runs) && last->run_count < LP_MARY_RUNS; i++) {
+                struct json_object *r = json_object_array_get_idx(runs, i);
+                lp_mary_run *run = &last->runs[last->run_count++];
+                memset(run, 0, sizeof *run);
+                snprintf(run->app, sizeof run->app, "%s", str(r, "app") ? str(r, "app") : "");
+                const lp_app *app = m->desk && run->app[0] ? lp_desktop_find_app(m->desk, run->app) : NULL;
+                snprintf(run->app_name, sizeof run->app_name, "%s", app ? (app->name ? app->name : app->title) : run->app);
+                snprintf(run->skill, sizeof run->skill, "%s", str(r, "skill") ? str(r, "skill") : "");
+                snprintf(run->invocation, sizeof run->invocation, "%s", str(r, "invocation") ? str(r, "invocation") : "");
+                snprintf(run->summary, sizeof run->summary, "%s", str(r, "summary") ? str(r, "summary") : "");
+                run->ok = has(r, "ok", json_type_boolean, &v) && json_object_get_boolean(v);
+                run->requested = has(r, "requested", json_type_boolean, &v) && json_object_get_boolean(v);
+            }
+        }
+        unsigned what = LP_MARY_CHANGED_MESSAGES;
+        if (m->confirm.active) { memset(&m->confirm, 0, sizeof m->confirm); what |= LP_MARY_CHANGED_CONFIRM; }   /* the turn ended: the card is moot */
+        changed(m, what);
     } else if (strcmp(type, "key.status") == 0) {
         if (has(msg, "present", json_type_boolean, &v)) m->key_present = json_object_get_boolean(v);
         m->key_verified_at = json_object_object_get_ex(msg, "verified_at", &v) ? json_object_get_int64(v) : 0;
@@ -400,6 +420,25 @@ static void handle(lp_mary *m, struct json_object *msg) {
         free(m->trace_report);
         m->trace_report = strdup(str(msg, "text") ? str(msg, "text") : "");
         changed(m, LP_MARY_CHANGED_TRACE);
+    } else if (strcmp(type, "skill.confirm") == 0) {
+        const char *call_id = str(msg, "call_id");
+        if (!call_id) return;
+        memset(&m->confirm, 0, sizeof m->confirm);
+        m->confirm.active = 1;
+        snprintf(m->confirm.call_id, sizeof m->confirm.call_id, "%s", call_id);
+        snprintf(m->confirm.app, sizeof m->confirm.app, "%s", str(msg, "app") ? str(msg, "app") : "");
+        snprintf(m->confirm.app_name, sizeof m->confirm.app_name, "%s", str(msg, "app_name") ? str(msg, "app_name") : m->confirm.app);
+        snprintf(m->confirm.skill, sizeof m->confirm.skill, "%s", str(msg, "skill") ? str(msg, "skill") : "");
+        snprintf(m->confirm.title, sizeof m->confirm.title, "%s", str(msg, "title") ? str(msg, "title") : m->confirm.skill);
+        snprintf(m->confirm.summary, sizeof m->confirm.summary, "%s", str(msg, "summary") ? str(msg, "summary") : "");
+        struct json_object *args;
+        if (has(msg, "args", json_type_object, &args) && json_object_object_length(args))
+            snprintf(m->confirm.args, sizeof m->confirm.args, "%s", json_object_to_json_string_ext(args, JSON_C_TO_STRING_PLAIN | JSON_C_TO_STRING_NOSLASHESCAPE));
+        changed(m, LP_MARY_CHANGED_CONFIRM);
+    } else if (strcmp(type, "triage.result") == 0) {
+        if (m->triage) json_object_put(m->triage);
+        m->triage = json_object_get(msg);
+        changed(m, LP_MARY_CHANGED_TRIAGE);
     }
 }
 
@@ -589,6 +628,24 @@ int lp_mary_listen(lp_mary *m) { return simple(m, "listen"); }
 int lp_mary_ambient_state(lp_mary *m) { return simple(m, "ambient.state"); }
 int lp_mary_list_trace(lp_mary *m) { return simple(m, "trace.list"); }
 int lp_mary_trace_report(lp_mary *m) { return simple(m, "trace.report"); }
+
+int lp_mary_confirm_reply(lp_mary *m, int yes) {
+    if (!m->confirm.active) return -ENOENT;
+    struct json_object *o = typed("skill.confirm.reply");
+    json_object_object_add(o, "call_id", json_object_new_string(m->confirm.call_id));
+    json_object_object_add(o, "yes", json_object_new_boolean(yes));
+    int rc = send_object(m, o);
+    memset(&m->confirm, 0, sizeof m->confirm);
+    changed(m, LP_MARY_CHANGED_CONFIRM);
+    return rc;
+}
+
+int lp_mary_triage(lp_mary *m, const char *text) {
+    if (!text || !*text) return -EINVAL;
+    struct json_object *o = typed("triage");
+    json_object_object_add(o, "text", json_object_new_string(text));
+    return send_object(m, o);
+}
 int lp_mary_stop(lp_mary *m) { return simple(m, "stop"); }
 int lp_mary_dismiss(lp_mary *m) { return simple(m, "dismiss"); }
 int lp_mary_verify_key(lp_mary *m) { return simple(m, "key.verify"); }
@@ -674,6 +731,8 @@ int lp_mary_listen(lp_mary *m) { return -ENOTCONN; }
 int lp_mary_ambient_state(lp_mary *m) { return -ENOTCONN; }
 int lp_mary_list_trace(lp_mary *m) { return -ENOTCONN; }
 int lp_mary_trace_report(lp_mary *m) { return -ENOTCONN; }
+int lp_mary_confirm_reply(lp_mary *m, int yes) { (void)yes; return -ENOENT; }
+int lp_mary_triage(lp_mary *m, const char *text) { (void)text; return -ENOTCONN; }
 int lp_mary_stop(lp_mary *m) { return -ENOTCONN; }
 int lp_mary_dismiss(lp_mary *m) { return -ENOTCONN; }
 int lp_mary_verify_key(lp_mary *m) { return -ENOTCONN; }

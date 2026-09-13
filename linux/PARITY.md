@@ -421,6 +421,26 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   **Runs** — the skills a turn invoked, their status, effect, arguments, result and timing, and the
   confirmation state. Copy Report puts the RouteReport text on the clipboard. `lp-render --ambient TAB`
   draws it over fixtures (`tests/lp_ambient_fixture.h`). The web has none of it.
+- **D30 — abilities: the schema, the card, the chips and the Abilities app.** Linux only. On the Mac an
+  ability is an authored package with recorded recipes; on MaryOS each app declares its skills in code, so
+  `lp_skill` carries the Mac's `SkillSchema` words (kind, access, triggers, phrases, target classes, spoken
+  values) and `lp_app` its `AbilitySchema` (summary, discipline, paradigm, aliases), all published in
+  `skills{apps}` for maryd's triage and its `ability` records. TextEdit (read, insert, replace the
+  selection, save), the Finder (open, reveal), the Calculator (calculate) and the desktop itself
+  (`src/apps/desktop_skills.c`: list, close, shade, bring forward — the window-management discipline,
+  with no window of its own) join Calendar, the Media Player and System Settings. A skill maryd parks
+  (`skill.confirm`) is a card under the newest words in Spotlight's conversation — the skill, the app, the
+  sentence, **Allow** / **Not now**; Return allows and Esc declines, and `skill.confirm.reply` goes back.
+  The skills a reply ran (`reply.end{runs}`) sit under its passage as the Mac's ability chips
+  (`App · skill | invocation`, mono); a click opens Ambient › Runs. `src/apps/abilities.c` is the Mac's
+  AbilityStudio over what the code declares: a rail of packages (every app with skills, then the
+  disciplines they realize), the title in the serif, the paradigm, "no model calls · N skills", and three
+  panes — **Control surface** (the callable functions, one line each, as the Thread's `ability` records hold
+  them), **Tune** (Summary, Listens for, Phrases, Sounds like, Order, Competes in, Settled by, Careful about)
+  and **Skills** (every skill's schema). Tune saves no override: with no recipes to record, tuning a package
+  is a change to the app. **Rehearse** sends a sentence through maryd's `triage` and prints who would answer
+  without a model. `lp-render --abilities PANE` and `--spotlight-chat confirm` draw them. The web has none
+  of it.
 - **Close animation.** `lp-window-close` (scale .96 + fade over `motion.fast`, `CLOSE` after
   fast + 80 ms) runs for built-in windows. A client that unmaps is gone at once — the compositor
   has no pixels left to fade.

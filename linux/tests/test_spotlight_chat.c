@@ -221,6 +221,46 @@ LP_TEST(a_reply_that_was_not_spoken_says_so_under_it) {
     teardown();
 }
 
+LP_TEST(the_card_and_the_run_chips_draw_and_the_keys_answer_the_card) {
+    setup(1);
+    if (!lp_mary_available()) { teardown(); return; }
+    lp_spotlight_view view = lp_desktop_spotlight_view(&d, NULL, 0);
+    view.mary = &d.mary;
+    view.chat = 1;
+    d.spotlight_chat = 1;
+    d.mary.key_present = 1;
+    say(LP_MARY_USER, "Play the music.");
+    say(LP_MARY_REPLY, "Playing.");
+    lp_mary_message *reply = &d.mary.messages[1];
+    reply->run_count = 1;
+    snprintf(reply->runs[0].app, sizeof reply->runs[0].app, "media");
+    snprintf(reply->runs[0].app_name, sizeof reply->runs[0].app_name, "Media Player");
+    snprintf(reply->runs[0].skill, sizeof reply->runs[0].skill, "play_pause");
+    snprintf(reply->runs[0].invocation, sizeof reply->runs[0].invocation, "media__play_pause");
+    reply->runs[0].ok = 1;
+    LP_ASSERT_EQ(draw(&view, 400), 0);                             /* a chip under the reply; nothing animates */
+    d.mary.confirm.active = 1;
+    snprintf(d.mary.confirm.call_id, sizeof d.mary.confirm.call_id, "c1");
+    snprintf(d.mary.confirm.title, sizeof d.mary.confirm.title, "Save the document");
+    snprintf(d.mary.confirm.app_name, sizeof d.mary.confirm.app_name, "TextEdit");
+    snprintf(d.mary.confirm.summary, sizeof d.mary.confirm.summary, "Save the document in TextEdit?");
+    d.mary.state = LP_MARY_THINKING;
+    LP_ASSERT(draw(&view, 400) >= 0);                              /* the card draws under the newest words */
+    /* Return with a blank bar allows; the reply goes out and the card comes down */
+    LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_Return, 0), 1);
+    LP_ASSERT(strstr(sent(), "\"type\":\"skill.confirm.reply\"") != NULL);
+    LP_ASSERT(!d.mary.confirm.active);
+    /* Esc declines before it stops Mary */
+    d.mary.confirm.active = 1;
+    snprintf(d.mary.confirm.call_id, sizeof d.mary.confirm.call_id, "c2");
+    LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_Escape, 0), 1);
+    const char *out = sent();
+    LP_ASSERT(strstr(out, "\"call_id\":\"c2\"") != NULL && strstr(out, "\"yes\":false") != NULL);
+    LP_ASSERT(!d.mary.confirm.active);
+    LP_ASSERT(d.spotlight.open);                                   /* the panel stays up */
+    teardown();
+}
+
 int main(void) {
     LP_RUN(ctrl_return_asks_mary_and_opens_the_conversation);
     LP_RUN(a_blank_bar_opens_the_microphone);
@@ -232,5 +272,6 @@ int main(void) {
     LP_RUN(the_conversation_is_one_fixed_height);
     LP_RUN(every_state_draws_and_only_a_busy_mary_animates);
     LP_RUN(a_reply_that_was_not_spoken_says_so_under_it);
+    LP_RUN(the_card_and_the_run_chips_draw_and_the_keys_answer_the_card);
     LP_TEST_MAIN_END();
 }

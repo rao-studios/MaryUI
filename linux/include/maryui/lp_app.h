@@ -57,6 +57,12 @@ typedef struct lp_app {
      * it unasked (0: LP_WORLD_POLL_S). */
     int (*surface)(void *state, struct lp_desktop *desktop, struct lp_app_surface *out);
     int surface_poll_s;
+    /* The Mac's AbilitySchema, optional (PARITY D30): what the package says of itself to Mary and the Abilities app. */
+    const char *summary;                /* one sentence */
+    const char *discipline;             /* the craft it realizes: writing, multimedia, awareness, window-management, system-control; or NULL */
+    const char *paradigm;               /* applicationExpertise (NULL) | systemControl | discipline */
+    const char *const *aliases;         /* other names Mary hears it by (besides name, title and aka) */
+    int alias_count;
 } lp_app;
 
 extern const lp_app lp_app_about;
@@ -75,6 +81,18 @@ extern const lp_app lp_app_prefs;
 extern const lp_app lp_app_thread;
 extern const lp_app lp_app_contribution;
 extern const lp_app lp_app_ambient;
+extern const lp_app lp_app_desktop;         /* no window: the desktop's own skills (windows) */
+extern const lp_app lp_app_abilities;
+
+/* Abilities (PARITY D30): its panes as commands, and its state for tests and renders. */
+enum lp_abilities_command { LP_ABILITIES_PANE_SURFACE, LP_ABILITIES_PANE_TUNE, LP_ABILITIES_PANE_SKILLS, LP_ABILITIES_REHEARSE };
+int lp_abilities_app_packages(const void *state);
+const char *lp_abilities_app_package_title(const void *state, int i);
+int lp_abilities_app_selected(const void *state);
+void lp_abilities_app_select(void *state, int i);
+int lp_abilities_app_pane(const void *state);
+int lp_abilities_app_skill_count(const void *state);        /* of the selected package */
+const char *lp_abilities_app_rehearsal(const void *state);  /* the last rehearsal's line, or "" */
 
 /* Ambient (PARITY D29): its tabs as commands, and its state for tests and renders. */
 enum lp_ambient_command { LP_AMBIENT_TAB_WORLD, LP_AMBIENT_TAB_REALMS, LP_AMBIENT_TAB_ROUTES, LP_AMBIENT_TAB_RUNS, LP_AMBIENT_RELOAD, LP_AMBIENT_COPY_REPORT };
@@ -94,6 +112,8 @@ const char *lp_contribution_source_name(const void *state, int i);
 const char *lp_contribution_source_preview(const void *state, int i);
 float lp_contribution_royalty(const void *state);
 
+/* Calculator: a fresh calculation of an expression (Mary's skill): the value shown, or "" when it does not compute. */
+void lp_calculator_evaluate(const char *expression, char *out, size_t n);
 /* TextEdit: replaces the document (for previews), and selects a range of it (bytes; for tests). */
 void lp_textedit_set_text(void *state, const char *name, const char *text);
 void lp_textedit_select(void *state, int start, int end);

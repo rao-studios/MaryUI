@@ -50,9 +50,10 @@ static int usage(int status) {
         "       lp-render --prefs-pane PANE <out.png>    System Settings on one pane (general|dock|displays|keyboard|sound|network|time|users|about|mary), with fixtures\n"
         "       lp-render --spotlight [QUERY] <out.png>  Spotlight over the desktop: the dock and its command pills, or the results for QUERY\n"
         "       lp-render --spotlight-menu NAME <out.png>  the same with the NAME pill open (rao|file|edit|view|go|window|help)\n"
-        "       lp-render --spotlight-chat STATE <out.png>  Spotlight on the conversation with Mary: idle|listening|thinking|streaming|speaking|error|nokey|offline|highlighted\n"
+        "       lp-render --spotlight-chat STATE <out.png>  Spotlight on the conversation with Mary: idle|listening|thinking|streaming|speaking|error|nokey|offline|highlighted|confirm\n"
         "       lp-render --contribution <out.png>       \"From the thread\": what a highlighted passage drew on, with fixtures\n"
         "       lp-render --ambient TAB <out.png>        Ambient on one tab (world|realms|routes|runs), with fixtures\n"
+        "       lp-render --abilities PANE <out.png>     Abilities on TextEdit's pane (surface|tune|skills), a rehearsal fed\n"
         "       lp-render --all <dir>                    every preview into <dir>\n"
         "       lp-render --version\n");
     return status;
@@ -191,6 +192,7 @@ static int fixture_displays(lp_desktop *d, lp_display *out, int max) {
 
 static const char *thread_tab;    /* --thread: Threads opens on this tab, with fixtures fed to its client */
 static const char *ambient_tab;   /* --ambient: Ambient opens on this tab, with fixtures fed to Mary's client */
+static const char *abilities_pane; /* --abilities: Abilities opens TextEdit on this pane, with a rehearsal answered */
 
 #include "../tests/lp_ambient_fixture.h"
 
@@ -262,6 +264,19 @@ static int render_app(const lp_app *app, int tab, const char *path) {
     void *state = app->create && app != &lp_app_contribution ? app->create(&d, "w1") : NULL;   /* "From the thread" paints its fixture when stateless */
     if (tab > 0 && state && app != &lp_app_thread) *(int *)state = tab; /* the gallery's first field is its tab */
     if (app == &lp_app_ambient && state) app->open(state, &d, ambient_tab ? ambient_tab : "world");
+    if (app == &lp_app_abilities && state) {
+        char target[64];
+        snprintf(target, sizeof target, "textedit:%s", abilities_pane ? abilities_pane : "surface");
+        app->open(state, &d, target);
+        int sv[2];
+        d.mary.fd = socketpair(AF_UNIX, SOCK_STREAM, 0, sv) == 0 ? sv[0] : 0;
+        app->command(state, &d, LP_ABILITIES_REHEARSE);         /* nothing typed: no request; the fixture answers anyway */
+        static const char REHEARSAL[] = "{\"type\":\"triage.result\",\"ok\":true,\"text\":\"save the document\",\"winner\":{\"app\":\"textedit\",\"skill\":\"save\","
+                                        "\"invocation\":\"textedit__save\",\"title\":\"Save the document\",\"score\":0.81,\"shape\":\"noRequiredArguments\",\"singleClause\":true,"
+                                        "\"decision\":\"allowed\",\"dispatchable\":true},\"affinities\":[]}\n";
+        lp_mary_feed(&d.mary, REHEARSAL, strlen(REHEARSAL));
+        lp_abilities_app_select(state, lp_abilities_app_selected(state));
+    }
     if (app == &lp_app_thread && state) {
         lp_thread_app_set_runner(state, NULL);
         app->open(state, &d, thread_tab && strcmp(thread_tab, "document") == 0 ? "document:file-2b3c4d5e6f7a8b9c" : thread_tab ? thread_tab : "drive");
@@ -397,7 +412,7 @@ static void chat_line(lp_mary *m, lp_mary_role role, const char *text, int strea
 /* Spotlight on the conversation with Mary (Linux, PARITY D18), in one state, from a fixture:
  * idle, listening, thinking, streaming, speaking, error, nokey or offline. */
 static int render_spotlight_chat(const char *state, const char *path) {
-    static const char *const states[] = { "idle", "listening", "thinking", "streaming", "speaking", "error", "nokey", "offline", "highlighted" };
+    static const char *const states[] = { "idle", "listening", "thinking", "streaming", "speaking", "error", "nokey", "offline", "highlighted", "confirm" };
     int which = -1;
     for (int i = 0; i < (int)(sizeof states / sizeof *states); i++) if (strcmp(state, states[i]) == 0) which = i;
     if (which < 0) { fprintf(stderr, "lp-render: no chat state named %s\n", state); return 1; }
@@ -432,6 +447,28 @@ static int render_spotlight_chat(const char *state, const char *path) {
     case 4: m->state = LP_MARY_SPEAKING; chat_line(m, LP_MARY_USER, "What's the weather like in Lyon this weekend?", 0);
         chat_line(m, LP_MARY_REPLY, "Mostly sunny on Saturday, with a high of 24 degrees. Sunday turns cloudy after lunch, so the morning is the time for the market.", 1); break;
     case 5: m->state = LP_MARY_ERROR; snprintf(m->error, sizeof m->error, "Mistral refused the key. Check it in Settings › Mary."); break;
+    case 9: {
+        /* a skill ran under the last reply (its chip), and the next turn parks one on the card (PARITY D30) */
+        lp_mary_message *last = &m->messages[m->message_count - 1];
+        last->run_count = 1;
+        snprintf(last->runs[0].app, sizeof last->runs[0].app, "calendar");
+        snprintf(last->runs[0].app_name, sizeof last->runs[0].app_name, "Calendar");
+        snprintf(last->runs[0].skill, sizeof last->runs[0].skill, "events_today");
+        snprintf(last->runs[0].invocation, sizeof last->runs[0].invocation, "calendar__events_today");
+        last->runs[0].ok = 1;
+        chat_line(m, LP_MARY_USER, "Save the note about Lyon, then.", 0);
+        m->state = LP_MARY_THINKING;
+        m->confirm.active = 1;
+        snprintf(m->confirm.call_id, sizeof m->confirm.call_id, "c1");
+        snprintf(m->confirm.app, sizeof m->confirm.app, "textedit");
+        snprintf(m->confirm.app_name, sizeof m->confirm.app_name, "TextEdit");
+        snprintf(m->confirm.skill, sizeof m->confirm.skill, "save");
+        snprintf(m->confirm.title, sizeof m->confirm.title, "Save the document");
+        snprintf(m->confirm.summary, sizeof m->confirm.summary, "Save the document in TextEdit?");
+        snprintf(m->confirm.args, sizeof m->confirm.args, "{}");
+        m->confirm.args[0] = 0;
+        break;
+    }
     case 8: {
         /* a reply that drew on two sources (PARITY D27): its passages carry their brush strokes */
         chat_line(m, LP_MARY_USER, "What did I write about the spring trip?", 0);
@@ -508,6 +545,7 @@ int main(int argc, char **argv) {
     if (strcmp(argv[1], "--thread") == 0 && argc == 4) { thread_tab = argv[2]; return render_app(&lp_app_thread, 0, argv[3]); }
     if (strcmp(argv[1], "--contribution") == 0 && argc == 3) return render_app(&lp_app_contribution, 0, argv[2]);
     if (strcmp(argv[1], "--ambient") == 0 && argc == 4) { ambient_tab = argv[2]; return render_app(&lp_app_ambient, 0, argv[3]); }
+    if (strcmp(argv[1], "--abilities") == 0 && argc == 4) { abilities_pane = argv[2]; return render_app(&lp_app_abilities, 0, argv[3]); }
     if (strcmp(argv[1], "--player") == 0 && argc == 3) return render_app(&lp_app_player, 0, argv[2]);
     if (strcmp(argv[1], "--calendar") == 0 && argc == 3) return render_app(&lp_app_calendar, 0, argv[2]);
     if (strcmp(argv[1], "--prefs-mary") == 0 && argc == 3) { prefs_pane = LP_PREFS_MARY; return render_app(&lp_app_prefs, 0, argv[2]); }

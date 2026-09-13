@@ -65,10 +65,11 @@ LP_TEST(ranks_prefix_matches_first) {
     LP_ASSERT_STR(r[0].title, "About");
     LP_ASSERT_STR(r[1].title, "Activity Monitor");
     LP_ASSERT_STR(r[2].title, "Ambient");
-    LP_ASSERT_STR(r[3].title, "Gallery");
-    LP_ASSERT_STR(r[4].title, "Calculator");
-    LP_ASSERT_STR(r[5].title, "Terminal");
-    LP_ASSERT_STR(r[6].title, "Media Player");
+    LP_ASSERT_STR(r[3].title, "Abilities");
+    LP_ASSERT_STR(r[4].title, "Gallery");
+    LP_ASSERT_STR(r[5].title, "Calculator");
+    LP_ASSERT_STR(r[6].title, "Terminal");
+    LP_ASSERT_STR(r[7].title, "Media Player");
 }
 
 LP_TEST(is_case_insensitive) {

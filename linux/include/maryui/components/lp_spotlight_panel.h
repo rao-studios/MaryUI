@@ -71,6 +71,10 @@ typedef struct lp_spotlight_result {
     /* A highlighted passage was clicked this event (PARITY D27): which message of the conversation, and
      * which of its owners; -1 otherwise. The host opens "From the thread" on it. */
     int contribution_message, contribution_owner;
+    /* A run chip under a reply was clicked (PARITY D30): which message; -1 otherwise. The host opens Ambient › Runs. */
+    int run_message;
+    /* The confirmation card was answered this event: 1 Allow, 0 Not now, -1 neither. The host sends skill.confirm.reply. */
+    int confirm_answer;
     lp_rect panel;       /* where the panel was painted */
 } lp_spotlight_result;
 

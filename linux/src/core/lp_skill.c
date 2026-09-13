@@ -170,6 +170,14 @@ char *lp_desktop_skills_json(const lp_desktop *d) {
         struct json_object *o = json_object_new_object(), *skills = json_object_new_array();
         json_object_object_add(o, "id", json_object_new_string(app->id));
         json_object_object_add(o, "name", json_object_new_string(app->name ? app->name : app->title));
+        json_object_object_add(o, "title", json_object_new_string(app->title ? app->title : app->id));
+        if (app->summary) json_object_object_add(o, "summary", json_object_new_string(app->summary));
+        struct json_object *aliases = json_object_new_array();
+        if (app->aka) json_object_array_add(aliases, json_object_new_string(app->aka));
+        for (int i = 0; i < app->alias_count; i++) json_object_array_add(aliases, json_object_new_string(app->aliases[i]));
+        json_object_object_add(o, "aliases", aliases);
+        json_object_object_add(o, "paradigm", json_object_new_string(app->paradigm ? app->paradigm : "applicationExpertise"));
+        if (app->discipline) json_object_object_add(o, "discipline", json_object_new_string(app->discipline));
         json_object_object_add(o, "enabled", json_object_new_boolean(lp_skill_app_enabled(&d->skill_policy, app->id)));
         json_object_object_add(o, "ask", json_object_new_string(lp_skill_ask_name(lp_skill_app_ask(&d->skill_policy, app->id))));
         for (int s = 0; s < app->skill_count; s++) {
@@ -181,6 +189,25 @@ char *lp_desktop_skills_json(const lp_desktop *d) {
             json_object_object_add(k, "params", sk->params ? json_tokener_parse(sk->params) : NULL);
             json_object_object_add(k, "effect", json_object_new_string(lp_skill_effect_name(sk->effect)));
             json_object_object_add(k, "enabled", json_object_new_boolean(lp_skill_enabled(&d->skill_policy, app->id, sk->id)));
+            if (sk->kind) json_object_object_add(k, "kind", json_object_new_string(sk->kind));
+            if (sk->access) json_object_object_add(k, "access", json_object_new_string(sk->access));
+            if (sk->trigger_count || sk->phrase_count) {
+                struct json_object *triggers = json_object_new_object(), *tokens = json_object_new_array(), *phrases = json_object_new_array();
+                for (int i = 0; i < sk->trigger_count; i++) json_object_array_add(tokens, json_object_new_string(sk->triggers[i]));
+                for (int i = 0; i < sk->phrase_count; i++) json_object_array_add(phrases, json_object_new_string(sk->phrases[i]));
+                json_object_object_add(triggers, "tokens", tokens);
+                json_object_object_add(triggers, "phrases", phrases);
+                json_object_object_add(k, "triggers", triggers);
+            }
+            if (sk->target_class_count) {
+                struct json_object *classes = json_object_new_array();
+                for (int i = 0; i < sk->target_class_count; i++) json_object_array_add(classes, json_object_new_string(sk->target_classes[i]));
+                json_object_object_add(k, "target_classes", classes);
+            }
+            if (sk->spoken) {
+                struct json_object *spoken = json_tokener_parse(sk->spoken);
+                if (spoken) json_object_object_add(k, "spoken", spoken);
+            }
             json_object_array_add(skills, k);
         }
         json_object_object_add(o, "skills", skills);

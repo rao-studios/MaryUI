@@ -669,8 +669,13 @@ static void calendar_destroy(void *state) {
 
 /* MARK: - Mary's skills (PARITY D20) */
 
+static const char *const CAL_TOKENS[] = { "calendar", "events", "schedule", "appointments" };
+static const char *const CAL_PHRASES[] = { "what is on my calendar", "what do I have today", "today's events" };
+static const char *const CAL_CLASSES[] = { "event", "day" };
 static const lp_skill calendar_skills[] = {
-    { "events_today", "Today's events", "Lists today's events with their times and places, from the calendar on disk.", NULL, LP_SKILL_READ },
+    { .id = "events_today", .title = "Today's events", .summary = "Lists today's events with their times and places, from the calendar on disk.",
+      .effect = LP_SKILL_READ, .kind = "cognitive", .access = "seamless", .triggers = CAL_TOKENS, .trigger_count = 4,
+      .phrases = CAL_PHRASES, .phrase_count = 3, .target_classes = CAL_CLASSES, .target_class_count = 2 },
 };
 
 /* Read from the model, not the window: Mary can ask without Calendar being open. */
@@ -716,6 +721,7 @@ const lp_app lp_app_calendar = {
     .command = calendar_command, .menu_entries = calendar_menu_entries, .notify = calendar_notify,
     .skills = calendar_skills, .skill_count = 1, .perform = calendar_perform,
     .surface = calendar_surface, .surface_poll_s = 60,
+    .summary = "The days and their events, kept on disk.", .discipline = "awareness",
 };
 
 /* MARK: - Tests */

@@ -403,6 +403,63 @@ LP_TEST(a_reply_that_was_not_spoken_says_why) {
     close(listener);
 }
 
+LP_TEST(a_card_comes_up_is_answered_and_the_runs_ride_reply_end) {
+    fresh(1);
+    int listener, srv = connect_pair(&listener);
+    say(srv, "{\"type\":\"transcript\",\"text\":\"save it\",\"final\":true}\n{\"type\":\"state\",\"state\":\"thinking\"}\n"
+             "{\"type\":\"skill.confirm\",\"call_id\":\"c7\",\"app\":\"textedit\",\"app_name\":\"TextEdit\",\"skill\":\"save\",\"title\":\"Save the document\","
+             "\"args\":{},\"summary\":\"Save the document in TextEdit?\"}\n");
+    lp_test_loop_run(500, NULL);
+    LP_ASSERT(d.mary.confirm.active);
+    LP_ASSERT_STR(d.mary.confirm.call_id, "c7");
+    LP_ASSERT_STR(d.mary.confirm.app_name, "TextEdit");
+    LP_ASSERT_STR(d.mary.confirm.title, "Save the document");
+    LP_ASSERT_STR(d.mary.confirm.args, "");                            /* no arguments: no small print */
+    LP_ASSERT(changes & LP_MARY_CHANGED_CONFIRM);
+    LP_ASSERT_EQ(lp_mary_confirm_reply(&d.mary, 1), 0);
+    LP_ASSERT(!d.mary.confirm.active);
+    lp_test_loop_run(100, NULL);
+    struct json_object *o = hear(srv);
+    LP_ASSERT_STR(field(o, "type"), "skill.confirm.reply");
+    LP_ASSERT_STR(field(o, "call_id"), "c7");
+    struct json_object *yes;
+    LP_ASSERT(json_object_object_get_ex(o, "yes", &yes) && json_object_get_boolean(yes));
+    json_object_put(o);
+    LP_ASSERT_EQ(lp_mary_confirm_reply(&d.mary, 0), -ENOENT);         /* nothing is up any more */
+    say(srv, "{\"type\":\"reply.delta\",\"text\":\"Saved.\"}\n"
+             "{\"type\":\"reply.end\",\"cancelled\":false,\"runs\":[{\"call_id\":\"c7\",\"app\":\"textedit\",\"skill\":\"save\",\"invocation\":\"textedit__save\","
+             "\"args\":\"{}\",\"ok\":true,\"requested\":false,\"found_nothing\":false,\"is_read\":false,\"summary\":\"Saved ~/Documents/x.txt.\"}]}\n");
+    want_messages = 2;
+    lp_test_loop_run(1000, enough_messages);
+    lp_test_loop_run(50, NULL);
+    LP_ASSERT_EQ(d.mary.message_count, 2);
+    LP_ASSERT_EQ(d.mary.messages[1].run_count, 1);
+    LP_ASSERT_STR(d.mary.messages[1].runs[0].invocation, "textedit__save");
+    LP_ASSERT_STR(d.mary.messages[1].runs[0].app_name, "textedit");    /* no apps registered here: the id stands in */
+    LP_ASSERT(d.mary.messages[1].runs[0].ok && !d.mary.messages[1].runs[0].requested);
+    /* a card the turn ends around is taken down with it */
+    say(srv, "{\"type\":\"skill.confirm\",\"call_id\":\"c8\",\"app\":\"finder\",\"skill\":\"open\",\"title\":\"Open\",\"args\":{\"path\":\"~/x\"},\"summary\":\"Open in the Finder?\"}\n");
+    lp_test_loop_run(200, NULL);
+    LP_ASSERT(d.mary.confirm.active);
+    LP_ASSERT_STR(d.mary.confirm.args, "{\"path\":\"~/x\"}");
+    say(srv, "{\"type\":\"reply.end\",\"cancelled\":true}\n");
+    lp_test_loop_run(200, NULL);
+    LP_ASSERT(!d.mary.confirm.active);
+    /* a rehearsal's answer is kept for the Abilities app */
+    LP_ASSERT_EQ(lp_mary_triage(&d.mary, "play the music"), 0);
+    lp_test_loop_run(100, NULL);
+    o = hear(srv);
+    LP_ASSERT_STR(field(o, "type"), "triage");
+    LP_ASSERT_STR(field(o, "text"), "play the music");
+    json_object_put(o);
+    say(srv, "{\"type\":\"triage.result\",\"ok\":false,\"message\":\"the skill index is not built\"}\n");
+    lp_test_loop_run(200, NULL);
+    LP_ASSERT(d.mary.triage != NULL && (changes & LP_MARY_CHANGED_TRIAGE));
+    lp_mary_free(&d.mary);
+    close(srv);
+    close(listener);
+}
+
 LP_TEST(starting_needs_an_event_loop) {
     fresh(0);
     LP_ASSERT_EQ(lp_mary_start(&d.mary, "/tmp/nowhere.sock"), -ENOSYS);
@@ -450,6 +507,7 @@ int main(void) {
     LP_RUN(skill_calls_reach_the_handler_or_are_answered_unknown);
     LP_RUN(voices_samples_and_config_travel_both_ways);
     LP_RUN(a_reply_that_was_not_spoken_says_why);
+    LP_RUN(a_card_comes_up_is_answered_and_the_runs_ride_reply_end);
     LP_RUN(reconnects_when_maryd_comes_back);             /* last of the socket tests: it removes their directory */
     LP_RUN(starting_needs_an_event_loop);
 #endif

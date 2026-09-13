@@ -391,7 +391,7 @@ LP_TEST(a_pane_taller_than_the_window_scrolls) {
     pass(p, (lp_input){ .mx = 500, .my = 150, .scroll_y = 120 }, 1010);
     LP_ASSERT_NEAR(lp_prefs_scroll(p), 120, 0.01);
     pass(p, (lp_input){ .mx = 500, .my = 150, .scroll_y = 100000 }, 1020);
-    LP_ASSERT(lp_prefs_scroll(p) > 120 && lp_prefs_scroll(p) < 1000);    /* it stops at the pane's end */
+    LP_ASSERT(lp_prefs_scroll(p) > 120 && lp_prefs_scroll(p) < 4000);    /* it stops at the pane's end (the Skills section lists every app's) */
     pass(p, (lp_input){ .mx = 90, .my = 150, .scroll_y = -50 }, 1030);    /* the sidebar does not scroll it */
     LP_ASSERT(lp_prefs_scroll(p) > 120);
     lp_desktop_run_command(&d, LP_CMD_APP, LP_PREFS_ABOUT);

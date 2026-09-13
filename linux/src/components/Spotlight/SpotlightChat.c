@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "maryui/components/lp_button.h"
 #include "maryui/components/lp_layout_components.h"
 #include "maryui/components/lp_liquid_bubble.h"
 #include "maryui/components/lp_monogram.h"
@@ -39,6 +40,9 @@
 #define CARET_MS 550.0
 #define DOTS_PERIOD_MS 2000.0
 #define DOTS_STAGGER_MS 350.0
+#define CHIP_H 18                       /* a run's chip: mono 10 in a capsule (the Mac's ability chip) */
+#define CHIP_GAP 6
+#define CARD_PAD 12                     /* the confirmation card */
 
 static const float TWO_PI = 6.2831853f;
 
@@ -165,7 +169,89 @@ static size_t byte_at(const char *text, size_t len, int cp) {
 struct probe {
     float x, y;
     int message, owner;     /* the highlighted passage under the pointer, or -1 */
+    int run_message;        /* a run chip under the pointer, or -1 */
+    lp_ctx *ctx;            /* for the card's buttons (NULL when only measuring) */
+    int confirm_answer;     /* the card's answer this event, or -1 */
 };
+
+/* The skills a reply ran, as chips (AbilitySkillReference: App · skill | invocation). Returns the rows' height. */
+static float chips(lp_ctx *ctx, const lp_mary_message *msg, int message_index, float alpha, float x, float y0, float w, int draw, struct probe *probe) {
+    if (!msg->run_count) return 0;
+    lp_text_style st = lp_text_style_default();
+    st.size_px = 10;
+    st.font = LP_FONT_MONO;
+    float x0 = x, y = y0 + 6;
+    for (int i = 0; i < msg->run_count; i++) {
+        const lp_mary_run *run = &msg->runs[i];
+        char label[200];
+        snprintf(label, sizeof label, "%s \xC2\xB7 %s | %s", run->app_name, run->skill, run->invocation);
+        float tw = draw || probe ? (ctx->cr ? lp_text_measure(ctx->cr, label, &st).w : (float)strlen(label) * 6) : (float)strlen(label) * 6;
+        float cw = tw + 16;
+        if (cw > w) cw = w;
+        if (x0 + cw > x + w && x0 > x) { x0 = x; y += CHIP_H + CHIP_GAP; }
+        lp_rect r = LP_RECT(x0, y, cw, CHIP_H);
+        if (probe && lp_rect_contains(r, probe->x, probe->y)) probe->run_message = message_index;
+        if (draw) {
+            lp_color ink = run->requested ? LP_INK_TERTIARY : run->ok ? LP_INK_SECONDARY : (lp_color){ 0.72f, 0.30f, 0.26f, 1 };
+            lp_color fill = ink;
+            fill.a = 0.12f * alpha;
+            ink.a *= alpha;
+            lp_fill_solid(ctx->cr, r, fill, CHIP_H / 2);
+            st.color = ink;
+            st.ellipsize = 1;
+            lp_text_draw(ctx->cr, label, LP_RECT(r.x + 8, r.y, r.w - 16, r.h), &st, LP_ALIGN_START);
+        }
+        x0 += cw + CHIP_GAP;
+    }
+    return y + CHIP_H - y0;
+}
+
+/* The confirmation card (Mary's skill.confirm, PARITY D30): what she would do, in which app, Allow or Not now. */
+static float card(lp_ctx *ctx, const lp_mary *m, float x, float y0, float w, int draw, struct probe *probe) {
+    const lp_mary_confirm *c = &m->confirm;
+    if (!c->active) return 0;
+    cairo_t *cr = ctx->cr;
+    lp_text_style title = lp_text_style_default();
+    title.size_px = LP_TEXT_MD;
+    title.weight = LP_TEXT_WEIGHT_SEMIBOLD;
+    title.color = LP_INK_PRIMARY;
+    lp_text_style quiet = lp_text_style_default();
+    quiet.size_px = LP_TEXT_SM;
+    quiet.color = LP_INK_SECONDARY;
+    lp_text_style small = lp_text_style_default();
+    small.size_px = 10;
+    small.font = LP_FONT_MONO;
+    small.color = LP_INK_TERTIARY;
+    small.ellipsize = 1;
+    char in[120];
+    snprintf(in, sizeof in, "in %s", c->app_name);
+    float inner = w - 2 * CARD_PAD;
+    float summary_h = cr ? paragraph(cr, c->summary, strlen(c->summary), &quiet, 0, 0, inner, 0) : 17;
+    float h = CARD_PAD + 20 + 4 + summary_h + (c->args[0] ? 16 : 0) + 8 + 28 + CARD_PAD;
+    lp_rect box = LP_RECT(x, y0 + LINE_GAP, w, h);
+    if (draw) {
+        lp_fill_solid(cr, box, LP_SURFACE_BODY, LP_RADIUS_MD);
+        lp_draw_hairline(cr, box, LP_EDGE_TOP | LP_EDGE_BOTTOM | LP_EDGE_LEFT | LP_EDGE_RIGHT, LP_EDGE_DIVIDER);
+        float y = box.y + CARD_PAD;
+        lp_size tw = lp_text_measure(cr, c->title, &title);
+        lp_text_draw(cr, c->title, LP_RECT(box.x + CARD_PAD, y, inner, 20), &title, LP_ALIGN_START);
+        lp_text_draw(cr, in, LP_RECT(box.x + CARD_PAD + tw.w + 8, y, inner - tw.w - 8, 20), &quiet, LP_ALIGN_START);
+        y += 24;
+        paragraph(cr, c->summary, strlen(c->summary), &quiet, box.x + CARD_PAD, y, inner, 1);
+        y += summary_h;
+        if (c->args[0]) { lp_text_draw(cr, c->args, LP_RECT(box.x + CARD_PAD, y, inner, 16), &small, LP_ALIGN_START); y += 16; }
+    }
+    /* the buttons take input in the EVENT pass and paint in the DRAW pass, as every lp_button does */
+    lp_button_opts allow = { LP_BUTTON_PRIMARY, LP_CONTROL_SM, LP_ICON_COUNT, 0, 0 }, later = { LP_BUTTON_DEFAULT, LP_CONTROL_SM, LP_ICON_COUNT, 0, 0 };
+    lp_size as = lp_button_measure(ctx, "Allow", allow), ls = lp_button_measure(ctx, "Not now", later);
+    float by = box.y + box.h - CARD_PAD - as.h, bx = box.x + box.w - CARD_PAD - as.w;
+    lp_id base = LP_ID("spotlight.confirm");
+    if (draw || probe) {
+        if (lp_button(ctx, lp_id_index(base, 1), LP_RECT(bx, by, as.w, as.h), "Allow", allow) && probe) probe->confirm_answer = 1;
+        if (lp_button(ctx, lp_id_index(base, 2), LP_RECT(bx - LP_SPACE_2 - ls.w, by, ls.w, ls.h), "Not now", later) && probe) probe->confirm_answer = 0;
+    }
+    return LINE_GAP + h;
+}
 
 /* Mary's passage: the reply as paragraphs on paper, with a brush stroke under every credited line
  * (ContributionHighlightText.swift, PARITY D26/D27). Returns its height. */
@@ -282,6 +368,7 @@ static float dialogue(lp_ctx *ctx, const lp_mary *m, float x, float y0, float w,
                 quiet.color.a *= alpha;
                 y += 3 + paragraph(cr, said, strlen(said), &quiet, x, y + 3, w, draw);
             }
+            y += chips(ctx, msg, i, alpha, x, y, w, draw, probe);
         }
     }
     if (m->partial[0]) {
@@ -310,6 +397,7 @@ static float dialogue(lp_ctx *ctx, const lp_mary *m, float x, float y0, float w,
         }
         y += 5;
     }
+    y += card(ctx, m, x, y, w, draw, probe);
     return y - y0 + LP_SPACE_3;
 }
 
@@ -350,18 +438,21 @@ void lp_spotlight_chat(lp_ctx *ctx, const lp_spotlight_view *v, lp_rect panel, f
         lp_text_draw(cr, hint, LP_RECT(well.x + TEXT_INSET, well.y, column, well.h), &st, LP_ALIGN_CENTER);
     } else if (draw) {
         dialogue(ctx, m, origin.x + TEXT_INSET, origin.y, column, 1, NULL);
-    } else if (!empty && lp_hit(ctx, well) && !isnan(ctx->in.mx)) {
-        /* the pointer over a credited passage: a hand, and a click opens "From the thread" */
-        struct probe probe = { ctx->in.mx, ctx->in.my, -1, -1 };
+    } else if (!empty && (m->confirm.active || (lp_hit(ctx, well) && !isnan(ctx->in.mx)))) {
+        /* the pointer over a credited passage or a run chip: a hand, and a click opens "From the thread" or Ambient › Runs;
+         * the card's buttons answer maryd */
+        struct probe probe = { ctx->in.mx, ctx->in.my, -1, -1, -1, ctx, -1 };
         dialogue(ctx, m, origin.x + TEXT_INSET, origin.y, column, 0, &probe);
-        if (probe.message >= 0) {
-            ctx->cursor = LP_CURSOR_POINTER;
-            if ((ctx->in.pressed & LP_BUTTON_LEFT) && res) {
-                res->contribution_message = probe.message;
-                res->contribution_owner = probe.owner;
-                ctx->dirty = 1;
-            }
+        if (probe.message >= 0 || probe.run_message >= 0) ctx->cursor = LP_CURSOR_POINTER;
+        if (probe.message >= 0 && (ctx->in.pressed & LP_BUTTON_LEFT) && res) {
+            res->contribution_message = probe.message;
+            res->contribution_owner = probe.owner;
+            ctx->dirty = 1;
+        } else if (probe.run_message >= 0 && (ctx->in.pressed & LP_BUTTON_LEFT) && res) {
+            res->run_message = probe.run_message;
+            ctx->dirty = 1;
         }
+        if (probe.confirm_answer >= 0 && res) { res->confirm_answer = probe.confirm_answer; ctx->dirty = 1; }
     }
     lp_scroll_end(ctx);
     if (draw) {

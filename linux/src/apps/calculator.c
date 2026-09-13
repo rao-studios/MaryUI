@@ -2,6 +2,7 @@
  * repeated equals, clicked or typed. The arithmetic is lp_calc
  * (src/core/lp_calc.c); this file is its display and keypad. ⌘/Ctrl+C copies
  * the display, ⌘/Ctrl+V types the clipboard in. Linux only (PARITY D15). */
+#include <errno.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,6 +14,7 @@
 #include "maryui/components/lp_text_area.h"
 #include "maryui/lp_calc.h"
 #include "maryui/lp_desktop.h"
+#include "maryui/lp_skill.h"
 #include "maryui/lp_text.h"
 #include "maryui/lp_tokens.h"
 
@@ -151,6 +153,39 @@ static void *calculator_create(lp_desktop *d, const char *window_id) {
 
 static void calculator_destroy(void *state) { free(state); }
 
+/* MARK: - Mary's skills (PARITY D20, D30) */
+
+void lp_calculator_evaluate(const char *expression, char *out, size_t n) {
+    lp_calc c;
+    lp_calc_init(&c);
+    lp_calc_paste(&c, expression, -1);
+    lp_calc_press(&c, LP_CALC_EQUALS);
+    lp_calc_display(&c, out, n);
+    if (strcmp(out, "Error") == 0 || strcmp(out, "NaN") == 0) out[0] = 0;
+}
+
+static const char *const CALC_TOKENS[] = { "calculate", "compute", "plus", "minus", "times", "divided" };
+static const char *const CALC_PHRASES[] = { "what is", "how much is", "calculate" };
+static const char *const CALC_CLASSES[] = { "number", "expression" };
+static const lp_skill calculator_skills[] = {
+    { .id = "calculate", .title = "Calculate", .summary = "Works out an arithmetic expression and answers with the value.",
+      .params = "{\"type\":\"object\",\"properties\":{\"expression\":{\"type\":\"string\"}},\"required\":[\"expression\"]}",
+      .effect = LP_SKILL_READ, .kind = "cognitive", .access = "seamless", .triggers = CALC_TOKENS, .trigger_count = 6,
+      .phrases = CALC_PHRASES, .phrase_count = 3, .target_classes = CALC_CLASSES, .target_class_count = 2 },
+};
+
+/* Read from a calculator of its own: Mary can ask without the window. */
+static int calculator_perform(void *state, lp_desktop *d, const char *skill, const char *args, char *result, size_t n) {
+    char expression[200], value[80], exprq[400];
+    if (strcmp(skill, "calculate") != 0) return -ENOENT;
+    if (!lp_skill_arg_string(args, "expression", expression, sizeof expression) || !expression[0]) { snprintf(result, n, "What should I calculate?"); return -EINVAL; }
+    lp_calculator_evaluate(expression, value, sizeof value);
+    if (!value[0]) { snprintf(result, n, "%.100s does not compute.", expression); return -EINVAL; }
+    lp_skill_json_escape(expression, exprq, sizeof exprq);
+    snprintf(result, n, "{\"expression\":\"%s\",\"value\":\"%s\",\"summary\":\"%s is %s.\"}", exprq, value, exprq, value);
+    return 0;
+}
+
 static int calculator_surface(void *state, lp_desktop *d, lp_app_surface *out);
 const lp_app lp_app_calculator = {
     .id = "calculator", .title = "Calculator", .name = "Calculator", .icon = LP_ICON_GRID, .object = "appCalculator",
@@ -158,7 +193,9 @@ const lp_app lp_app_calculator = {
     .default_rect = { NAN, NAN, 300, 420 }, .min_size = { 300, 420 }, .singleton = 1, .resizable = 0,
     .create = calculator_create, .paint = calculator_paint, .destroy = calculator_destroy,
     .command = calculator_command, .menu_entries = calculator_menu_entries,
+    .skills = calculator_skills, .skill_count = 1, .perform = calculator_perform,
     .surface = calculator_surface, .surface_poll_s = 60,
+    .summary = "Arithmetic, with a memory.",
 };
 
 /* MARK: - Introspection (tests) */

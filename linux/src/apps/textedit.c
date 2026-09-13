@@ -17,6 +17,7 @@
 #include "maryui/lp_desktop.h"
 #include "maryui/lp_draw.h"
 #include "maryui/lp_files.h"
+#include "maryui/lp_skill.h"
 #include "maryui/lp_text.h"
 #include "maryui/lp_tokens.h"
 
@@ -265,12 +266,125 @@ static void textedit_paint(void *state, lp_ctx *ctx, lp_rect body, lp_desktop *d
     }
 }
 
+/* MARK: - Mary's skills (PARITY D20, D30) */
+
+static const char *const TE_READ_TOKENS[] = { "read", "document", "text" };
+static const char *const TE_READ_PHRASES[] = { "read the document", "what does the document say", "read me the text" };
+static const char *const TE_INSERT_TOKENS[] = { "insert", "type", "write", "add" };
+static const char *const TE_INSERT_PHRASES[] = { "insert text", "write this down", "add to the document", "type this" };
+static const char *const TE_REPLACE_TOKENS[] = { "replace", "rewrite" };
+static const char *const TE_REPLACE_PHRASES[] = { "replace the selection", "replace this with", "rewrite the selection" };
+static const char *const TE_SAVE_TOKENS[] = { "save" };
+static const char *const TE_SAVE_PHRASES[] = { "save the document", "save this", "save the file" };
+static const char *const TE_CLASSES[] = { "document", "text", "selection" };
+
+static const lp_skill textedit_skills[] = {
+    { .id = "read", .title = "Read the document", .summary = "Reads the open document: its name, where it lives, its text and what is selected.",
+      .effect = LP_SKILL_READ, .kind = "cognitive", .access = "seamless", .triggers = TE_READ_TOKENS, .trigger_count = 3,
+      .phrases = TE_READ_PHRASES, .phrase_count = 3, .target_classes = TE_CLASSES, .target_class_count = 3 },
+    { .id = "insert_text", .title = "Insert text", .summary = "Types text into the document at the caret, at its end or at its start.",
+      .params = "{\"type\":\"object\",\"properties\":{\"text\":{\"type\":\"string\"},\"where\":{\"type\":\"string\",\"enum\":[\"caret\",\"end\",\"start\"]}},\"required\":[\"text\"]}",
+      .effect = LP_SKILL_ACT, .kind = "effectful", .access = "reversible", .triggers = TE_INSERT_TOKENS, .trigger_count = 4,
+      .phrases = TE_INSERT_PHRASES, .phrase_count = 4, .target_classes = TE_CLASSES, .target_class_count = 3,
+      .spoken = "{\"where\":{\"end\":[\"at the end\",\"to the end\",\"at the bottom\"],\"start\":[\"at the top\",\"at the start\",\"at the beginning\"],\"caret\":[\"here\",\"at the cursor\"]}}" },
+    { .id = "replace_selection", .title = "Replace the selection", .summary = "Replaces the selected text with new text.",
+      .params = "{\"type\":\"object\",\"properties\":{\"text\":{\"type\":\"string\"}},\"required\":[\"text\"]}",
+      .effect = LP_SKILL_ACT, .kind = "effectful", .access = "reversible", .triggers = TE_REPLACE_TOKENS, .trigger_count = 2,
+      .phrases = TE_REPLACE_PHRASES, .phrase_count = 3, .target_classes = TE_CLASSES, .target_class_count = 3 },
+    { .id = "save", .title = "Save the document", .summary = "Writes the document back where it came from.",
+      .effect = LP_SKILL_ACT, .kind = "effectful", .access = "reversible", .triggers = TE_SAVE_TOKENS, .trigger_count = 1,
+      .phrases = TE_SAVE_PHRASES, .phrase_count = 3, .target_classes = TE_CLASSES, .target_class_count = 3 },
+};
+
+#define TE_READ_MAX 6000
+
+static int textedit_perform(void *state, lp_desktop *d, const char *skill, const char *args, char *result, size_t n) {
+    struct textedit *t = state;
+    if (!t && d) {                      /* the skill needs a window: open the document */
+        lp_desktop_open_app(d, "textedit");
+        t = lp_desktop_app_state(d, "textedit");
+    }
+    if (!t) { snprintf(result, n, "TextEdit would not open."); return -EIO; }
+    const char *name = t->name.len ? t->name.text : "Untitled";
+    char nameq[520], escaped[TE_READ_MAX * 2 + 8], path[LP_FILES_PATH_MAX * 2];
+    lp_skill_json_escape(name, nameq, sizeof nameq);
+    lp_skill_json_escape(t->path, path, sizeof path);
+    if (strcmp(skill, "read") == 0) {
+        int start = 0, end = 0;
+        lp_text_doc_selection(&t->area.doc, &start, &end);
+        size_t len = (size_t)t->area.doc.len, shown = len > TE_READ_MAX ? TE_READ_MAX : len;
+        while (shown && shown < len && ((unsigned char)t->area.doc.text[shown] & 0xC0) == 0x80) shown--;
+        char *piece = malloc(shown + 1);
+        if (!piece) return -ENOMEM;
+        memcpy(piece, t->area.doc.text, shown);
+        piece[shown] = 0;
+        lp_skill_json_escape(piece, escaped, sizeof escaped);
+        free(piece);
+        char selected[1200] = "";
+        if (end > start) {
+            size_t sl = (size_t)(end - start) > 500 ? 500 : (size_t)(end - start);
+            char raw[504];
+            memcpy(raw, t->area.doc.text + start, sl);
+            raw[sl] = 0;
+            lp_skill_json_escape(raw, selected, sizeof selected);
+        }
+        int wrote = snprintf(result, n, "{\"name\":\"%s\",\"path\":\"%s\",\"chars\":%d,\"truncated\":%s,\"text\":\"%s\",\"selection\":{\"start\":%d,\"end\":%d,\"text\":\"%s\"}}",
+                             nameq, path, lp_text_doc_char_count(&t->area.doc), shown < len ? "true" : "false", escaped, start, end, selected);
+        return wrote < (int)n ? 0 : -ENOBUFS;
+    }
+    if (strcmp(skill, "insert_text") == 0 || strcmp(skill, "replace_selection") == 0) {
+        char *text = malloc(LP_SKILL_RESULT_MAX);
+        if (!text) return -ENOMEM;
+        if (!lp_skill_arg_string(args, "text", text, LP_SKILL_RESULT_MAX) || !text[0]) {
+            free(text);
+            snprintf(result, n, strcmp(skill, "insert_text") == 0 ? "What should I insert?" : "What should the selection become?");
+            return -EINVAL;
+        }
+        if (strcmp(skill, "replace_selection") == 0) {
+            if (!lp_text_doc_has_selection(&t->area.doc)) {
+                free(text);
+                snprintf(result, n, "Nothing is selected in the document.");
+                return -EINVAL;
+            }
+        } else {
+            char where[16] = "";
+            lp_skill_arg_string(args, "where", where, sizeof where);
+            if (strcmp(where, "end") == 0) t->area.doc.cursor = t->area.doc.anchor = t->area.doc.len;
+            else if (strcmp(where, "start") == 0) t->area.doc.cursor = t->area.doc.anchor = 0;
+            else t->area.doc.anchor = t->area.doc.cursor;      /* at the caret, never over a selection */
+        }
+        lp_text_doc_insert(&t->area.doc, text, (int)strlen(text));
+        int chars = 0;
+        for (const char *c = text; *c; c++) if (((unsigned char)*c & 0xC0) != 0x80) chars++;
+        free(text);
+        t->dirty = 1;
+        if (d && d->on_app_dirty) d->on_app_dirty(d, t->window_id);
+        snprintf(result, n, "{\"landed\":true,\"chars\":%d,\"summary\":\"%s %d character%s in %s.\"}", chars,
+                 strcmp(skill, "insert_text") == 0 ? "Inserted" : "Replaced the selection with", chars, chars == 1 ? "" : "s", nameq);
+        return 0;
+    }
+    if (strcmp(skill, "save") == 0) {
+        if (!t->dir[0]) { snprintf(result, n, "This document has nowhere to go."); return -ENOENT; }
+        save(t, d);
+        if (strncmp(t->status, "Could not", 9) == 0) { snprintf(result, n, "%s", t->status); return -EIO; }
+        lp_skill_json_escape(t->path, path, sizeof path);
+        char shown[LP_FILES_PATH_MAX], shownq[LP_FILES_PATH_MAX * 2];
+        lp_files_abbreviate(t->path, shown, sizeof shown);
+        lp_skill_json_escape(shown, shownq, sizeof shownq);
+        snprintf(result, n, "{\"landed\":true,\"path\":\"%s\",\"summary\":\"Saved %s.\"}", path, shownq);
+        return 0;
+    }
+    return -ENOENT;
+}
+
 const lp_app lp_app_textedit = {
     .id = "textedit", .title = "Untitled", .name = "TextEdit", .icon = LP_ICON_PENCIL, .hidden = 1, .dock = 1,
     .default_rect = { 200, 120, 560, 420 }, .min_size = { 320, 220 }, .singleton = 0, .resizable = 1,
     .create = textedit_create, .paint = textedit_paint, .destroy = textedit_destroy,
     .open = textedit_open, .command = textedit_command, .menu_entries = textedit_menu_entries,
+    .skills = textedit_skills, .skill_count = 4, .perform = textedit_perform,
     .surface = textedit_surface, .surface_poll_s = 15,
+    .summary = "Writes and reads plain text documents.", .discipline = "writing",
 };
 
 /* MARK: - Introspection (tests) */

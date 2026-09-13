@@ -3,12 +3,13 @@
  * $XDG_RUNTIME_DIR/mary/mary.sock with newline-delimited JSON:
  *
  *   maryd → desktop   hello{state, key_present, wake, voice, tail}, wake, state{state}, level{rms},
- *                     transcript{text, final}, reply.delta{text}, reply.end{cancelled, contribution, retrieved},
+ *                     transcript{text, final}, reply.delta{text}, reply.end{cancelled, contribution, retrieved, runs},
  *                     key.status{present, verified_at, ok?, message?}, error{stage, message},
  *                     skill.invoke{call_id, app, skill, args}, voices{ok, voices | message},
  *                     voice.sample{voice_id, state, message?}, world.request, app.state{call_id, app},
- *                     ambient{state}, trace{records}, trace.report{text}
- *   desktop → maryd   ask{text}, listen, stop, dismiss, key.set{key}, key.verify,
+ *                     ambient{state}, trace{records}, trace.report{text},
+ *                     skill.confirm{call_id, app, app_name, skill, title, args, summary} (the card), triage.result{…}
+ *   desktop → maryd   ask{text}, listen, stop, dismiss, key.set{key}, key.verify, skill.confirm.reply{call_id, yes}, triage{text},
  *                     config{wake?, voice?}, voices.list, voice.sample{voice_id, text?},
  *                     skills{apps}, skill.result{call_id, ok, result | error},
  *                     world{…}, selection{…}, selection.clear{…}, app.state.result{…} (lp_world.h),
@@ -65,6 +66,15 @@ typedef struct lp_mary_owner {
 } lp_mary_owner;
 
 #define LP_MARY_OWNERS 8
+#define LP_MARY_RUNS 8
+
+/* One skill a reply ran (maryd's reply.end runs[], PARITY D30): the chip under the passage. */
+typedef struct lp_mary_run {
+    char app[32], app_name[64], skill[48];
+    char invocation[96];    /* "media__play_pause" */
+    char summary[200];
+    int ok, requested;      /* requested: parked for the person and not run */
+} lp_mary_run;
 
 typedef struct lp_mary_message {
     lp_mary_role role;
@@ -81,7 +91,18 @@ typedef struct lp_mary_message {
     void *contribution;     /* struct json_object *, or NULL */
     void *retrieved;        /* struct json_object *, or NULL */
     double highlighted_ms;  /* when the strokes began to fade in (the panel's clock); 0 until first drawn */
+    lp_mary_run runs[LP_MARY_RUNS];
+    int run_count;
 } lp_mary_message;
+
+/* A skill parked for the person (maryd's skill.confirm, PARITY D30): the card Spotlight shows under the reply. */
+typedef struct lp_mary_confirm {
+    int active;
+    char call_id[64];
+    char app[32], app_name[64], skill[48], title[96];
+    char summary[240];      /* "Save the document in TextEdit?" */
+    char args[240];         /* the arguments as compact JSON, for the card's small print */
+} lp_mary_confirm;
 
 /* One of Mistral's voices, as maryd lists them. */
 typedef struct lp_mary_voice {
@@ -107,6 +128,8 @@ enum {
     LP_MARY_CHANGED_SAMPLE = 256,       /* a sample's progress */
     LP_MARY_CHANGED_AMBIENT = 512,      /* the ambient state (the Ambient app's World and Realms) */
     LP_MARY_CHANGED_TRACE = 1024,       /* the trace (Routes and Runs), or its report */
+    LP_MARY_CHANGED_CONFIRM = 2048,     /* a confirmation card came, or was answered */
+    LP_MARY_CHANGED_TRIAGE = 4096,      /* a rehearsal's answer (the Abilities app) */
 };
 
 /* A skill call from maryd (U4 answers it); args_json is "null" when there are none. */
@@ -160,6 +183,8 @@ typedef struct lp_mary {
     void *ambient;
     void *trace;
     char *trace_report;
+    lp_mary_confirm confirm;            /* the card, while one is up */
+    void *triage;                       /* the last triage.result (json-c, opaque), or NULL */
 } lp_mary;
 
 /* 1 when the client is compiled in. */
@@ -199,6 +224,10 @@ int lp_mary_set_key(lp_mary *m, char *key, size_t len);
 int lp_mary_ambient_state(lp_mary *m);
 int lp_mary_list_trace(lp_mary *m);
 int lp_mary_trace_report(lp_mary *m);
+/* Answers the confirmation card (skill.confirm.reply) and takes it down; -ENOENT when none is up. */
+int lp_mary_confirm_reply(lp_mary *m, int yes);
+/* triage{text}: who would answer these words without a model (the answer sets LP_MARY_CHANGED_TRIAGE). */
+int lp_mary_triage(lp_mary *m, const char *text);
 /* One message as a JSON object's text, sent as a line: skills{apps}, skill.result. */
 int lp_mary_send_line(lp_mary *m, const char *json);
 

@@ -26,6 +26,7 @@
 #include "maryui/lp_draw.h"
 #include "maryui/lp_files.h"
 #include "maryui/lp_icon.h"
+#include "maryui/lp_skill.h"
 #include "maryui/lp_text.h"
 #include "maryui/lp_tokens.h"
 
@@ -1224,9 +1225,66 @@ int lp_finder_renaming(const void *state) { return ((const struct finder *)state
 int lp_finder_view(const void *state) { return ((const struct finder *)state)->view; }
 int lp_finder_sidebar_count(const void *state) { return ((const struct finder *)state)->nside; }
 
+/* MARK: - Mary's skills (PARITY D20, D30) */
+
+static const char *const FI_OPEN_TOKENS[] = { "open", "launch", "show" };
+static const char *const FI_OPEN_PHRASES[] = { "open the file", "open the folder", "open my documents" };
+static const char *const FI_REVEAL_TOKENS[] = { "reveal", "find", "where" };
+static const char *const FI_REVEAL_PHRASES[] = { "show it in the finder", "reveal the file", "where is the file" };
+static const char *const FI_CLASSES[] = { "file", "folder" };
+
+static const lp_skill finder_skills[] = {
+    { .id = "open", .title = "Open a file or folder", .summary = "Opens a path: a folder in the Finder, a document in the app that reads it.",
+      .params = "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"}},\"required\":[\"path\"]}",
+      .effect = LP_SKILL_ACT, .kind = "effectful", .access = "reversible", .triggers = FI_OPEN_TOKENS, .trigger_count = 3,
+      .phrases = FI_OPEN_PHRASES, .phrase_count = 3, .target_classes = FI_CLASSES, .target_class_count = 2 },
+    { .id = "reveal", .title = "Show in the Finder", .summary = "Opens the folder that holds a file and selects it.",
+      .params = "{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"}},\"required\":[\"path\"]}",
+      .effect = LP_SKILL_READ, .kind = "cognitive", .access = "seamless", .triggers = FI_REVEAL_TOKENS, .trigger_count = 3,
+      .phrases = FI_REVEAL_PHRASES, .phrase_count = 3, .target_classes = FI_CLASSES, .target_class_count = 2 },
+};
+
+/* "~/Documents/x.txt", "/tmp/x" or "Documents/x.txt" (from the home). */
+static void resolve_path(const char *given, char *out, size_t n) {
+    if (given[0] == '/') snprintf(out, n, "%s", given);
+    else if (given[0] == '~' && (given[1] == '/' || !given[1])) snprintf(out, n, "%s%s", lp_files_home(), given + 1);
+    else lp_files_join(lp_files_home(), given, out, n);
+}
+
+static int finder_perform(void *state, lp_desktop *d, const char *skill, const char *args, char *result, size_t n) {
+    char given[LP_FILES_PATH_MAX], path[LP_FILES_PATH_MAX], shown[LP_FILES_PATH_MAX], shownq[LP_FILES_PATH_MAX * 2];
+    if (!lp_skill_arg_string(args, "path", given, sizeof given) || !given[0]) { snprintf(result, n, "Which file or folder?"); return -EINVAL; }
+    resolve_path(given, path, sizeof path);
+    int is_dir = 0;
+    if (!lp_files_exists(path, &is_dir)) { snprintf(result, n, "There is nothing at %.200s.", given); return -ENOENT; }
+    lp_files_abbreviate(path, shown, sizeof shown);
+    lp_skill_json_escape(shown, shownq, sizeof shownq);
+    if (strcmp(skill, "open") == 0) {
+        if (!d || !lp_desktop_open_path(d, path)) { snprintf(result, n, "Nothing on this desktop opens %.200s.", shown); return -ENOSYS; }
+        snprintf(result, n, "{\"landed\":true,\"path\":\"%s\",\"summary\":\"Opened %s.\"}", shownq, shownq);
+        return 0;
+    }
+    if (strcmp(skill, "reveal") == 0) {
+        char dir[LP_FILES_PATH_MAX], id[12] = "";
+        if (is_dir) snprintf(dir, sizeof dir, "%s", path);
+        else lp_files_parent(path, dir, sizeof dir);
+        if (!d || !lp_desktop_open_app_with(d, "finder", dir, NULL, id)) { snprintf(result, n, "The Finder would not open."); return -EIO; }
+        struct finder *f = lp_desktop_instance(d, id) ? lp_desktop_instance(d, id)->state : NULL;
+        if (f && !is_dir) {
+            const char *name = lp_files_basename(path);
+            for (int i = 0; i < f->list.count; i++) if (strcmp(f->list.entries[i].name, name) == 0) { select_only(f, i); f->reveal = i; break; }
+        }
+        snprintf(result, n, "{\"landed\":true,\"path\":\"%s\",\"summary\":\"Showing %s in the Finder.\"}", shownq, shownq);
+        return 0;
+    }
+    return -ENOENT;
+}
+
 const lp_app lp_app_finder = {
     .id = "finder", .title = "Rao", .name = "Finder", .dock = 1, .icon = LP_ICON_FOLDER, .object = "appFinder", .default_rect = { 72, 72, 720, 460 }, .min_size = { 420, 240 }, .singleton = 0, .resizable = 1,
     .create = finder_create, .paint = finder_paint, .destroy = finder_destroy,
     .open = finder_open, .command = finder_command, .menu_entries = finder_menu_entries, .notify = finder_notify, .title_of = finder_title_of,
+    .skills = finder_skills, .skill_count = 2, .perform = finder_perform,
     .surface = finder_surface, .surface_poll_s = 30,
+    .summary = "The files and folders of the drive.", .discipline = "awareness",
 };

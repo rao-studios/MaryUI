@@ -34,6 +34,17 @@ typedef struct lp_skill {
     const char *summary;        /* one sentence, for Mary and for Settings */
     const char *params;         /* a JSON Schema for the arguments, or NULL */
     lp_skill_effect effect;
+    /* The Mac's SkillSchema, optional (PARITY D30): how the skill is classed, when it may run, and the words
+     * that call it — what maryd's triage embeds and the Abilities app shows. NULL / 0 take the defaults. */
+    const char *kind;                   /* "cognitive" | "effectful" | "workflow"; NULL: from the effect */
+    const char *access;                 /* "seamless" | "confirm" | "reversible"; NULL: from the effect */
+    const char *const *triggers;        /* tokens: single words that call it */
+    int trigger_count;
+    const char *const *phrases;         /* whole phrases that call it */
+    int phrase_count;
+    const char *const *target_classes;  /* what it acts on: document, selection, file … */
+    int target_class_count;
+    const char *spoken;                 /* {param: {value: [words]}} as JSON — how an enum value is said — or NULL */
 } lp_skill;
 
 #define LP_SKILL_POLICY_MAX 128
@@ -78,7 +89,8 @@ lp_skill_decision lp_desktop_skill_decide(const struct lp_desktop *d, const char
  * its JSON or its sentence; both are untouched unless the call was allowed. */
 lp_skill_decision lp_desktop_perform_skill(struct lp_desktop *d, const char *app, const char *skill, const char *args_json,
                                            char *result, size_t n, int *status);
-/* {"type":"skills","apps":[{id, name, enabled, ask, skills:[{id, title, summary, params, effect, enabled}]}]}
+/* {"type":"skills","apps":[{id, name, title, summary, aliases, paradigm, discipline, enabled, ask,
+ *  skills:[{id, title, summary, params, effect, enabled, kind, access, triggers{tokens, phrases}, target_classes, spoken}]}]}
  * for every app that declares skills, as one line (heap; NULL without json-c). */
 char *lp_desktop_skills_json(const struct lp_desktop *d);
 /* Sends that to maryd. 0, or -errno (-ENOTCONN while maryd is away: it is sent again on connect). */

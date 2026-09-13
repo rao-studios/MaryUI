@@ -53,6 +53,17 @@ static void paint_spotlight(lp_ctx *ctx, struct mui_chrome *chrome, void *data) 
         mui_spotlight_request_sync(server);
         ctx->dirty = 1;
     }
+    if (res.run_message >= 0) {
+        /* a run chip: the Ambient app's Runs tab (PARITY D30) */
+        lp_desktop_open_app_with(d, "ambient", "runs", NULL, NULL);
+        mui_spotlight_request_sync(server);
+        ctx->dirty = 1;
+    }
+    if (res.confirm_answer >= 0) {
+        lp_mary_confirm_reply(&d->mary, res.confirm_answer);
+        mui_spotlight_resize(server);
+        ctx->dirty = 1;
+    }
     if (res.hovered >= 0 && res.hovered != d->spotlight.selection) { d->spotlight.selection = res.hovered; ctx->dirty = 1; }
 
     /* The command pills. Press opens, as a pull-down menu does. */
