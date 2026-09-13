@@ -277,6 +277,31 @@ LP_TEST(mary_hands_the_key_over_once_and_keeps_no_copy) {
     lp_desktop_close_window(&d, id);
 }
 
+static void pass(void *p, lp_input in, double now) {
+    static lp_ctx ctx;
+    ctx.settings = &d.settings;
+    lp_ctx_begin(&ctx, LP_PASS_EVENT, NULL, &in, LP_RECT(0, 0, 800, 300), now);
+    lp_app_prefs.paint(p, &ctx, LP_RECT(0, 0, 800, 300), &d);
+    lp_ctx_end(&ctx);
+}
+
+LP_TEST(a_pane_taller_than_the_window_scrolls) {
+    char id[12];
+    void *p = open_prefs(id);
+    lp_desktop_run_command(&d, LP_CMD_APP, LP_PREFS_MARY);
+    pass(p, (lp_input){ .mx = 500, .my = 150 }, 1000);                     /* lays the pane out once */
+    LP_ASSERT_NEAR(lp_prefs_scroll(p), 0, 0.01);
+    pass(p, (lp_input){ .mx = 500, .my = 150, .scroll_y = 120 }, 1010);
+    LP_ASSERT_NEAR(lp_prefs_scroll(p), 120, 0.01);
+    pass(p, (lp_input){ .mx = 500, .my = 150, .scroll_y = 100000 }, 1020);
+    LP_ASSERT(lp_prefs_scroll(p) > 120 && lp_prefs_scroll(p) < 1000);    /* it stops at the pane's end */
+    pass(p, (lp_input){ .mx = 90, .my = 150, .scroll_y = -50 }, 1030);    /* the sidebar does not scroll it */
+    LP_ASSERT(lp_prefs_scroll(p) > 120);
+    lp_desktop_run_command(&d, LP_CMD_APP, LP_PREFS_ABOUT);
+    LP_ASSERT_NEAR(lp_prefs_scroll(p), 0, 0.01);
+    lp_desktop_close_window(&d, id);
+}
+
 int main(void) {
     const char *tmp = getenv("TMPDIR");
     snprintf(root, sizeof root, "%s/lp_prefs_XXXXXX", tmp && *tmp ? tmp : "/tmp");
@@ -293,6 +318,7 @@ int main(void) {
     LP_RUN(the_dock_pane_changes_what_spotlight_shows);
     LP_RUN(every_pane_paints);
     LP_RUN(mary_hands_the_key_over_once_and_keeps_no_copy);
+    LP_RUN(a_pane_taller_than_the_window_scrolls);
     LP_RUN(settings_keep_their_defaults_and_bounds);
     lp_files_delete_tree(root);
     LP_TEST_MAIN_END();

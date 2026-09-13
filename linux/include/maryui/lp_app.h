@@ -196,5 +196,7 @@ void lp_prefs_mary_set_key_text(void *state, const char *text);
 void lp_prefs_mary_save_key(void *state);
 const char *lp_prefs_mary_status(const void *state);
 const char *lp_prefs_mary_key_bytes(const void *state, size_t *n);
+/* How far the pane is scrolled, in pixels (0 at its top; switching panes goes back there). */
+float lp_prefs_scroll(const void *state);
 
 #endif
