@@ -16,7 +16,12 @@
 #include "maryui/lp_files.h"
 #include "maryui/lp_icon.h"
 #include "maryui/lp_text.h"
+#include "maryui/lp_thread.h"
 #include "maryui/lp_tokens.h"
+
+#ifdef HAVE_JSONC
+#include <json-c/json.h>
+#endif
 
 struct info {
     char window_id[12];
@@ -26,12 +31,52 @@ struct info {
     int is_dir, exists;
     char size[96], where[LP_FILES_PATH_MAX], modified[48], created[48], owner[96], perms[16];
     int items;               /* a folder's entry count */
+    lp_desktop *desk;
+    int thread_asked;        /* file.record went out */
+    char indexed[48], chunks[32], entities[32], record_state[32];
+    int in_thread;           /* -1 unknown, 0 no record, 1 recorded */
 };
 
 static void *info_create(lp_desktop *d, const char *window_id) {
     struct info *s = calloc(1, sizeof *s);
     snprintf(s->window_id, sizeof s->window_id, "%s", window_id);
+    s->desk = d;
+    s->in_thread = -1;
     return s;
+}
+
+/* The file's record in the Thread (PARITY D24): asked once the path is known, read when it answers. */
+static void read_record(struct info *s) {
+#ifdef HAVE_JSONC
+    if (!s->desk) return;
+    lp_thread *t = &s->desk->thread;
+    if (strcmp(t->file_path, s->path) != 0) return;
+    if (t->error[0] && t->error_kind == LP_THREAD_FILE_RECORD && !lp_thread_answer(t, LP_THREAD_FILE_RECORD)) { s->in_thread = 0; return; }
+    struct json_object *record = lp_thread_answer(t, LP_THREAD_FILE_RECORD), *file, *f;
+    if (!record || !json_object_object_get_ex(record, "file", &file)) { s->in_thread = 0; return; }
+    const char *path = json_object_object_get_ex(file, "path", &f) ? json_object_get_string(f) : NULL;
+    if (!path || strcmp(path, s->path) != 0) { s->in_thread = 0; return; }
+    s->in_thread = 1;
+    int64_t seen = json_object_object_get_ex(file, "seen_ms", &f) ? json_object_get_int64(f) : 0;
+    lp_files_format_date((time_t)(seen / 1000), time(NULL), s->indexed, sizeof s->indexed);
+    snprintf(s->chunks, sizeof s->chunks, "%zu", json_object_object_get_ex(record, "partitions", &f) ? json_object_array_length(f) : 0);
+    snprintf(s->entities, sizeof s->entities, "%zu", json_object_object_get_ex(record, "entities", &f) ? json_object_array_length(f) : 0);
+    snprintf(s->record_state, sizeof s->record_state, "%s", json_object_object_get_ex(record, "enrich_state", &f) ? json_object_get_string(f) : "pending");
+#else
+    s->in_thread = 0;
+#endif
+}
+
+static int info_model_changed(void *state, lp_desktop *d, unsigned model, unsigned what) {
+    struct info *s = state;
+    if (!s || model != LP_MODEL_THREAD) return 0;
+    if ((what & LP_THREAD_CHANGED_CONNECTION) && lp_thread_connected(&d->thread) && !s->thread_asked && s->exists && !s->is_dir) {
+        s->thread_asked = lp_thread_file_record(&d->thread, s->path) == 0;
+        return 0;
+    }
+    if (!(what & (LP_THREAD_CHANGED_FILE | LP_THREAD_CHANGED_ERROR))) return 0;
+    read_record(s);
+    return 1;
 }
 static void info_destroy(void *state) { free(state); }
 
@@ -72,6 +117,7 @@ static void info_open(void *state, lp_desktop *d, const char *path) {
     struct group *gr = getgrgid(st.st_gid);
     snprintf(s->owner, sizeof s->owner, "%s (%s)", pw && pw->pw_name ? pw->pw_name : "?", gr && gr->gr_name ? gr->gr_name : "?");
     perms_string((unsigned)st.st_mode, s->perms);
+    if (!s->is_dir && d && lp_thread_connected(&d->thread)) s->thread_asked = lp_thread_file_record(&d->thread, s->path) == 0;
 }
 
 static void row(cairo_t *cr, lp_rect *area, const char *label, const char *value) {
@@ -125,6 +171,18 @@ static void info_paint(void *state, lp_ctx *ctx, lp_rect body, lp_desktop *d) {
         row(cr, &area, "Created:", s->created);
         row(cr, &area, "Owner:", s->owner);
         row(cr, &area, "Access:", s->perms);
+        if (!s->is_dir) {
+            area.y += LP_SPACE_2;
+            lp_draw_hairline(cr, LP_RECT(area.x, area.y - 1, area.w, 0), LP_EDGE_TOP, LP_EDGE_DIVIDER);
+            area.y += LP_SPACE_2;
+            if (s->in_thread == 1) {
+                row(cr, &area, "Indexed:", s->indexed);
+                row(cr, &area, "Chunks:", s->chunks);
+                row(cr, &area, "Entities:", s->entities);
+            } else {
+                row(cr, &area, "Thread:", s->in_thread == 0 ? "Not in the Thread" : state && lp_thread_connected(&s->desk->thread) ? "Asking…" : "threadd is not running");
+            }
+        }
     } else if (!draw) {
         area.y += 7 * 20;
     }
@@ -140,6 +198,6 @@ static void info_paint(void *state, lp_ctx *ctx, lp_rect body, lp_desktop *d) {
 
 const lp_app lp_app_info = {
     .id = "info", .title = "Info", .name = "Info", .icon = LP_ICON_INFO, .hidden = 1, .internal = 1,
-    .default_rect = { NAN, NAN, 320, 380 }, .min_size = { 320, 380 }, .singleton = 0, .resizable = 0,
-    .create = info_create, .paint = info_paint, .destroy = info_destroy, .open = info_open,
+    .default_rect = { NAN, NAN, 320, 440 }, .min_size = { 320, 440 }, .singleton = 0, .resizable = 0,
+    .create = info_create, .paint = info_paint, .destroy = info_destroy, .open = info_open, .model_changed = info_model_changed,
 };

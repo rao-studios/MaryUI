@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/socket.h>
 #include <sys/stat.h>
 #include <cairo.h>
 
@@ -16,6 +17,7 @@
 #include "maryui/lp_desktop.h"
 #include "maryui/lp_settings.h"
 #include "maryui/lp_texture.h"
+#include "maryui/lp_thread.h"
 #include "maryui/lp_tokens.h"
 #include "maryui/lp_ui.h"
 #include "maryui/lp_molten.h"
@@ -36,6 +38,7 @@ static int usage(int status) {
         "       lp-render --terminal <out.png>           Terminal with a short sample session\n"
         "       lp-render --activity <out.png>           Activity Monitor over this machine's /proc\n"
         "       lp-render --diskutil <out.png>           Disk Utility over this machine's drives\n"
+        "       lp-render --thread TAB <out.png>         Threads on one tab (drive|library|document|graph|schemas|ledger|retrieval), with fixtures\n"
         "       lp-render --player <out.png>             the Media Player with nothing open\n"
         "       lp-render --calendar <out.png>           Calendar on this month\n"
         "       lp-render --prefs <out.png>              System Settings on its General pane\n"
@@ -180,6 +183,50 @@ static int fixture_displays(lp_desktop *d, lp_display *out, int max) {
     return 1;
 }
 
+static const char *thread_tab;    /* --thread: Threads opens on this tab, with fixtures fed to its client */
+
+/* What threadd would answer, so the Threads app renders the same on every machine. */
+static void thread_fixtures(lp_desktop *d) {
+    static const char *const LINES[] = {
+        "{\"type\":\"stats.result\",\"node_id\":\"6b0c7a2e-1f4d-4a8e-9c3b-2d5e7f8a9b0c\",\"documents\":1204,\"partitions\":3811,\"embedded\":3790,\"groups\":9,\"owners\":1,"
+        "\"entities\":642,\"relationships\":1187,\"predicates\":14,\"files\":1180,\"ledger_rows\":4410,\"jobs_pending\":2,\"jobs_failed\":0,\"db_bytes\":58720256,\"wal_bytes\":1048576,"
+        "\"vectors\":{\"count\":3790,\"documents\":1204,\"bytes\":15523840,\"dim\":1024},\"embedding_model\":\"mistral-embed\",\"user_version\":1}\n",
+        "{\"type\":\"parity.result\",\"run_id\":17,\"started_ms\":1757700000000,\"finished_ms\":1757700003100,\"seen\":1180,\"recorded\":1180,\"missing\":0,\"stale\":0,\"orphaned\":0,\"files\":1180,\"entries\":[]}\n",
+        "{\"type\":\"schemas.result\",\"families\":["
+        "{\"name\":\"file\",\"label\":\"A file on the drive\",\"description\":\"Every file in the home, chunked and embedded, with its folders in the graph.\",\"id_prefix\":\"file-\",\"group_prefix\":\"files-\",\"lane\":\"personal\",\"writer\":\"indexd\",\"fields\":[{\"name\":\"path\",\"type\":\"string\",\"description\":\"where it lives\"},{\"name\":\"hash\",\"type\":\"sha256\",\"description\":\"its bytes\"}],\"graph\":\"file node; in → folder\",\"count\":1180,\"last_written_ms\":1757700002000},"
+        "{\"name\":\"conversation\",\"label\":\"A turn with Mary\",\"description\":\"What was asked and what Mary answered, turn by turn.\",\"id_prefix\":\"mary-turn-\",\"group_prefix\":\"conversation-\",\"lane\":\"conversation\",\"writer\":\"maryd\",\"fields\":[{\"name\":\"source\",\"type\":\"voice|typed\",\"description\":\"how it was asked\"}],\"graph\":\"turn node; mentions → entities\",\"count\":18,\"last_written_ms\":1757700001000},"
+        "{\"name\":\"memory\",\"label\":\"A memory\",\"description\":\"Sewn's note of a conversation.\",\"id_prefix\":\"\",\"group_prefix\":\"memory-\",\"lane\":\"personal\",\"writer\":\"sewnd\",\"fields\":[],\"graph\":\"memory node; about → concepts\",\"count\":6,\"last_written_ms\":1757699000000}]}\n",
+        "{\"type\":\"library.result\",\"groups\":["
+        "{\"id\":\"files-mary\",\"label\":\"Files\",\"owner_id\":\"mary\",\"family\":\"file\",\"documents\":[{\"id\":\"file-1a2b3c4d5e6f7a8b\",\"name\":\"Design principles.md\",\"created_at\":1757600000,\"family\":\"file\"},{\"id\":\"file-2b3c4d5e6f7a8b9c\",\"name\":\"notes.txt\",\"created_at\":1757650000,\"family\":\"file\"}]},"
+        "{\"id\":\"conversation-mary\",\"label\":\"Conversation\",\"owner_id\":\"mary\",\"family\":\"conversation\",\"documents\":[{\"id\":\"mary-turn-1757700000000-3fa2\",\"name\":\"What is the capital of France?\",\"created_at\":1757700000,\"family\":\"conversation\"}]},"
+        "{\"id\":\"memory-mary\",\"label\":\"Memory\",\"owner_id\":\"mary\",\"family\":\"memory\",\"documents\":[{\"id\":\"1122334455667788990011\",\"name\":\"Paris in spring\",\"created_at\":1757690000,\"family\":\"memory\"}]}],\"has_more\":false}\n",
+        "{\"type\":\"graph.result\",\"entities\":["
+        "{\"id\":\"e1\",\"name\":\"Documents/notes.txt\",\"kind\":\"file\",\"score\":1,\"mention_count\":3,\"document_ids\":[\"file-2b3c4d5e6f7a8b9c\"]},"
+        "{\"id\":\"e2\",\"name\":\"Documents\",\"kind\":\"folder\",\"score\":0.8,\"mention_count\":41,\"document_ids\":[\"file-1a2b3c4d5e6f7a8b\",\"file-2b3c4d5e6f7a8b9c\"]},"
+        "{\"id\":\"e3\",\"name\":\"Paris\",\"kind\":\"place\",\"score\":0.9,\"mention_count\":7,\"document_ids\":[\"mary-turn-1757700000000-3fa2\"]},"
+        "{\"id\":\"e4\",\"name\":\"France\",\"kind\":\"place\",\"score\":0.7,\"mention_count\":4,\"document_ids\":[\"mary-turn-1757700000000-3fa2\"]},"
+        "{\"id\":\"e5\",\"name\":\"Mary\",\"kind\":\"person\",\"score\":0.6,\"mention_count\":18,\"document_ids\":[]},"
+        "{\"id\":\"e6\",\"name\":\"spring trip\",\"kind\":\"event\",\"score\":0.5,\"mention_count\":2,\"document_ids\":[\"1122334455667788990011\"]},"
+        "{\"id\":\"e7\",\"name\":\"~\",\"kind\":\"folder\",\"score\":0.4,\"mention_count\":1180,\"document_ids\":[]}],"
+        "\"relationships\":[{\"id\":\"r1\",\"subject_id\":\"e1\",\"predicate\":\"in\",\"object_id\":\"e2\",\"weight\":1,\"document_ids\":[]},"
+        "{\"id\":\"r2\",\"subject_id\":\"e2\",\"predicate\":\"in\",\"object_id\":\"e7\",\"weight\":41,\"document_ids\":[]},"
+        "{\"id\":\"r3\",\"subject_id\":\"e3\",\"predicate\":\"capital of\",\"object_id\":\"e4\",\"weight\":3,\"document_ids\":[]},"
+        "{\"id\":\"r4\",\"subject_id\":\"e6\",\"predicate\":\"auto:appears with\",\"object_id\":\"e3\",\"weight\":2,\"document_ids\":[]},"
+        "{\"id\":\"r5\",\"subject_id\":\"e1\",\"predicate\":\"about\",\"object_id\":\"e3\",\"weight\":1,\"document_ids\":[]}],"
+        "\"documents\":[],\"entity_count\":642,\"relationship_count\":1187}\n",
+        "{\"type\":\"ledger.result\",\"rows\":["
+        "{\"id\":4410,\"at_ms\":1757700003000,\"kind\":\"search\",\"source\":\"sewnd\",\"request_id\":\"mary-turn-1757700000000-3fa2\",\"count\":2,\"ms\":41,\"detail\":\"lanes: conversation, personal\",\"documents\":[{\"rank\":1,\"document_id\":\"file-2b3c4d5e6f7a8b9c\",\"partition_id\":\"p1\",\"score\":4.21},{\"rank\":2,\"document_id\":\"1122334455667788990011\",\"partition_id\":\"p2\",\"score\":5.03}]},"
+        "{\"id\":4409,\"at_ms\":1757700002000,\"kind\":\"deposit\",\"source\":\"indexd\",\"document_id\":\"file-2b3c4d5e6f7a8b9c\",\"count\":1,\"ms\":3,\"documents\":[]},"
+        "{\"id\":4408,\"at_ms\":1757699990000,\"kind\":\"embed\",\"source\":\"threadd\",\"document_id\":\"file-2b3c4d5e6f7a8b9c\",\"count\":4,\"ms\":212,\"documents\":[]},"
+        "{\"id\":4407,\"at_ms\":1757699980000,\"kind\":\"reconcile\",\"source\":\"indexd\",\"count\":1180,\"ms\":3100,\"detail\":\"0 missing, 0 stale, 0 orphaned\",\"documents\":[]}],\"has_more\":true}\n",
+        "{\"type\":\"documents.result\",\"documents\":[{\"id\":\"file-2b3c4d5e6f7a8b9c\",\"name\":\"notes.txt\",\"owner_id\":\"mary\",\"group_id\":\"files-mary\",\"group_label\":\"Files\",\"family\":\"file\",\"created_at\":1757650000,\"media_type\":\"text\",\"texts\":[\"Paris is the capital of France, a note I keep for the spring trip.\",\"Bread is good.\"],\"enrich_state\":\"done\"}]}\n",
+    };
+    /* shown as connected; what the app asks goes into a socket nobody reads */
+    int sv[2];
+    d->thread.fd = socketpair(AF_UNIX, SOCK_STREAM, 0, sv) == 0 ? sv[0] : 0;
+    for (size_t i = 0; i < sizeof LINES / sizeof LINES[0]; i++) lp_thread_feed(&d->thread, LINES[i], strlen(LINES[i]));
+}
+
 static int render_app(const lp_app *app, int tab, const char *path) {
     int w = 900, h = 640;
     /* a window that cannot be resized is shown at its own size, not stretched to the canvas */
@@ -193,8 +240,13 @@ static int render_app(const lp_app *app, int tab, const char *path) {
     lp_desktop d;
     lp_desktop_init(&d, LP_RECT(0, 0, w, h), NULL);
     lp_desktop_register_builtin_apps(&d);
+    if (app == &lp_app_thread) thread_fixtures(&d);
     void *state = app->create ? app->create(&d, "w1") : NULL;
-    if (tab > 0 && state) *(int *)state = tab; /* the gallery's first field is its tab */
+    if (tab > 0 && state && app != &lp_app_thread) *(int *)state = tab; /* the gallery's first field is its tab */
+    if (app == &lp_app_thread && state) {
+        lp_thread_app_set_runner(state, NULL);
+        app->open(state, &d, thread_tab && strcmp(thread_tab, "document") == 0 ? "document:file-2b3c4d5e6f7a8b9c" : thread_tab ? thread_tab : "drive");
+    }
     if (app == &lp_app_finder && state) lp_finder_set_preview(state); /* files.ts, not the build host's home */
     if (app == &lp_app_calculator && state) lp_calculator_type(state, "1234.5*2");
     if (app == &lp_app_terminal && state) lp_terminal_feed(state, NULL);
@@ -410,6 +462,7 @@ int main(int argc, char **argv) {
     if (strcmp(argv[1], "--terminal") == 0 && argc == 3) return render_app(&lp_app_terminal, 0, argv[2]);
     if (strcmp(argv[1], "--activity") == 0 && argc == 3) return render_app(&lp_app_activity, 0, argv[2]);
     if (strcmp(argv[1], "--diskutil") == 0 && argc == 3) return render_app(&lp_app_diskutil, 0, argv[2]);
+    if (strcmp(argv[1], "--thread") == 0 && argc == 4) { thread_tab = argv[2]; return render_app(&lp_app_thread, 0, argv[3]); }
     if (strcmp(argv[1], "--player") == 0 && argc == 3) return render_app(&lp_app_player, 0, argv[2]);
     if (strcmp(argv[1], "--calendar") == 0 && argc == 3) return render_app(&lp_app_calendar, 0, argv[2]);
     if (strcmp(argv[1], "--prefs-mary") == 0 && argc == 3) { prefs_pane = LP_PREFS_MARY; return render_app(&lp_app_prefs, 0, argv[2]); }

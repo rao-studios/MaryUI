@@ -86,6 +86,10 @@ int lp_files_user_dirs_ensure(void);
 typedef struct lp_volume { char name[64]; char path[LP_FILES_PATH_MAX]; } lp_volume;
 int lp_files_volumes(lp_volume *out, int max);
 int lp_files_volumes_parse(const char *mounts, const char *system_name, lp_volume *out, int max);
+/* The host's share (/mnt/maryos-out) is a developer's volume: lp_files_volumes lists it only when the
+ * kernel command line carries maryos.ui=dev (PARITY D24). */
+int lp_files_volume_is_shared(const char *path);
+int lp_files_dev_mode(void);
 
 /* Operations: 0 or -errno. */
 int lp_files_mkdir_unique(const char *dir, char *out_name, size_t n);    /* "untitled folder", "untitled folder 2" */

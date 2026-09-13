@@ -272,6 +272,8 @@ void mui_sources_init(struct mui_server *server);
 void mui_mary_init(struct mui_server *server);
 void mui_mary_finish(struct mui_server *server);
 void mui_audio_init(struct mui_server *server);
+void mui_thread_init(struct mui_server *server);
+void mui_thread_finish(struct mui_server *server);
 void mui_audio_finish(struct mui_server *server);
 /* Schedules a frame on every output; the motion engine's wake callback (output.c). */
 void mui_server_schedule_frame(struct mui_server *server);

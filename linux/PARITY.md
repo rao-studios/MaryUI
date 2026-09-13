@@ -357,6 +357,29 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   stay `wpctl`'s: System Settings › Sound shows each list as a table with the default selected, chooses one with
   `wpctl set-default`, sets the microphone's volume, meters it while the pane is open, and says what to do when
   there is no microphone. The web has no audio devices.
+- **D24 — one drive, and the drive is the Thread.** Linux only. The root volume is labelled by the
+  distribution's name (`ROOT_LABEL=MaryOS`), so the Finder's Locations, Disk Utility and every mount table
+  show one drive, like a Macintosh HD; the host's share (`/mnt/maryos-out`) is a developer's volume and is
+  listed only under `maryos.ui=dev` (`lp_files_volume_is_shared`, `lp_files_dev_mode`), and the FAT boot
+  partition hides in Disk Utility behind View › Show All Devices. The drive carries the machine's memory
+  (MaryPi's threadd, `/var/lib/thread/thread.db`): Disk Utility's detail for the root volume shows a Thread
+  section (documents, graph, parity), a right-click on the volume — in the Finder's sidebar or Disk Utility —
+  offers *View Thread*, *Inspect Knowledge Graph*, *Record Schemas* and *Check Parity*, a right-click on a
+  file offers *View Thread* (its node, centred), and Get Info shows when the file was indexed, its chunks and
+  entities. The web has one volume and no memory.
+- **D25 — the Threads app.** Linux only. `lp_thread` (`src/core/lp_thread.c`, json-c, optional as
+  `HAVE_JSONC`) is the desktop's client for threadd's local socket (newline JSON, one answer per request, in
+  order), riding the compositor's event sources and reconnecting with backoff; every answer reaches the
+  windows that show it through `lp_desktop_models_changed(LP_MODEL_THREAD, …)`. The Threads app (`src/apps/
+  thread.c`, pinned) is the Mac's Thread app: **Drive** (the volume, the database, a parity gauge with
+  Reconcile, which runs `indexd --once`), **Library** (family chips, group cards, document rows, a document
+  drill with the codec view for behaviour records), **Graph** (`src/ui/lp_graph.c`: a Cairo node-link canvas
+  laid out by Fruchterman–Reingold, ≤ 120 nodes, coloured by kind, edge width by weight, labels from 0.8×
+  zoom, Ctrl+wheel zoom, drag pan, click selects, double-click re-seeds; a seed field, Hops 1…3, a Documents
+  checkbox, kind chips; the selected node's card and the repair bench — rename, merge, set kind, delete,
+  re-extract), **Schemas** (one card per record family), **Ledger** (every event, by kind) and **Retrieval**
+  (what each search returned, in rank order, each a link into the Library). `lp-render --thread TAB` draws it
+  over fixtures. The web has none of it.
 - **Close animation.** `lp-window-close` (scale .96 + fade over `motion.fast`, `CLOSE` after
   fast + 80 ms) runs for built-in windows. A client that unmaps is gone at once — the compositor
   has no pixels left to fade.

@@ -476,6 +476,39 @@ static void show_info(struct finder *f, lp_desktop *d) {
     }
 }
 
+static lp_menu_entry *entry(lp_menu_model *m, const char *label, const char *shortcut, int cmd, int disabled);
+static void separator(lp_menu_model *m);
+
+/* The Thread (PARITY D24): a selected file's node in the Threads app, or the drive's own tabs. */
+static void view_thread(struct finder *f, lp_desktop *d) {
+    if (!d || f->preview) return;
+    for (int i = 0; i < f->list.count; i++) {
+        if (!f->sel[i]) continue;
+        char path[LP_FILES_PATH_MAX], target[LP_FILES_PATH_MAX + 16];
+        item_path(f, i, path, sizeof path);
+        snprintf(target, sizeof target, "graph:file=%s", path);
+        lp_desktop_open_app_with(d, "thread", target, NULL, NULL);
+        return;
+    }
+    lp_desktop_open_app_with(d, "thread", "drive", NULL, NULL);
+}
+
+static void open_thread_tab(lp_desktop *d, const char *tab) {
+    if (d) lp_desktop_open_app_with(d, "thread", tab, NULL, NULL);
+}
+
+static void open_volume_popup(struct finder *f, lp_desktop *d, float x, float y) {
+    if (!d) return;
+    lp_menu_model m = { .id = "popup", .label = "", .count = 0 };
+    entry(&m, "View Thread", NULL, LP_FINDER_VIEW_THREAD, 0);
+    entry(&m, "Inspect Knowledge Graph", NULL, LP_FINDER_THREAD_GRAPH, 0);
+    entry(&m, "Record Schemas", NULL, LP_FINDER_THREAD_SCHEMAS, 0);
+    entry(&m, "Check Parity", NULL, LP_FINDER_THREAD_PARITY, 0);
+    separator(&m);
+    entry(&m, "Get Info", NULL, LP_FINDER_INFO, 0);
+    lp_desktop_open_popup(d, f->window_id, x, y, &m);
+}
+
 static void go_user_dir(struct finder *f, lp_desktop *d, enum lp_user_dir k) {
     char path[LP_FILES_PATH_MAX];
     lp_files_user_dir(k, path, sizeof path);
@@ -532,6 +565,10 @@ static void finder_command(void *state, lp_desktop *d, int cmd) {
     case LP_FINDER_DUPLICATE: duplicate_selection(f, d); break;
     case LP_FINDER_TRASH: trash_selection(f, d); break;
     case LP_FINDER_INFO: show_info(f, d); break;
+    case LP_FINDER_VIEW_THREAD: view_thread(f, d); break;
+    case LP_FINDER_THREAD_GRAPH: open_thread_tab(d, "graph"); break;
+    case LP_FINDER_THREAD_SCHEMAS: open_thread_tab(d, "schemas"); break;
+    case LP_FINDER_THREAD_PARITY: open_thread_tab(d, "drive"); break;
     case LP_FINDER_COPY: copy_selection(f, 0); break;
     case LP_FINDER_CUT: copy_selection(f, 1); break;
     case LP_FINDER_PASTE: paste(f, d, 0); break;
@@ -647,6 +684,7 @@ static void open_popup(struct finder *f, lp_desktop *d, float x, float y) {
     if (n > 0) {
         entry(&m, "Open", NULL, LP_FINDER_OPEN, 0);
         entry(&m, "Get Info", NULL, LP_FINDER_INFO, 0);
+        entry(&m, "View Thread", NULL, LP_FINDER_VIEW_THREAD, n != 1 || trash);
         separator(&m);
         entry(&m, "Rename", NULL, LP_FINDER_RENAME, n != 1);
         entry(&m, "Duplicate", NULL, LP_FINDER_DUPLICATE, trash);
@@ -935,6 +973,10 @@ static void finder_paint(void *state, lp_ctx *ctx, lp_rect body, lp_desktop *d) 
         int selected = strcmp(e->path, f->path) == 0;
         if (dragging_here && lp_hit(ctx, r) && (e->trash || strcmp(e->path, drag->src_dir) != 0)) { new_kind = DROP_SIDEBAR; new_index = i; snprintf(new_dir, sizeof new_dir, "%s", e->path); }
         if (draw && f->drop_kind == DROP_SIDEBAR && f->drop_index == i) drop_ring(cr, r, LP_RADIUS_SM, accent);
+        if (ctx->pass == LP_PASS_EVENT && (in->pressed & LP_BUTTON_RIGHT) && lp_hit(ctx, r) && i >= f->nfavorites && !e->trash) {
+            open_volume_popup(f, d, in->mx, in->my);   /* the drive is the Thread: its graph, schemas and parity */
+            ctx->dirty = 1;
+        }
         if (lp_sidebar_item(ctx, lp_id_index(base, 10 + i), &col, e->icon, e->label, selected) && !in->drag) {
             if (e->trash) lp_files_mkdir_p(e->path);
             else if (i < f->nfavorites) lp_files_user_dirs_ensure();

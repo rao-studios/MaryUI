@@ -323,7 +323,8 @@ LP_TEST(right_click_opens_a_context_menu_for_the_item) {
     LP_ASSERT_EQ(d.open_menu, LP_DESKTOP_MENU_POPUP);
     LP_ASSERT_STR(d.popup_window, finder_id);
     LP_ASSERT_STR(d.menus[LP_DESKTOP_MENU_POPUP].entries[0].label, "Open");
-    LP_ASSERT_STR(d.menus[LP_DESKTOP_MENU_POPUP].entries[5].label, "Move to Trash");
+    LP_ASSERT_STR(d.menus[LP_DESKTOP_MENU_POPUP].entries[2].label, "View Thread");   /* the file's node in the Thread (PARITY D24) */
+    LP_ASSERT_STR(d.menus[LP_DESKTOP_MENU_POPUP].entries[6].label, "Move to Trash");
     lp_desktop_key(&d, XKB_KEY_Down, 0);
     lp_desktop_key(&d, XKB_KEY_Return, 0); /* Open */
     LP_ASSERT_EQ(d.wm.count, 2);

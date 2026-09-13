@@ -20,7 +20,12 @@
 #include "maryui/lp_icon.h"
 #include "maryui/lp_job.h"
 #include "maryui/lp_text.h"
+#include "maryui/lp_thread.h"
 #include "maryui/lp_tokens.h"
+
+#ifdef HAVE_JSONC
+#include <json-c/json.h>
+#endif
 
 #define REFRESH_MS 3000
 #define INFO_ROW_H 22
@@ -40,7 +45,13 @@ struct diskutil {
     char job_name[96];
     char status[256];
     job_runner run;
+    int show_all;                 /* View › Show All Devices: the system's own partitions too (the FAT boot volume) */
 };
+
+/* The root volume is the drive: the one that is the Thread. */
+static int is_root(const lp_disk_volume *v) { return v && strcmp(v->mount_point, "/") == 0; }
+/* A system partition that is not the root (the boot volume) hides unless Show All Devices. */
+static int hidden(const struct diskutil *u, const lp_disk_volume *v) { return v->system && !is_root(v) && !u->show_all; }
 
 static void refresh(struct diskutil *u) {
     char *mounts = NULL;
@@ -78,6 +89,9 @@ static int can(const struct diskutil *u, int command) {
     case LP_DISKUTIL_UNMOUNT: return !u->job && v && v->mount_point[0] && !v->system;
     case LP_DISKUTIL_EJECT: return !u->job && !d->system && strcmp(d->kind, "Virtual") != 0;
     case LP_DISKUTIL_SHOW_IN_FINDER: return v && v->mount_point[0];
+    case LP_DISKUTIL_SHOW_ALL: return 1;
+    case LP_DISKUTIL_VIEW_THREAD: case LP_DISKUTIL_THREAD_GRAPH: case LP_DISKUTIL_THREAD_SCHEMAS: case LP_DISKUTIL_THREAD_PARITY:
+        return is_root(v) || (!v && d->system);
     }
     return 0;
 }
@@ -147,6 +161,15 @@ static void start(struct diskutil *u, int command) {
 static void diskutil_command(void *state, lp_desktop *d, int cmd) {
     struct diskutil *u = state;
     if (!u) return;
+    if (cmd == LP_DISKUTIL_SHOW_ALL) {
+        u->show_all = !u->show_all;
+        return;
+    }
+    if (cmd >= LP_DISKUTIL_VIEW_THREAD && cmd <= LP_DISKUTIL_THREAD_PARITY) {
+        static const char *const TABS[] = { "drive", "graph", "schemas", "drive" };
+        if (d) lp_desktop_open_app_with(d, "thread", TABS[cmd - LP_DISKUTIL_VIEW_THREAD], NULL, NULL);
+        return;
+    }
     if (cmd == LP_DISKUTIL_SHOW_IN_FINDER) {
         const lp_disk_volume *v;
         selected_drive(u, &v);
@@ -162,10 +185,15 @@ static int on_tick(int fd, uint32_t mask, void *data) {
     int w = lp_wm_find(&u->desk->wm, u->window_id);
     if (w >= 0 && u->desk->wm.windows[w].state != LP_WIN_SHADED && !u->job) {
         refresh(u);
+        if (lp_thread_connected(&u->desk->thread)) { lp_thread_stats(&u->desk->thread); lp_thread_parity(&u->desk->thread); }
         if (u->desk->on_app_dirty) u->desk->on_app_dirty(u->desk, u->window_id);
     }
     lp_desktop_update_timer(u->desk, u->timer, REFRESH_MS);
     return 0;
+}
+
+static int diskutil_model_changed(void *state, lp_desktop *d, unsigned model, unsigned what) {
+    return state && model == LP_MODEL_THREAD && (what & (LP_THREAD_CHANGED_STATS | LP_THREAD_CHANGED_PARITY | LP_THREAD_CHANGED_CONNECTION));
 }
 
 /* MARK: - Painting */
@@ -189,6 +217,8 @@ static void paint_toolbar(lp_ctx *ctx, struct diskutil *u, lp_desktop *d, lp_rec
     }
 }
 
+static void menu_entry(lp_menu_model *m, const char *label, const char *shortcut, int arg, int disabled);
+
 static void paint_sidebar(lp_ctx *ctx, struct diskutil *u, lp_rect *area, lp_id base) {
     lp_rect cursor = lp_sidebar(ctx, area);
     for (int pass = 0; pass < 2; pass++) {
@@ -203,9 +233,21 @@ static void paint_sidebar(lp_ctx *ctx, struct diskutil *u, lp_rect *area, lp_id 
                 ctx->dirty = 1;
             }
             for (int v = 0; v < d->nvolumes; v++) {
+                if (hidden(u, &d->volumes[v])) continue;
                 char label[96], name[80];
                 lp_disks_volume_name(d, &d->volumes[v], name, sizeof name);
                 snprintf(label, sizeof label, "   %s", name);   /* a volume sits under its drive */
+                lp_rect row = LP_RECT(cursor.x, cursor.y, cursor.w, 24);
+                if (ctx->pass == LP_PASS_EVENT && (ctx->in.pressed & LP_BUTTON_RIGHT) && lp_hit(ctx, row) && is_root(&d->volumes[v]) && u->desk) {
+                    snprintf(u->selected, sizeof u->selected, "%s", d->volumes[v].device);
+                    lp_menu_model m = { .id = "popup", .label = "", .count = 0 };
+                    menu_entry(&m, "View Thread", NULL, LP_DISKUTIL_VIEW_THREAD, 0);
+                    menu_entry(&m, "Inspect Knowledge Graph", NULL, LP_DISKUTIL_THREAD_GRAPH, 0);
+                    menu_entry(&m, "Record Schemas", NULL, LP_DISKUTIL_THREAD_SCHEMAS, 0);
+                    menu_entry(&m, "Check Parity", NULL, LP_DISKUTIL_THREAD_PARITY, 0);
+                    lp_desktop_open_popup(u->desk, u->window_id, ctx->in.mx, ctx->in.my, &m);
+                    ctx->dirty = 1;
+                }
                 if (lp_sidebar_item(ctx, lp_id_index(base, 100 + i * 32 + 1 + v), &cursor, LP_ICON_COUNT, label, strcmp(u->selected, d->volumes[v].device) == 0)) {
                     snprintf(u->selected, sizeof u->selected, "%s", d->volumes[v].device);
                     ctx->dirty = 1;
@@ -283,6 +325,41 @@ static void paint_detail(lp_ctx *ctx, struct diskutil *u, lp_rect area) {
         info_row(cr, inner.x, &y, inner.w, "Capacity", size);
         info_row(cr, inner.x, &y, inner.w, "Device", v->device);
         if (v->system) info_row(cr, inner.x, &y, inner.w, "Used by", "the system, which runs from it");
+        if (is_root(v) && u->desk) {
+            /* The drive is the Thread (PARITY D24): what the memory on it holds, and whether it matches the disk. */
+            y += LP_SPACE_3;
+            lp_text_style hs = lp_text_style_default();
+            hs.size_px = LP_TEXT_SM;
+            hs.weight = LP_TEXT_WEIGHT_SEMIBOLD;
+            hs.uppercase = 1;
+            hs.letter_spacing = 0.6f;
+            hs.color = LP_INK_TERTIARY;
+            lp_text_draw(cr, "Thread", LP_RECT(inner.x, y, inner.w, 16), &hs, LP_ALIGN_START);
+            y += 20;
+#ifdef HAVE_JSONC
+            struct json_object *stats = lp_thread_answer(&u->desk->thread, LP_THREAD_STATS), *parity = lp_thread_answer(&u->desk->thread, LP_THREAD_PARITY), *f;
+            if (stats) {
+                char line[160];
+                snprintf(line, sizeof line, "%lld documents · %lld partitions", json_object_object_get_ex(stats, "documents", &f) ? (long long)json_object_get_int64(f) : 0LL,
+                         json_object_object_get_ex(stats, "partitions", &f) ? (long long)json_object_get_int64(f) : 0LL);
+                info_row(cr, inner.x, &y, inner.w, "Memory", line);
+                snprintf(line, sizeof line, "%lld entities · %lld relationships", json_object_object_get_ex(stats, "entities", &f) ? (long long)json_object_get_int64(f) : 0LL,
+                         json_object_object_get_ex(stats, "relationships", &f) ? (long long)json_object_get_int64(f) : 0LL);
+                info_row(cr, inner.x, &y, inner.w, "Graph", line);
+                if (parity && json_object_object_get_ex(parity, "run_id", &f) && json_object_get_int64(f)) {
+                    long long seen = json_object_object_get_ex(parity, "seen", &f) ? json_object_get_int64(f) : 0;
+                    long long recorded = json_object_object_get_ex(parity, "recorded", &f) ? json_object_get_int64(f) : 0;
+                    snprintf(line, sizeof line, "%lld of %lld files in the graph", recorded, seen);
+                    info_row(cr, inner.x, &y, inner.w, "Parity", line);
+                } else {
+                    info_row(cr, inner.x, &y, inner.w, "Parity", "not checked yet");
+                }
+            } else
+#endif
+            {
+                info_row(cr, inner.x, &y, inner.w, "Memory", lp_thread_connected(&u->desk->thread) ? "asking threadd…" : "threadd is not running");
+            }
+        }
     } else {
         char count[32];
         snprintf(count, sizeof count, "%d", d->nvolumes);
@@ -315,7 +392,7 @@ static void diskutil_paint(void *state, lp_ctx *ctx, lp_rect body, lp_desktop *d
     paint_detail(ctx, u, area);
 }
 
-static void entry(lp_menu_model *m, const char *label, const char *shortcut, int arg, int disabled) {
+static void menu_entry(lp_menu_model *m, const char *label, const char *shortcut, int arg, int disabled) {
     if (m->count >= LP_MENU_MAX_ENTRIES) return;
     lp_menu_entry *e = &m->entries[m->count++];
     memset(e, 0, sizeof *e);
@@ -328,11 +405,22 @@ static void entry(lp_menu_model *m, const char *label, const char *shortcut, int
 
 static void diskutil_menu_entries(void *state, lp_desktop *d, int menu, lp_menu_model *m) {
     const struct diskutil *u = state;
-    if (!u || menu != LP_MENU_FILE) return;
-    entry(m, "Mount", NULL, LP_DISKUTIL_MOUNT, !can(u, LP_DISKUTIL_MOUNT));
-    entry(m, "Unmount", NULL, LP_DISKUTIL_UNMOUNT, !can(u, LP_DISKUTIL_UNMOUNT));
-    entry(m, "Eject", "⌘E", LP_DISKUTIL_EJECT, !can(u, LP_DISKUTIL_EJECT));
-    entry(m, "Show in Finder", NULL, LP_DISKUTIL_SHOW_IN_FINDER, !can(u, LP_DISKUTIL_SHOW_IN_FINDER));
+    if (!u) return;
+    if (menu == LP_MENU_VIEW) {
+        menu_entry(m, "Show All Devices", NULL, LP_DISKUTIL_SHOW_ALL, 0);
+        m->entries[m->count - 1].checked = u->show_all;
+        return;
+    }
+    if (menu != LP_MENU_FILE) return;
+    menu_entry(m, "Mount", NULL, LP_DISKUTIL_MOUNT, !can(u, LP_DISKUTIL_MOUNT));
+    menu_entry(m, "Unmount", NULL, LP_DISKUTIL_UNMOUNT, !can(u, LP_DISKUTIL_UNMOUNT));
+    menu_entry(m, "Eject", "⌘E", LP_DISKUTIL_EJECT, !can(u, LP_DISKUTIL_EJECT));
+    menu_entry(m, "Show in Finder", NULL, LP_DISKUTIL_SHOW_IN_FINDER, !can(u, LP_DISKUTIL_SHOW_IN_FINDER));
+    if (m->count < LP_MENU_MAX_ENTRIES) { memset(&m->entries[m->count], 0, sizeof m->entries[0]); m->entries[m->count++].separator = 1; }
+    menu_entry(m, "View Thread", NULL, LP_DISKUTIL_VIEW_THREAD, !can(u, LP_DISKUTIL_VIEW_THREAD));
+    menu_entry(m, "Inspect Knowledge Graph", NULL, LP_DISKUTIL_THREAD_GRAPH, !can(u, LP_DISKUTIL_THREAD_GRAPH));
+    menu_entry(m, "Record Schemas", NULL, LP_DISKUTIL_THREAD_SCHEMAS, !can(u, LP_DISKUTIL_THREAD_SCHEMAS));
+    menu_entry(m, "Check Parity", NULL, LP_DISKUTIL_THREAD_PARITY, !can(u, LP_DISKUTIL_THREAD_PARITY));
 }
 
 static void select_first(struct diskutil *u) {
@@ -358,6 +446,7 @@ static void *diskutil_create(lp_desktop *d, const char *window_id) {
     refresh(u);
     select_first(u);
     if (d) u->timer = lp_desktop_add_timer(d, REFRESH_MS, on_tick, u);
+    if (d && lp_thread_connected(&d->thread)) { lp_thread_stats(&d->thread); lp_thread_parity(&d->thread); }
     return u;
 }
 
@@ -374,7 +463,7 @@ const lp_app lp_app_diskutil = {
     .id = "diskutil", .title = "Disk Utility", .name = "Disk Utility", .icon = LP_ICON_DRIVE, .object = "volumeInternal",
     .default_rect = { NAN, NAN, 760, 480 }, .min_size = { 560, 340 }, .singleton = 1, .resizable = 1,
     .create = diskutil_create, .paint = diskutil_paint, .destroy = diskutil_destroy,
-    .command = diskutil_command, .menu_entries = diskutil_menu_entries,
+    .command = diskutil_command, .menu_entries = diskutil_menu_entries, .model_changed = diskutil_model_changed,
 };
 
 /* MARK: - Tests */
@@ -397,3 +486,11 @@ int lp_diskutil_can(const void *state, int command) { return can(state, command)
 int lp_diskutil_busy(const void *state) { return ((const struct diskutil *)state)->job != NULL; }
 const char *lp_diskutil_status(const void *state) { return ((const struct diskutil *)state)->status; }
 void lp_diskutil_refresh(void *state) { refresh(state); }
+int lp_diskutil_show_all(const void *state) { return ((const struct diskutil *)state)->show_all; }
+int lp_diskutil_visible_volumes(const void *state) {
+    const struct diskutil *u = state;
+    int n = 0;
+    for (int i = 0; i < u->disks->count; i++)
+        for (int v = 0; v < u->disks->drives[i].nvolumes; v++) if (!hidden(u, &u->disks->drives[i].volumes[v])) n++;
+    return n;
+}

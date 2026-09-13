@@ -17,6 +17,7 @@
 #include "maryui/lp_settings.h"
 #include "maryui/lp_skill.h"
 #include "maryui/lp_spotlight.h"
+#include "maryui/lp_thread.h"
 #include "maryui/lp_wm.h"
 
 #define LP_DESKTOP_MAX_APPS 24
@@ -92,6 +93,7 @@ typedef struct lp_desktop {
     int menu_active;          /* highlighted entry of the open menu, -1 */
     lp_spotlight spotlight;   /* Ctrl+Space: the search bar and dock */
     lp_mary mary;             /* the conversation with maryd, shown in Spotlight */
+    lp_thread thread;         /* the hard drive's memory, from threadd (the Thread app, Disk Utility, Get Info; PARITY D25) */
     lp_audio audio;           /* PipeWire's speakers and microphones (System Settings › Sound, PARITY D23) */
     int spotlight_chat;       /* Spotlight shows that conversation instead of the dock (Linux, PARITY D18) */
     lp_scroll_state spotlight_chat_scroll;
@@ -126,8 +128,8 @@ typedef struct lp_desktop {
 void lp_desktop_init(lp_desktop *d, lp_rect bounds, void *host);
 void lp_desktop_register_app(lp_desktop *d, const lp_app *app);
 /* Registers finder, gallery, about, textedit (hidden: Spotlight only), info (internal)
- * and the system apps (calculator, preview, terminal, activity, diskutil, media, calendar, settings); Finder,
- * TextEdit, Preview, Terminal, the Media Player, Calendar and System Settings are pinned. */
+ * and the system apps (calculator, preview, terminal, activity, diskutil, media, calendar, settings, thread); Finder,
+ * TextEdit, Preview, Terminal, the Media Player, Calendar, System Settings and Threads are pinned. */
 void lp_desktop_register_builtin_apps(lp_desktop *d);
 /* Runs the WM reducer, syncs app instances, calls on_change. Returns the change mask. */
 uint64_t lp_desktop_dispatch(lp_desktop *d, const lp_wm_action *action);
@@ -160,7 +162,7 @@ const lp_app *lp_desktop_find_app(const lp_desktop *d, const char *app_id);
 lp_app_instance *lp_desktop_instance(lp_desktop *d, const char *window_id);
 /* The desktop-wide models an app can show, and a change to one (`what` is that model's CHANGED bits): each
  * window whose app answers lp_app.model_changed with 1 is repainted through on_app_dirty. */
-enum { LP_MODEL_MARY = 1, LP_MODEL_AUDIO = 2 };
+enum { LP_MODEL_MARY = 1, LP_MODEL_AUDIO = 2, LP_MODEL_THREAD = 4 };
 void lp_desktop_models_changed(lp_desktop *d, unsigned model, unsigned what);
 /* Mary's settings to maryd, which keeps none of its own: the wake word and the voice. On every connect, and when
  * either changes. 0, or -ENOTCONN while maryd is away. */

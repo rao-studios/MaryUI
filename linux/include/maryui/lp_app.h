@@ -11,6 +11,7 @@
 
 struct lp_desktop;
 struct lp_skill;
+struct lp_job;
 
 typedef struct lp_app {
     const char *id;
@@ -64,6 +65,7 @@ extern const lp_app lp_app_diskutil;
 extern const lp_app lp_app_player;
 extern const lp_app lp_app_calendar;
 extern const lp_app lp_app_prefs;
+extern const lp_app lp_app_thread;
 
 /* TextEdit: replaces the document (for previews). */
 void lp_textedit_set_text(void *state, const char *name, const char *text);
@@ -90,6 +92,8 @@ enum lp_finder_command {
     LP_FINDER_GO_HOME, LP_FINDER_GO_DESKTOP, LP_FINDER_GO_DOCUMENTS, LP_FINDER_GO_DOWNLOADS, LP_FINDER_GO_TRASH,
     LP_FINDER_EMPTY_TRASH,
     LP_FINDER_SORT_NAME, LP_FINDER_SORT_DATE, LP_FINDER_SORT_SIZE, LP_FINDER_SORT_KIND,
+    /* the Thread (PARITY D24): a file's node, and the drive's graph, schemas and parity */
+    LP_FINDER_VIEW_THREAD, LP_FINDER_THREAD_GRAPH, LP_FINDER_THREAD_SCHEMAS, LP_FINDER_THREAD_PARITY,
 };
 enum lp_textedit_command { LP_TEXTEDIT_OPEN, LP_TEXTEDIT_SAVE };
 enum lp_calculator_command { LP_CALCULATOR_COPY, LP_CALCULATOR_PASTE };
@@ -134,7 +138,24 @@ int lp_activity_sheet_open(const void *state);
 const char *lp_activity_status(const void *state);
 lp_rect lp_activity_sheet_button(const void *state, lp_ctx *ctx, lp_rect body, int button);
 
-enum lp_diskutil_command { LP_DISKUTIL_MOUNT, LP_DISKUTIL_UNMOUNT, LP_DISKUTIL_EJECT, LP_DISKUTIL_SHOW_IN_FINDER };
+enum lp_diskutil_command { LP_DISKUTIL_MOUNT, LP_DISKUTIL_UNMOUNT, LP_DISKUTIL_EJECT, LP_DISKUTIL_SHOW_IN_FINDER, LP_DISKUTIL_SHOW_ALL,
+                          LP_DISKUTIL_VIEW_THREAD, LP_DISKUTIL_THREAD_GRAPH, LP_DISKUTIL_THREAD_SCHEMAS, LP_DISKUTIL_THREAD_PARITY };
+int lp_diskutil_show_all(const void *state);
+int lp_diskutil_visible_volumes(const void *state);
+
+/* Threads (the Thread app, PARITY D25): its tabs as commands, and its state for tests and renders. */
+enum lp_thread_command { LP_THREAD_TAB_DRIVE, LP_THREAD_TAB_LIBRARY, LP_THREAD_TAB_GRAPH, LP_THREAD_TAB_SCHEMAS, LP_THREAD_TAB_LEDGER,
+                         LP_THREAD_TAB_RETRIEVAL, LP_THREAD_RELOAD, LP_THREAD_RECONCILE };
+int lp_thread_app_tab(const void *state);
+void lp_thread_app_set_tab(void *state, int tab);
+const char *lp_thread_app_seed(const void *state);
+const char *lp_thread_app_file(const void *state);
+const char *lp_thread_app_document(const void *state);
+const char *lp_thread_app_status(const void *state);
+int lp_thread_app_graph_nodes(const void *state);
+int lp_thread_app_graph_selected(const void *state);
+void lp_thread_app_set_runner(void *state, struct lp_job *(*run)(struct lp_desktop *d, const char *const *argv,
+                              void (*done)(int status, const char *output, void *user), void *user));
 /* Disk Utility, for tests: read fixture sysfs/udev/mounts paths, stand in for lp_job_run, select, and ask what it offers. */
 struct lp_job;
 void lp_diskutil_set_paths(void *state, const char *sys_block, const char *udev_data, const char *mounts_path);

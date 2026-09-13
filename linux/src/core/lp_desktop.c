@@ -16,6 +16,7 @@ void lp_desktop_init(lp_desktop *d, lp_rect bounds, void *host) {
     d->menu_active = -1;
     lp_spotlight_init(&d->spotlight);
     lp_mary_init(&d->mary, d);
+    lp_thread_init(&d->thread, d);
     lp_audio_init(&d->audio, d);
     d->mary.on_skill_invoke = lp_desktop_on_skill_invoke;
     lp_skill_policy_load(&d->skill_policy);
@@ -53,6 +54,7 @@ void lp_desktop_register_builtin_apps(lp_desktop *d) {
     lp_desktop_register_app(d, &lp_app_player);
     lp_desktop_register_app(d, &lp_app_calendar);
     lp_desktop_register_app(d, &lp_app_prefs);
+    lp_desktop_register_app(d, &lp_app_thread);
 }
 
 const lp_app *lp_desktop_find_app(const lp_desktop *d, const char *app_id) {

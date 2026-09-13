@@ -454,6 +454,17 @@ int lp_files_volumes_parse(const char *mounts, const char *system_name, lp_volum
     return n;
 }
 
+int lp_files_dev_mode(void) {
+    char *cmdline = NULL;
+    size_t len = 0;
+    if (lp_files_read("/proc/cmdline", &cmdline, &len) != 0) return 0;
+    int dev = cmdline && strstr(cmdline, "maryos.ui=dev") != NULL;
+    free(cmdline);
+    return dev;
+}
+
+int lp_files_volume_is_shared(const char *path) { return strncmp(path, "/mnt/maryos-out", 15) == 0 && (path[15] == 0 || path[15] == '/'); }
+
 int lp_files_volumes(lp_volume *out, int max) {
     lp_branding b = lp_branding_load();
     char *text = NULL;
@@ -461,6 +472,12 @@ int lp_files_volumes(lp_volume *out, int max) {
     if (lp_files_read("/proc/mounts", &text, &len) != 0) text = NULL;
     int n = lp_files_volumes_parse(text ? text : "", b.name, out, max);
     free(text);
+    /* One drive, like a Macintosh HD (PARITY D24): the host's share is a developer's, shown only in dev mode. */
+    if (!lp_files_dev_mode()) {
+        int kept = 0;
+        for (int i = 0; i < n; i++) if (!lp_files_volume_is_shared(out[i].path)) out[kept++] = out[i];
+        n = kept;
+    }
     return n;
 }
 
