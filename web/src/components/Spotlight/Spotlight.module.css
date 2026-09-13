@@ -56,13 +56,16 @@
 }
 
 .dock {
+  /* set by SpotlightPanel: below 1 when 88px cells would not fit the panel */
+  --dock-scale: 1;
   display: flex;
   justify-content: center;
-  padding: var(--lp-space-2) 0;
+  padding: var(--lp-space-2);
 }
 
 .cell {
-  width: 88px;
+  flex: none;
+  width: calc(88px * var(--dock-scale));
   height: var(--lp-size-spotlight-cell);
   display: flex;
   flex-direction: column;
@@ -93,13 +96,15 @@
 .plate {
   display: grid;
   place-items: center;
-  width: var(--lp-size-spotlight-tile);
-  height: var(--lp-size-spotlight-tile);
+  width: calc(var(--lp-size-spotlight-tile) * var(--dock-scale));
+  height: calc(var(--lp-size-spotlight-tile) * var(--dock-scale));
+  /* a narrowed icon keeps the label on its line */
+  margin-top: calc(var(--lp-size-spotlight-tile) * (1 - var(--dock-scale)));
   color: var(--lp-ink-secondary);
 }
 
 .label {
-  max-width: 84px;
+  max-width: calc(88px * var(--dock-scale) - 2px);
   font-size: var(--lp-text-xs);
   line-height: 14px;
   overflow: hidden;

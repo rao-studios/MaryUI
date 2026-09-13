@@ -17,6 +17,7 @@ import { MenuItem, MenuSeparator } from '@/components/MenuItem'
 import { Monogram } from '@/components/Monogram'
 import { Surface } from '@/components/Surface'
 import { TextField } from '@/components/TextField'
+import { tokens } from '@/tokens/tokens'
 import { useOutsideClick } from '@/hooks/useOutsideClick'
 import { cx } from '@/lib/cx'
 import { isSeparator, type MenuEntry, type MenuModel } from '@/desktop/menus'
@@ -42,6 +43,21 @@ export interface SpotlightPanelProps {
   inputRef?: RefObject<HTMLInputElement>
   className?: string
   style?: CSSProperties
+}
+
+/*
+ * A dock cell is 88px while the row fits; with more apps than that allows, every cell narrows so the row sits
+ * inside the panel at the bar's inset (seven pinned apps at 88px would be 616px in 560px), and the icon scales
+ * with it. Spotlight.c's dock_cell_w is the same rule.
+ */
+const DOCK_CELL = 88
+const DOCK_INSET = 8
+function dockScale(count: number): number {
+  const fit = (parseFloat(tokens.size.spotlightWidth) - 2 * DOCK_INSET) / Math.max(count, 1)
+  return Math.min(1, fit / DOCK_CELL)
+}
+function dockMark(count: number): number {
+  return Math.max(20, Math.round(36 * dockScale(count)))
 }
 
 export function SpotlightPanel({
@@ -98,7 +114,12 @@ export function SpotlightPanel({
         <div className={styles.divider} />
         {dock ? (
           <>
-            <div className={styles.dock} role="listbox" aria-label="Applications">
+            <div
+              className={styles.dock}
+              role="listbox"
+              aria-label="Applications"
+              style={{ '--dock-scale': dockScale(items.length) } as CSSProperties}
+            >
               {items.map((item, i) => (
                 <button
                   key={`${item.kind}:${item.id}`}
@@ -111,7 +132,7 @@ export function SpotlightPanel({
                   onClick={() => onActivate?.(i)}
                 >
                   <span className={styles.plate}>
-                    <Icon name={item.icon} variant="object" size={36} strokeWidth={1.6} />
+                    <Icon name={item.icon} variant="object" size={dockMark(items.length)} strokeWidth={1.6} />
                   </span>
                   <span className={styles.label}>{item.title}</span>
                   <span className={cx(styles.dot, item.running && styles.running)} aria-hidden="true" />

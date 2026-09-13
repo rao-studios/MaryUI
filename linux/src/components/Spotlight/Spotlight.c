@@ -1,3 +1,4 @@
+#include <math.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
@@ -39,6 +40,12 @@ int lp_spotlight_query_is_blank(const char *query) {
 
 static float width_of(const lp_spotlight_view *v) { return v->width > 0 ? v->width : LP_SIZE_SPOTLIGHT_WIDTH; }
 static float dock_height(void) { return 1 + LP_SPOTLIGHT_PAD + LP_SPOTLIGHT_CELL_H + LP_SPOTLIGHT_PAD; }
+/* A dock cell's width: 88 while the row fits, narrower when it would not, so the row always sits inside the
+ * panel at the search bar's own inset (seven pinned apps at 88 would be 616 in a 560 panel). */
+static float dock_cell_w(float panel_w, int n) {
+    float fit = n > 0 ? (panel_w - 2 * LP_SPOTLIGHT_PAD) / n : LP_SPOTLIGHT_CELL_W;
+    return fit < LP_SPOTLIGHT_CELL_W ? fit : LP_SPOTLIGHT_CELL_W;
+}
 static float results_height(int count) { return count > 0 ? 1 + 2 * LIST_PAD + count * LP_LIST_ROW_H : 1 + EMPTY_H; }
 
 static int pill_count(const lp_spotlight_view *v) {
@@ -124,19 +131,26 @@ static void tile(lp_ctx *ctx, lp_id id, lp_rect cell, const lp_spotlight_item *i
     } else if (lp_is_hot(ctx, id)) {
         lp_fill_solid(cr, cell, LP_RGBA(0, 0, 0, 0.04f), LP_RADIUS_SM);
     }
-    float plate = LP_SIZE_SPOTLIGHT_TILE;
-    lp_rect ic = LP_RECT(cell.x + (cell.w - plate) / 2, cell.y + 6, plate, plate);
+    /* the icon scales with a narrowed cell; the label keeps its line, so the row's rhythm and height do not change */
+    float scale = cell.w / LP_SPOTLIGHT_CELL_W;
+    float plate = roundf(LP_SIZE_SPOTLIGHT_TILE * scale);
+    lp_rect ic = LP_RECT(cell.x + (cell.w - plate) / 2, cell.y + 6 + (LP_SIZE_SPOTLIGHT_TILE - plate), plate, plate);
     /* No raised plate: hover and selection belong to the cell around the icon,
      * which is what the plate was being mistaken for. At 36 the mark is above
      * the glyph tier, so an app with an object of its name is drawn as one. */
-    lp_rect mark = LP_RECT(ic.x + (plate - 36) / 2, ic.y + (plate - 36) / 2, 36, 36);
+    float side = roundf(36 * scale);
+    if (side <= LP_OBJECT_TIER_GLYPH_MAX) side = LP_OBJECT_TIER_GLYPH_MAX + 1;   /* object art, never the glyph */
+    lp_rect mark = LP_RECT(roundf(ic.x + (plate - side) / 2), roundf(ic.y + (plate - side) / 2), side, side);
     lp_object named = it->object ? lp_object_by_name(it->object) : LP_OBJ_COUNT;
     if (named < LP_OBJ_COUNT && lp_icon_tier(mark.w) != LP_TIER_GLYPH) lp_object_icon_draw(cr, named, mark, ctx->settings);
     else lp_icon_paint_object(cr, it->icon, mark, 1.6f, LP_INK_SECONDARY, ctx->settings);
     lp_text_style st = lp_text_style_default();
     st.size_px = LP_TEXT_XS;
     st.ellipsize = 1;
-    lp_rect label = LP_RECT(cell.x + 2, ic.y + plate + LP_SPACE_1, cell.w - 4, 14);
+    lp_rect label = LP_RECT(cell.x + 1, cell.y + 6 + LP_SIZE_SPOTLIGHT_TILE + LP_SPACE_1, cell.w - 2, 14);
+    /* a name a narrowed cell cannot hold steps down a little before it would ellipsize ("System Settings") */
+    /* re-measured at each step: hinted advances do not shrink in proportion to the size */
+    while (st.size_px > 9 && lp_text_measure(cr, it->title, &st).w > label.w) st.size_px -= 0.5f;
     lp_text_draw(cr, it->title, label, &st, LP_ALIGN_CENTER);
     if (it->running) lp_fill_solid(cr, LP_RECT(cell.x + cell.w / 2 - 2, label.y + label.h + 2, 4, 4), accent.base, 2);
 }
@@ -260,10 +274,10 @@ void lp_spotlight_panel(lp_ctx *ctx, float x, float y, const lp_spotlight_view *
     if (lp_spotlight_query_is_blank(q->text)) {
         /* The dock: one centred row of tiles */
         int n = v->count;
-        float row_w = n * LP_SPOTLIGHT_CELL_W;
-        float x0 = panel.x + (panel.w - row_w) / 2;
+        float cell_w = dock_cell_w(panel.w, n);
+        float x0 = panel.x + (panel.w - n * cell_w) / 2;
         for (int i = 0; i < n; i++) {
-            lp_rect cell = LP_RECT(x0 + i * LP_SPOTLIGHT_CELL_W, cy + LP_SPOTLIGHT_PAD, LP_SPOTLIGHT_CELL_W, LP_SPOTLIGHT_CELL_H);
+            lp_rect cell = LP_RECT(x0 + i * cell_w, cy + LP_SPOTLIGHT_PAD, cell_w, LP_SPOTLIGHT_CELL_H);
             tile(ctx, lp_id_index(base, 100 + i), cell, &v->items[i], v->selection == i, &res, i);
         }
         /* The commands the menu bar used to carry, folded in under the dock. */
