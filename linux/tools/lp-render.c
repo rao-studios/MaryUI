@@ -39,6 +39,7 @@ static int usage(int status) {
         "       lp-render --player <out.png>             the Media Player with nothing open\n"
         "       lp-render --calendar <out.png>           Calendar on this month\n"
         "       lp-render --prefs <out.png>              System Settings on its General pane\n"
+        "       lp-render --prefs-mary <out.png>         System Settings on Mary's pane: the key, the wake word, each app's skills\n"
         "       lp-render --spotlight [QUERY] <out.png>  Spotlight over the desktop: the dock and its command pills, or the results for QUERY\n"
         "       lp-render --spotlight-menu NAME <out.png>  the same with the NAME pill open (rao|file|edit|view|go|window|help)\n"
         "       lp-render --spotlight-chat STATE <out.png>  Spotlight on the conversation with Mary: idle|listening|thinking|streaming|speaking|error|nokey|offline\n"
@@ -158,6 +159,8 @@ static int render_window(const char *path) {
     return rc;
 }
 
+static int prefs_mary;   /* --prefs-mary: System Settings opens on Mary's pane, with a fixture */
+
 static int render_app(const lp_app *app, int tab, const char *path) {
     int w = 900, h = 640;
     /* a window that cannot be resized is shown at its own size, not stretched to the canvas */
@@ -176,6 +179,15 @@ static int render_app(const lp_app *app, int tab, const char *path) {
     if (app == &lp_app_finder && state) lp_finder_set_preview(state); /* files.ts, not the build host's home */
     if (app == &lp_app_calculator && state) lp_calculator_type(state, "1234.5*2");
     if (app == &lp_app_terminal && state) lp_terminal_feed(state, NULL);
+    if (app == &lp_app_prefs && state && prefs_mary) {
+        d.mary.fd = 0;                          /* shown as connected; a render never sends */
+        d.mary.key_present = 1;
+        d.mary.key_check = 1;
+        d.mary.key_verified_at = 1757700000000LL;
+        lp_skill_set_app_ask(&d.skill_policy, "media", LP_SKILL_ASK_ALWAYS);
+        lp_prefs_mary_set_key_text(state, "a-new-key-being-typed");
+        app->command(state, &d, LP_PREFS_MARY);
+    }
     if (app == &lp_app_preview && state) {
         /* a picture to show: the procedural wallpaper, written where the build can write */
         char picture[600];
@@ -356,6 +368,7 @@ int main(int argc, char **argv) {
     if (strcmp(argv[1], "--diskutil") == 0 && argc == 3) return render_app(&lp_app_diskutil, 0, argv[2]);
     if (strcmp(argv[1], "--player") == 0 && argc == 3) return render_app(&lp_app_player, 0, argv[2]);
     if (strcmp(argv[1], "--calendar") == 0 && argc == 3) return render_app(&lp_app_calendar, 0, argv[2]);
+    if (strcmp(argv[1], "--prefs-mary") == 0 && argc == 3) { prefs_mary = 1; return render_app(&lp_app_prefs, 0, argv[2]); }
     if (strcmp(argv[1], "--prefs") == 0 && argc == 3) return render_app(&lp_app_prefs, 0, argv[2]);
     if (strcmp(argv[1], "--spotlight") == 0 && argc == 3) return render_spotlight(NULL, NULL, argv[2]);
     if (strcmp(argv[1], "--spotlight") == 0 && argc == 4) return render_spotlight(argv[2], NULL, argv[3]);

@@ -309,6 +309,13 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   maryd's client are `lp_mary` (json-c: without it there is no orb), the keys `lp_desktop_ask_mary` /
   `lp_desktop_mary_wake`, the drawing `SpotlightChat.c`; `lp_text_field_opts.trailing_w` and `.icon_monogram`
   exist for it. The web has no maryd and no chat.
+- **D19 — a TextField can keep a secret.** Linux only. `lp_text_field_opts.secure` draws one bullet per
+  character — the text, the selection highlight and the caret are all measured on the bullets — for System
+  Settings' Mistral API key. There is no clipboard yet; when one arrives it must never copy or cut a secure
+  field. The Mary pane (System Settings › Assistant) keeps the key only until Save hands it to maryd
+  (`lp_mary_set_key`) and zeroes the field whatever happened; Verify asks maryd to check it with Mistral;
+  “Listen for Hey Mary” is `mary_wake` in settings.conf; and every app that declares skills gets a group —
+  whether Mary may use it, when she asks first, and a switch per skill (D20). The web has neither.
 - **D20 — apps have skills, and Mary uses them through the apps.** Linux only. An `lp_app` declares what
   Mary can do with it (`skills`: an id, a title, a one-line summary, a JSON Schema for the arguments, and
   whether it reads, acts or cannot be undone) and performs one with `perform`, the same code its menus run —

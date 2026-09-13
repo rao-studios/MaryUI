@@ -109,6 +109,20 @@ int lp_text_field(lp_ctx *ctx, lp_id id, lp_rect r, lp_text_buffer *b, lp_text_f
     cairo_save(cr);
     cairo_rectangle(cr, text_rect.x, text_rect.y, text_rect.w, text_rect.h);
     cairo_clip(cr);
+    /* A secret shows one bullet per character; everything below measures what is shown. */
+    char bullets[sizeof b->text * 3 + 1];
+    int chars = 0;
+    if (o.secure) {
+        size_t k = 0;
+        for (int i = 0; i < b->len && k + 3 < sizeof bullets; i++) {
+            if (((unsigned char)b->text[i] & 0xC0) == 0x80) continue;
+            memcpy(bullets + k, "\xE2\x80\xA2", 3);
+            k += 3;
+            chars++;
+        }
+        bullets[k] = 0;
+    }
+    const char *shown = o.secure ? bullets : b->text;
     if (b->len == 0 && o.placeholder) {
         st.color = LP_INK_TERTIARY;
         lp_text_draw(cr, o.placeholder, text_rect, &st, LP_ALIGN_START);
@@ -116,17 +130,24 @@ int lp_text_field(lp_ctx *ctx, lp_id id, lp_rect r, lp_text_buffer *b, lp_text_f
         st.color = o.disabled ? LP_INK_DISABLED : LP_INK_PRIMARY;
         st.ellipsize = 0;
         if (b->all_selected && ctx->focus == id && !o.disabled) {
-            lp_size ts = lp_text_measure(cr, b->text, &st);
+            lp_size ts = lp_text_measure(cr, shown, &st);
             float w = ts.w < text_rect.w ? ts.w : text_rect.w;
             lp_fill_solid(cr, LP_RECT(text_rect.x - 1, r.y + (r.h - st.size_px - 6) / 2, w + 2, st.size_px + 6), accent.light, LP_RADIUS_XS);
             st.color = LP_INK_ON_ACCENT;
         }
-        lp_text_draw(cr, b->text, text_rect, &st, LP_ALIGN_START);
+        lp_text_draw(cr, shown, text_rect, &st, LP_ALIGN_START);
     }
     if (ctx->focus == id && !o.disabled && !b->all_selected) {
-        char head[256];
-        memcpy(head, b->text, (size_t)b->cursor);
-        head[b->cursor] = 0;
+        char head[sizeof bullets];
+        if (o.secure) {
+            int before = 0;
+            for (int i = 0; i < b->cursor; i++) before += ((unsigned char)b->text[i] & 0xC0) != 0x80;
+            memcpy(head, bullets, (size_t)(before < chars ? before : chars) * 3);
+            head[(before < chars ? before : chars) * 3] = 0;
+        } else {
+            memcpy(head, b->text, (size_t)b->cursor);
+            head[b->cursor] = 0;
+        }
         float cx = text_rect.x + (b->cursor ? lp_text_measure(cr, head, &st).w : 0);
         float ch = o.large ? st.size_px + 6 : r.h - 8;
         lp_fill_solid(cr, LP_RECT(cx, r.y + (r.h - ch) / 2, 1, ch), LP_INK_PRIMARY, 0);

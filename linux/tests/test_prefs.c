@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/socket.h>
 #include "lp_test.h"
 #include "maryui/lp_desktop.h"
 #include "maryui/lp_files.h"
@@ -192,7 +193,7 @@ LP_TEST(every_pane_paints) {
     lp_ctx ctx = { 0 };
     ctx.settings = &d.settings;
     lp_input in = { .mx = -1, .my = -1 };
-    for (int pane = 0; pane <= LP_PREFS_ABOUT; pane++) {
+    for (int pane = 0; pane <= LP_PREFS_MARY; pane++) {
         lp_desktop_run_command(&d, LP_CMD_APP, pane);
         if (pending_done) finish(1, "");
         if (pending_done) finish(1, "");
@@ -237,6 +238,45 @@ LP_TEST(settings_keep_their_defaults_and_bounds) {
     unlink(path);
 }
 
+LP_TEST(mary_hands_the_key_over_once_and_keeps_no_copy) {
+    char id[12];
+    void *p = open_prefs(id);
+    lp_desktop_run_command(&d, LP_CMD_APP, LP_PREFS_MARY);
+    LP_ASSERT_EQ(lp_prefs_pane(p), LP_PREFS_MARY);
+    size_t n = 0;
+    const char *bytes;
+    int clean = 1;
+    lp_prefs_mary_set_key_text(p, "abcDEF1234567890ghij");
+    lp_prefs_mary_save_key(p);                                  /* maryd is away */
+    LP_ASSERT(strstr(lp_prefs_mary_status(p), "isn’t running") != NULL);
+    bytes = lp_prefs_mary_key_bytes(p, &n);
+    for (size_t i = 0; i < n; i++) clean &= bytes[i] == 0;
+    LP_ASSERT(clean && n >= 64);
+    if (lp_mary_available()) {
+        int sv[2];
+        LP_ASSERT_EQ(socketpair(AF_UNIX, SOCK_STREAM, 0, sv), 0);
+        d.mary.fd = sv[0];
+        lp_prefs_mary_set_key_text(p, "not a key!");
+        lp_prefs_mary_save_key(p);
+        LP_ASSERT(strstr(lp_prefs_mary_status(p), "doesn’t look like") != NULL);
+        lp_prefs_mary_set_key_text(p, "abcDEF1234567890ghij");
+        lp_prefs_mary_save_key(p);
+        LP_ASSERT(strstr(lp_prefs_mary_status(p), "Saved") != NULL);
+        char buf[256];
+        ssize_t got = recv(sv[1], buf, sizeof buf - 1, MSG_DONTWAIT);
+        buf[got > 0 ? got : 0] = 0;
+        LP_ASSERT(strstr(buf, "\"type\":\"key.set\"") && strstr(buf, "abcDEF1234567890ghij"));
+        LP_ASSERT(strstr(buf, "not a key") == NULL);
+        bytes = lp_prefs_mary_key_bytes(p, &n);
+        clean = 1;
+        for (size_t i = 0; i < n; i++) clean &= bytes[i] == 0;
+        LP_ASSERT(clean);
+        lp_mary_free(&d.mary);
+        close(sv[1]);
+    }
+    lp_desktop_close_window(&d, id);
+}
+
 int main(void) {
     const char *tmp = getenv("TMPDIR");
     snprintf(root, sizeof root, "%s/lp_prefs_XXXXXX", tmp && *tmp ? tmp : "/tmp");
@@ -252,6 +292,7 @@ int main(void) {
     LP_RUN(keyboard_settings_are_saved_and_applied);
     LP_RUN(the_dock_pane_changes_what_spotlight_shows);
     LP_RUN(every_pane_paints);
+    LP_RUN(mary_hands_the_key_over_once_and_keeps_no_copy);
     LP_RUN(settings_keep_their_defaults_and_bounds);
     lp_files_delete_tree(root);
     LP_TEST_MAIN_END();

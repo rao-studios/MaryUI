@@ -13,7 +13,7 @@ lp_settings lp_settings_defaults(void) {
     /* The clock shows until someone hides it, so a file written before the key existed keeps it. */
     return (lp_settings){ .accent = LP_ACCENT_BLUE, .folders = LP_FOLDER_SLATE, .goo = 1,
                           .wallpaper = LP_WALLPAPER_MOLTEN, .molten_tone = LP_MOLTEN_PLATINUM, .reduced_motion = 0,
-                          .clock = 1, .key_repeat_rate = 25, .key_repeat_delay = 600 };
+                          .clock = 1, .key_repeat_rate = 25, .key_repeat_delay = 600, .mary_wake = 1 };
 }
 
 void lp_config_path(const char *name, char *out, size_t n, int mkdirs) {
@@ -61,6 +61,7 @@ lp_settings lp_settings_load(void) {
         else if (strcmp(key, "natural_scroll") == 0) s.natural_scroll = strcmp(value, "on") == 0 || strcmp(value, "1") == 0;
         else if (strcmp(key, "clock_24h") == 0) s.clock_24h = strcmp(value, "on") == 0 || strcmp(value, "1") == 0;
         else if (strcmp(key, "dock") == 0) snprintf(s.dock, sizeof s.dock, "%s", value);
+        else if (strcmp(key, "mary_wake") == 0) s.mary_wake = strcmp(value, "off") != 0 && strcmp(value, "0") != 0;
     }
     fclose(f);
     /* a hand-edited file stays inside what the compositor can use (a rate of 0 would divide by zero) */
@@ -89,6 +90,7 @@ int lp_settings_save(const lp_settings *s) {
     fprintf(f, "# System Settings\nkey_repeat_rate=%d\nkey_repeat_delay=%d\nkeyboard_layout=%s\npointer_speed=%.2f\nnatural_scroll=%s\nclock_24h=%s\n",
         s->key_repeat_rate, s->key_repeat_delay, s->keyboard_layout[0] ? s->keyboard_layout : "default", s->pointer_speed,
         s->natural_scroll ? "on" : "off", s->clock_24h ? "on" : "off");
+    fprintf(f, "# Mary\nmary_wake=%s\n", s->mary_wake ? "on" : "off");
     if (s->dock[0]) fprintf(f, "dock=%s\n", s->dock);
     fclose(f);
     return 0;

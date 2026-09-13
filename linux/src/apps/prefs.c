@@ -73,6 +73,9 @@ struct prefs {
     /* About */
     lp_about about;
     lp_text_buffer hostname_field;
+    /* Mary: the key only until Save hands it to maryd, then zeroed */
+    lp_text_buffer mary_key;
+    char mary_status[160];
 };
 
 static const struct { const char *name; lp_icon icon; const char *section; } PANES[] = {
@@ -85,6 +88,7 @@ static const struct { const char *name; lp_icon icon; const char *section; } PAN
     { "Date & Time", LP_ICON_CLOCK, NULL },
     { "Users", LP_ICON_USER, NULL },
     { "About", LP_ICON_INFO, NULL },
+    { "Mary", LP_ICON_STAR, "Assistant" },
 };
 #define PANE_COUNT ((int)(sizeof PANES / sizeof PANES[0]))
 
@@ -606,6 +610,113 @@ static void pane_about(lp_ctx *ctx, struct prefs *p, lp_desktop *d, float x, flo
     if (lp_button(ctx, lp_id_index(base, 91), LP_RECT(x + LABEL_W + 200 + LP_SPACE_2, y + (ROW_H - bs.h) / 2, bs.w, bs.h), "Rename", bo) && !p->job) apply_hostname(p);
 }
 
+/* MARK: - Mary (PARITY D19, D20) */
+
+static void wipe(char *bytes, size_t n) {
+    volatile char *b = bytes;
+    while (n--) *b++ = 0;
+}
+
+/* Hands the key to maryd, which hands it to sewnd, and forgets it here whatever happened. */
+static void save_mary_key(struct prefs *p) {
+    int rc = p->desk ? lp_mary_set_key(&p->desk->mary, p->mary_key.text, (size_t)p->mary_key.len) : -ENOTCONN;
+    wipe(p->mary_key.text, sizeof p->mary_key.text);
+    p->mary_key.len = p->mary_key.cursor = 0;
+    p->mary_key.all_selected = 0;
+    snprintf(p->mary_status, sizeof p->mary_status, "%s",
+             rc == 0 ? "Saved. Verify asks Mistral whether it works."
+             : rc == -EINVAL ? "That doesn’t look like a Mistral API key."
+             : rc == -ENOTCONN ? "Mary isn’t running, so the key was not saved."
+                               : "The key could not be handed to Mary.");
+}
+
+static void mary_key_status(const struct prefs *p, const lp_mary *m, char *out, size_t n) {
+    char when[40] = "";
+    if (m && m->key_verified_at > 0) {
+        time_t t = (time_t)(m->key_verified_at / 1000);
+        struct tm tm;
+        strftime(when, sizeof when, " Verified %B %d, %Y.", localtime_r(&t, &tm));
+    }
+    if (!m || !lp_mary_connected(m)) snprintf(out, n, "Mary isn’t running. The key can be saved once she is back.");
+    else if (m->key_check == 1) snprintf(out, n, "Mistral accepted the key.%s", when);
+    else if (m->key_check == 0) snprintf(out, n, "%s", m->key_message[0] ? m->key_message : "Mistral refused the key.");
+    else if (p->mary_status[0]) snprintf(out, n, "%s", p->mary_status);
+    else if (m->key_present) snprintf(out, n, "A key is stored.%s", when);
+    else snprintf(out, n, "No key yet: Mary needs one to talk to Mistral. It is kept by sewnd, never here.");
+}
+
+static void subheading(lp_ctx *ctx, const char *text, float x, float *y, float w) {
+    if (ctx->pass == LP_PASS_DRAW && ctx->cr) {
+        lp_text_style st = lp_text_style_default();
+        st.weight = LP_TEXT_WEIGHT_BOLD;
+        st.emboss = 1;
+        lp_text_draw(ctx->cr, text, LP_RECT(x, *y, w, 20), &st, LP_ALIGN_START);
+    }
+    *y += 20 + LP_SPACE_2;
+}
+
+static void pane_mary(lp_ctx *ctx, struct prefs *p, lp_desktop *d, float x, float y, float w, lp_id base) {
+    heading(ctx, "Mary", x, &y, w);
+    const lp_mary *m = d ? &d->mary : NULL;
+    label(ctx, "Mistral API key", x, y);
+    float field_w = fmin(280, w - LABEL_W - 170);
+    lp_text_field(ctx, lp_id_index(base, 400), LP_RECT(x + LABEL_W, y + (ROW_H - LP_SIZE_CONTROL_HEIGHT) / 2, field_w, LP_SIZE_CONTROL_HEIGHT), &p->mary_key,
+                  (lp_text_field_opts){ .placeholder = m && m->key_present ? "Paste a new key to replace it" : "Paste your key", .icon = LP_ICON_COUNT, .secure = 1 });
+    lp_button_opts save = { LP_BUTTON_PRIMARY, LP_CONTROL_SM, LP_ICON_COUNT, 0, p->mary_key.len == 0 };
+    lp_size ss = lp_button_measure(ctx, "Save", save);
+    float bx = x + LABEL_W + field_w + LP_SPACE_2;
+    if (lp_button(ctx, lp_id_index(base, 401), LP_RECT(bx, y + (ROW_H - ss.h) / 2, ss.w, ss.h), "Save", save) && p->mary_key.len) save_mary_key(p);
+    lp_button_opts verify = { LP_BUTTON_DEFAULT, LP_CONTROL_SM, LP_ICON_COUNT, 0, !(m && lp_mary_connected(m) && m->key_present) };
+    lp_size vs = lp_button_measure(ctx, "Verify", verify);
+    if (lp_button(ctx, lp_id_index(base, 402), LP_RECT(bx + ss.w + LP_SPACE_2, y + (ROW_H - vs.h) / 2, vs.w, vs.h), "Verify", verify) && d && lp_mary_verify_key(&d->mary) == 0)
+        snprintf(p->mary_status, sizeof p->mary_status, "Asking Mistral…");
+    y += ROW_H;
+    char status[240];
+    mary_key_status(p, m, status, sizeof status);
+    note(ctx, status, x + LABEL_W, &y, w - LABEL_W);
+    int wake = d ? d->settings.mary_wake : 1;
+    if (toggle_row(ctx, lp_id_index(base, 403), "Listen for “Hey Mary”", x, &y, &wake) && d) {
+        d->settings.mary_wake = wake;
+        lp_desktop_settings_changed(d);
+        lp_mary_set_wake(&d->mary, wake);
+    }
+    if (!d) return;
+
+    y += LP_SPACE_3;
+    subheading(ctx, "What Mary can do with each app", x, &y, w);
+    static const lp_segment ASK[3] = { { "Never", LP_ICON_COUNT }, { "Before changes", LP_ICON_COUNT }, { "Always", LP_ICON_COUNT } };
+    int group = 0;
+    for (int a = 0; a < d->app_count; a++) {
+        const lp_app *app = d->apps[a];
+        if (!app->skill_count || !app->perform) continue;
+        lp_id gid = lp_id_index(base, 500 + 20 * group++);
+        char text[96];
+        snprintf(text, sizeof text, "Use %s", app->name ? app->name : app->title);
+        int on = lp_skill_app_enabled(&d->skill_policy, app->id);
+        if (toggle_row(ctx, gid, text, x, &y, &on)) {
+            lp_skill_set_app_enabled(&d->skill_policy, app->id, on);
+            lp_desktop_skill_policy_changed(d);
+        }
+        int ask = (int)lp_skill_app_ask(&d->skill_policy, app->id);
+        if (segmented_row(ctx, lp_id_index(gid, 1), "Ask first", x, &y, ASK, 3, &ask)) {
+            lp_skill_set_app_ask(&d->skill_policy, app->id, (lp_skill_ask)ask);
+            lp_desktop_skill_policy_changed(d);
+        }
+        for (int s = 0; s < app->skill_count && s < 16; s++) {
+            const lp_skill *sk = &app->skills[s];
+            float row_y = y;
+            int enabled = lp_skill_enabled(&d->skill_policy, app->id, sk->id);
+            if (toggle_row(ctx, lp_id_index(gid, 2 + s), sk->title, x, &y, &enabled)) {
+                lp_skill_set_enabled(&d->skill_policy, app->id, sk->id, enabled);
+                lp_desktop_skill_policy_changed(d);
+            }
+            snprintf(text, sizeof text, "%s", sk->effect == LP_SKILL_READ ? "Looks, changes nothing" : sk->effect == LP_SKILL_ACT ? "Changes something" : "Cannot be undone");
+            value_text(ctx, text, x + LABEL_W + 52, row_y, w - LABEL_W - 52);
+        }
+        y += LP_SPACE_2;
+    }
+}
+
 static void prefs_paint(void *state, lp_ctx *ctx, lp_rect body, lp_desktop *d) {
     static struct prefs empty = { .wifi_selected = -1, .queued_volume = -1 };
     struct prefs *p = state ? state : &empty;
@@ -633,6 +744,7 @@ static void prefs_paint(void *state, lp_ctx *ctx, lp_rect body, lp_desktop *d) {
     case LP_PREFS_TIME: pane_time(ctx, p, desk, x, y, w, base); break;
     case LP_PREFS_USERS: pane_users(ctx, p, desk, x, y, w, base); break;
     case LP_PREFS_ABOUT: pane_about(ctx, p, desk, x, y, w, base); break;
+    case LP_PREFS_MARY: pane_mary(ctx, p, desk, x, y, w, base); break;
     }
     if (ctx->pass == LP_PASS_DRAW && ctx->cr && p->message[0] && p->pane != LP_PREFS_SOUND) {
         lp_text_style st = lp_text_style_default();
@@ -673,13 +785,14 @@ static void prefs_destroy(void *state) {
     if (!p) return;
     if (p->ticker) lp_desktop_remove_source(p->desk, p->ticker);
     if (p->job && p->run == lp_job_run) lp_job_cancel(p->job);
+    wipe(p->mary_key.text, sizeof p->mary_key.text);
     free(p);
 }
 
 /* MARK: - Mary's skills (PARITY D20) */
 
 /* LP_PREFS_* order: the words Mary names a pane by. */
-static const char *const PANE_SLUGS[] = { "general", "dock", "displays", "keyboard", "sound", "network", "time", "users", "about" };
+static const char *const PANE_SLUGS[] = { "general", "dock", "displays", "keyboard", "sound", "network", "time", "users", "about", "mary" };
 
 static const lp_skill prefs_skills[] = {
     { "open_pane", "Open a pane", "Opens System Settings on one of its panes; it changes no setting.",
@@ -748,3 +861,11 @@ void lp_prefs_set_zone(void *state, const char *zone) { struct prefs *p = state;
 void lp_prefs_set_hostname(void *state, const char *name) { struct prefs *p = state; lp_text_buffer_set(&p->hostname_field, name); apply_hostname(p); }
 void lp_prefs_join(void *state, int network, const char *passphrase) { join(state, network, passphrase); }
 void lp_prefs_set_volume(void *state, int volume) { set_volume(state, volume); }
+void lp_prefs_mary_set_key_text(void *state, const char *text) { lp_text_buffer_set(&((struct prefs *)state)->mary_key, text); }
+void lp_prefs_mary_save_key(void *state) { save_mary_key(state); }
+const char *lp_prefs_mary_status(const void *state) { return ((const struct prefs *)state)->mary_status; }
+const char *lp_prefs_mary_key_bytes(const void *state, size_t *n) {
+    const struct prefs *p = state;
+    *n = sizeof p->mary_key.text;
+    return p->mary_key.text;
+}

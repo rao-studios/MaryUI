@@ -50,6 +50,7 @@ typedef struct lp_text_field_opts {
     int disabled;
     float trailing_w;           /* room kept clear at the right end for an accessory the caller draws (Spotlight's Ask Mary orb) */
     int icon_monogram;          /* the leading mark is Mary's monogram rather than `icon` (Spotlight's chat) */
+    int secure;                 /* a secret (the Mistral key): every character drawn as a bullet; a clipboard must never copy it (PARITY D19) */
 } lp_text_field_opts;
 void lp_text_buffer_set(lp_text_buffer *b, const char *text);
 /* Sets the text with all of it selected, the way the Finder starts a rename. */

@@ -175,7 +175,7 @@ void lp_calendar_app_edit(void *state, int index);
 /* System Settings (app id "settings"): each command shows that pane. */
 enum lp_prefs_command {
     LP_PREFS_GENERAL, LP_PREFS_DOCK, LP_PREFS_DISPLAYS, LP_PREFS_KEYBOARD, LP_PREFS_SOUND,
-    LP_PREFS_NETWORK, LP_PREFS_TIME, LP_PREFS_USERS, LP_PREFS_ABOUT,
+    LP_PREFS_NETWORK, LP_PREFS_TIME, LP_PREFS_USERS, LP_PREFS_ABOUT, LP_PREFS_MARY,
 };
 /* Its actions as a person takes them, and what it shows, for tests; job runs stand in for lp_job_run. */
 void lp_prefs_set_runner(void *state, struct lp_job *(*run)(struct lp_desktop *d, const char *const *argv,
@@ -191,5 +191,10 @@ int lp_prefs_link_count(const void *state);
 int lp_prefs_network_count(const void *state);
 int lp_prefs_volume(const void *state);        /* 0 … 100, or -1 while unknown */
 const char *lp_prefs_timezone(const void *state);
+/* The Mary pane: type a key in, press Save, what it says, and the field's bytes (all zero once saved). */
+void lp_prefs_mary_set_key_text(void *state, const char *text);
+void lp_prefs_mary_save_key(void *state);
+const char *lp_prefs_mary_status(const void *state);
+const char *lp_prefs_mary_key_bytes(const void *state, size_t *n);
 
 #endif

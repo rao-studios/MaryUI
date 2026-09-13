@@ -34,6 +34,7 @@ typedef struct lp_settings {
     int natural_scroll;
     int clock_24h;              /* the ambient clock in 24-hour time */
     char dock[256];             /* the app ids a blank Spotlight shows, comma-separated; "" for each app's own */
+    int mary_wake;              /* maryd listens for "Hey Mary" (System Settings › Mary) */
 } lp_settings;
 
 typedef struct lp_accent {
