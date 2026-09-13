@@ -31,6 +31,10 @@ void lp_desktop_models_changed(lp_desktop *d, unsigned model, unsigned what) {
     }
 }
 
+int lp_desktop_publish_mary_config(lp_desktop *d) {
+    return lp_mary_send_config(&d->mary, d->settings.mary_wake != 0, d->settings.mary_voice[0] ? d->settings.mary_voice : NULL);
+}
+
 void lp_desktop_register_app(lp_desktop *d, const lp_app *app) {
     if (d->app_count < LP_DESKTOP_MAX_APPS) d->apps[d->app_count++] = app;
 }

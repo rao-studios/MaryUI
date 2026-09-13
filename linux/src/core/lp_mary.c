@@ -34,6 +34,16 @@ int lp_mary_connected(const lp_mary *m) { return m->fd >= 0; }
 
 int lp_mary_active(const lp_mary *m) { return m->state >= LP_MARY_LISTENING && m->state <= LP_MARY_SPEAKING; }
 
+int lp_mary_voice_split(const char *voice_id, char *character, size_t cn, char *mood, size_t mn) {
+    static const char *const MOODS[] = { "neutral", "sad", "happy", "excited", "curious", "angry" };
+    const char *id = voice_id ? voice_id : "", *cut = strrchr(id, '_');
+    int split = 0;
+    for (size_t i = 0; cut && cut > id && i < sizeof MOODS / sizeof *MOODS; i++) split |= strcmp(cut + 1, MOODS[i]) == 0;
+    if (cn) snprintf(character, cn, "%.*s", split ? (int)(cut - id) : (int)strlen(id), id);
+    if (mn) snprintf(mood, mn, "%s", split ? cut + 1 : "");
+    return split;
+}
+
 static void changed(lp_mary *m, unsigned what) {
     if (m->desk && m->desk->on_mary) m->desk->on_mary(m->desk, what);
     /* and any window showing Mary (Settings › Mary); the microphone's level only moves Spotlight's meter */
@@ -41,7 +51,10 @@ static void changed(lp_mary *m, unsigned what) {
 }
 
 static void clear_messages(lp_mary *m) {
-    for (int i = 0; i < m->message_count; i++) free(m->messages[i].text);
+    for (int i = 0; i < m->message_count; i++) {
+        free(m->messages[i].text);
+        free(m->messages[i].note);
+    }
     m->message_count = 0;
 }
 
@@ -89,6 +102,7 @@ static void disconnect(lp_mary *m, int retry) {
     m->state = LP_MARY_IDLE;
     m->partial[0] = 0;
     m->level = 0;
+    if (m->sample_state == LP_MARY_SAMPLE_ASKING || m->sample_state == LP_MARY_SAMPLE_PLAYING) m->sample_state = LP_MARY_SAMPLE_NONE;
     for (int i = 0; i < m->message_count; i++) m->messages[i].streaming = 0;
     changed(m, LP_MARY_CHANGED_CONNECTION | LP_MARY_CHANGED_STATE);
     if (retry) schedule_retry(m);
@@ -111,6 +125,7 @@ static int has(struct json_object *o, const char *key, json_type type, struct js
 static lp_mary_message *push(lp_mary *m, lp_mary_role role, const char *text, int streaming) {
     if (m->message_count == LP_MARY_MESSAGES) {
         free(m->messages[0].text);
+        free(m->messages[0].note);
         memmove(m->messages, m->messages + 1, (LP_MARY_MESSAGES - 1) * sizeof *m->messages);
         m->message_count--;
     }
@@ -120,6 +135,7 @@ static lp_mary_message *push(lp_mary *m, lp_mary_role role, const char *text, in
     msg->len = strlen(msg->text);
     msg->role = role;
     msg->streaming = streaming;
+    msg->note = NULL;
     m->message_count++;
     return msg;
 }
@@ -178,6 +194,7 @@ static void handle(lp_mary *m, struct json_object *msg) {
             if (strcmp(state, state_names[i]) == 0) m->state = (lp_mary_state)i;
         if (has(msg, "key_present", json_type_boolean, &v)) m->key_present = json_object_get_boolean(v);
         if (has(msg, "wake", json_type_boolean, &v)) m->wake = json_object_get_boolean(v);
+        snprintf(m->voice, sizeof m->voice, "%s", str(msg, "voice") ? str(msg, "voice") : "");
         if (has(msg, "tail", json_type_array, &v)) {
             clear_messages(m);
             size_t n = json_object_array_length(v), first = n > LP_MARY_MESSAGES ? n - LP_MARY_MESSAGES : 0;
@@ -233,7 +250,49 @@ static void handle(lp_mary *m, struct json_object *msg) {
     } else if (strcmp(type, "error") == 0) {
         snprintf(m->error_stage, sizeof m->error_stage, "%s", str(msg, "stage") ? str(msg, "stage") : "error");
         snprintf(m->error, sizeof m->error, "%s", str(msg, "message") ? str(msg, "message") : "");
-        changed(m, LP_MARY_CHANGED_ERROR);
+        lp_mary_message *last = m->message_count ? &m->messages[m->message_count - 1] : NULL;
+        if ((strcmp(m->error_stage, "speech") == 0 || strcmp(m->error_stage, "speaker") == 0) && last && last->role == LP_MARY_REPLY) {
+            free(last->note);                   /* the words arrived; this says why they were not heard */
+            last->note = strdup(m->error);
+            changed(m, LP_MARY_CHANGED_ERROR | LP_MARY_CHANGED_MESSAGES);
+        } else {
+            changed(m, LP_MARY_CHANGED_ERROR);
+        }
+    } else if (strcmp(type, "voices") == 0) {
+        struct json_object *list;
+        int ok = has(msg, "ok", json_type_boolean, &v) && json_object_get_boolean(v);
+        if (ok && has(msg, "voices", json_type_array, &list)) {
+            m->voice_count = 0;
+            size_t n = json_object_array_length(list);
+            for (size_t i = 0; i < n && m->voice_count < LP_MARY_VOICES; i++) {
+                struct json_object *item = json_object_array_get_idx(list, i), *languages;
+                const char *id = str(item, "voice_id"), *name = str(item, "name");
+                if (!id || !*id) continue;
+                lp_mary_voice *voice = &m->voices[m->voice_count++];
+                memset(voice, 0, sizeof *voice);
+                snprintf(voice->id, sizeof voice->id, "%s", id);
+                snprintf(voice->name, sizeof voice->name, "%s", name && *name ? name : id);
+                if (has(item, "languages", json_type_array, &languages) && json_object_array_length(languages)) {
+                    const char *language = json_object_get_string(json_object_array_get_idx(languages, 0));
+                    snprintf(voice->language, sizeof voice->language, "%s", language ? language : "");
+                }
+                voice->custom = has(item, "custom", json_type_boolean, &v) && json_object_get_boolean(v);
+            }
+            m->voices_state = LP_MARY_VOICES_LISTED;
+            m->voices_message[0] = 0;
+        } else {
+            m->voices_state = LP_MARY_VOICES_FAILED;
+            snprintf(m->voices_message, sizeof m->voices_message, "%s", str(msg, "message") ? str(msg, "message") : "Mistral’s voices could not be listed.");
+        }
+        changed(m, LP_MARY_CHANGED_VOICES);
+    } else if (strcmp(type, "voice.sample") == 0) {
+        const char *state = str(msg, "state");
+        m->sample_state = !state ? LP_MARY_SAMPLE_NONE
+                        : strcmp(state, "asking") == 0 ? LP_MARY_SAMPLE_ASKING
+                        : strcmp(state, "playing") == 0 ? LP_MARY_SAMPLE_PLAYING
+                        : strcmp(state, "done") == 0 ? LP_MARY_SAMPLE_DONE : LP_MARY_SAMPLE_FAILED;
+        snprintf(m->sample_message, sizeof m->sample_message, "%s", str(msg, "message") ? str(msg, "message") : "");
+        changed(m, LP_MARY_CHANGED_SAMPLE);
     } else if (strcmp(type, "skill.invoke") == 0) {
         skill_invoke(m, msg);
     }
@@ -426,11 +485,38 @@ int lp_mary_stop(lp_mary *m) { return simple(m, "stop"); }
 int lp_mary_dismiss(lp_mary *m) { return simple(m, "dismiss"); }
 int lp_mary_verify_key(lp_mary *m) { return simple(m, "key.verify"); }
 
-int lp_mary_set_wake(lp_mary *m, int on) {
+int lp_mary_send_config(lp_mary *m, int wake, const char *voice) {
     if (m->fd < 0) return -ENOTCONN;
     struct json_object *o = typed("config");
-    json_object_object_add(o, "wake", json_object_new_boolean(on != 0));
+    if (wake >= 0) json_object_object_add(o, "wake", json_object_new_boolean(wake != 0));
+    if (voice && *voice) json_object_object_add(o, "voice", json_object_new_string(voice));
     return send_object(m, o);
+}
+
+int lp_mary_set_wake(lp_mary *m, int on) { return lp_mary_send_config(m, on != 0, NULL); }
+
+int lp_mary_list_voices(lp_mary *m) {
+    int rc = simple(m, "voices.list");
+    if (rc == 0) {
+        m->voices_state = LP_MARY_VOICES_ASKING;
+        changed(m, LP_MARY_CHANGED_VOICES);
+    }
+    return rc;
+}
+
+int lp_mary_sample_voice(lp_mary *m, const char *voice_id, const char *text) {
+    if (!voice_id || !*voice_id) return -EINVAL;
+    if (m->fd < 0) return -ENOTCONN;
+    struct json_object *o = typed("voice.sample");
+    json_object_object_add(o, "voice_id", json_object_new_string(voice_id));
+    if (text && *text) json_object_object_add(o, "text", json_object_new_string(text));
+    int rc = send_object(m, o);
+    if (rc == 0) {
+        m->sample_state = LP_MARY_SAMPLE_ASKING;
+        m->sample_message[0] = 0;
+        changed(m, LP_MARY_CHANGED_SAMPLE);
+    }
+    return rc;
 }
 
 int lp_mary_set_key(lp_mary *m, char *key, size_t len) {
@@ -474,6 +560,9 @@ int lp_mary_stop(lp_mary *m) { return -ENOTCONN; }
 int lp_mary_dismiss(lp_mary *m) { return -ENOTCONN; }
 int lp_mary_verify_key(lp_mary *m) { return -ENOTCONN; }
 int lp_mary_set_wake(lp_mary *m, int on) { return -ENOTCONN; }
+int lp_mary_send_config(lp_mary *m, int wake, const char *voice) { return -ENOTCONN; }
+int lp_mary_list_voices(lp_mary *m) { return -ENOTCONN; }
+int lp_mary_sample_voice(lp_mary *m, const char *voice_id, const char *text) { return -ENOTCONN; }
 int lp_mary_set_key(lp_mary *m, char *key, size_t len) {
     if (key) wipe(key, len);
     return -ENOTCONN;

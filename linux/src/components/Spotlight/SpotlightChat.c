@@ -189,6 +189,16 @@ static float dialogue(lp_ctx *ctx, const lp_mary *m, float x, float y0, float w,
             }
             y += paragraph(cr, text, n, &st, x, y, w, draw);
             free(with_caret);
+            if (msg->note) {
+                /* the words came but the voice did not: say why, quietly, under them */
+                char said[300];
+                snprintf(said, sizeof said, "Not spoken: %s", msg->note);
+                lp_text_style quiet = lp_text_style_default();
+                quiet.size_px = LP_TEXT_XS;
+                quiet.color = LP_INK_TERTIARY;
+                quiet.color.a *= alpha;
+                y += 3 + paragraph(cr, said, strlen(said), &quiet, x, y + 3, w, draw);
+            }
         }
     }
     if (m->partial[0]) {

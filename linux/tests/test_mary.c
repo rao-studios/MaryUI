@@ -313,12 +313,117 @@ LP_TEST(reconnects_when_maryd_comes_back) {
     rmdir(dir);
 }
 
+static int voice_known(void) { return d.mary.voice[0] != 0; }
+static enum lp_mary_voices_state want_voices;
+static int voices_reached(void) { return d.mary.voices_state == want_voices; }
+static enum lp_mary_sample_state want_sample;
+static int sample_reached(void) { return d.mary.sample_state == want_sample; }
+static int noted(void) { return d.mary.message_count >= 2 && d.mary.messages[1].note != NULL; }
+
+LP_TEST(voices_samples_and_config_travel_both_ways) {
+    fresh(1);
+    int listener, srv = connect_pair(&listener);
+    say(srv, "{\"type\":\"hello\",\"state\":\"idle\",\"key_present\":true,\"wake\":true,\"voice\":\"en_paul_neutral\",\"tail\":[]}\n");
+    lp_test_loop_run(1000, voice_known);
+    LP_ASSERT_STR(d.mary.voice, "en_paul_neutral");
+
+    LP_ASSERT_EQ(lp_mary_list_voices(&d.mary), 0);
+    LP_ASSERT_EQ(d.mary.voices_state, LP_MARY_VOICES_ASKING);
+    struct json_object *o = hear(srv);
+    LP_ASSERT_STR(field(o, "type"), "voices.list");
+    json_object_put(o);
+    say(srv, "{\"type\":\"voices\",\"ok\":true,\"voices\":[{\"voice_id\":\"fr_marie_neutral\",\"name\":\"Marie\",\"languages\":[\"fr\"],\"custom\":false},"
+             "{\"voice_id\":\"019b2bd7-96e7\",\"name\":\"My voice\",\"languages\":[],\"custom\":true},{\"name\":\"no id\"}]}\n");
+    want_voices = LP_MARY_VOICES_LISTED;
+    lp_test_loop_run(1000, voices_reached);
+    LP_ASSERT_EQ(d.mary.voice_count, 2);
+    LP_ASSERT_STR(d.mary.voices[0].name, "Marie");
+    LP_ASSERT_STR(d.mary.voices[0].language, "fr");
+    LP_ASSERT(!d.mary.voices[0].custom && d.mary.voices[1].custom);
+    say(srv, "{\"type\":\"voices\",\"ok\":false,\"message\":\"Mistral rejected the key\"}\n");
+    want_voices = LP_MARY_VOICES_FAILED;
+    lp_test_loop_run(1000, voices_reached);
+    LP_ASSERT_STR(d.mary.voices_message, "Mistral rejected the key");
+
+    LP_ASSERT_EQ(lp_mary_sample_voice(&d.mary, "fr_marie_happy", "Bonjour !"), 0);
+    o = hear(srv);
+    LP_ASSERT_STR(field(o, "type"), "voice.sample");
+    LP_ASSERT_STR(field(o, "voice_id"), "fr_marie_happy");
+    LP_ASSERT_STR(field(o, "text"), "Bonjour !");
+    json_object_put(o);
+    say(srv, "{\"type\":\"voice.sample\",\"voice_id\":\"fr_marie_happy\",\"state\":\"playing\"}\n");
+    want_sample = LP_MARY_SAMPLE_PLAYING;
+    lp_test_loop_run(1000, sample_reached);
+    LP_ASSERT_EQ(d.mary.sample_state, LP_MARY_SAMPLE_PLAYING);
+    say(srv, "{\"type\":\"voice.sample\",\"voice_id\":\"fr_marie_happy\",\"state\":\"failed\",\"message\":\"Mistral refused to speak it (HTTP 403)\"}\n");
+    want_sample = LP_MARY_SAMPLE_FAILED;
+    lp_test_loop_run(1000, sample_reached);
+    LP_ASSERT_STR(d.mary.sample_message, "Mistral refused to speak it (HTTP 403)");
+    LP_ASSERT_EQ(lp_mary_sample_voice(&d.mary, "", NULL), -EINVAL);
+
+    LP_ASSERT_EQ(lp_mary_send_config(&d.mary, 1, "fr_marie_sad"), 0);
+    o = hear(srv);
+    LP_ASSERT_STR(field(o, "type"), "config");
+    LP_ASSERT_STR(field(o, "wake"), "true");
+    LP_ASSERT_STR(field(o, "voice"), "fr_marie_sad");
+    json_object_put(o);
+    d.settings.mary_wake = 0;
+    snprintf(d.settings.mary_voice, sizeof d.settings.mary_voice, "fr_marie_curious");
+    LP_ASSERT_EQ(lp_desktop_publish_mary_config(&d), 0);             /* what a connect sends */
+    o = hear(srv);
+    LP_ASSERT_STR(field(o, "wake"), "false");
+    LP_ASSERT_STR(field(o, "voice"), "fr_marie_curious");
+    json_object_put(o);
+    LP_ASSERT_EQ(lp_mary_set_wake(&d.mary, 1), 0);
+    o = hear(srv);
+    LP_ASSERT(o && !json_object_object_get_ex(o, "voice", NULL));    /* the wake word alone */
+    json_object_put(o);
+    lp_mary_free(&d.mary);
+    close(srv);
+    close(listener);
+}
+
+LP_TEST(a_reply_that_was_not_spoken_says_why) {
+    fresh(1);
+    int listener, srv = connect_pair(&listener);
+    say(srv, "{\"type\":\"transcript\",\"text\":\"Hi\",\"final\":true}\n{\"type\":\"state\",\"state\":\"thinking\"}\n"
+             "{\"type\":\"reply.delta\",\"text\":\"Hello there.\"}\n"
+             "{\"type\":\"error\",\"stage\":\"speech\",\"message\":\"Mistral refused to speak it (HTTP 403)\"}\n"
+             "{\"type\":\"reply.end\",\"cancelled\":false}\n{\"type\":\"state\",\"state\":\"idle\"}\n");
+    lp_test_loop_run(1000, noted);
+    lp_test_loop_run(50, NULL);
+    LP_ASSERT(d.mary.message_count == 2 && d.mary.messages[1].note != NULL);
+    if (d.mary.message_count == 2 && d.mary.messages[1].note) LP_ASSERT_STR(d.mary.messages[1].note, "Mistral refused to speak it (HTTP 403)");
+    LP_ASSERT(d.mary.state != LP_MARY_ERROR);                        /* the words arrived: nothing went wrong with them */
+    say(srv, "{\"type\":\"error\",\"stage\":\"sewnd\",\"message\":\"sewnd is not running\"}\n");
+    lp_test_loop_run(100, NULL);
+    LP_ASSERT_STR(d.mary.messages[1].note, "Mistral refused to speak it (HTTP 403)");   /* other errors are not notes */
+    lp_mary_free(&d.mary);
+    close(srv);
+    close(listener);
+}
+
 LP_TEST(starting_needs_an_event_loop) {
     fresh(0);
     LP_ASSERT_EQ(lp_mary_start(&d.mary, "/tmp/nowhere.sock"), -ENOSYS);
     LP_ASSERT(lp_mary_available());
 }
 #endif
+
+LP_TEST(a_voice_id_names_a_character_and_a_mood) {
+    char character[64], mood[16];
+    LP_ASSERT_EQ(lp_mary_voice_split("fr_marie_happy", character, sizeof character, mood, sizeof mood), 1);
+    LP_ASSERT_STR(character, "fr_marie");
+    LP_ASSERT_STR(mood, "happy");
+    LP_ASSERT_EQ(lp_mary_voice_split("gb_jane_neutral", character, sizeof character, mood, sizeof mood), 1);
+    LP_ASSERT_STR(character, "gb_jane");
+    LP_ASSERT_EQ(lp_mary_voice_split("0fda0527-d5e8-4996", character, sizeof character, mood, sizeof mood), 0);
+    LP_ASSERT_STR(character, "0fda0527-d5e8-4996");
+    LP_ASSERT_STR(mood, "");
+    LP_ASSERT_EQ(lp_mary_voice_split("en_paul_calm", character, sizeof character, mood, sizeof mood), 0);   /* not a mood Mary knows */
+    LP_ASSERT_EQ(lp_mary_voice_split("_happy", character, sizeof character, mood, sizeof mood), 0);          /* no character */
+    LP_ASSERT_EQ(lp_mary_voice_split(NULL, character, sizeof character, mood, sizeof mood), 0);
+}
 
 LP_TEST(without_json_c_there_is_no_mary) {
     fresh(0);
@@ -338,9 +443,12 @@ int main(void) {
     LP_RUN(requests_arrive_as_json_lines);
     LP_RUN(the_key_is_sent_once_and_every_copy_is_zeroed);
     LP_RUN(skill_calls_reach_the_handler_or_are_answered_unknown);
-    LP_RUN(reconnects_when_maryd_comes_back);
+    LP_RUN(voices_samples_and_config_travel_both_ways);
+    LP_RUN(a_reply_that_was_not_spoken_says_why);
+    LP_RUN(reconnects_when_maryd_comes_back);             /* last of the socket tests: it removes their directory */
     LP_RUN(starting_needs_an_event_loop);
 #endif
+    LP_RUN(a_voice_id_names_a_character_and_a_mood);
     LP_RUN(without_json_c_there_is_no_mary);
     LP_TEST_MAIN_END();
 }

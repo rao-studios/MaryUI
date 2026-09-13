@@ -220,11 +220,12 @@ LP_TEST(settings_keep_their_defaults_and_bounds) {
     LP_ASSERT_EQ(fresh.key_repeat_rate, 25);
     LP_ASSERT_EQ(fresh.key_repeat_delay, 600);
     LP_ASSERT_STR(fresh.dock, "");
+    LP_ASSERT_STR(fresh.mary_voice, "fr_marie_neutral");
     char path[700];
     snprintf(path, sizeof path, "%s/config/maryui", root);
     lp_files_mkdir_p(path);
     snprintf(path, sizeof path, "%s/config/maryui/settings.conf", root);
-    const char *old = "accent=graphite\nclock=on\nkey_repeat_rate=0\nkey_repeat_delay=99999\npointer_speed=5\nclock_24h=on\ndock=finder,settings\n";
+    const char *old = "accent=graphite\nclock=on\nkey_repeat_rate=0\nkey_repeat_delay=99999\npointer_speed=5\nclock_24h=on\ndock=finder,settings\nmary_voice=en_paul_neutral\n";
     lp_files_write(path, old, strlen(old));
     lp_settings s = lp_settings_load();
     LP_ASSERT_EQ(s.accent, LP_ACCENT_GRAPHITE);
@@ -234,10 +235,15 @@ LP_TEST(settings_keep_their_defaults_and_bounds) {
     LP_ASSERT(s.clock_24h);                               /* a key with digits in it */
     LP_ASSERT_STR(s.dock, "finder,settings");
     LP_ASSERT_STR(s.keyboard_layout, "");
+    LP_ASSERT_STR(s.mary_voice, "en_paul_neutral");
     LP_ASSERT_EQ(lp_settings_save(&s), 0);
     lp_settings again = lp_settings_load();
     LP_ASSERT_EQ(again.key_repeat_delay, 2000);
     LP_ASSERT_STR(again.dock, "finder,settings");
+    LP_ASSERT_STR(again.mary_voice, "en_paul_neutral");
+    const char *odd = "mary_voice=../../etc\n";                         /* not a voice: the default stands */
+    lp_files_write(path, odd, strlen(odd));
+    LP_ASSERT_STR(lp_settings_load().mary_voice, "fr_marie_neutral");
     unlink(path);
 }
 

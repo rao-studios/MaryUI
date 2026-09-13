@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,7 +14,8 @@ lp_settings lp_settings_defaults(void) {
     /* The clock shows until someone hides it, so a file written before the key existed keeps it. */
     return (lp_settings){ .accent = LP_ACCENT_BLUE, .folders = LP_FOLDER_SLATE, .goo = 1,
                           .wallpaper = LP_WALLPAPER_MOLTEN, .molten_tone = LP_MOLTEN_PLATINUM, .reduced_motion = 0,
-                          .clock = 1, .key_repeat_rate = 25, .key_repeat_delay = 600, .mary_wake = 1 };
+                          .clock = 1, .key_repeat_rate = 25, .key_repeat_delay = 600, .mary_wake = 1,
+                          .mary_voice = "fr_marie_neutral" };
 }
 
 void lp_config_path(const char *name, char *out, size_t n, int mkdirs) {
@@ -32,6 +34,14 @@ void lp_config_path(const char *name, char *out, size_t n, int mkdirs) {
 }
 
 static void config_path(char *out, size_t n, int mkdirs) { lp_config_path("settings.conf", out, n, mkdirs); }
+
+/* A voice id as maryd and sewnd take one: 1..63 of letters, digits, _ and -. */
+static int voice_name(const char *v) {
+    size_t n = strlen(v);
+    if (!n || n > 63) return 0;
+    for (size_t i = 0; i < n; i++) if (!isalnum((unsigned char)v[i]) && v[i] != '_' && v[i] != '-') return 0;
+    return 1;
+}
 
 lp_settings lp_settings_load(void) {
     lp_settings s = lp_settings_defaults();
@@ -62,6 +72,7 @@ lp_settings lp_settings_load(void) {
         else if (strcmp(key, "clock_24h") == 0) s.clock_24h = strcmp(value, "on") == 0 || strcmp(value, "1") == 0;
         else if (strcmp(key, "dock") == 0) snprintf(s.dock, sizeof s.dock, "%s", value);
         else if (strcmp(key, "mary_wake") == 0) s.mary_wake = strcmp(value, "off") != 0 && strcmp(value, "0") != 0;
+        else if (strcmp(key, "mary_voice") == 0 && voice_name(value)) snprintf(s.mary_voice, sizeof s.mary_voice, "%s", value);
     }
     fclose(f);
     /* a hand-edited file stays inside what the compositor can use (a rate of 0 would divide by zero) */
@@ -90,7 +101,7 @@ int lp_settings_save(const lp_settings *s) {
     fprintf(f, "# System Settings\nkey_repeat_rate=%d\nkey_repeat_delay=%d\nkeyboard_layout=%s\npointer_speed=%.2f\nnatural_scroll=%s\nclock_24h=%s\n",
         s->key_repeat_rate, s->key_repeat_delay, s->keyboard_layout[0] ? s->keyboard_layout : "default", s->pointer_speed,
         s->natural_scroll ? "on" : "off", s->clock_24h ? "on" : "off");
-    fprintf(f, "# Mary\nmary_wake=%s\n", s->mary_wake ? "on" : "off");
+    fprintf(f, "# Mary\nmary_wake=%s\nmary_voice=%s\n", s->mary_wake ? "on" : "off", voice_name(s->mary_voice) ? s->mary_voice : "fr_marie_neutral");
     if (s->dock[0]) fprintf(f, "dock=%s\n", s->dock);
     fclose(f);
     return 0;

@@ -309,7 +309,8 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   0.72, 0.5), the live transcript pending in tertiary ink, three breathing dots while she thinks and a blinking
   caret while her reply streams. The panel is `size.spotlight-chat` tall under the bar however long the
   conversation runs, so the host sizes it once. In chat mode Return asks, the arrows scroll, the first Esc
-  stops Mary and the second closes; the conversation is still there when Spotlight opens again. The model and
+  stops Mary and the second closes; the conversation is still there when Spotlight opens again. A reply whose voice
+  failed says why under it (“Not spoken: …”), from maryd's error{stage: speech | speaker}. The model and
   maryd's client are `lp_mary` (json-c: without it there is no orb), the keys `lp_desktop_ask_mary` /
   `lp_desktop_mary_wake`, the drawing `SpotlightChat.c`; `lp_text_field_opts.trailing_w` and `.icon_monogram`
   exist for it. The web has no maryd and no chat.

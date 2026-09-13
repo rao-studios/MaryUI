@@ -207,6 +207,19 @@ LP_TEST(every_state_draws_and_only_a_busy_mary_animates) {
     teardown();
 }
 
+LP_TEST(a_reply_that_was_not_spoken_says_so_under_it) {
+    setup(1);
+    lp_spotlight_view view = lp_desktop_spotlight_view(&d, NULL, 0);
+    view.mary = &d.mary;
+    view.chat = 1;
+    d.mary.key_present = 1;
+    say(LP_MARY_USER, "Say something.");
+    say(LP_MARY_REPLY, "Here is something.");
+    d.mary.messages[1].note = strdup("Mistral refused to speak it (HTTP 403)");
+    LP_ASSERT_EQ(draw(&view, 400), 0);                             /* drawn under the reply, and nothing to animate */
+    teardown();
+}
+
 int main(void) {
     LP_RUN(ctrl_return_asks_mary_and_opens_the_conversation);
     LP_RUN(a_blank_bar_opens_the_microphone);
@@ -217,5 +230,6 @@ int main(void) {
     LP_RUN(what_was_typed_stays_in_the_bar_while_maryd_is_away);
     LP_RUN(the_conversation_is_one_fixed_height);
     LP_RUN(every_state_draws_and_only_a_busy_mary_animates);
+    LP_RUN(a_reply_that_was_not_spoken_says_so_under_it);
     LP_TEST_MAIN_END();
 }

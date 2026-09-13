@@ -904,7 +904,7 @@ static float pane_mary(lp_ctx *ctx, struct prefs *p, lp_desktop *d, float x, flo
     if (toggle_row(ctx, lp_id_index(base, 403), "“Hey Mary”", x, &y, &wake) && d) {
         d->settings.mary_wake = wake;
         lp_desktop_settings_changed(d);
-        lp_mary_set_wake(&d->mary, wake);
+        lp_desktop_publish_mary_config(d);
     }
     aside(ctx, "Listens for her name while the desktop is idle", after_toggle, row_y, aside_w);
     if (!d) return y;
