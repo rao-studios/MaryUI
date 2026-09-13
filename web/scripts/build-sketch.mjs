@@ -667,6 +667,128 @@ const MENUBAR_H = num('size.menubar-height')
   defineSymbol('Spotlight', w, y, layers)
 }
 
+// MARK: - Spotlight chat (Linux, PARITY D18)
+//
+// Spotlight talking to Mary: the Ask Mary orb inside the bar's right end, and the
+// conversation as dialogue on paper under it — what you said small behind a thin
+// accent rule, Mary's reply as body text, older exchanges fading, and a status row
+// over the well. Mirrors linux/src/components/Spotlight/SpotlightChat.c; the web
+// has no chat.
+
+{
+  const w = num('size.spotlight-width')
+  const barH = num('size.spotlight-bar-height')
+  const pad = num('space.2')
+  const rSpot = num('radius.spotlight')
+  const rWell = num('radius.spotlight-results')
+  const chatH = num('size.spotlight-chat')
+  const accessory = num('size.spotlight-accessory')
+  const statusH = 28
+  const h = pad * 3 + barH + chatH
+  const accent = col('accent.blue.base')
+
+  /* Mary's mark in any ink: the Monogram's two R's, one flipped. */
+  const monoMark = (x, y, size, color) => {
+    const font = size * 0.75
+    const glyphW = font * 0.72
+    return [
+      S.text('Я', f(x + size * 0.06, y + size * 0.02, glyphW, font * 1.2), 'R', { font: S.FONT.display, size: font, color, behaviour: 0, extra: { isFlippedHorizontal: true } }),
+      S.text('R', f(x + size * 0.94 - glyphW, y + size * 0.02, glyphW, font * 1.2), 'R', { font: S.FONT.display, size: font, color, behaviour: 0 }),
+    ]
+  }
+  const text = (name, x, y, width, height, str, { size = num('text.md'), color = 'ink.primary', opacity = 1, font = S.FONT.regular } = {}) =>
+    S.text(name, f(x, y, width, height), str, { font, size, color: col(color), align: 0, behaviour: 1, opacity })
+
+  for (const [state, tint, fill, ink] of [['Idle', 'platinum', 0.25, 'ink.secondary'], ['Active', 'accent', 0.65, 'ink.on-accent']]) {
+    const mark = 14
+    defineSymbol(`Spotlight/Ask accessory/${state}`, accessory, accessory, [
+      ...bubbleLayers(accessory, tint, { fill }),
+      ...monoMark((accessory - mark) / 2, (accessory - mark) / 2, mark, col(ink)),
+    ])
+  }
+
+  const states = {
+    Listening: { placeholder: 'Listening…', status: 'Listening', dot: accent, meter: true },
+    Thinking: { placeholder: 'Thinking…', status: 'Thinking', dot: col('ink.secondary') },
+    Speaking: { placeholder: 'Type to ask something else…', status: 'Speaking', dot: col('traffic.zoom.base') },
+  }
+  for (const [name, s] of Object.entries(states)) {
+    const layers = []
+    let y = pad
+    layers.push(well('bar', f(pad, y, w - pad * 2, barH), { radius: barH / 2 }))
+    layers.push(...monoMark(pad + 14, y + (barH - 16) / 2, 16, col('ink.tertiary')))
+    layers.push(text('bar placeholder', pad + 42, y + (barH - 22) / 2, w - pad * 2 - 58 - accessory, 22, s.placeholder, { size: num('text.lg'), color: 'ink.tertiary' }))
+    const inset = (barH - accessory) / 2
+    layers.push(inst('Spotlight/Ask accessory/Active', w - pad - inset - accessory, y + inset, { layerName: 'Ask Mary' }))
+    y += barH + pad
+    layers.push(S.rectangle('divider', f(pad, y, w - pad * 2, 1), S.style({ fills: [S.fillColor(col('edge.divider'))] })))
+    y += 1
+
+    const rowX = pad + 12
+    layers.push(S.oval('status dot', f(rowX, y + (statusH - 6) / 2, 6, 6), S.style({ fills: [S.fillColor(s.dot)] })))
+    layers.push(text('status', rowX + 14, y + (statusH - 14) / 2, 200, 14, s.status, { size: num('text.xs'), color: 'ink.secondary', font: S.FONT.medium }))
+    let right = w - pad - 12
+    layers.push(text('esc to stop', right - 58, y + (statusH - 14) / 2, 58, 14, 'esc to stop', { size: num('text.xs'), color: 'ink.tertiary' }))
+    right -= 58 + 12
+    if (s.meter) {
+      const bars = 24
+      const step = 4
+      const loud = 0.42
+      const mx = right - bars * step
+      for (let i = 0; i < bars; i++) {
+        const bh = 2 + Math.sin((Math.PI * (i + 0.5)) / bars) * loud * 16
+        layers.push(S.rectangle(`meter ${i + 1}`, f(mx + i * step, y + (statusH - bh) / 2, 2, bh), S.style({ fills: [S.fillColor(accent, { opacity: 0.8 })] }), { radius: 1 }))
+      }
+    }
+    y += statusH
+
+    layers.push(well('conversation', f(pad, y, w - pad * 2, h - pad - 4 - y), { radius: rWell }))
+    const cx = pad + 16
+    const colW = w - pad * 2 - 32
+    let ty = y + 12
+    const exchanges = [
+      ['What’s the capital of France?', 'Paris — and it has been, give or take a king or two, since the tenth century.'],
+      ['And how far is it from Lyon?', 'About 390 kilometres. The TGV does it in two hours, which beats driving.'],
+    ]
+    if (name !== 'Listening')
+      exchanges.push(['What’s the weather like in Lyon this weekend?', name === 'Speaking' ? 'Mostly sunny on Saturday, with a high of 24 degrees. Sunday turns cloudy after lunch, so the morning is the time for the market.' : null])
+    exchanges.forEach(([question, answer], i) => {
+      const age = exchanges.length - 1 - i
+      const alpha = age === 0 ? 1 : age === 1 ? 0.72 : 0.5
+      if (i) ty += 16
+      layers.push(S.rectangle(`rule ${i + 1}`, f(cx, ty, 2, 16), S.style({ fills: [S.fillColor(accent, { opacity: 0.55 * alpha })] }), { radius: 1 }))
+      layers.push(text(`you ${i + 1}`, cx + 12, ty, colW - 12, 16, question, { size: num('text.sm'), color: 'ink.secondary', opacity: alpha }))
+      ty += 16
+      if (!answer) return
+      ty += 6
+      const lines = answer.length > 90 ? 2 : 1
+      const streaming = name === 'Speaking' && i === exchanges.length - 1
+      layers.push(text(`mary ${i + 1}`, cx, ty, colW, 18 * lines, streaming ? `${answer}▏` : answer, { opacity: alpha }))
+      ty += 18 * lines
+    })
+    if (name === 'Listening') {
+      ty += 16
+      layers.push(S.rectangle('rule pending', f(cx, ty, 2, 16), S.style({ fills: [S.fillColor(accent, { opacity: 0.3 })] }), { radius: 1 }))
+      layers.push(text('pending', cx + 12, ty, colW - 12, 16, 'What’s the weather like in Lyon this', { size: num('text.sm'), color: 'ink.tertiary' }))
+    }
+    if (name === 'Thinking') {
+      ty += 8
+      ;[0.35, 0.7, 1].forEach((o, k) => layers.push(S.oval(`thinking ${k + 1}`, f(cx + k * 9, ty, 5, 5), S.style({ fills: [S.fillColor(col('ink.secondary'), { opacity: o })] }))))
+    }
+
+    layers.unshift(
+      metal('panel bg', f(0, 0, w, h), {
+        top: 'surface.window-top',
+        bottom: 'surface.window-bottom',
+        radius: rSpot,
+        shadows: [S.shadow(rgbaTok(20, 22, 28, 0.3), { y: 10, blur: 30 }), S.shadow(S.BLACK(0.22), { spread: 1 })],
+      }),
+    )
+    layers.splice(1, 0, sheen(f(0, 0, w, h), rSpot, { at: num('sheen.light-x') }))
+    defineSymbol(`Spotlight/Chat · ${name}`, w, h, layers)
+  }
+}
+
 defineSymbol('Toolbar', WIN_W, 40, [
   metal('bar', f(0, 0, WIN_W, 40), { top: 'surface.window-top', bottom: 'surface.window-bottom' }),
   S.rectangle('hairline', f(0, 39, WIN_W, 1), S.style({ fills: [S.fillColor(col('edge.hairline'))] })),
@@ -949,6 +1071,20 @@ const desktopLayers = []
 }
 const desktopBoard = S.artboard('Desktop', f(0, 0, 1440, 900), desktopLayers, { background: col('platinum.6') })
 
+// The same desktop a moment after “Hey Mary”: Spotlight has opened on the conversation,
+// listening, with its bar at SPOTLIGHT_Y_FRACTION as the C desktop places it (Linux, PARITY D18).
+const heyMaryLayers = []
+{
+  if (wallpaperPng) heyMaryLayers.push(S.bitmap('wallpaper', f(0, 0, 1440, 900), WALLPAPER_REF))
+  else heyMaryLayers.push(S.rectangle('wallpaper', f(0, 0, 1440, 900), S.style({ fills: [S.fillGradient([[0, col('platinum.3')], [0.55, col('platinum.6')], [1, col('platinum.8')]], { from: S.pt(0, 0), to: S.pt(1, 1) })] })))
+  heyMaryLayers.push(S.rectangle('vignette', f(0, 0, 1440, 900), S.style({ fills: [S.fillGradient([[0.55, S.BLACK(0)], [1, rgbaTok(20, 22, 28, 0.35)]], { type: 1, from: S.pt(0.5, 0.4), to: S.pt(0.5, 1.1), elipseLength: 1.6 })] })))
+  heyMaryLayers.push(inst('Window', 72, 72, { layerName: 'Rao' }))
+  const chat = SYM.get('Spotlight/Chat · Listening')
+  const barY = Math.round(900 * 0.38 - num('size.spotlight-bar-height') / 2 - num('space.2'))
+  heyMaryLayers.push(inst('Spotlight/Chat · Listening', Math.round((1440 - chat.w) / 2), barY, { layerName: 'Spotlight (Hey Mary)' }))
+}
+const heyMaryBoard = S.artboard('Desktop — Hey Mary', f(0, 0, 1440, 900), heyMaryLayers, { background: col('platinum.6') })
+
 // MARK: - Icons
 
 const ICONS_REF = 'icons.png'
@@ -1048,6 +1184,7 @@ const iconsBoard = S.artboard('Icons', f(0, 0, ICONS_W, iconsH), iconsLayers, { 
 
 const boardsPage = S.page('Liquid Platinum', [
   Object.assign(desktopBoard, { frame: S.rect(0, 0, 1440, 900) }),
+  Object.assign(heyMaryBoard, { frame: S.rect(0, 980, 1440, 900) }),
   Object.assign(componentsBoard, { frame: S.rect(1520, 0, 1440, componentsH) }),
   Object.assign(tokensBoard, { frame: S.rect(3040, 0, 1440, tokensH) }),
   Object.assign(iconsBoard, { frame: S.rect(4560, 0, ICONS_W, iconsH) }),
