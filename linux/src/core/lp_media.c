@@ -86,6 +86,9 @@ struct lp_media {
     double last_position;
     lp_media_info info;
     double volume;
+    char file_title[128];       /* the file's name without its extension */
+    char stream_title[128];     /* a stream's title tag, which may only name the track */
+    int global_title;           /* the container carried a title of its own */
 };
 
 int lp_media_available(void) { return 1; }
@@ -135,6 +138,7 @@ int lp_media_open(lp_media **out, const char *path, int flags) {
     m->state = LP_MEDIA_LOADING;
     const char *base = lp_files_basename(path), *dot = strrchr(base, '.');
     snprintf(m->info.title, sizeof m->info.title, "%.*s", dot && dot != base ? (int)(dot - base) : (int)strlen(base), base);
+    snprintf(m->file_title, sizeof m->file_title, "%s", m->info.title);
 
     m->playbin = gst_element_factory_make("playbin", NULL);
     m->video_sink = gst_element_factory_make("appsink", NULL);
@@ -195,6 +199,16 @@ cairo_surface_t *lp_media_frame(lp_media *m) { return m ? m->frame : NULL; }
 cairo_surface_t *lp_media_cover(lp_media *m) { return m ? m->cover : NULL; }
 double lp_media_volume(const lp_media *m) { return m ? m->volume : 1; }
 
+/* The container's title tag, else a stream's once the file has proved to have no picture (a WebM names its
+ * tracks "Video" and "Audio"; an Ogg's Vorbis comments are the song's own), else the file's name. */
+static int settle_title(lp_media *m) {
+    if (m->global_title) return 0;
+    const char *title = m->stream_title[0] && m->state != LP_MEDIA_LOADING && !m->info.has_video ? m->stream_title : m->file_title;
+    if (strcmp(title, m->info.title) == 0) return 0;
+    snprintf(m->info.title, sizeof m->info.title, "%s", title);
+    return LP_MEDIA_CHANGED_INFO;
+}
+
 static int query_info(lp_media *m) {
     int changed = 0;
     gint64 duration;
@@ -209,12 +223,21 @@ static int query_info(lp_media *m) {
         m->info.has_audio = audios > 0;
         changed = LP_MEDIA_CHANGED_INFO;
     }
-    return changed;
+    return changed | settle_title(m);
 }
 
 static void read_tags(lp_media *m, GstTagList *tags) {
     gchar *text = NULL;
-    if (gst_tag_list_get_string(tags, GST_TAG_TITLE, &text)) { snprintf(m->info.title, sizeof m->info.title, "%s", text); g_free(text); }
+    if (gst_tag_list_get_string(tags, GST_TAG_TITLE, &text)) {
+        if (gst_tag_list_get_scope(tags) == GST_TAG_SCOPE_GLOBAL) {
+            snprintf(m->info.title, sizeof m->info.title, "%s", text);
+            m->global_title = 1;
+        } else {
+            snprintf(m->stream_title, sizeof m->stream_title, "%s", text);
+        }
+        g_free(text);
+        settle_title(m);
+    }
     if (gst_tag_list_get_string(tags, GST_TAG_ARTIST, &text)) { snprintf(m->info.artist, sizeof m->info.artist, "%s", text); g_free(text); }
     if (gst_tag_list_get_string(tags, GST_TAG_ALBUM, &text)) { snprintf(m->info.album, sizeof m->info.album, "%s", text); g_free(text); }
     GstSample *image = NULL;

@@ -299,6 +299,29 @@ static int app_index(const lp_desktop *d, const char *id) {
     return -1;
 }
 
+/* Whether the focused app's own menus list this chord ("⌘N", "⇧⌘N"): then the key is the app's, not the desktop's. */
+static int app_claims_chord(lp_desktop *d, const lp_window_record *front, uint32_t keysym, uint32_t mods) {
+    lp_app_instance *inst = front ? lp_desktop_instance(d, front->id) : NULL;
+    if (!inst || !inst->app->menu_entries) return 0;
+    char letter;
+    if (keysym >= XKB_KEY_a && keysym <= XKB_KEY_z) letter = (char)('A' + (keysym - XKB_KEY_a));
+    else if (keysym >= XKB_KEY_A && keysym <= XKB_KEY_Z) letter = (char)('A' + (keysym - XKB_KEY_A));
+    else return 0;
+    char want[16];
+    snprintf(want, sizeof want, "%s⌘%c", (mods & LP_MOD_SHIFT) ? "⇧" : "", letter);
+    static const int slots[] = { LP_MENU_FILE, LP_MENU_EDIT, LP_MENU_VIEW, LP_MENU_GO };
+    static lp_menu_model scratch;   /* large; the desktop runs on one thread */
+    for (size_t s = 0; s < sizeof slots / sizeof slots[0]; s++) {
+        memset(&scratch, 0, sizeof scratch);
+        inst->app->menu_entries(inst->state, d, slots[s], &scratch);
+        for (int i = 0; i < scratch.count; i++) {
+            const lp_menu_entry *e = &scratch.entries[i];
+            if (!e->separator && e->shortcut && strcmp(e->shortcut, want) == 0) return 1;
+        }
+    }
+    return 0;
+}
+
 /* menus.ts, as data, plus the focused app's entries (File, Edit, View, Go). The Mac's ⌘ is the guest's Super key. */
 void lp_desktop_build_menus(lp_desktop *d) {
     const lp_window_record *focused = lp_wm_focused(&d->wm);
@@ -580,6 +603,8 @@ int lp_desktop_key(lp_desktop *d, uint32_t keysym, uint32_t mods) {
     const lp_window_record *front = lp_wm_focused(&d->wm);
     const lp_app *front_app = front ? lp_desktop_find_app(d, front->app_id) : NULL;
     if (!(mods & LP_MOD_LOGO) && (!mod || (front_app && front_app->raw_ctrl))) return 0;
+    /* an app's own shortcut outranks the desktop's: Calendar's ⌘N is New Event, not another Finder */
+    if (app_claims_chord(d, front, keysym, mods)) return 0;
     switch (keysym) {
     case XKB_KEY_grave: return lp_desktop_run_command(d, LP_CMD_FOCUS_NEXT, 0);
     case XKB_KEY_w: case XKB_KEY_W: return lp_desktop_run_command(d, LP_CMD_CLOSE_FOCUSED, 0);

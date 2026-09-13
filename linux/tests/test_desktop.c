@@ -320,6 +320,17 @@ LP_TEST(leaves_shift_cmd_n_and_other_keys_to_the_app) {
     LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_Up, LP_MOD_LOGO), 0);
 }
 
+LP_TEST(leaves_a_shortcut_to_the_app_whose_menu_lists_it) {
+    setup();
+    lp_desktop_open_app(&d, "calendar");
+    LP_ASSERT_EQ(d.wm.count, 1);
+    LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_n, LP_MOD_LOGO), 0);   /* File › New Event ⌘N is Calendar's */
+    LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_n, LP_MOD_CTRL), 0);
+    LP_ASSERT_EQ(d.wm.count, 1);                                     /* no Finder window */
+    LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_w, LP_MOD_LOGO), 1);   /* ⌘W, which it does not list, is still the desktop's */
+    LP_ASSERT_EQ(d.wm.count, 0);
+}
+
 LP_TEST(keeps_a_drag_session_and_tells_the_host) {
     setup();
     const char *names[2] = { "a.txt", "b.txt" };
@@ -471,6 +482,7 @@ int main(void) {
     LP_RUN(opens_a_popup_that_runs_its_entry_on_its_window);
     LP_RUN(broadcasts_directory_changes_to_every_instance);
     LP_RUN(leaves_shift_cmd_n_and_other_keys_to_the_app);
+    LP_RUN(leaves_a_shortcut_to_the_app_whose_menu_lists_it);
     LP_RUN(keeps_a_drag_session_and_tells_the_host);
     LP_RUN(spotlight_skips_internal_apps);
     LP_RUN(textedit_opens_a_path_and_saves_back_to_it);

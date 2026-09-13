@@ -134,7 +134,8 @@ LP_TEST(opens_a_video_paused_on_its_first_frame) {
     LP_ASSERT_EQ(info->width, 64);
     LP_ASSERT_EQ(info->height, 48);
     LP_ASSERT_NEAR(info->duration, 2.0, 0.25);
-    LP_ASSERT_STR(info->title, "clip");                  /* no tags: the file's name */
+    LP_ASSERT(info->has_audio);
+    LP_ASSERT_STR(info->title, "clip");                  /* the file's name, not the "Audio" its sound track is called */
     cairo_surface_t *frame = lp_media_frame(m);
     LP_ASSERT(frame && cairo_image_surface_get_width(frame) == 64);
     lp_media_close(m);
@@ -174,6 +175,7 @@ LP_TEST(reads_the_tags_a_file_carries) {
     lp_media *m = NULL;
     LP_ASSERT_EQ(lp_media_open(&m, tagged_clip, LP_MEDIA_SILENT), 0);
     LP_ASSERT(wait_until(m, tagged, 10000));
+    LP_ASSERT(wait_until(m, prerolled, 10000));        /* a stream's title counts once the file proves to have no picture */
     LP_ASSERT_STR(lp_media_info_of(m)->title, "Test Tone");
     LP_ASSERT_STR(lp_media_info_of(m)->artist, "MaryOS");
     LP_ASSERT(!lp_media_info_of(m)->has_video);
@@ -250,7 +252,9 @@ int main(void) {
     path_of("tone.wav", sound, sizeof sound);
     path_of("tagged.ogg", tagged_clip, sizeof tagged_clip);
     char pipeline[2048];
-    snprintf(pipeline, sizeof pipeline, "videotestsrc num-buffers=20 ! video/x-raw,width=64,height=48,framerate=10/1 ! vp8enc ! webmmux ! filesink location=\"%s\"", video);
+    /* with a Vorbis track, which webmmux names "Audio": a track's name must not become the title */
+    snprintf(pipeline, sizeof pipeline, "videotestsrc num-buffers=20 ! video/x-raw,width=64,height=48,framerate=10/1 ! vp8enc ! webmmux name=mux ! filesink location=\"%s\" "
+             "audiotestsrc num-buffers=10 samplesperbuffer=1600 ! audio/x-raw,rate=8000,channels=1 ! audioconvert ! vorbisenc ! mux.", video);
     int clips = make_clip(pipeline);
     snprintf(pipeline, sizeof pipeline, "audiotestsrc num-buffers=12 samplesperbuffer=2000 ! audio/x-raw,rate=8000,channels=1 ! wavenc ! filesink location=\"%s\"", sound);
     clips &= make_clip(pipeline);

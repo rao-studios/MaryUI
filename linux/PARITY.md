@@ -125,7 +125,7 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
 | — | `tests/test_calendar.c` (leap years, weekdays, day and month steps, the grid, typed dates and times, 23- and 25-hour days under a POSIX zone, the app's navigation, editor validation and a DRAW pass of each view; with libical, a save/load round trip, a weekly repeat across the clocks going back, another program's read-only file with a counted yearly rule, and the app saving and deleting) |
 | — | `tests/test_sysinfo.c` (cpuinfo for a Pi 5, the Mac's virtual CPU and x86, meminfo, key=value, `ip -brief address`, iwctl's coloured list, `wpctl get-volume`); `tests/test_prefs.c` (the app with a stand-in runner: links then Wi-Fi scan and join, volume with a queued change, time zones refused, host names refused, the layout saved, the dock changing Spotlight, every pane painted, and the settings file's defaults and bounds) |
 
-252 C cases in all (234 on a Mac, which runs a stand-in case where libvterm, GStreamer and libical are missing).
+253 C cases in all (235 on a Mac, which runs a stand-in case where libvterm, GStreamer and libical are missing).
 
 ## Deviations
 
