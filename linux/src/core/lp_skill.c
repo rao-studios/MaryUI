@@ -170,7 +170,7 @@ char *lp_desktop_skills_json(const lp_desktop *d) {
         struct json_object *o = json_object_new_object(), *skills = json_object_new_array();
         json_object_object_add(o, "id", json_object_new_string(app->id));
         json_object_object_add(o, "name", json_object_new_string(app->name ? app->name : app->title));
-        json_object_object_add(o, "title", json_object_new_string(app->title ? app->title : app->id));
+        json_object_object_add(o, "title", json_object_new_string(app->name ? app->name : app->title ? app->title : app->id));    /* the package's name, not a window's title */
         if (app->summary) json_object_object_add(o, "summary", json_object_new_string(app->summary));
         struct json_object *aliases = json_object_new_array();
         if (app->aka) json_object_array_add(aliases, json_object_new_string(app->aka));
