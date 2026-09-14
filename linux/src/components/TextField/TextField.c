@@ -188,8 +188,10 @@ int lp_text_field(lp_ctx *ctx, lp_id id, lp_rect r, lp_text_buffer *b, lp_text_f
     }
     const char *shown = o.secure ? bullets : b->text;
     if (b->len == 0 && o.placeholder) {
+        /* clear of the caret, which stands at the start of the text rect (focused or not, so nothing shifts on focus) */
         st.color = LP_INK_TERTIARY;
-        lp_text_draw(cr, o.placeholder, text_rect, &st, LP_ALIGN_START);
+        lp_rect ph = LP_RECT(text_rect.x + LP_PLACEHOLDER_INSET, text_rect.y, text_rect.w - LP_PLACEHOLDER_INSET, text_rect.h);
+        lp_text_draw(cr, o.placeholder, ph, &st, LP_ALIGN_START);
     } else {
         st.color = o.disabled ? LP_INK_DISABLED : LP_INK_PRIMARY;
         st.ellipsize = 0;

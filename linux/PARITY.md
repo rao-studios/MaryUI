@@ -524,6 +524,11 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   typed with Shift held, so the chord gives way inside Spotlight and the Launchpad: with words in the query,
   Shift+Space types the space; with the query empty it closes. Everywhere else it opens Spotlight, so an app
   (TextEdit, the Terminal) cannot receive a space typed with Shift held. Ctrl+Space does nothing now.
+- **D36 — the placeholder stands clear of the caret.** A browser draws an empty input's caret over the first letter
+  of its placeholder, and TextField and TextArea did the same. Rao asked for space between them: both now start the
+  placeholder `LP_PLACEHOLDER_INSET` (4px: the caret and a 3px gap) right of where typed text starts, focused or not,
+  so nothing moves when a field takes the focus. Typed text still starts at the caret. Every text field on the
+  desktop is one of the two (Spotlight's bar, the Launchpad's, Finder's search, Settings, Calendar, TextEdit).
 - **Close animation.** `lp-window-close` (scale .96 + fade over `motion.fast`, `CLOSE` after
   fast + 80 ms) runs for built-in windows. A client that unmaps is gone at once — the compositor
   has no pixels left to fade.

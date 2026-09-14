@@ -32,6 +32,10 @@ typedef struct lp_text_style {
 /* The body default: font.ui, text.md, regular, ink.primary. */
 lp_text_style lp_text_style_default(void);
 
+/* How far right of where typed text starts a text field draws its placeholder: the 1px caret and a 3px gap, so an
+ * empty, focused field's caret stands clear of the placeholder's first letter instead of on it (PARITY D36). */
+#define LP_PLACEHOLDER_INSET 4.0f
+
 lp_size lp_text_measure(cairo_t *cr, const char *text, const lp_text_style *style);
 /* Draws with its capitals centred vertically in `r` (not its line box, whose ascent and descent are the
  * font's own), horizontally per `align`. */

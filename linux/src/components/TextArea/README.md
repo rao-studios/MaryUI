@@ -7,7 +7,7 @@ selection and the clipboard are the library's own (PARITY.md D10).
 ## Anatomy
 `surface.well` at `radius.sm` with `emboss-well`; padding `space.2`; text `text.md` in `font.ui` (`mono`: `font.mono`),
 wrapped at the well's width minus the 10px scrollbar lane (word, then character); selection `accent.soft`
-(`platinum.4` when the window is inactive); a 1px `ink.primary` caret; placeholder `ink.tertiary`.
+(`platinum.4` when the window is inactive); a 1px `ink.primary` caret; placeholder `ink.tertiary`, `LP_PLACEHOLDER_INSET` (4px) right of the caret.
 
 ## States
 focus: `0 0 0 3px accent.focus-ring`, the caret, typing edits the document · disabled `ink.disabled`.

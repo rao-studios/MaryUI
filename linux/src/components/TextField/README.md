@@ -5,7 +5,8 @@ Mirrors `web/src/components/TextField`.
 
 ## Anatomy
 height `size.control-height`, padding `0 space.2` (`round`: `0 space.3`, `radius.pill`), `radius.sm`,
-`surface.well`, `emboss-well`; icon 14px `ink.tertiary`; text `text.md`; placeholder `ink.tertiary`; a 1px caret.
+`surface.well`, `emboss-well`; icon 14px `ink.tertiary`; text `text.md`; placeholder `ink.tertiary`, starting `LP_PLACEHOLDER_INSET` (4px) right of where typed text starts so the 1px caret
+of an empty field stands clear of it; a 1px caret.
 
 ## States
 focus: `0 0 0 3px accent.focus-ring`, the caret, typing edits the buffer (Backspace, Delete, ←/→, Home/End) ·

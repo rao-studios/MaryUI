@@ -288,7 +288,8 @@ int lp_text_area(lp_ctx *ctx, lp_id id, lp_rect r, lp_text_area_state *s, lp_tex
         if (doc->len == 0 && o.placeholder) {
             lp_text_style ps = st;
             ps.color = LP_INK_TERTIARY;
-            lp_text_draw_at(cr, o.placeholder, tx, ty + lp_text_layout_baseline(l), &ps);   /* on the line typed text will take */
+            /* on the line typed text will take, clear of the caret at its start */
+            lp_text_draw_at(cr, o.placeholder, tx + LP_PLACEHOLDER_INSET, ty + lp_text_layout_baseline(l), &ps);
         } else {
             lp_text_layout_draw(cr, l, tx, ty, st.color);
         }
