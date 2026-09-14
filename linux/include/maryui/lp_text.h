@@ -41,6 +41,10 @@ void lp_text_draw(cairo_t *cr, const char *text, lp_rect r, const lp_text_style 
 float lp_text_cap_middle(cairo_t *cr, const lp_text_style *style);
 /* Draws with the baseline origin at (x, y) — for glyph-level layouts. */
 void lp_text_draw_at(cairo_t *cr, const char *text, float x, float y, const lp_text_style *style);
+/* Appends the glyph outlines of `text` to the current path, exactly where lp_text_draw would put its ink (capitals
+ * centred in `r`, aligned per `align`), for letters filled with something other than ink — the clock's brushed
+ * platinum. Returns the rect the line's logical box occupies. */
+lp_rect lp_text_path(cairo_t *cr, const char *text, lp_rect r, const lp_text_style *style, enum lp_align align);
 
 /* The Pango family list for a font slot (e.g. "…, Inter, sans-serif"). */
 const char *lp_font_families(enum lp_font font);

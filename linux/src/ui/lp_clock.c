@@ -9,32 +9,49 @@
 
 static lp_text_style clock_style(void) {
     lp_text_style s = lp_text_style_default();
-    s.weight = LP_TEXT_WEIGHT_MEDIUM;
+    s.size_px = LP_CLOCK_SIZE;
+    s.weight = LP_TEXT_WEIGHT_BOLD;
     s.tabular_nums = 1;
-    s.emboss = 1;
-    s.color = LP_INK_PRIMARY;
     return s;
 }
 
-lp_rect lp_clock_capsule(cairo_t *cr, lp_rect box, const char *text) {
+lp_rect lp_clock_bounds(cairo_t *cr, lp_rect box, const char *text) {
     lp_text_style s = clock_style();
-    float w = ceilf(lp_text_measure(cr, text ? text : "", &s).w) + 2 * LP_CLOCK_PAD;
-    if (w > box.w) w = box.w;
-    return LP_RECT(floorf(box.x + box.w - w), floorf(box.y + (box.h - LP_CLOCK_H) / 2), w, LP_CLOCK_H);
+    lp_size m = lp_text_measure(cr, text ? text : "", &s);
+    float room = box.w - LP_CLOCK_INSET, w = ceilf(m.w) < room ? ceilf(m.w) : room, h = ceilf(m.h) < box.h ? ceilf(m.h) : box.h;
+    return LP_RECT(floorf(box.x + box.w - LP_CLOCK_INSET - w), floorf(box.y + (box.h - h) / 2), w, h);
 }
 
 void lp_clock_paint(cairo_t *cr, lp_rect box, const char *text, float world_x, float world_y, const lp_settings *settings) {
     (void)settings;
-    lp_rect capsule = lp_clock_capsule(cr, box, text);
-    /* a little lift off the wallpaper, then the metal (the menu bar's grade, with its sheen) */
-    static const lp_shadow_layer lift[] = { { 0, 0, 1, 3, 0, { 0, 0, 0, 0.28f } } };
-    lp_draw_outer_shadows(cr, capsule, LP_RADIUS_PILL, lift, 1);
-    lp_surface_paint(cr, capsule, (lp_surface_opts){ .variant = LP_VARIANT_BAR, .radius = LP_RADIUS_PILL, .sheen = 1, .sheen_alpha = -1 },
-                     (lp_surface_motion){ .sheen_x = 0.5f, .world_x = world_x, .world_y = world_y });
-    lp_path_rrect(cr, LP_RECT(capsule.x + 0.5f, capsule.y + 0.5f, capsule.w - 1, capsule.h - 1), LP_RADIUS_PILL);
-    lp_set_color(cr, LP_EDGE_DARK);
-    cairo_set_line_width(cr, 1);
-    cairo_stroke(cr);
+    const char *t = text ? text : "";
+    lp_rect line = lp_clock_bounds(cr, box, t);
     lp_text_style s = clock_style();
-    lp_text_draw(cr, text ? text : "", capsule, &s, LP_ALIGN_CENTER);
+    cairo_save(cr);
+    /* the letters lifted off the wallpaper: their own shape a pixel and two below, dark and soft */
+    static const struct { float dy, alpha; } drop[] = { { 2, 0.16f }, { 1, 0.40f } };
+    for (int i = 0; i < 2; i++) {
+        cairo_new_path(cr);
+        cairo_save(cr);
+        cairo_translate(cr, 0, drop[i].dy);
+        lp_text_path(cr, t, line, &s, LP_ALIGN_END);
+        cairo_restore(cr);                         /* the path keeps the offset it was built with */
+        cairo_set_source_rgba(cr, 0, 0, 0, drop[i].alpha);
+        cairo_fill(cr);
+    }
+    /* a dark keyline round the letters (its inner half is covered by the metal), so pale metal reads on pale wallpaper */
+    cairo_new_path(cr);
+    lp_text_path(cr, t, line, &s, LP_ALIGN_END);
+    cairo_set_line_width(cr, 1.6);
+    cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
+    cairo_set_source_rgba(cr, 0.09, 0.10, 0.12, 0.55);
+    cairo_stroke_preserve(cr);
+    /* the metal: the glyphs are the clip, and the desktop's sheet shows through them, grain, sheen and bevel */
+    double x1, y1, x2, y2;
+    cairo_path_extents(cr, &x1, &y1, &x2, &y2);
+    cairo_clip(cr);
+    lp_rect metal = LP_RECT((float)floor(x1) - 1, (float)floor(y1) - 1, (float)(ceil(x2) - floor(x1)) + 2, (float)(ceil(y2) - floor(y1)) + 2);
+    lp_surface_paint(cr, metal, (lp_surface_opts){ .variant = LP_VARIANT_BAR, .radius = 0, .sheen = 1, .sheen_alpha = -1 },
+                     (lp_surface_motion){ .sheen_x = 0.35f, .world_x = world_x, .world_y = world_y });
+    cairo_restore(cr);
 }

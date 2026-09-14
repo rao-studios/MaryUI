@@ -212,6 +212,21 @@ void lp_text_draw(cairo_t *cr, const char *text, lp_rect r, const lp_text_style 
     pango_cairo_show_layout(cr, layout);
 }
 
+lp_rect lp_text_path(cairo_t *cr, const char *text, lp_rect r, const lp_text_style *style, enum lp_align align) {
+    PangoLayout *layout = make_layout(cr, text, style, r.w);
+    PangoRectangle ink, logical;
+    pango_layout_get_pixel_extents(layout, &ink, &logical);
+    double x = r.x;
+    if (align == LP_ALIGN_CENTER) x = r.x + (r.w - logical.width) / 2.0;
+    else if (align == LP_ALIGN_END) x = r.x + r.w - logical.width;
+    double y = r.y + r.h / 2.0 - lp_text_cap_middle(cr, style);
+    x = floor(x + 0.5);
+    y = floor(y + 0.5);
+    cairo_move_to(cr, x, y);
+    pango_cairo_layout_path(cr, layout);
+    return LP_RECT((float)x + logical.x, (float)y + logical.y, (float)logical.width, (float)logical.height);
+}
+
 void lp_text_draw_at(cairo_t *cr, const char *text, float x, float y, const lp_text_style *style) {
     PangoLayout *layout = make_layout(cr, text, style, 0);
     int baseline = pango_layout_get_baseline(layout) / PANGO_SCALE;
