@@ -17,6 +17,7 @@
 #include "maryui/lp_geometry.h"
 #include "maryui/lp_text.h"
 #include "maryui/lp_tokens.h"
+#include "maryui/lp_clock.h"
 #include "maryui/lp_molten.h"
 #include "maryui/lp_wallpaper.h"
 #include "chrome.h"
@@ -26,7 +27,7 @@
 /* The ambient clock's box. Fixed, and right-aligned inside itself, so a wider
  * string ("Wed 12:38 PM") never moves the anchor or resizes the chrome. */
 #define MUI_CLOCK_W 160
-#define MUI_CLOCK_H ((int)LP_SIZE_MENUBAR_HEIGHT)
+#define MUI_CLOCK_H 30   /* the capsule and the lift under it */
 
 static void format_clock(char *out, size_t n, int hours24) {
     time_t now = time(NULL);
@@ -129,11 +130,9 @@ static int clock_visible(struct mui_server *server) {
 static void paint_clock(lp_ctx *ctx, struct mui_chrome *chrome, void *data) {
     struct mui_server *server = data;
     if (ctx->pass != LP_PASS_DRAW || !ctx->cr) return;
-    lp_text_style s = lp_text_style_default();
-    s.weight = LP_TEXT_WEIGHT_MEDIUM;
-    s.tabular_nums = 1;
-    s.emboss = 1;
-    lp_text_draw(ctx->cr, server->clock_text, LP_RECT(0, 0, chrome->width, chrome->height), &s, LP_ALIGN_END);
+    /* On a brushed platinum capsule cut from the desktop's sheet: the world offset is the chrome's own
+     * position on the desktop, and only that (cairo's user space is already chrome-local). */
+    lp_clock_paint(ctx->cr, LP_RECT(0, 0, chrome->width, chrome->height), server->clock_text, (float)server->clock_x, (float)server->clock_y, server->settings);
 }
 
 static int clock_tick(void *data) {
@@ -143,7 +142,7 @@ static int clock_tick(void *data) {
     if (strcmp(text, server->clock_text) != 0) {
         snprintf(server->clock_text, sizeof server->clock_text, "%s", text);
         if (clock_visible(server)) {
-            mui_chrome_damage_all(server->clock);   /* 160×24: the whole chrome is the partial damage */
+            mui_chrome_damage_all(server->clock);   /* 160×30: the whole chrome is the partial damage */
             mui_chrome_repaint(server->clock, mui_now_ms());
         }
     }
@@ -364,7 +363,9 @@ void mui_desktop_output_ready(struct mui_output *output) {
         server->clock = calloc(1, sizeof(*server->clock));
         mui_chrome_init(server->clock, server, server->layer_menubar, MUI_CLOCK_W, MUI_CLOCK_H, paint_clock, server);
     }
-    wlr_scene_node_set_position(&server->clock->node->node, box.x + w - MUI_CLOCK_W - (int)LP_SPACE_3, box.y + (int)LP_SPACE_1);
+    server->clock_x = box.x + w - MUI_CLOCK_W - (int)LP_SPACE_3;
+    server->clock_y = box.y + (int)LP_SPACE_1;
+    wlr_scene_node_set_position(&server->clock->node->node, server->clock_x, server->clock_y);
     wlr_scene_node_set_enabled(&server->clock->node->node, server->desktop.settings.clock);
     if (clock_visible(server)) {
         mui_chrome_damage_all(server->clock);

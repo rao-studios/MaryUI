@@ -161,7 +161,8 @@ struct mui_server {
     enum mui_cursor_shape cursor_shape;
     struct mui_chrome *pointer_chrome;   /* the chrome under the pointer, for leave events */
 
-    struct mui_chrome *clock;            /* the ambient clock, top right on the wallpaper (no bar behind it) */
+    struct mui_chrome *clock;            /* the ambient clock, top right on the wallpaper, on its platinum capsule */
+    int clock_x, clock_y;                /* where its chrome sits on the desktop: the capsule's world offset */
     struct wl_event_source *clock_timer;
     char clock_text[32];
     struct wl_list keyboards; /* struct mui_keyboard */

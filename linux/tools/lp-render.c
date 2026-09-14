@@ -15,6 +15,7 @@
 #include "maryui/components/lp_spotlight_panel.h"
 #include "maryui/components/lp_surface.h"
 #include "maryui/components/lp_window.h"
+#include "maryui/lp_clock.h"
 #include "maryui/lp_desktop.h"
 #include "maryui/lp_settings.h"
 #include "maryui/lp_texture.h"
@@ -126,11 +127,9 @@ static int render_clock(int w, const char *path) {
     cairo_paint(cr);
     cairo_surface_destroy(wp);
     lp_wallpaper_vignette(cr, w, h);
-    lp_text_style st = lp_text_style_default();
-    st.weight = LP_TEXT_WEIGHT_MEDIUM;
-    st.tabular_nums = 1;
-    st.emboss = 1;
-    lp_text_draw(cr, "Tue 9:41 AM", LP_RECT(w - 160 - LP_SPACE_3, LP_SPACE_1, 160, LP_SIZE_MENUBAR_HEIGHT), &st, LP_ALIGN_END);
+    lp_settings settings = lp_settings_defaults();
+    float x = w - 160 - LP_SPACE_3, y = LP_SPACE_1;   /* where the compositor puts the chrome: its world offset too */
+    lp_clock_paint(cr, LP_RECT(x, y, 160, 30), "Tue 9:41 AM", x, y, &settings);
     cairo_destroy(cr);
     int rc = write_png(s, path);
     cairo_surface_destroy(s);
