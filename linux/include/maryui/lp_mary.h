@@ -134,9 +134,11 @@ enum {
     LP_MARY_CHANGED_CALLS = 8192,       /* sewnd's calls ledger (Settings › Mary › Network activity) */
 };
 
-/* A skill call from maryd (U4 answers it); args_json is "null" when there are none. */
+/* A skill call from maryd (U4 answers it); args_json is "null" when there are none. confirmed is 1 when
+ * maryd's skills lane already put the call on the card in Spotlight and the person allowed it: the gate lets
+ * a call that asks first through then, and only then (denied and unknown stay refused). */
 typedef void (*lp_mary_skill_fn)(struct lp_desktop *d, const char *call_id, const char *app, const char *skill,
-                                 const char *args_json);
+                                 const char *args_json, int confirmed);
 /* maryd asked for the world (a turn is starting), or for one app's surface (PARITY D28). */
 typedef void (*lp_mary_world_fn)(struct lp_desktop *d);
 typedef void (*lp_mary_app_state_fn)(struct lp_desktop *d, const char *call_id, const char *app);

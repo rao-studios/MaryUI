@@ -258,8 +258,8 @@ LP_TEST(the_key_is_sent_once_and_every_copy_is_zeroed) {
 }
 
 static char invoked[256];
-static void on_skill(lp_desktop *desk, const char *call_id, const char *app, const char *skill, const char *args) {
-    snprintf(invoked, sizeof invoked, "%s %s %s %s", call_id, app, skill, args);
+static void on_skill(lp_desktop *desk, const char *call_id, const char *app, const char *skill, const char *args, int confirmed) {
+    snprintf(invoked, sizeof invoked, "%s %s %s %s%s", call_id, app, skill, args, confirmed ? " confirmed" : "");
 }
 static int was_invoked(void) { return invoked[0] != 0; }
 
@@ -279,6 +279,11 @@ LP_TEST(skill_calls_reach_the_handler_or_are_answered_unknown) {
     say(srv, "{\"type\":\"skill.invoke\",\"call_id\":\"c2\",\"app\":\"settings\",\"skill\":\"open_pane\",\"args\":{\"pane\":\"sound\"}}\n");
     lp_test_loop_run(1000, was_invoked);
     LP_ASSERT_STR(invoked, "c2 settings open_pane {\"pane\":\"sound\"}");
+    /* a call the person allowed on the card arrives marked, and the mark reaches the handler */
+    invoked[0] = 0;
+    say(srv, "{\"type\":\"skill.invoke\",\"call_id\":\"c3\",\"app\":\"settings\",\"skill\":\"open_pane\",\"args\":{},\"confirmed\":true}\n");
+    lp_test_loop_run(1000, was_invoked);
+    LP_ASSERT_STR(invoked, "c3 settings open_pane {} confirmed");
     lp_mary_free(&d.mary);
     close(srv);
     close(listener);

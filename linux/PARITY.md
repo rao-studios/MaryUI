@@ -338,8 +338,10 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   asks always, or asks before changes and the skill acts), otherwise allowed. The desktop publishes
   `skills{apps}` to maryd on connect and after every policy change, and answers `skill.invoke` with
   `skill.result`. Settings (`open_pane`, which only shows a pane), the Media Player (`play_pause`) and Calendar
-  (`events_today`, read from the model with no window) carry the first skills. There is no confirmation UI
-  yet, so a call that needs one is refused as `needs_confirmation`. The web has no Mary.
+  (`events_today`, read from the model with no window) carry the first skills. A call that needs confirmation
+  is refused as `needs_confirmation` unless maryd's skills lane already put it on the card in Spotlight and the
+  person allowed it: that `skill.invoke` arrives with `confirmed:true`, and the gate lets it through (a denied or
+  unknown skill stays refused). The web has no Mary.
 - **D21 — text fields edit with the keyboard and a context menu.** A browser gives every input ⌘A/C/X/V
   and a right-click menu; C's TextField now has both, through the desktop's own text clipboard
   (`lp_text_clipboard_shared`, which TextArea, the Calculator and the Terminal already use). A right-click

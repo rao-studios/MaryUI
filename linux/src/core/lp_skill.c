@@ -144,8 +144,9 @@ lp_skill_decision lp_desktop_skill_decide(const lp_desktop *d, const char *app_i
 }
 
 lp_skill_decision lp_desktop_perform_skill(lp_desktop *d, const char *app_id, const char *skill_id, const char *args_json,
-                                           char *result, size_t n, int *status) {
+                                           int confirmed, char *result, size_t n, int *status) {
     lp_skill_decision decision = lp_desktop_skill_decide(d, app_id, skill_id);
+    if (decision == LP_SKILL_NEEDS_CONFIRMATION && confirmed) decision = LP_SKILL_ALLOWED;    /* the card was answered */
     if (decision != LP_SKILL_ALLOWED) return decision;
     const lp_app *app = lp_desktop_find_app(d, app_id);
     if (n) result[0] = 0;
@@ -219,10 +220,10 @@ char *lp_desktop_skills_json(const lp_desktop *d) {
     return line;
 }
 
-void lp_desktop_on_skill_invoke(lp_desktop *d, const char *call_id, const char *app, const char *skill, const char *args_json) {
+void lp_desktop_on_skill_invoke(lp_desktop *d, const char *call_id, const char *app, const char *skill, const char *args_json, int confirmed) {
     char result[LP_SKILL_RESULT_MAX];
     int status = 0;
-    lp_skill_decision decision = lp_desktop_perform_skill(d, app, skill, args_json, result, sizeof result, &status);
+    lp_skill_decision decision = lp_desktop_perform_skill(d, app, skill, args_json, confirmed, result, sizeof result, &status);
     struct json_object *msg = json_object_new_object();
     json_object_object_add(msg, "type", json_object_new_string("skill.result"));
     json_object_object_add(msg, "call_id", json_object_new_string(call_id));
@@ -242,7 +243,7 @@ void lp_desktop_on_skill_invoke(lp_desktop *d, const char *call_id, const char *
 #else
 
 char *lp_desktop_skills_json(const lp_desktop *d) { return NULL; }
-void lp_desktop_on_skill_invoke(lp_desktop *d, const char *call_id, const char *app, const char *skill, const char *args_json) {}
+void lp_desktop_on_skill_invoke(lp_desktop *d, const char *call_id, const char *app, const char *skill, const char *args_json, int confirmed) {}
 
 #endif
 

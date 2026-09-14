@@ -103,16 +103,16 @@ LP_TEST(perform_runs_only_what_is_allowed) {
     setup();
     char result[256] = "untouched";
     int status = 99;
-    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "notes", "add", "{\"text\":\"milk\"}", result, sizeof result, &status), LP_SKILL_NEEDS_CONFIRMATION);
+    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "notes", "add", "{\"text\":\"milk\"}", 0, result, sizeof result, &status), LP_SKILL_NEEDS_CONFIRMATION);
     LP_ASSERT_STR(performed, "");
     LP_ASSERT_STR(result, "untouched");
     LP_ASSERT_EQ(status, 99);
-    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "notes", "list", "null", result, sizeof result, &status), LP_SKILL_ALLOWED);
+    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "notes", "list", "null", 0, result, sizeof result, &status), LP_SKILL_ALLOWED);
     LP_ASSERT_STR(performed, "list null");
     LP_ASSERT_EQ(status, 0);
     LP_ASSERT_STR(result, "{\"count\":3}");
     lp_skill_set_app_ask(&d.skill_policy, "notes", LP_SKILL_ASK_NEVER);
-    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "notes", "add", "{}", result, sizeof result, &status), LP_SKILL_ALLOWED);
+    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "notes", "add", "{}", 0, result, sizeof result, &status), LP_SKILL_ALLOWED);
     LP_ASSERT_EQ(status, -EINVAL);
     LP_ASSERT_STR(result, "A note needs its text.");
     LP_ASSERT(lp_desktop_app_state(&d, "notes") == NULL);
@@ -168,7 +168,7 @@ LP_TEST(skill_invoke_is_answered_with_skill_result) {
     d.mary.fd = sv[0];
     LP_ASSERT(d.mary.on_skill_invoke == lp_desktop_on_skill_invoke);
 
-    lp_desktop_on_skill_invoke(&d, "c1", "notes", "list", "null");
+    lp_desktop_on_skill_invoke(&d, "c1", "notes", "list", "null", 0);
     struct json_object *r = received(sv[1]);
     LP_ASSERT_STR(json_object_get_string(field(r, "type")), "skill.result");
     LP_ASSERT_STR(json_object_get_string(field(r, "call_id")), "c1");
@@ -176,21 +176,40 @@ LP_TEST(skill_invoke_is_answered_with_skill_result) {
     LP_ASSERT_EQ(json_object_get_int(field(field(r, "result"), "count")), 3);
     json_object_put(r);
 
-    lp_desktop_on_skill_invoke(&d, "c2", "notes", "add", "{\"text\":\"milk\"}");
+    lp_desktop_on_skill_invoke(&d, "c2", "notes", "add", "{\"text\":\"milk\"}", 0);
     r = received(sv[1]);
     LP_ASSERT(!json_object_get_boolean(field(r, "ok")));
     LP_ASSERT_STR(json_object_get_string(field(r, "error")), "needs_confirmation");
     json_object_put(r);
     LP_ASSERT_STR(performed, "list null");
 
+    /* the same call, marked confirmed: maryd's lane put it on the card and the person allowed it */
+    lp_desktop_on_skill_invoke(&d, "c2b", "notes", "add", "{\"text\":\"milk\"}", 1);
+    r = received(sv[1]);
+    LP_ASSERT(json_object_get_boolean(field(r, "ok")));
+    LP_ASSERT_STR(json_object_get_string(field(r, "call_id")), "c2b");
+    json_object_put(r);
+    LP_ASSERT_STR(performed, "add {\"text\":\"milk\"}");
+    /* confirmed opens the card's gate only: a denied skill and an unknown one stay refused */
+    lp_skill_set_enabled(&d.skill_policy, "notes", "add", 0);
+    lp_desktop_on_skill_invoke(&d, "c2c", "notes", "add", "{\"text\":\"milk\"}", 1);
+    r = received(sv[1]);
+    LP_ASSERT_STR(json_object_get_string(field(r, "error")), "denied");
+    json_object_put(r);
+    lp_skill_set_enabled(&d.skill_policy, "notes", "add", 1);
+    lp_desktop_on_skill_invoke(&d, "c2d", "mail", "send", "null", 1);
+    r = received(sv[1]);
+    LP_ASSERT_STR(json_object_get_string(field(r, "error")), "unknown");
+    json_object_put(r);
+
     lp_skill_set_app_ask(&d.skill_policy, "notes", LP_SKILL_ASK_NEVER);
-    lp_desktop_on_skill_invoke(&d, "c3", "notes", "add", "{}");
+    lp_desktop_on_skill_invoke(&d, "c3", "notes", "add", "{}", 0);
     r = received(sv[1]);
     LP_ASSERT_STR(json_object_get_string(field(r, "error")), "failed");
     LP_ASSERT_STR(json_object_get_string(field(r, "message")), "A note needs its text.");
     json_object_put(r);
 
-    lp_desktop_on_skill_invoke(&d, "c4", "mail", "send", "null");
+    lp_desktop_on_skill_invoke(&d, "c4", "mail", "send", "null", 0);
     r = received(sv[1]);
     LP_ASSERT_STR(json_object_get_string(field(r, "error")), "unknown");
     json_object_put(r);
@@ -217,20 +236,20 @@ LP_TEST(settings_media_and_calendar_carry_the_first_skills) {
     char result[512];
     int status = 1;
     lp_skill_set_app_ask(&d.skill_policy, "media", LP_SKILL_ASK_NEVER);
-    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "media", "play_pause", NULL, result, sizeof result, &status), LP_SKILL_ALLOWED);
+    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "media", "play_pause", NULL, 0, result, sizeof result, &status), LP_SKILL_ALLOWED);
     LP_ASSERT_EQ(status, -ENOENT);
     LP_ASSERT_STR(result, "Nothing is open in the Media Player.");
     lp_skill_set_app_enabled(&d.skill_policy, "media", 0);
     LP_ASSERT_EQ(lp_desktop_skill_decide(&d, "media", "play_pause"), LP_SKILL_DENIED);
 #ifdef HAVE_JSONC
-    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "settings", "open_pane", "{\"pane\":\"sound\"}", result, sizeof result, &status), LP_SKILL_ALLOWED);
+    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "settings", "open_pane", "{\"pane\":\"sound\"}", 0, result, sizeof result, &status), LP_SKILL_ALLOWED);
     LP_ASSERT_EQ(status, 0);
     LP_ASSERT_STR(result, "{\"pane\":\"sound\"}");
     void *prefs = lp_desktop_app_state(&d, "settings");
     LP_ASSERT(prefs && lp_prefs_pane(prefs) == LP_PREFS_SOUND);
-    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "settings", "open_pane", "{\"pane\":\"Keyboard & Mouse\"}", result, sizeof result, &status), LP_SKILL_ALLOWED);
+    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "settings", "open_pane", "{\"pane\":\"Keyboard & Mouse\"}", 0, result, sizeof result, &status), LP_SKILL_ALLOWED);
     LP_ASSERT(prefs && lp_prefs_pane(prefs) == LP_PREFS_KEYBOARD);
-    lp_desktop_perform_skill(&d, "settings", "open_pane", "{\"pane\":\"attic\"}", result, sizeof result, &status);
+    lp_desktop_perform_skill(&d, "settings", "open_pane", "{\"pane\":\"attic\"}", 0, result, sizeof result, &status);
     LP_ASSERT_EQ(status, -EINVAL);
     char *line = lp_desktop_skills_json(&d);
     LP_ASSERT(line && strstr(line, "\"id\":\"settings\"") && strstr(line, "\"id\":\"media\"") && strstr(line, "\"id\":\"calendar\""));
@@ -245,38 +264,38 @@ LP_TEST(textedit_the_finder_the_calculator_and_the_desktop_carry_their_skills) {
     char result[LP_SKILL_RESULT_MAX];
     int status = 1;
     /* the Calculator reads without a window */
-    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "calculator", "calculate", "{\"expression\":\"12*3\"}", result, sizeof result, &status), LP_SKILL_ALLOWED);
+    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "calculator", "calculate", "{\"expression\":\"12*3\"}", 0, result, sizeof result, &status), LP_SKILL_ALLOWED);
     LP_ASSERT_EQ(status, 0);
     LP_ASSERT(strstr(result, "\"value\":\"36\"") != NULL);
     /* the desktop's own: nothing open yet */
-    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "desktop", "list_windows", NULL, result, sizeof result, &status), LP_SKILL_ALLOWED);
+    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "desktop", "list_windows", NULL, 0, result, sizeof result, &status), LP_SKILL_ALLOWED);
     LP_ASSERT_STR(result, "{\"count\":0,\"windows\":[]}");
     lp_skill_set_app_ask(&d.skill_policy, "desktop", LP_SKILL_ASK_NEVER);
-    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "desktop", "close_front_window", NULL, result, sizeof result, &status), LP_SKILL_NEEDS_CONFIRMATION);   /* destructive: always asked */
+    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "desktop", "close_front_window", NULL, 0, result, sizeof result, &status), LP_SKILL_NEEDS_CONFIRMATION);   /* destructive: always asked */
     LP_ASSERT_EQ(lp_desktop_skill_decide(&d, "desktop", "shade_front_window"), LP_SKILL_ALLOWED);
-    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "desktop", "bring_forward", "{\"app\":\"Calculator\"}", result, sizeof result, &status), LP_SKILL_ALLOWED);
+    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "desktop", "bring_forward", "{\"app\":\"Calculator\"}", 0, result, sizeof result, &status), LP_SKILL_ALLOWED);
     LP_ASSERT_EQ(status, 0);
     LP_ASSERT(lp_desktop_app_state(&d, "calculator") != NULL);
-    lp_desktop_perform_skill(&d, "desktop", "list_windows", NULL, result, sizeof result, &status);
+    lp_desktop_perform_skill(&d, "desktop", "list_windows", NULL, 0, result, sizeof result, &status);
     LP_ASSERT(strstr(result, "\"count\":1") && strstr(result, "\"app\":\"calculator\"") && strstr(result, "\"front\":true"));
     /* TextEdit: read what is open, insert at the end, and the read shows it */
     lp_skill_set_app_ask(&d.skill_policy, "textedit", LP_SKILL_ASK_NEVER);
     char id[12];
     LP_ASSERT(lp_desktop_open_app_with(&d, "textedit", NULL, NULL, id));
     lp_textedit_set_text(lp_desktop_instance(&d, id)->state, "Tides", "The tide comes in.");
-    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "textedit", "insert_text", "{\"text\":\" Twice a day.\",\"where\":\"end\"}", result, sizeof result, &status), LP_SKILL_ALLOWED);
+    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "textedit", "insert_text", "{\"text\":\" Twice a day.\",\"where\":\"end\"}", 0, result, sizeof result, &status), LP_SKILL_ALLOWED);
     LP_ASSERT_EQ(status, 0);
     LP_ASSERT(strstr(result, "\"landed\":true") != NULL);
     LP_ASSERT_STR(lp_textedit_text(lp_desktop_instance(&d, id)->state), "The tide comes in. Twice a day.");
-    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "textedit", "read", NULL, result, sizeof result, &status), LP_SKILL_ALLOWED);
+    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "textedit", "read", NULL, 0, result, sizeof result, &status), LP_SKILL_ALLOWED);
     LP_ASSERT(strstr(result, "\"name\":\"Tides\"") && strstr(result, "\"text\":\"The tide comes in. Twice a day.\""));
-    lp_desktop_perform_skill(&d, "textedit", "replace_selection", "{\"text\":\"x\"}", result, sizeof result, &status);
+    lp_desktop_perform_skill(&d, "textedit", "replace_selection", "{\"text\":\"x\"}", 0, result, sizeof result, &status);
     LP_ASSERT_EQ(status, -EINVAL);                                  /* nothing selected */
     lp_textedit_select(lp_desktop_instance(&d, id)->state, 0, 8);
-    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "textedit", "replace_selection", "{\"text\":\"A wave\"}", result, sizeof result, &status), LP_SKILL_ALLOWED);
+    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "textedit", "replace_selection", "{\"text\":\"A wave\"}", 0, result, sizeof result, &status), LP_SKILL_ALLOWED);
     LP_ASSERT_STR(lp_textedit_text(lp_desktop_instance(&d, id)->state), "A wave comes in. Twice a day.");
     /* a new note is a fresh window of its own, whatever is open: the document in front is left alone */
-    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "textedit", "new_document", "{\"text\":\"hello world\"}", result, sizeof result, &status), LP_SKILL_ALLOWED);
+    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "textedit", "new_document", "{\"text\":\"hello world\"}", 0, result, sizeof result, &status), LP_SKILL_ALLOWED);
     LP_ASSERT_EQ(status, 0);
     LP_ASSERT(strstr(result, "\"landed\":true") && strstr(result, "\"name\":\"Note\"") && strstr(result, "Wrote it in a new note."));
     LP_ASSERT_STR(lp_textedit_text(lp_desktop_instance(&d, id)->state), "A wave comes in. Twice a day.");
@@ -288,7 +307,7 @@ LP_TEST(textedit_the_finder_the_calculator_and_the_desktop_carry_their_skills) {
     LP_ASSERT(note_id != NULL);
     if (note_id) LP_ASSERT_STR(lp_textedit_text(lp_desktop_instance(&d, note_id)->state), "hello world");
     /* the Finder refuses what is not there */
-    lp_desktop_perform_skill(&d, "finder", "reveal", "{\"path\":\"~/no-such-file-here\"}", result, sizeof result, &status);
+    lp_desktop_perform_skill(&d, "finder", "reveal", "{\"path\":\"~/no-such-file-here\"}", 0, result, sizeof result, &status);
     LP_ASSERT_EQ(status, -ENOENT);
     /* the message carries the schema words */
     char *line = lp_desktop_skills_json(&d);
@@ -324,7 +343,7 @@ LP_TEST(a_new_note_opens_textedit_when_nothing_is) {
     char result[LP_SKILL_RESULT_MAX];
     int status = 1;
     LP_ASSERT(lp_desktop_app_state(&d, "textedit") == NULL);
-    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "textedit", "new_document", "{\"text\":\"hello world\"}", result, sizeof result, &status), LP_SKILL_ALLOWED);
+    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "textedit", "new_document", "{\"text\":\"hello world\"}", 0, result, sizeof result, &status), LP_SKILL_ALLOWED);
     LP_ASSERT_EQ(status, 0);
     void *state = lp_desktop_app_state(&d, "textedit");
     LP_ASSERT(state != NULL);
@@ -332,7 +351,7 @@ LP_TEST(a_new_note_opens_textedit_when_nothing_is) {
     const lp_window_record *front = lp_wm_focused(&d.wm);
     LP_ASSERT(front && strcmp(front->app_id, "textedit") == 0);
     /* without text it still opens, empty and named */
-    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "textedit", "new_document", NULL, result, sizeof result, &status), LP_SKILL_ALLOWED);
+    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "textedit", "new_document", NULL, 0, result, sizeof result, &status), LP_SKILL_ALLOWED);
     LP_ASSERT(strstr(result, "Opened a new note.") != NULL);
 }
 
@@ -362,7 +381,7 @@ LP_TEST(events_today_reads_the_calendar_without_opening_it) {
     lp_calendar_free(&cal);
     char result[2048];
     int status = 1;
-    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "calendar", "events_today", NULL, result, sizeof result, &status), LP_SKILL_ALLOWED);
+    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "calendar", "events_today", NULL, 0, result, sizeof result, &status), LP_SKILL_ALLOWED);
     LP_ASSERT_EQ(status, 0);
     if (!strstr(result, "\"title\":\"Standup \\\"daily\\\"\"") || !strstr(result, "\"start\":\"09:00\"") || !strstr(result, "\"end\":\"09:15\"") || !strstr(result, "\"location\":\"Kitchen\""))
         LP_FAIL("events_today said %s", result);

@@ -248,7 +248,9 @@ static void skill_invoke(lp_mary *m, struct json_object *msg) {
         const char *json = json_object_object_get_ex(msg, "args", &args) && args
                                ? json_object_to_json_string_ext(args, JSON_C_TO_STRING_PLAIN | JSON_C_TO_STRING_NOSLASHESCAPE)
                                : "null";
-        m->on_skill_invoke(m->desk, call_id, app, skill, json);
+        struct json_object *c = NULL;
+        int confirmed = has(msg, "confirmed", json_type_boolean, &c) && json_object_get_boolean(c);
+        m->on_skill_invoke(m->desk, call_id, app, skill, json, confirmed);
         return;
     }
     struct json_object *r = typed("skill.result");

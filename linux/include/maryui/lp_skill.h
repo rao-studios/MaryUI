@@ -85,10 +85,12 @@ void *lp_desktop_app_state(struct lp_desktop *d, const char *app_id);
 /* The rule (maryd's registry mirrors it): unknown, then denied, then needs confirmation — destructive, the app
  * asks always, or it asks before changes and the skill acts — else allowed. */
 lp_skill_decision lp_desktop_skill_decide(const struct lp_desktop *d, const char *app, const char *skill);
-/* Decides, and runs the app's perform only when allowed. *status is perform's (0, or -errno) and result holds
- * its JSON or its sentence; both are untouched unless the call was allowed. */
+/* Decides, and runs the app's perform only when allowed. A call that needs confirmation runs when `confirmed`
+ * says the person already allowed it on the card (maryd's skills lane asked); denied and unknown never run.
+ * *status is perform's (0, or -errno) and result holds its JSON or its sentence; both are untouched unless the
+ * call ran. */
 lp_skill_decision lp_desktop_perform_skill(struct lp_desktop *d, const char *app, const char *skill, const char *args_json,
-                                           char *result, size_t n, int *status);
+                                           int confirmed, char *result, size_t n, int *status);
 /* {"type":"skills","apps":[{id, name, title, summary, aliases, paradigm, discipline, enabled, ask,
  *  skills:[{id, title, summary, params, effect, enabled, kind, access, triggers{tokens, phrases}, target_classes, spoken}]}]}
  * for every app that declares skills, as one line (heap; NULL without json-c). */
@@ -99,7 +101,7 @@ int lp_desktop_publish_skills(struct lp_desktop *d);
 int lp_desktop_skill_policy_changed(struct lp_desktop *d);
 /* lp_mary's skill.invoke handler (lp_desktop_init installs it): decides, performs and answers skill.result. */
 void lp_desktop_on_skill_invoke(struct lp_desktop *d, const char *call_id, const char *app, const char *skill,
-                                const char *args_json);
+                                const char *args_json, int confirmed);
 
 /* For an app's perform: a string argument (1 and a copy in out, else 0; always 0 without json-c), and text escaped
  * for a JSON string (quotes and backslashes and control characters; NUL-terminated, truncated to fit). */
