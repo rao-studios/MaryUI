@@ -687,7 +687,14 @@ void lp_desktop_leave_chat(lp_desktop *d) {
 
 int lp_desktop_key(lp_desktop *d, uint32_t keysym, uint32_t mods) {
     int mod = (mods & (4 | 64)) != 0; /* Ctrl or Logo (⌘) */
-    if (mod && keysym == XKB_KEY_space) {
+    /* Spotlight's chord: Shift+Space (PARITY D35), or Super+Space. Shift alone is also how a space is typed with Shift
+     * held, so while Spotlight or the Launchpad has words in its query Shift+Space types that space; with the query
+     * empty it closes. Super+Space always toggles. */
+    int logo = (mods & LP_MOD_LOGO) != 0;
+    int shift_only = (mods & (LP_MOD_SHIFT | LP_MOD_CTRL | LP_MOD_ALT | LP_MOD_LOGO)) == LP_MOD_SHIFT;
+    if (keysym == XKB_KEY_space && (logo || shift_only)) {
+        const char *query = d->launchpad.open ? d->launchpad.query.text : d->spotlight.open ? d->spotlight.query.text : NULL;
+        if (!logo && query && !lp_spotlight_query_is_blank(query)) return 0;
         lp_desktop_close_menu(d);
         if (d->launchpad.open) lp_desktop_launchpad_close(d);   /* Spotlight takes over from the grid */
         lp_spotlight_toggle(&d->spotlight);

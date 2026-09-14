@@ -37,7 +37,7 @@ LP_TEST(every_app_is_listed_alphabetically_and_typing_ranks_them) {
 
 LP_TEST(opening_it_closes_spotlight_and_the_keys_walk_the_grid) {
     setup();
-    lp_desktop_key(&d, XKB_KEY_space, LP_MOD_CTRL);
+    lp_desktop_key(&d, XKB_KEY_space, LP_MOD_SHIFT);
     LP_ASSERT(d.spotlight.open);
     lp_desktop_launchpad_open(&d);
     LP_ASSERT(!d.spotlight.open);
@@ -72,9 +72,9 @@ LP_TEST(return_launches_the_selected_app_and_closes_the_grid) {
     const lp_window_record *front = lp_wm_focused(&d.wm);
     LP_ASSERT(front != NULL);
     LP_ASSERT_STR(front->app_id, "calculator");
-    /* Ctrl+Space over the grid hands over to Spotlight */
+    /* Shift+Space over the grid (its query empty) hands over to Spotlight */
     lp_desktop_launchpad_open(&d);
-    lp_desktop_key(&d, XKB_KEY_space, LP_MOD_CTRL);
+    lp_desktop_key(&d, XKB_KEY_space, LP_MOD_SHIFT);
     LP_ASSERT(!d.launchpad.open && d.spotlight.open);
 }
 

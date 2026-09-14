@@ -1,7 +1,7 @@
 # Spotlight
 
 The floating search bar that is also the application dock — and, folded in the same way, the app's commands.
-`Ctrl+Space` (or `Super+Space`) opens it centred on the desktop; typing filters apps, commands and open windows;
+`Shift+Space` (or `Super+Space`) opens it centred on the desktop; typing filters apps, commands and open windows;
 Enter launches. There is no menu bar: Rao / File / Edit / View / Go / Window / Help are pills under the dock
 (`lp_desktop_build_menus` builds them). Mirrors `web/src/components/Spotlight`.
 

@@ -113,8 +113,10 @@ static void sync_popup_chrome(struct mui_server *server) {
 /* MARK: - The ambient clock
  *
  * All that is left of the menu bar: the time, top right, sitting on the
- * wallpaper with no strip behind it. Not interactive, never hit-tested, and
- * repainted once a minute — only when the string actually changes — so an idle
+ * wallpaper with no strip behind it. It rests at half opacity and comes up to full
+ * while the pointer is over its text (the scene node's opacity, eased: no repaint),
+ * and a click on the text opens the Calendar; the rest of its chrome is not
+ * hit-tested. It is repainted once a minute — only when the string actually changes — so an idle
  * desktop still schedules no frames. View › Show Clock (settings.clock) hides
  * it: the node is disabled, the minute timer keeps the string current, and
  * nothing is painted until it shows again. */
@@ -123,8 +125,47 @@ static int clock_visible(struct mui_server *server) {
     return server->clock && server->desktop.settings.clock;
 }
 
+/* The part of the clock's chrome that answers the pointer: its text, a little padded. */
+static lp_rect clock_target(struct mui_server *server) {
+    return lp_clock_hit_rect(NULL, LP_RECT(0, 0, server->clock->width, server->clock->height), server->clock_text);
+}
+
+/* Toward full opacity under the pointer, back to rest once it leaves: the node's opacity, eased over motion.fast. */
+static void clock_hover(struct mui_server *server, int hover) {
+    float to = hover ? LP_CLOCK_HOVER_OPACITY : LP_CLOCK_REST_OPACITY;
+    if (to == server->clock_opacity_to) return;
+    server->clock_opacity_from = server->clock_opacity;
+    server->clock_opacity_to = to;
+    if (server->settings && server->settings->reduced_motion) {
+        server->clock_anim.active = 0;
+        server->clock_opacity = to;
+        if (server->clock) wlr_scene_buffer_set_opacity(server->clock->node, to);
+    } else {
+        mui_tween_start(&server->clock_anim, mui_now_ms(), LP_MOTION_FAST_MS, LP_MOTION_EASE_OUT);
+    }
+    mui_server_schedule_frame(server);
+}
+
+static int animate_clock(struct mui_server *server, double now_ms) {
+    if (!server->clock || !server->clock_anim.active) return 0;
+    float p = mui_tween_progress(&server->clock_anim, now_ms);
+    server->clock_opacity = server->clock_opacity_from + (server->clock_opacity_to - server->clock_opacity_from) * p;
+    wlr_scene_buffer_set_opacity(server->clock->node, server->clock_opacity);
+    return server->clock_anim.active;
+}
+
 static void paint_clock(lp_ctx *ctx, struct mui_chrome *chrome, void *data) {
     struct mui_server *server = data;
+    if (ctx->pass == LP_PASS_EVENT) {
+        /* Its text answers the pointer: up to full opacity while over it, and a click opens the Calendar. */
+        lp_rect target = clock_target(server);
+        lp_id id = LP_ID("desktop.clock");
+        int hot = lp_hot(ctx, id, target);
+        clock_hover(server, hot);
+        if (lp_clicked(ctx, id, target)) lp_desktop_open_app(&server->desktop, "calendar");
+        if (hot) ctx->cursor = LP_CURSOR_POINTER;
+        return;
+    }
     if (ctx->pass != LP_PASS_DRAW || !ctx->cr) return;
     /* On a brushed platinum capsule cut from the desktop's sheet: the world offset is the chrome's own
      * position on the desktop, and only that (cairo's user space is already chrome-local). */
@@ -138,7 +179,7 @@ static int clock_tick(void *data) {
     if (strcmp(text, server->clock_text) != 0) {
         snprintf(server->clock_text, sizeof server->clock_text, "%s", text);
         if (clock_visible(server)) {
-            mui_chrome_damage_all(server->clock);   /* 160×30: the whole chrome is the partial damage */
+            mui_chrome_damage_all(server->clock);   /* 220×30: the whole chrome is the partial damage */
             mui_chrome_repaint(server->clock, mui_now_ms());
         }
     }
@@ -261,6 +302,7 @@ void mui_desktop_init(struct mui_server *server) {
     server->lava_start_ms = mui_now_ms();
     server->session_timer = wl_event_loop_add_timer(loop, session_save_tick, server);
     server->session_restored = 0;
+    server->clock_opacity = server->clock_opacity_from = server->clock_opacity_to = LP_CLOCK_REST_OPACITY;
     server->wallpaper_look = 0;
     time_t now = time(NULL);
     wl_event_source_timer_update(server->clock_timer, (int)((60 - now % 60) * 1000 + 50));
@@ -488,6 +530,7 @@ void mui_desktop_output_ready(struct mui_output *output) {
     if (!server->clock) {
         server->clock = calloc(1, sizeof(*server->clock));
         mui_chrome_init(server->clock, server, server->layer_menubar, MUI_CLOCK_W, MUI_CLOCK_H, paint_clock, server);
+        wlr_scene_buffer_set_opacity(server->clock->node, server->clock_opacity);   /* at rest */
     }
     server->clock_x = box.x + w - MUI_CLOCK_W - (int)LP_SPACE_3;
     server->clock_y = box.y + (int)LP_SPACE_1;
@@ -550,8 +593,18 @@ void mui_desktop_hit(struct mui_server *server, double lx, double ly, struct mui
             return;
         }
     }
-    /* The clock is not interactive: a press over it falls through to whatever
-     * is behind, which is the wallpaper. */
+    /* The clock's text, above the windows: the pointer brings it up and a click opens the Calendar. The rest of its
+     * chrome falls through to whatever is behind. */
+    if (clock_visible(server)) {
+        lp_rect target = clock_target(server);
+        double sx = lx - server->clock_x, sy = ly - server->clock_y;
+        if (lp_rect_contains(target, (float)sx, (float)sy)) {
+            hit->chrome = server->clock;
+            hit->sx = sx;
+            hit->sy = sy;
+            return;
+        }
+    }
     /* Windows, front to back, by their rect plus the resize grip that pokes out of it. */
     struct mui_window *sorted[LP_WM_MAX_WINDOWS];
     int n = 0;
@@ -784,7 +837,7 @@ int mui_desktop_key(struct mui_server *server, uint32_t keysym, uint32_t modifie
     int handled = pressed ? lp_desktop_key(d, keysym, modifiers) : 0;
     if (had_pad || d->launchpad.open) {
         /* The Launchpad owns the keyboard the way Spotlight does: Esc, the arrows and Enter were the desktop's, the
-         * rest types into its field. Ctrl+Space may have handed over to Spotlight: both sync. */
+         * rest types into its field. Shift+Space may have handed over to Spotlight: both sync. */
         if (!pressed) { if (!d->launchpad.open) mui_launchpad_sync(server); return 0; }
         if (!handled && d->launchpad.open && server->launchpad) {
             mui_chrome_key(server->launchpad, keysym, modifiers, utf8, pressed, mui_now_ms());
@@ -857,6 +910,7 @@ int mui_desktop_animate(struct mui_server *server, double now_ms) {
     int active = animate_menu(server, now_ms);
     active |= mui_spotlight_animate(server, now_ms);
     active |= mui_launchpad_animate(server, now_ms);
+    active |= animate_clock(server, now_ms);
     return active;
 }
 

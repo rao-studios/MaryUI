@@ -213,8 +213,9 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   machine people actually run wants the time on screen, so the C desktop keeps it — but as a bare
   label in the top-right corner of the wallpaper, no strip behind it, painted by `paint_clock` in
   `desktop.c` into a 220×30 chrome in the `z.menubar` band (reused rather than minting a `z.clock`
-  token for the identical stacking slot). It is not hit-tested, so a press over it lands on the
-  wallpaper, and it repaints once a minute and only when the string changes, so an idle desktop
+  token for the identical stacking slot). It rests at half opacity and eases to full while the pointer is over its text
+  (the scene node's opacity, so nothing repaints), and a click on the text opens the Calendar; the rest of its
+  chrome is not hit-tested, so a press there lands on the wallpaper. It repaints once a minute and only when the string changes, so an idle desktop
   still schedules no frames. Since 2026-09 its letters are brushed platinum: the glyph outlines (`lp_text_path`) clip the
   desktop's sheet of metal (`lp_surface_paint`, with the chrome's scene position as the world
   offset), over a dark keyline and a two-step drop shadow so pale metal reads on any wallpaper. There
@@ -486,7 +487,7 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   round search field and every application on a grid of its marks (`src/ui/lp_launchpad.c`, C-only UI like the graph and the pane kit), seven columns
   at most, paged with dots when more than fit. The model is `lp_desktop.launchpad` (open, query,
   selection, page): opening it closes Spotlight, typing ranks the apps as Spotlight ranks them, the arrows
-  walk the grid, Return launches, Esc or a click on the scrim closes, Ctrl+Space hands over to Spotlight.
+  walk the grid, Return launches, Esc or a click on the scrim closes, Shift+Space hands over to Spotlight.
   It appears with the same scale-and-fade as the panel, from a little larger. `lp-render --launchpad
   [QUERY]`. The web has no Launchpad. In the same change the pins became seven — Finder, TextEdit,
   Preview, Terminal, Calendar, Settings, Threads (the Media Player is one query away) — and Shift+Enter
@@ -518,6 +519,11 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   Restoring opens them lowest first so the front window is in front again; a document that is gone opens its
   app empty, an unknown or internal app and a line that does not parse are skipped. Wayland clients are not kept,
   and an untitled document's unsaved text is not either.
+- **D35 — Spotlight opens with Shift+Space.** Rao's chord; the web opens it with Ctrl+Space (or ⌘Space where the
+  browser lets it through), and the C desktop did too. Super+Space still toggles it. Shift is also how a space is
+  typed with Shift held, so the chord gives way inside Spotlight and the Launchpad: with words in the query,
+  Shift+Space types the space; with the query empty it closes. Everywhere else it opens Spotlight, so an app
+  (TextEdit, the Terminal) cannot receive a space typed with Shift held. Ctrl+Space does nothing now.
 - **Close animation.** `lp-window-close` (scale .96 + fade over `motion.fast`, `CLOSE` after
   fast + 80 ms) runs for built-in windows. A client that unmaps is gone at once — the compositor
   has no pixels left to fade.

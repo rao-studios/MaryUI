@@ -135,7 +135,7 @@ LP_TEST(closing_spotlight_while_mary_speaks_dismisses_her) {
     if (!lp_mary_available()) { teardown(); return; }
     d.spotlight_chat = 1;
     d.mary.state = LP_MARY_SPEAKING;
-    LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_space, CTRL), 1);
+    LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_space, LP_MOD_SHIFT), 1);
     LP_ASSERT(!d.spotlight.open);
     LP_ASSERT(!d.spotlight_chat);
     LP_ASSERT(strstr(sent(), "\"type\":\"dismiss\"") != NULL);

@@ -92,7 +92,7 @@ typedef struct lp_desktop {
     char pending_open[1024];  /* the path for the instance OPEN is about to create */
     lp_drag drag;             /* the drag session, when active */
     int menu_active;          /* highlighted entry of the open menu, -1 */
-    lp_spotlight spotlight;   /* Ctrl+Space: the search bar and dock */
+    lp_spotlight spotlight;   /* Shift+Space: the search bar and dock */
     struct { int open; lp_text_buffer query; int selection; int page; } launchpad;   /* All Applications, over the desktop (Linux, PARITY D32) */
     lp_mary mary;             /* the conversation with maryd, shown in Spotlight */
     lp_thread thread;         /* the hard drive's memory, from threadd (the Thread app, Disk Utility, Get Info; PARITY D25) */

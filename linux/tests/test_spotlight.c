@@ -139,9 +139,9 @@ LP_TEST(caps_results_at_eight) {
     LP_ASSERT_EQ(results(title, r), LP_SPOTLIGHT_MAX_RESULTS);
 }
 
-LP_TEST(ctrl_space_toggles_and_escape_closes) {
+LP_TEST(shift_space_toggles_and_escape_closes) {
     setup();
-    LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_space, LP_MOD_CTRL), 1);
+    LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_space, LP_MOD_SHIFT), 1);
     LP_ASSERT(d.spotlight.open);
     LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_Down, 0), 1);
     LP_ASSERT_EQ(d.spotlight.selection, 1);
@@ -156,11 +156,26 @@ LP_TEST(ctrl_space_toggles_and_escape_closes) {
     LP_ASSERT(d.spotlight.open);
     lp_desktop_key(&d, XKB_KEY_space, LP_MOD_LOGO);
     LP_ASSERT(!d.spotlight.open);
+    lp_desktop_key(&d, XKB_KEY_space, LP_MOD_CTRL);                   /* Ctrl+Space no longer opens it */
+    LP_ASSERT(!d.spotlight.open);
+    lp_desktop_key(&d, XKB_KEY_space, LP_MOD_SHIFT | LP_MOD_CTRL);    /* nor does Shift with another modifier */
+    LP_ASSERT(!d.spotlight.open);
+    /* with words in the bar, Shift+Space is a space typed with Shift held — the bar keeps it, Spotlight stays */
+    LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_space, LP_MOD_SHIFT), 1);
+    lp_spotlight_set_query(&d.spotlight, "Hello");
+    LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_space, LP_MOD_SHIFT), 0);
+    LP_ASSERT(d.spotlight.open);
+    LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_space, LP_MOD_LOGO), 1);  /* Super+Space still closes it whatever it holds */
+    LP_ASSERT(!d.spotlight.open);
+    LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_space, LP_MOD_SHIFT), 1);
+    lp_spotlight_set_query(&d.spotlight, "");
+    LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_space, LP_MOD_SHIFT), 1);  /* empty: it closes */
+    LP_ASSERT(!d.spotlight.open);
 }
 
 LP_TEST(enter_activates_the_selection) {
     setup();
-    lp_desktop_key(&d, XKB_KEY_space, LP_MOD_CTRL);
+    lp_desktop_key(&d, XKB_KEY_space, LP_MOD_SHIFT);
     lp_spotlight_set_query(&d.spotlight, "textedit");
     LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_Return, 0), 1);
     LP_ASSERT(!d.spotlight.open);
@@ -174,7 +189,7 @@ LP_TEST(enter_activates_the_selection) {
     /* Enter on a window result focuses it */
     lp_desktop_open_app(&d, "finder");
     LP_ASSERT_EQ(d.wm.focused, 1);
-    lp_desktop_key(&d, XKB_KEY_space, LP_MOD_CTRL);
+    lp_desktop_key(&d, XKB_KEY_space, LP_MOD_SHIFT);
     lp_spotlight_set_query(&d.spotlight, "untitled");
     lp_desktop_key(&d, XKB_KEY_Return, 0);
     LP_ASSERT_EQ(d.wm.focused, 0);
@@ -198,7 +213,7 @@ LP_TEST(a_terminal_app_replaces_the_terminal_command) {
     lp_spotlight_item r[LP_SPOTLIGHT_MAX_RESULTS];
     LP_ASSERT_EQ(results("term", r), 1);
     LP_ASSERT_EQ(r[0].kind, LP_SPOT_APP);
-    lp_desktop_key(&d, XKB_KEY_space, LP_MOD_CTRL);
+    lp_desktop_key(&d, XKB_KEY_space, LP_MOD_SHIFT);
     lp_spotlight_set_query(&d.spotlight, "term");
     lp_desktop_key(&d, XKB_KEY_Return, 0);
     LP_ASSERT_EQ(d.wm.count, 1);
@@ -214,7 +229,7 @@ LP_TEST(a_terminal_app_replaces_the_terminal_command) {
 static void open_spotlight(void) {
     setup();
     lp_desktop_open_app(&d, "gallery");
-    lp_desktop_key(&d, XKB_KEY_space, LP_MOD_CTRL);
+    lp_desktop_key(&d, XKB_KEY_space, LP_MOD_SHIFT);
     LP_ASSERT(d.spotlight.open);
 }
 
@@ -327,7 +342,7 @@ int main(void) {
     LP_RUN(resets_the_selection_when_the_query_changes);
     LP_RUN(toggle_opens_with_an_empty_query_and_closes);
     LP_RUN(caps_results_at_eight);
-    LP_RUN(ctrl_space_toggles_and_escape_closes);
+    LP_RUN(shift_space_toggles_and_escape_closes);
     LP_RUN(enter_activates_the_selection);
     LP_RUN(pins_the_dock_and_finds_the_rest_by_typing);
     LP_RUN(a_terminal_app_replaces_the_terminal_command);

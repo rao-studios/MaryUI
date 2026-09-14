@@ -165,6 +165,8 @@ struct mui_server {
     int clock_x, clock_y;                /* where its chrome sits on the desktop: the capsule's world offset */
     struct wl_event_source *clock_timer;
     char clock_text[32];
+    struct mui_tween clock_anim;         /* its opacity, easing between rest (half) and the pointer over it (full) */
+    float clock_opacity, clock_opacity_from, clock_opacity_to;
     /* The wallpaper as it is showing — mode, tone and reduced motion — so a settings change republishes only when
      * one of them moved (0: nothing published yet). And the lava's clock: wall time since the desktop started,
      * stepped by lava_timer at lava.fps while lava is live, with MARYUI_DEBUG=frames statistics. */

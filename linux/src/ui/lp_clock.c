@@ -34,6 +34,16 @@ lp_rect lp_clock_bounds(cairo_t *cr, lp_rect box, const char *text) {
     return LP_RECT(floorf(box.x + box.w - LP_CLOCK_INSET - w), floorf(box.y + (box.h - h) / 2), w, h);
 }
 
+lp_rect lp_clock_hit_rect(cairo_t *cr, lp_rect box, const char *text) {
+    lp_rect b = lp_clock_bounds(cr, box, text);
+    float x0 = b.x - LP_CLOCK_HIT_PAD, y0 = b.y - LP_CLOCK_HIT_PAD, x1 = b.x + b.w + LP_CLOCK_HIT_PAD, y1 = b.y + b.h + LP_CLOCK_HIT_PAD;
+    if (x0 < box.x) x0 = box.x;
+    if (y0 < box.y) y0 = box.y;
+    if (x1 > box.x + box.w) x1 = box.x + box.w;
+    if (y1 > box.y + box.h) y1 = box.y + box.h;
+    return LP_RECT(x0, y0, x1 - x0, y1 - y0);
+}
+
 void lp_clock_paint(cairo_t *cr, lp_rect box, const char *text, float world_x, float world_y, const lp_settings *settings) {
     (void)settings;
     const char *t = text ? text : "";

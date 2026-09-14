@@ -9,6 +9,7 @@
 #include "maryui/lp_settings.h"
 #include "maryui/lp_texture.h"
 #include "maryui/lp_tokens.h"
+#include "maryui/lp_ui.h"
 
 #define W 220
 #define H 24
@@ -125,7 +126,26 @@ LP_TEST(the_clock_reads_weekday_month_and_day_before_the_time) {
     cairo_surface_destroy(s);
 }
 
+LP_TEST(only_the_text_answers_the_pointer_and_it_rests_at_half) {
+    cairo_surface_t *s = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, W, H);
+    cairo_t *cr = cairo_create(s);
+    const char *text = "Mon Sep 14 6:47 AM";
+    lp_rect box = LP_RECT(0, 0, W, H), b = lp_clock_bounds(cr, box, text), hit = lp_clock_hit_rect(cr, box, text);
+    LP_ASSERT(hit.x <= b.x && hit.x + hit.w >= b.x + b.w);           /* all of the text */
+    LP_ASSERT(hit.x >= 0 && hit.x + hit.w <= W && hit.y >= 0 && hit.y + hit.h <= H);
+    LP_ASSERT(lp_rect_contains(hit, b.x + b.w / 2, H / 2.0f));
+    LP_ASSERT(!lp_rect_contains(hit, 2, H / 2.0f));                  /* left of the text: the wallpaper's */
+    lp_rect scratch = lp_clock_hit_rect(NULL, box, text);            /* the compositor measures without a context */
+    LP_ASSERT_NEAR(scratch.x, hit.x, 0.5);
+    LP_ASSERT_NEAR(scratch.w, hit.w, 0.5);
+    LP_ASSERT_NEAR(LP_CLOCK_REST_OPACITY, 0.5, 1e-6);
+    LP_ASSERT_NEAR(LP_CLOCK_HOVER_OPACITY, 1.0, 1e-6);
+    cairo_destroy(cr);
+    cairo_surface_destroy(s);
+}
+
 int main(void) {
+    LP_RUN(only_the_text_answers_the_pointer_and_it_rests_at_half);
     LP_RUN(the_clock_reads_weekday_month_and_day_before_the_time);
     LP_RUN(the_line_hugs_the_text_inside_the_chrome);
     LP_RUN(the_letters_are_pale_metal_with_a_dark_edge_and_no_plate);

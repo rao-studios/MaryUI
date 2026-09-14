@@ -159,7 +159,7 @@ static void controls_tab(struct gallery *g, lp_ctx *ctx, lp_rect *c) {
     section_end(c);
 
     heading(ctx, c, "Spotlight");
-    note(ctx, c, "Ctrl+Space opens it on the desktop: the search bar is the dock, and — there is no menu bar any more — "
+    note(ctx, c, "Shift+Space opens it on the desktop: the search bar is the dock, and — there is no menu bar any more — "
                  "a blank query also shows the frontmost app's commands as pills; click one to open it. Typing filters apps and windows.");
     /* the pinned dock (lp_app.dock); the other apps are one query away */
     static const lp_spotlight_item dock[7] = {
