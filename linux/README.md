@@ -1,9 +1,11 @@
 # MaryUI for Linux — Liquid Platinum in C
 
+![maryui-desktop: Spotlight over the live lava wallpaper, with the dated ambient clock](../docs/screenshots/linux-desktop.png)
+
 The design system in `../web` (React, the reference) rebuilt as a C library, `libmaryui`,
 plus `maryui-desktop`, a Wayland compositor (wlroots 0.17) that *is* the desktop: the
 wallpaper, an ambient clock, window frames with liquid traffic lights, menus, Spotlight (the
-search bar that is also the dock *and* the app's commands, `Ctrl+Space`) and the built-in apps
+search bar that is also the dock *and* the app's commands, `Shift+Space`) and the built-in apps
 are drawn by the library with Cairo and Pango; other Wayland programs open as Liquid Platinum
 windows with server-side decorations. There is no menu bar: it folded into Spotlight, the way
 the dock did before it.

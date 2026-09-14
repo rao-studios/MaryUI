@@ -35,8 +35,11 @@ the vitest suites so `make test` can be read next to `npm test`. `linux/PARITY.m
 file, its C counterpart, and every deliberate deviation.
 
 The C desktop carries the same visual pass as the web: the 42px title bar, the liquid corners, the
-moving grain, the glass-bead traffic lights, the lit merge filter and the molten wallpaper. The one
-place they part company is where the shader's clock runs — see **D12** in `linux/PARITY.md`.
+moving grain, the glass-bead traffic lights and the lit merge filter. Where they part company is
+listed in `linux/PARITY.md` — among them its default wallpaper, a lighter molten field that moves on
+its own like a lava lamp (**D33**), and the ambient clock in the corner (**D13**).
+
+![maryui-desktop on Linux: Spotlight over the lava wallpaper](docs/screenshots/linux-desktop.png)
 
 ## The direction
 
