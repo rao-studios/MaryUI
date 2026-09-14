@@ -170,6 +170,10 @@ struct mui_server {
      * stepped by lava_timer at lava.fps while lava is live, with MARYUI_DEBUG=frames statistics. */
     unsigned wallpaper_look;
     struct wl_event_source *lava_timer;
+    /* The windows of last time (lp_session.h): saved a second after they change, reopened once at start when
+     * System Settings asks; nothing is saved until the start has had its chance, so a failed start keeps them. */
+    struct wl_event_source *session_timer;
+    int session_restored;
     double lava_start_ms;
     unsigned lava_frames, lava_covered;
     double lava_ms, lava_max_ms, lava_report_ms;

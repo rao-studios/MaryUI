@@ -49,7 +49,7 @@ README, or when a file under `web/src/lib` or `web/src/desktop` is missing from 
 | `desktop/wm/actions.ts`, `desktop/wm/types.ts` | `lp_wm_action`, `lp_window_record`, `lp_open_spec` in `lp_wm.h` | ✓ |
 | `desktop/wm/selectors.ts` | `lp_wm_focused`, `lp_wm_find` | ✓ |
 | `desktop/wm/store.ts`, `desktop/wm/useWM.ts` | `lp_desktop_dispatch` + `on_change` (the host syncs from the change mask) | ≈ no subscriptions: one host, one callback |
-| `desktop/settings.ts` | `lp_settings.h`, `src/core/lp_settings.c` (`$XDG_CONFIG_HOME/maryui/settings.conf`) | ≈ **D6** raster wallpaper stored, not rendered; plus `clock`, C-only (**D13**), and `wallpaper=lava`, C-only and the default (**D33**) |
+| `desktop/settings.ts` | `lp_settings.h`, `src/core/lp_settings.c` (`$XDG_CONFIG_HOME/maryui/settings.conf`) | ≈ **D6** raster wallpaper stored, not rendered; plus `clock`, C-only (**D13**), and `wallpaper=lava`, C-only and the default (**D33**), and `restore_windows` (**D34**) |
 | `desktop/menus.ts` | `include/maryui/lp_menus.h` (the models), `lp_desktop_build_menus` in `src/core/lp_desktop.c` | ≈ **D11** plus File › New Terminal (`spawn("foot")`), a Go menu, and the focused app's entries (`lp_app.menu_entries`); both sides draw them as Spotlight's pills |
 | `desktop/apps/registry.ts` | `lp_desktop_register_builtin_apps`, `lp_app.h` (`name`, `icon`, `hidden`, `internal`, `dock`, `raw_ctrl`, `open`, `command`, `menu_entries`, `notify`) | ≈ **D11** **D15** finder, gallery, about, textedit (hidden: Spotlight only), info (internal: opened by the Finder), and the Linux-only system apps: calculator, preview (hidden: Spotlight and the Finder), terminal (hidden: Spotlight and File › New Terminal), activity, diskutil, media (the Media Player; hidden: Spotlight and the Finder), calendar, settings (System Settings); `dock` pins Finder, TextEdit, Preview, Terminal, the Media Player, Calendar and System Settings, and System Settings › Dock can choose the set (`settings.dock`, `lp_desktop_in_dock`) |
 | `desktop/spotlight.ts` | `include/maryui/lp_spotlight.h`, `src/core/lp_spotlight.c`, `lp_desktop_spotlight_*` in `src/core/lp_desktop.c`, `tests/test_spotlight.c` | ≈ **D15** 9/9 cases: the dock for a blank query (the pinned apps only), ranking (prefix, word prefix, substring), windows as items, wrap, cap 8; the C tests add the Ctrl+Space / Esc / Enter key cases and seven for the command pills |
@@ -212,13 +212,14 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   `hooks/useClock.ts` is deleted there, and a web desktop tells the time only through an app. A
   machine people actually run wants the time on screen, so the C desktop keeps it — but as a bare
   label in the top-right corner of the wallpaper, no strip behind it, painted by `paint_clock` in
-  `desktop.c` into a 160×24 chrome in the `z.menubar` band (reused rather than minting a `z.clock`
+  `desktop.c` into a 220×30 chrome in the `z.menubar` band (reused rather than minting a `z.clock`
   token for the identical stacking slot). It is not hit-tested, so a press over it lands on the
   wallpaper, and it repaints once a minute and only when the string changes, so an idle desktop
   still schedules no frames. Since 2026-09 its letters are brushed platinum: the glyph outlines (`lp_text_path`) clip the
   desktop's sheet of metal (`lp_surface_paint`, with the chrome's scene position as the world
   offset), over a dark keyline and a two-step drop shadow so pale metal reads on any wallpaper. There
-  is still no plate behind; `lp-render --clock` keeps an eye on it.
+  is still no plate behind; `lp-render --clock` keeps an eye on it. It reads the weekday, month and day before
+  the time — "Mon Sep 14 6:21 AM" (`lp_clock_format`).
   It is a setting, not a fixture: View › Show Clock (`LP_CMD_TOGGLE_CLOCK`) flips `settings.clock`,
   saved as `clock=on|off` in `settings.conf` — the one key with no `settings.ts` counterpart. It
   defaults to on, and a file without the key keeps it on. Hidden, the chrome's scene node is
@@ -507,6 +508,16 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   Wallpaper and the View pill offer Lava, Molten and Procedural; `settings.conf` writes `wallpaper=lava`,
   and an unknown value reads as lava. The web has no lava. `lp-render --lava WxH [SECONDS [TONE]]`,
   `--lava-strip`, `--lava-bench`.
+- **D34 — the desktop starts empty, or as it was.** Linux only. The C desktop used to open the Finder and the
+  Gallery at every start; the web has no start at all. Now it opens nothing unless System Settings › General ›
+  Reopen at login (`restore_windows=on`, off by default) asks for last time's windows. `lp_session.c` writes
+  `$XDG_CONFIG_HOME/maryui/session.conf` a second after the windows stop changing and again when the desktop
+  stops (a reboot's SIGTERM): each app window in stacking order with its place, its size — the unzoomed one for a
+  zoomed window — its state and the folder or document its surface reports. It writes whether or not the switch
+  is on, so turning it on brings back the last session; nothing is written before the start has had its chance.
+  Restoring opens them lowest first so the front window is in front again; a document that is gone opens its
+  app empty, an unknown or internal app and a line that does not parse are skipped. Wayland clients are not kept,
+  and an untitled document's unsaved text is not either.
 - **Close animation.** `lp-window-close` (scale .96 + fade over `motion.fast`, `CLOSE` after
   fast + 80 ms) runs for built-in windows. A client that unmaps is gone at once — the compositor
   has no pixels left to fade.

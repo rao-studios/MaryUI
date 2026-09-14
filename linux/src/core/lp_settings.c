@@ -74,6 +74,7 @@ lp_settings lp_settings_load(void) {
         else if (strcmp(key, "pointer_speed") == 0) s.pointer_speed = (float)atof(value);
         else if (strcmp(key, "natural_scroll") == 0) s.natural_scroll = strcmp(value, "on") == 0 || strcmp(value, "1") == 0;
         else if (strcmp(key, "clock_24h") == 0) s.clock_24h = strcmp(value, "on") == 0 || strcmp(value, "1") == 0;
+        else if (strcmp(key, "restore_windows") == 0) s.restore_windows = strcmp(value, "on") == 0 || strcmp(value, "1") == 0;
         else if (strcmp(key, "dock") == 0) snprintf(s.dock, sizeof s.dock, "%s", value);
         else if (strcmp(key, "mary_wake") == 0) s.mary_wake = strcmp(value, "off") != 0 && strcmp(value, "0") != 0;
         else if (strcmp(key, "mary_voice") == 0 && voice_name(value)) snprintf(s.mary_voice, sizeof s.mary_voice, "%s", value);
@@ -110,6 +111,7 @@ int lp_settings_save(const lp_settings *s) {
     fprintf(f, "# System Settings\nkey_repeat_rate=%d\nkey_repeat_delay=%d\nkeyboard_layout=%s\npointer_speed=%.2f\nnatural_scroll=%s\nclock_24h=%s\n",
         s->key_repeat_rate, s->key_repeat_delay, s->keyboard_layout[0] ? s->keyboard_layout : "default", s->pointer_speed,
         s->natural_scroll ? "on" : "off", s->clock_24h ? "on" : "off");
+    fprintf(f, "restore_windows=%s\n", s->restore_windows ? "on" : "off");
     fprintf(f, "# Mary\nmary_wake=%s\nmary_voice=%s\n", s->mary_wake ? "on" : "off", voice_name(s->mary_voice) ? s->mary_voice : "fr_marie_neutral");
     fprintf(f, "mary_voice_engine=%s\nmary_skill_engine=%s\n", lp_settings_engine_known(s->mary_voice_engine) ? s->mary_voice_engine : "mistral",
             lp_settings_engine_known(s->mary_skill_engine) ? s->mary_skill_engine : "mistral");

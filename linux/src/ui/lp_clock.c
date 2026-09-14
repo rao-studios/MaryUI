@@ -1,6 +1,7 @@
 #include "maryui/lp_clock.h"
 
 #include <math.h>
+#include <stdio.h>
 
 #include "maryui/components/lp_surface.h"
 #include "maryui/lp_draw.h"
@@ -13,6 +14,17 @@ static lp_text_style clock_style(void) {
     s.weight = LP_TEXT_WEIGHT_BOLD;
     s.tabular_nums = 1;
     return s;
+}
+
+void lp_clock_format(const struct tm *tm, int hours24, char *out, size_t n) {
+    static const char *const DAYS[7] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
+    static const char *const MONTHS[12] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+    const char *day = tm->tm_wday >= 0 && tm->tm_wday < 7 ? DAYS[tm->tm_wday] : "";
+    const char *month = tm->tm_mon >= 0 && tm->tm_mon < 12 ? MONTHS[tm->tm_mon] : "";
+    int hour = tm->tm_hour % 12;
+    if (hour == 0) hour = 12;
+    if (hours24) snprintf(out, n, "%s %s %d %02d:%02d", day, month, tm->tm_mday, tm->tm_hour, tm->tm_min);
+    else snprintf(out, n, "%s %s %d %d:%02d %s", day, month, tm->tm_mday, hour, tm->tm_min, tm->tm_hour < 12 ? "AM" : "PM");
 }
 
 lp_rect lp_clock_bounds(cairo_t *cr, lp_rect box, const char *text) {

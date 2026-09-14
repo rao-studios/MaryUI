@@ -19,6 +19,7 @@
 #include "maryui/lp_tokens.h"
 #include "maryui/lp_clock.h"
 #include "maryui/lp_lava.h"
+#include "maryui/lp_session.h"
 #include "maryui/lp_molten.h"
 #include "maryui/lp_wallpaper.h"
 #include "chrome.h"
@@ -26,21 +27,15 @@
 
 #define DOUBLE_CLICK_MS 400
 /* The ambient clock's box. Fixed, and right-aligned inside itself, so a wider
- * string ("Wed 12:38 PM") never moves the anchor or resizes the chrome. */
-#define MUI_CLOCK_W 160
+ * string ("Wed Sep 30 12:38 PM") never moves the anchor or resizes the chrome. */
+#define MUI_CLOCK_W 220
 #define MUI_CLOCK_H 30   /* the capsule and the lift under it */
 
 static void format_clock(char *out, size_t n, int hours24) {
     time_t now = time(NULL);
     struct tm tm;
     localtime_r(&now, &tm);
-    char day[8], hm[16];
-    strftime(day, sizeof day, "%a", &tm);
-    int hour = tm.tm_hour % 12;
-    if (hour == 0) hour = 12;
-    if (hours24) snprintf(hm, sizeof hm, "%02d:%02d", tm.tm_hour, tm.tm_min);   /* System Settings › General */
-    else snprintf(hm, sizeof hm, "%d:%02d %s", hour, tm.tm_min, tm.tm_hour < 12 ? "AM" : "PM");
-    snprintf(out, n, "%s %s", day, hm);
+    lp_clock_format(&tm, hours24, out, n);   /* "Mon Sep 14 6:21 AM"; 24-hour time from System Settings › General */
 }
 
 /* MARK: - The context menu
@@ -154,8 +149,17 @@ static int clock_tick(void *data) {
 
 /* MARK: - Desktop model hooks */
 
+/* The windows as they are now, a second after they stopped changing (lp_session.h, PARITY D34). */
+static int session_save_tick(void *data) {
+    struct mui_server *server = data;
+    int n = lp_session_save(&server->desktop);
+    if (n < 0) wlr_log(WLR_ERROR, "session: could not save the open windows: %s", strerror(-n));
+    return 0;
+}
+
 static void desktop_changed(lp_desktop *d, uint64_t changed) {
     struct mui_server *server = d->host;
+    if (server->session_restored && server->session_timer) wl_event_source_timer_update(server->session_timer, 1000);
     mui_windows_sync(server);
     if (d->open_menu != LP_DESKTOP_MENU_POPUP && server->menu) sync_popup_chrome(server);
     /* The window list is part of Spotlight's results; deferred, since this may run inside its EVENT pass. */
@@ -255,6 +259,8 @@ void mui_desktop_init(struct mui_server *server) {
     struct wl_event_loop *loop = wl_display_get_event_loop(server->display);
     server->clock_timer = wl_event_loop_add_timer(loop, clock_tick, server);
     server->lava_start_ms = mui_now_ms();
+    server->session_timer = wl_event_loop_add_timer(loop, session_save_tick, server);
+    server->session_restored = 0;
     server->wallpaper_look = 0;
     time_t now = time(NULL);
     wl_event_source_timer_update(server->clock_timer, (int)((60 - now % 60) * 1000 + 50));
@@ -282,6 +288,10 @@ void mui_desktop_init(struct mui_server *server) {
 }
 
 void mui_desktop_finish(struct mui_server *server) {
+    /* the windows as they were at the end (a reboot stops the desktop with SIGTERM), before any of them go */
+    if (server->session_restored) session_save_tick(server);
+    if (server->session_timer) wl_event_source_remove(server->session_timer);
+    server->session_timer = NULL;
     mui_audio_finish(server);
     mui_mary_finish(server);
     mui_thread_finish(server);
@@ -489,9 +499,14 @@ void mui_desktop_output_ready(struct mui_output *output) {
     }
     lp_wm_action a = { .type = LP_WM_SET_BOUNDS, .bounds = LP_RECT(box.x, box.y, w, h) };
     lp_desktop_dispatch(&server->desktop, &a);
-    if (server->desktop.wm.count == 0) {
-        lp_desktop_open_app(&server->desktop, "finder");
-        lp_desktop_open_app(&server->desktop, "gallery");
+    /* No windows of its own at start: last time's, when System Settings › General › Reopen at login asks for them. */
+    if (!server->session_restored) {
+        server->session_restored = 1;
+        if (server->desktop.settings.restore_windows) {
+            int n = lp_session_restore(&server->desktop);
+            if (n < 0) wlr_log(WLR_ERROR, "session: could not read the windows of last time: %s", strerror(-n));
+            else wlr_log(WLR_INFO, "session: %d window%s reopened", n, n == 1 ? "" : "s");
+        }
     }
 }
 

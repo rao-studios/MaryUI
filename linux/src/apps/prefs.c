@@ -572,6 +572,11 @@ static float pane_general(lp_ctx *ctx, struct prefs *p, lp_desktop *d, float x, 
     section(ctx, "Clock", x, &y, w);
     if (toggle_row(ctx, lp_id_index(base, 7), "Show the clock", x, &y, &clock)) run(d, LP_CMD_TOGGLE_CLOCK, 0);
     if (toggle_row(ctx, lp_id_index(base, 8), "24-hour time", x, &y, &hours24) && d) { d->settings.clock_24h = hours24; lp_desktop_settings_changed(d); }
+    int restore = s.restore_windows;
+    section(ctx, "Windows", x, &y, w);
+    if (toggle_row(ctx, lp_id_index(base, 9), "Reopen at login", x, &y, &restore) && d) { d->settings.restore_windows = restore; lp_desktop_settings_changed(d); }
+    note(ctx, restore ? "The windows open when you last used the desktop come back where they were, with the folder or document they showed."
+                      : "Off: the desktop starts empty.", x, &y, w);
     return y;
 }
 

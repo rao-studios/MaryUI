@@ -188,8 +188,8 @@ static int render_clock(int w, const char *path) {
     cairo_surface_destroy(wp);
     lp_wallpaper_vignette(cr, w, h);
     lp_settings settings = lp_settings_defaults();
-    float x = w - 160 - LP_SPACE_3, y = LP_SPACE_1;   /* where the compositor puts the chrome: its world offset too */
-    lp_clock_paint(cr, LP_RECT(x, y, 160, 30), "Tue 9:41 AM", x, y, &settings);
+    float x = w - 220 - LP_SPACE_3, y = LP_SPACE_1;   /* where the compositor puts its 220-px chrome: its world offset too */
+    lp_clock_paint(cr, LP_RECT(x, y, 220, 30), "Tue Sep 14 9:41 AM", x, y, &settings);
     cairo_destroy(cr);
     int rc = write_png(s, path);
     cairo_surface_destroy(s);

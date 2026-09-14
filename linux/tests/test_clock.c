@@ -10,7 +10,7 @@
 #include "maryui/lp_texture.h"
 #include "maryui/lp_tokens.h"
 
-#define W 160
+#define W 220
 #define H 24
 
 /* The clock over a flat wallpaper of grey `g`, or over nothing (g < 0). */
@@ -22,7 +22,7 @@ static cairo_surface_t *paint_over(float g, float world_x, float world_y) {
         cairo_paint(cr);
     }
     lp_settings settings = lp_settings_defaults();
-    lp_clock_paint(cr, LP_RECT(0, 0, W, H), "Tue 9:41 AM", world_x, world_y, &settings);
+    lp_clock_paint(cr, LP_RECT(0, 0, W, H), "Tue Sep 14 9:41 AM", world_x, world_y, &settings);
     cairo_destroy(cr);
     cairo_surface_flush(s);
     return s;
@@ -44,11 +44,11 @@ static float luminance(uint32_t px) {
 LP_TEST(the_line_hugs_the_text_inside_the_chrome) {
     cairo_surface_t *s = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, W, H);
     cairo_t *cr = cairo_create(s);
-    lp_rect c = lp_clock_bounds(cr, LP_RECT(0, 0, W, H), "Tue 9:41 AM");
+    lp_rect c = lp_clock_bounds(cr, LP_RECT(0, 0, W, H), "Tue Sep 14 9:41 AM");
     LP_ASSERT_NEAR(c.x + c.w, W - LP_CLOCK_INSET, 1e-6);
     LP_ASSERT(c.w > 60 && c.w < W - LP_CLOCK_INSET);
     LP_ASSERT(c.y >= 0 && c.y + c.h <= H);
-    lp_rect wider = lp_clock_bounds(cr, LP_RECT(0, 0, W, H), "Wed 12:38 PM");
+    lp_rect wider = lp_clock_bounds(cr, LP_RECT(0, 0, W, H), "Wed Sep 30 12:38 PM");
     LP_ASSERT(wider.w > c.w);
     cairo_destroy(cr);
     cairo_surface_destroy(s);
@@ -102,7 +102,31 @@ LP_TEST(the_grain_is_the_desktops_sheet) {
     cairo_surface_destroy(tiled);
 }
 
+LP_TEST(the_clock_reads_weekday_month_and_day_before_the_time) {
+    struct tm tm = { 0 };
+    tm.tm_wday = 1; tm.tm_mon = 8; tm.tm_mday = 14; tm.tm_hour = 6; tm.tm_min = 21;
+    char text[40];
+    lp_clock_format(&tm, 0, text, sizeof text);
+    LP_ASSERT_STR(text, "Mon Sep 14 6:21 AM");
+    lp_clock_format(&tm, 1, text, sizeof text);
+    LP_ASSERT_STR(text, "Mon Sep 14 06:21");
+    tm.tm_wday = 3; tm.tm_mon = 11; tm.tm_mday = 31; tm.tm_hour = 0; tm.tm_min = 5;
+    lp_clock_format(&tm, 0, text, sizeof text);
+    LP_ASSERT_STR(text, "Wed Dec 31 12:05 AM");                       /* midnight is twelve */
+    tm.tm_hour = 12;
+    lp_clock_format(&tm, 0, text, sizeof text);
+    LP_ASSERT_STR(text, "Wed Dec 31 12:05 PM");
+    /* the widest string fits the compositor's 220-px chrome */
+    cairo_surface_t *s = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, W, H);
+    cairo_t *cr = cairo_create(s);
+    lp_rect b = lp_clock_bounds(cr, LP_RECT(0, 0, W, H), "Wed Sep 30 12:38 PM");
+    LP_ASSERT(b.x > 0);
+    cairo_destroy(cr);
+    cairo_surface_destroy(s);
+}
+
 int main(void) {
+    LP_RUN(the_clock_reads_weekday_month_and_day_before_the_time);
     LP_RUN(the_line_hugs_the_text_inside_the_chrome);
     LP_RUN(the_letters_are_pale_metal_with_a_dark_edge_and_no_plate);
     LP_RUN(the_grain_is_the_desktops_sheet);
