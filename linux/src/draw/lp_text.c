@@ -4,6 +4,7 @@
 #include <string.h>
 #include <pango/pangocairo.h>
 
+#include "maryui/lp_draw.h"
 #include "maryui/lp_text.h"
 #include "maryui/lp_tokens.h"
 
@@ -181,7 +182,16 @@ lp_size lp_text_measure(cairo_t *cr, const char *text, const lp_text_style *styl
     return (lp_size){ (float)logical.width, (float)logical.height };
 }
 
+/* Nothing of the text can land outside this box: the glyphs sit within a text size of the rect
+ * vertically (the capitals are centred on it), and an unellipsized line may run past either end. */
+static lp_rect text_reach(lp_rect r, const lp_text_style *style) {
+    float over = style->ellipsize ? 4 : 600, pad = style->size_px + 4;
+    return LP_RECT(r.x - over, r.y - pad, r.w + 2 * over, r.h + 2 * pad);
+}
+
 void lp_text_draw(cairo_t *cr, const char *text, lp_rect r, const lp_text_style *style, enum lp_align align) {
+    /* Painting into a clip that discards it still costs a layout: skip what the damage cannot show. */
+    if (!lp_clip_intersects(cr, text_reach(r, style))) return;
     PangoLayout *layout = make_layout(cr, text, style, r.w);
     PangoRectangle ink, logical;
     pango_layout_get_pixel_extents(layout, &ink, &logical);
@@ -324,6 +334,8 @@ int lp_text_layout_range_rects(const lp_text_layout *l, int start, int end, lp_r
 float lp_text_layout_baseline(const lp_text_layout *l) { return (float)pango_layout_get_baseline(l->layout) / PANGO_SCALE; }
 
 void lp_text_layout_draw(cairo_t *cr, const lp_text_layout *l, float x, float y, lp_color color) {
+    lp_size size = lp_text_layout_size(l);
+    if (!lp_clip_intersects(cr, LP_RECT(x - 4, y - 4, size.w + 8, size.h + 8))) return;
     cairo_move_to(cr, x, y);
     cairo_set_source_rgba(cr, color.r, color.g, color.b, color.a);
     pango_cairo_show_layout(cr, l->layout);

@@ -27,7 +27,7 @@ int lp_list_header_aligned(lp_ctx *ctx, lp_id id, lp_rect r, const char *const *
         lp_rect cell = LP_RECT(r.x + xs[i] - LP_SPACE_2, r.y, ws[i] + LP_SPACE_2, r.h);
         if (lp_clicked(ctx, lp_id_index(id, i), cell)) clicked = i;
     }
-    if (ctx->pass != LP_PASS_DRAW || !ctx->cr) return clicked;
+    if (ctx->pass != LP_PASS_DRAW || !ctx->cr || !lp_clip_intersects(ctx->cr, r)) return clicked;
     cairo_t *cr = ctx->cr;
     lp_fill_vgradient(cr, r, LP_PLATINUM_1, LP_PLATINUM_2, 0);
     lp_draw_hairline(cr, r, LP_EDGE_BOTTOM, LP_EDGE_DIVIDER);
@@ -48,7 +48,7 @@ int lp_list_header_aligned(lp_ctx *ctx, lp_id id, lp_rect r, const char *const *
 int lp_list_row_aligned(lp_ctx *ctx, lp_id id, lp_rect r, lp_icon icon, const char *name, const char *const *columns, const enum lp_align *align, int n, int selected, int even) {
     int result = lp_clicked(ctx, id, r) ? 1 : 0;
     if (ctx->pass == LP_PASS_EVENT && lp_hit(ctx, r) && ctx->in.double_click) result = 2;
-    if (ctx->pass != LP_PASS_DRAW || !ctx->cr) return result;
+    if (ctx->pass != LP_PASS_DRAW || !ctx->cr || !lp_clip_intersects(ctx->cr, r)) return result;
     cairo_t *cr = ctx->cr;
     lp_accent accent = lp_settings_accent(ctx->settings);
     if (selected) lp_fill_vgradient(cr, r, accent.light, accent.base, 0);

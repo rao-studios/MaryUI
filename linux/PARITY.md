@@ -153,7 +153,7 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
 - **D7 — menu backdrop.** `backdrop-filter: blur(14px) saturate(1.1)` is not available to a
   scene node; the dropdown is the 94 %-alpha surface alone. That holds for both forms the rows
   take now: the commands inline in Spotlight's panel, and the Finder's floating context menu.
-- **D8 — liquid merge.** Not ported, by choice. The web puts each GooGroup through an SVG filter
+- **D8 — liquid merge.** Not ported for GooGroup, by choice; ported for the segmented control (below). The web puts each GooGroup through an SVG filter
   that blurs the blobs together, thresholds them into one silhouette and lights that; C draws the
   blobs discrete and embossed instead. It was ported once and then removed: the filter is a
   per-pixel blur plus a `pow()` per pixel with no clip test, so it ran on every repaint of every
@@ -161,6 +161,12 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   hover, lean `goo.attract` toward the hot one, and smear with the drag's shear. The traffic
   lights lose their hover bridge with it; the `goo.blur-*`, `goo.slope-*`, `goo.intercept-*`,
   `goo.specular-*` and `goo.rim-shade` tokens are now web-only.
+  The **segmented control** is the exception, since 2026-09: its thumb and hover bead go through the
+  same recipe in Cairo (`SegmentedControl.c` `paint_merged`: blur, the tension's slope and intercept,
+  the specular dome, the rim shade), which is affordable because the layer is one small track, built
+  only when the control is inside the damage clip, and lit at the xxs scale where the filter fuses a
+  join rather than reshaping beads. The thumb's slide is a spring and the bead's rise and fall are the
+  web's transitions, all driven from the DRAW pass with `lp_want_frame_rect`.
 - **D9 — the Terminal tile.** Spotlight lists `Terminal` as a command on both sides. In C it runs
   `LP_CMD_NEW_TERMINAL` (`spawn("foot")`) and the dock's dot lights while a client window is
   open; on the web it is a no-op — the browser has no processes. Since D15 the built-in Terminal is registered, so

@@ -126,6 +126,11 @@ int lp_is_active(const lp_ctx *ctx, lp_id id);
 int lp_is_hot(const lp_ctx *ctx, lp_id id);
 /* Marks a rectangle for repaint without dirtying the whole chrome (hover rings, marquees). */
 void lp_damage(lp_ctx *ctx, lp_rect r);
+/* How far into a hover look a widget is, 0..1: rising over in_ms while it is hot, falling over
+ * out_ms from wherever it had reached once it was last hot. *moving is set while that is still
+ * changing, so the caller can ask for another frame. The same for a press (active and hot at once). */
+float lp_hover_progress(const lp_ctx *ctx, lp_id id, float in_ms, float out_ms, int *moving);
+float lp_press_progress(const lp_ctx *ctx, lp_id id, float in_ms, float out_ms, int *moving);
 /* Asks the host for another frame; the whole chrome is repainted. */
 void lp_want_frame(lp_ctx *ctx);
 /* Asks for another frame for r only (a progress glint, a rolling bubble). */

@@ -34,6 +34,7 @@ static int usage(int status) {
         "       lp-render --molten WxH [TONE] <out.png>  the molten shader at WxH (TONE platinum|faithful); needs EGL\n"
         "       lp-render --clock W <out.png>            the ambient clock, W px wide, over the wallpaper\n"
         "       lp-render --window <out.png>             a focused About window and an inactive one, over the wallpaper\n"
+        "       lp-render --segmented <out.png>          three segmented controls: at rest, mid-slide, and with a hovered segment's bead necking in\n"
         "       lp-render --finder <out.png>             the Finder window (icon view)\n"
         "       lp-render --gallery N <out.png>          the Gallery window on tab N (0 controls … 4 motion)\n"
         "       lp-render --textedit <out.png>           the TextEdit window with a sample document\n"
@@ -145,6 +146,44 @@ static void paint_window_preview(lp_ctx *ctx, lp_desktop *d, lp_rect rect, const
     lp_surface_paint(ctx->cr, body, (lp_surface_opts){ .variant = LP_VARIANT_BODY, .radius = 0 }, (lp_surface_motion){ .sheen_x = 0.5f });
     if (app && app->paint) app->paint(NULL, ctx, body, d);
     cairo_restore(ctx->cr);
+}
+
+/* The segmented control's motion, frozen: one at rest, one caught mid-slide (its spring stepped a few
+ * frames toward the new selection), one with the segment beside the thumb hovered so the bead necks in. */
+static int render_segmented(const char *path) {
+    int w = 420, h = 130;
+    cairo_surface_t *s = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, w, h);
+    cairo_t *cr = cairo_create(s);
+    lp_desktop d;
+    lp_desktop_init(&d, LP_RECT(0, 0, w, h), NULL);
+    lp_ctx ctx = { 0 };
+    ctx.settings = &d.settings;
+    static const lp_segment TABS[4] = { { "Drive", LP_ICON_COUNT }, { "Library", LP_ICON_COUNT }, { "Graph", LP_ICON_COUNT }, { "Ledger", LP_ICON_COUNT } };
+    int rest = 1, sliding = 0, hovered = 1;
+    lp_id slide = LP_ID("render.slide"), hover = LP_ID("render.hover");
+    /* prime the sliding one at its old index, then move it and step a few frames */
+    lp_ctx_begin(&ctx, LP_PASS_DRAW, cr, NULL, LP_RECT(0, 0, w, h), 1000);
+    lp_segmented(&ctx, slide, 20, 50, TABS, 4, &sliding, LP_CONTROL_MD);
+    lp_ctx_end(&ctx);
+    sliding = 3;
+    for (int i = 1; i <= 5; i++) {
+        lp_ctx_begin(&ctx, LP_PASS_DRAW, cr, NULL, LP_RECT(0, 0, w, h), 1000 + 16 * i);
+        lp_segmented(&ctx, slide, 20, 50, TABS, 4, &sliding, LP_CONTROL_MD);
+        lp_ctx_end(&ctx);
+    }
+    cairo_set_source_rgb(cr, 0.93f, 0.94f, 0.95f);
+    cairo_paint(cr);
+    lp_ctx_begin(&ctx, LP_PASS_DRAW, cr, NULL, LP_RECT(0, 0, w, h), 1096);
+    lp_segmented(&ctx, LP_ID("render.rest"), 20, 14, TABS, 4, &rest, LP_CONTROL_MD);
+    lp_segmented(&ctx, slide, 20, 50, TABS, 4, &sliding, LP_CONTROL_MD);
+    ctx.hot = lp_id_index(hover, 2);          /* the segment beside the selection, hovered 70 ms ago */
+    ctx.hot_since_ms = 1096 - 70;
+    lp_segmented(&ctx, hover, 20, 86, TABS, 4, &hovered, LP_CONTROL_MD);
+    lp_ctx_end(&ctx);
+    cairo_destroy(cr);
+    int rc = write_png(s, path);
+    cairo_surface_destroy(s);
+    return rc;
 }
 
 static int render_window(const char *path) {
@@ -546,6 +585,7 @@ int main(int argc, char **argv) {
         return argc == 5 ? render_molten(w, h, argv[3], argv[4]) : render_molten(w, h, NULL, argv[3]);
     }
     if (strcmp(argv[1], "--clock") == 0 && argc == 4) return render_clock(atoi(argv[2]), argv[3]);
+    if (strcmp(argv[1], "--segmented") == 0 && argc == 3) return render_segmented(argv[2]);
     if (strcmp(argv[1], "--window") == 0 && argc == 3) return render_window(argv[2]);
     if (strcmp(argv[1], "--finder") == 0 && argc == 3) return render_app(&lp_app_finder, 0, argv[2]);
     if (strcmp(argv[1], "--gallery") == 0 && argc == 4) return render_app(&lp_app_gallery, atoi(argv[2]), argv[3]);

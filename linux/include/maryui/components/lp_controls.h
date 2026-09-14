@@ -57,7 +57,10 @@ void lp_text_buffer_set(lp_text_buffer *b, const char *text);
 void lp_text_buffer_set_selected(lp_text_buffer *b, const char *text);
 int lp_text_field(lp_ctx *ctx, lp_id id, lp_rect r, lp_text_buffer *buffer, lp_text_field_opts opts);
 
-/* SegmentedControl — a well holding a sliding platinum thumb. */
+/* SegmentedControl — a well holding a sliding platinum thumb. The thumb springs to a new selection
+ * (about motion.normal) and the hovered segment's bead eases in and necks into it; both move in the
+ * DRAW pass and ask for their frames through lp_want_frame_rect. With no clock (now_ms 0) or reduced
+ * motion the thumb simply sits at the index. */
 typedef struct lp_segment {
     const char *label;          /* NULL for icon-only */
     lp_icon icon;               /* LP_ICON_COUNT for none */
@@ -66,6 +69,9 @@ lp_size lp_segmented_measure(lp_ctx *ctx, const lp_segment *options, int n, enum
 int lp_segmented(lp_ctx *ctx, lp_id id, float x, float y, const lp_segment *options, int n, int *index, enum lp_control_size size);
 /* The same with some segments disabled (bit i: options[i]): drawn in the disabled ink, never chosen by a click or an arrow. */
 int lp_segmented_masked(lp_ctx *ctx, lp_id id, float x, float y, const lp_segment *options, int n, int *index, enum lp_control_size size, unsigned disabled_mask);
+/* For tests and renders: where the control's thumb is, in segment units (2.4 = between the third and
+ * the fourth), or -1 while the control has never been drawn. */
+float lp_segmented_thumb(lp_id id);
 
 /* ProgressBar — an 8px inset rail with a liquid accent fill; value < 0 is indeterminate (barber pole). */
 #define LP_PROGRESS_H 8

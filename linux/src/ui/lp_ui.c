@@ -3,6 +3,8 @@
 
 #include "maryui/lp_tokens.h"
 #include "maryui/lp_ui.h"
+#include "maryui/lp_motion.h"
+#include "maryui/lp_tokens.h"
 
 void lp_ctx_begin(lp_ctx *ctx, enum lp_pass pass, cairo_t *cr, const lp_input *in, lp_rect bounds, double now_ms) {
     ctx->pass = pass;
@@ -113,6 +115,36 @@ int lp_hot(lp_ctx *ctx, lp_id id, lp_rect r) {
         return ctx->next_hot == id;
     }
     return ctx->hot == id;
+}
+
+static float eased_progress(double elapsed_ms, float duration_ms) {
+    float t = duration_ms > 0 ? (float)(elapsed_ms / duration_ms) : 1;
+    if (t <= 0) return 0;
+    if (t >= 1) return 1;
+    return lp_cubic_bezier_eval(LP_MOTION_EASE_OUT, t);
+}
+
+/* Rising while on; once off, falling from what it had reached (LiquidBubble's `engaged`). */
+static float engaged(double now, int on, double since, int was, double was_since, double was_until, float in_ms, float out_ms, int *moving) {
+    if (on) {
+        if (now - since < in_ms && moving) *moving = 1;
+        return eased_progress(now - since, in_ms);
+    }
+    if (!was) return 0;
+    float reached = eased_progress(was_until - was_since, in_ms);
+    float left = 1 - eased_progress(now - was_until, out_ms);
+    if (reached > 0 && left > 0 && moving) *moving = 1;
+    return reached * left;
+}
+
+float lp_hover_progress(const lp_ctx *ctx, lp_id id, float in_ms, float out_ms, int *moving) {
+    if (!id) return 0;
+    return engaged(ctx->now_ms, ctx->hot == id, ctx->hot_since_ms, ctx->last_hot == id, ctx->last_hot_since_ms, ctx->last_hot_until_ms, in_ms, out_ms, moving);
+}
+
+float lp_press_progress(const lp_ctx *ctx, lp_id id, float in_ms, float out_ms, int *moving) {
+    if (!id) return 0;
+    return engaged(ctx->now_ms, ctx->held == id, ctx->held_since_ms, ctx->last_held == id, ctx->last_held_since_ms, ctx->last_held_until_ms, in_ms, out_ms, moving);
 }
 
 int lp_is_active(const lp_ctx *ctx, lp_id id) { return ctx->active == id; }
