@@ -611,7 +611,9 @@ static void paint_node_card(lp_ctx *ctx, struct thread_app *a, lp_rect side, lp_
     if (g->selected < 0 || g->selected >= g->node_count) {
 
         paragraph(ctx, LP_RECT(inner.x, y, inner.w, 40), totals_text(g), LP_INK_TERTIARY, 0);
-        paragraph(ctx, LP_RECT(inner.x, y + 44, inner.w, 60), "Click a node to see it, double-click to re-seed the graph on it, drag to pan; Ctrl+wheel zooms.", LP_INK_TERTIARY, 0);
+        paragraph(ctx, LP_RECT(inner.x, y + 44, inner.w, 76), a->graph.mode == LP_GRAPH_3D
+                  ? "Click a node to see it, double-click to re-seed the graph on it; drag to turn the graph, Shift+drag to pan; Ctrl+wheel zooms. It turns on its own while nothing is selected."
+                  : "Click a node to see it, double-click to re-seed the graph on it, drag to pan; Ctrl+wheel zooms.", LP_INK_TERTIARY, 0);
         return;
     }
     const lp_graph_node *n = &g->nodes[g->selected];
@@ -724,6 +726,14 @@ static void paint_graph(lp_ctx *ctx, struct thread_app *a, lp_rect area, lp_id b
         ctx->dirty = 1;
     }
     x += hs.w + LP_SPACE_3;
+    static const lp_segment DIMS[2] = { { "2D", LP_ICON_COUNT }, { "3D", LP_ICON_COUNT } };
+    int dim = a->graph.mode == LP_GRAPH_3D;
+    lp_size ds = lp_segmented_measure(ctx, DIMS, 2, LP_CONTROL_SM);
+    if (lp_segmented(ctx, lp_id_index(base, 65), x, cy - ds.h / 2, DIMS, 2, &dim, LP_CONTROL_SM)) {
+        lp_graph_set_mode(&a->graph, dim ? LP_GRAPH_3D : LP_GRAPH_2D);
+        ctx->dirty = 1;
+    }
+    x += ds.w + LP_SPACE_3;
     if (lp_checkbox(ctx, lp_id_index(base, 62), x, cy - 9, &a->with_documents, "Documents", 0)) {
         ask_graph(a);
         ctx->dirty = 1;
@@ -987,6 +997,11 @@ static void thread_open(void *state, lp_desktop *d, const char *path) {
         lp_thread_file_record(&d->thread, a->file_path);
         return;
     }
+    if (strcmp(path, "graph3d") == 0) {
+        lp_graph_set_mode(&a->graph, LP_GRAPH_3D);
+        set_tab(a, TAB_GRAPH);
+        return;
+    }
     if (strncmp(path, "graph:", 6) == 0) {
         lp_text_buffer_set(&a->seed, path + 6);
         a->file_path[0] = 0;
@@ -1085,6 +1100,7 @@ static void thread_destroy(void *state) {
     struct thread_app *a = state;
     if (!a) return;
     if (a->timer) lp_desktop_remove_source(a->desk, a->timer);
+    lp_graph_free(&a->graph);
     free(a);
 }
 
@@ -1105,6 +1121,7 @@ const char *lp_thread_app_document(const void *state) { return ((const struct th
 const char *lp_thread_app_status(const void *state) { return ((const struct thread_app *)state)->status; }
 int lp_thread_app_graph_nodes(const void *state) { return ((const struct thread_app *)state)->graph.node_count; }
 int lp_thread_app_graph_selected(const void *state) { return ((const struct thread_app *)state)->graph.selected; }
+int lp_thread_app_graph_mode(const void *state) { return ((const struct thread_app *)state)->graph.mode; }
 void lp_thread_app_set_runner(void *state, lp_job *(*run)(lp_desktop *d, const char *const *argv, lp_job_done_fn done, void *user)) {
     ((struct thread_app *)state)->run = run;
 }

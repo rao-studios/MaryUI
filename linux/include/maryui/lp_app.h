@@ -202,6 +202,7 @@ const char *lp_thread_app_document(const void *state);
 const char *lp_thread_app_status(const void *state);
 int lp_thread_app_graph_nodes(const void *state);
 int lp_thread_app_graph_selected(const void *state);
+int lp_thread_app_graph_mode(const void *state);        /* lp_graph_mode: 0 flat, 1 in 3D */
 void lp_thread_app_set_runner(void *state, struct lp_job *(*run)(struct lp_desktop *d, const char *const *argv,
                               void (*done)(int status, const char *output, void *user), void *user));
 /* Disk Utility, for tests: read fixture sysfs/udev/mounts paths, stand in for lp_job_run, select, and ask what it offers. */

@@ -7,6 +7,8 @@
 #include <strings.h>
 
 #include "maryui/lp_draw.h"
+#include "maryui/lp_motion.h"
+#include "maryui/lp_settings.h"
 #include "maryui/lp_text.h"
 #include "maryui/lp_tokens.h"
 
@@ -14,11 +16,25 @@
 #include <json-c/json.h>
 #endif
 
+#define LABEL_W 140
+#define LABEL_H 14
+
 void lp_graph_init(lp_graph *g) {
     memset(g, 0, sizeof *g);
     g->selected = -1;
     g->zoom = 1;
+    g->yaw = 0.55f;
+    g->pitch = 0.32f;
 }
+
+static void drop_labels(lp_graph *g) {
+    for (int i = 0; i < LP_GRAPH_MAX_NODES; i++) {
+        if (g->nodes[i].label) cairo_surface_destroy(g->nodes[i].label);
+        g->nodes[i].label = NULL;
+    }
+}
+
+void lp_graph_free(lp_graph *g) { drop_labels(g); }
 
 /* Kinds are coloured by the ontology's own names first, anything else by hash. */
 lp_color lp_graph_kind_color(const char *kind) {
@@ -67,7 +83,9 @@ static float seeded(const char *id, unsigned salt) {
 void lp_graph_load(lp_graph *g, struct json_object *answer, int keep) {
     char kept[100] = "";
     if (keep && g->selected >= 0) snprintf(kept, sizeof kept, "%s", g->nodes[g->selected].id);
-    lp_graph old = *g;
+    drop_labels(g);
+    lp_graph *old = malloc(sizeof *old);
+    if (old) memcpy(old, g, sizeof *old);
     g->node_count = g->edge_count = 0;
     g->selected = -1;
     g->total_entities = g->total_relationships = 0;
@@ -83,9 +101,9 @@ void lp_graph_load(lp_graph *g, struct json_object *answer, int keep) {
             if (json_object_object_get_ex(e, "kind", &f)) snprintf(n->kind, sizeof n->kind, "%s", json_object_get_string(f));
             if (json_object_object_get_ex(e, "mention_count", &f)) n->mentions = json_object_get_int(f);
             if (json_object_object_get_ex(e, "document_ids", &f) && json_object_is_type(f, json_type_array)) n->documents = (int)json_object_array_length(f);
-            int was = index_of(&old, n->id);
-            if (was >= 0) { n->x = old.nodes[was].x; n->y = old.nodes[was].y; }
-            else { n->x = 0.1f + 0.8f * seeded(n->id, 1); n->y = 0.1f + 0.8f * seeded(n->id, 2); }
+            int was = old ? index_of(old, n->id) : -1;
+            if (was >= 0) { n->x = old->nodes[was].x; n->y = old->nodes[was].y; n->z = old->nodes[was].z; }
+            else { n->x = 0.1f + 0.8f * seeded(n->id, 1); n->y = 0.1f + 0.8f * seeded(n->id, 2); n->z = 0.1f + 0.8f * seeded(n->id, 3); }
             g->node_count++;
         }
     }
@@ -110,60 +128,70 @@ void lp_graph_load(lp_graph *g, struct json_object *answer, int keep) {
 #else
     (void)answer;
 #endif
+    free(old);
     if (kept[0]) g->selected = index_of(g, kept);
     g->settled = LP_GRAPH_ITERATIONS;
     for (int i = 0; i < LP_GRAPH_ITERATIONS; i++) if (!lp_graph_step(g)) break;
     g->settled = 30;    /* a few frames of settling on screen, so a reload eases into place */
 }
 
-/* Fruchterman–Reingold in the unit square: k = sqrt(area / n), temperature cooling with the steps left. */
+void lp_graph_set_mode(lp_graph *g, enum lp_graph_mode mode) {
+    if (g->mode == mode) return;
+    g->mode = mode;
+    g->settled = LP_GRAPH_ITERATIONS / 2;   /* relax into the other space over the next frames */
+}
+
+/* Fruchterman–Reingold in the unit square (or cube): k = sqrt(area / n), temperature cooling with the
+ * steps left. In 2D the z axis is left alone. */
 int lp_graph_step(lp_graph *g) {
     int n = g->node_count;
     if (n < 2 || g->settled <= 0) {
         g->settled = 0;
         return 0;
     }
+    int cube = g->mode == LP_GRAPH_3D;
     float k = sqrtf(1.0f / (float)n), k2 = k * k;
     float t = 0.1f * (float)g->settled / (float)LP_GRAPH_ITERATIONS + 0.002f;
-    for (int i = 0; i < n; i++) g->nodes[i].dx = g->nodes[i].dy = 0;
+    for (int i = 0; i < n; i++) g->nodes[i].dx = g->nodes[i].dy = g->nodes[i].dz = 0;
     for (int i = 0; i < n; i++) {
         for (int j = i + 1; j < n; j++) {
-            float dx = g->nodes[i].x - g->nodes[j].x, dy = g->nodes[i].y - g->nodes[j].y;
-            float d2 = dx * dx + dy * dy;
+            float dx = g->nodes[i].x - g->nodes[j].x, dy = g->nodes[i].y - g->nodes[j].y, dz = cube ? g->nodes[i].z - g->nodes[j].z : 0;
+            float d2 = dx * dx + dy * dy + dz * dz;
             if (d2 < 1e-6f) { dx = 1e-3f * (float)(i - j); dy = 1e-3f; d2 = dx * dx + dy * dy; }
             float f = k2 / d2;
-            g->nodes[i].dx += dx * f;
-            g->nodes[i].dy += dy * f;
-            g->nodes[j].dx -= dx * f;
-            g->nodes[j].dy -= dy * f;
+            g->nodes[i].dx += dx * f; g->nodes[i].dy += dy * f; g->nodes[i].dz += dz * f;
+            g->nodes[j].dx -= dx * f; g->nodes[j].dy -= dy * f; g->nodes[j].dz -= dz * f;
         }
     }
     for (int e = 0; e < g->edge_count; e++) {
         lp_graph_node *a = &g->nodes[g->edges[e].a], *b = &g->nodes[g->edges[e].b];
-        float dx = a->x - b->x, dy = a->y - b->y;
-        float d = sqrtf(dx * dx + dy * dy);
+        float dx = a->x - b->x, dy = a->y - b->y, dz = cube ? a->z - b->z : 0;
+        float d = sqrtf(dx * dx + dy * dy + dz * dz);
         if (d < 1e-6f) continue;
         float f = d * d / k * (1 + 0.15f * (float)(g->edges[e].weight > 1 ? g->edges[e].weight - 1 : 0));
-        a->dx -= dx / d * f;
-        a->dy -= dy / d * f;
-        b->dx += dx / d * f;
-        b->dy += dy / d * f;
+        a->dx -= dx / d * f; a->dy -= dy / d * f; a->dz -= dz / d * f;
+        b->dx += dx / d * f; b->dy += dy / d * f; b->dz += dz / d * f;
     }
     for (int i = 0; i < n; i++) {
         lp_graph_node *v = &g->nodes[i];
         /* gravity to the centre keeps disconnected pieces on the canvas */
         v->dx += (0.5f - v->x) * 0.08f;
         v->dy += (0.5f - v->y) * 0.08f;
-        float d = sqrtf(v->dx * v->dx + v->dy * v->dy);
+        if (cube) v->dz += (0.5f - v->z) * 0.08f;
+        else v->dz = 0;
+        float d = sqrtf(v->dx * v->dx + v->dy * v->dy + v->dz * v->dz);
         if (d > 1e-9f) {
             float step = d < t ? d : t;
             v->x += v->dx / d * step;
             v->y += v->dy / d * step;
+            v->z += v->dz / d * step;
         }
         if (v->x < 0.08f) v->x = 0.08f;
         if (v->x > 0.92f) v->x = 0.92f;
         if (v->y < 0.08f) v->y = 0.08f;
         if (v->y > 0.92f) v->y = 0.92f;
+        if (v->z < 0.08f) v->z = 0.08f;
+        if (v->z > 0.92f) v->z = 0.92f;
     }
     g->settled--;
     return g->settled > 0;
@@ -174,24 +202,73 @@ static float radius_of(const lp_graph_node *n, float zoom) {
     return r * (0.6f + 0.4f * zoom);
 }
 
-static void to_canvas(const lp_graph *g, lp_rect canvas, const lp_graph_node *n, float *x, float *y) {
+/* The canvas placement: the unit square fitted to the canvas's shorter side, zoomed about its
+ * centre and panned. In 3D the cube is turned by yaw then pitch about its centre and seen from
+ * LP_GRAPH_CAMERA away, so a near node lands further from the centre and larger. Returns the
+ * perspective scale (1 in 2D). */
+static float place(const lp_graph *g, lp_rect canvas, const lp_graph_node *n, float *x, float *y, float *depth) {
     float side = canvas.w < canvas.h ? canvas.w : canvas.h;
-    float ox = canvas.x + (canvas.w - side) / 2, oy = canvas.y + (canvas.h - side) / 2;
     float cx = canvas.x + canvas.w / 2, cy = canvas.y + canvas.h / 2;
-    *x = cx + ((ox + n->x * side) - cx) * g->zoom + g->pan_x;
-    *y = cy + ((oy + n->y * side) - cy) * g->zoom + g->pan_y;
+    float ux = n->x - 0.5f, uy = n->y - 0.5f, scale = 1, near = 0;
+    if (g->mode == LP_GRAPH_3D) {
+        float uz = n->z - 0.5f;
+        float cy_ = cosf(g->yaw), sy_ = sinf(g->yaw), cp = cosf(g->pitch), sp = sinf(g->pitch);
+        float xr = ux * cy_ + uz * sy_, zr = -ux * sy_ + uz * cy_;
+        float yr = uy * cp - zr * sp;
+        near = uy * sp + zr * cp;
+        scale = LP_GRAPH_CAMERA / (LP_GRAPH_CAMERA - near);
+        ux = xr * scale * LP_GRAPH_FIT_3D;
+        uy = yr * scale * LP_GRAPH_FIT_3D;
+    }
+    *x = cx + ux * side * g->zoom + g->pan_x;
+    *y = cy + uy * side * g->zoom + g->pan_y;
+    if (depth) *depth = near;
+    return scale;
+}
+
+int lp_graph_project(const lp_graph *g, lp_rect canvas, int i, float *x, float *y, float *depth) {
+    if (i < 0 || i >= g->node_count) return 0;
+    place(g, canvas, &g->nodes[i], x, y, depth);
+    return 1;
 }
 
 int lp_graph_hit(const lp_graph *g, lp_rect canvas, float x, float y) {
     int best = -1;
-    float best_d = 1e9f;
+    float best_depth = -1e9f, best_d = 1e9f;
     for (int i = 0; i < g->node_count; i++) {
-        float nx, ny;
-        to_canvas(g, canvas, &g->nodes[i], &nx, &ny);
-        float r = radius_of(&g->nodes[i], g->zoom) + 3, d = hypotf(x - nx, y - ny);
-        if (d <= r && d < best_d) { best = i; best_d = d; }
+        float nx, ny, depth;
+        float scale = place(g, canvas, &g->nodes[i], &nx, &ny, &depth);
+        float r = radius_of(&g->nodes[i], g->zoom) * scale + 3, d = hypotf(x - nx, y - ny);
+        if (d > r) continue;
+        /* the nearest wins in 3D; otherwise the closest to the pointer */
+        if (g->mode == LP_GRAPH_3D ? depth > best_depth : d < best_d) { best = i; best_depth = depth; best_d = d; }
     }
     return best;
+}
+
+static int by_depth(const void *a, const void *b, const lp_graph *g) {
+    float da = g->nodes[*(const int *)a].depth, db = g->nodes[*(const int *)b].depth;
+    return da < db ? -1 : da > db ? 1 : 0;
+}
+
+/* The name at the label size, laid out once into a small surface the frames paint from. */
+static cairo_surface_t *label_of(cairo_t *cr, lp_graph_node *n) {
+    if (n->label) return n->label;
+    double sx = 1, sy = 1;
+    cairo_surface_get_device_scale(cairo_get_target(cr), &sx, &sy);
+    cairo_surface_t *s = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, (int)ceilf(LABEL_W * (float)sx), (int)ceilf(LABEL_H * (float)sy));
+    cairo_surface_set_device_scale(s, sx, sy);
+    cairo_t *lc = cairo_create(s);
+    lp_text_style ns = lp_text_style_default();
+    ns.size_px = LP_TEXT_XS;
+    ns.color = LP_INK_SECONDARY;
+    ns.ellipsize = 1;
+    lp_text_draw(lc, n->name, LP_RECT(0, 0, LABEL_W, LABEL_H), &ns, LP_ALIGN_CENTER);
+    cairo_destroy(lc);
+    n->label = s;
+    n->label_w = LABEL_W;
+    n->label_h = LABEL_H;
+    return s;
 }
 
 int lp_graph_widget(lp_ctx *ctx, lp_id id, lp_rect canvas, lp_graph *g, int *selected_changed) {
@@ -200,6 +277,7 @@ int lp_graph_widget(lp_ctx *ctx, lp_id id, lp_rect canvas, lp_graph *g, int *sel
     if (ctx->pass == LP_PASS_EVENT) {
         const lp_input *in = &ctx->in;
         int over = lp_hit(ctx, canvas);
+        g->pointer_inside = over;
         if (over && (in->scroll_y != 0 || in->scroll_x != 0) && (in->mods & (LP_MOD_CTRL | LP_MOD_LOGO))) {
             float factor = in->scroll_y < 0 ? 1.1f : 1 / 1.1f;
             float z = g->zoom * factor;
@@ -224,29 +302,48 @@ int lp_graph_widget(lp_ctx *ctx, lp_id id, lp_rect canvas, lp_graph *g, int *sel
                 g->selected = hit;
                 if (selected_changed) *selected_changed = 1;
             }
-            g->dragging = hit < 0;
+            g->dragging = hit < 0 ? ((g->mode == LP_GRAPH_3D && !(in->mods & LP_MOD_SHIFT)) ? 2 : 1) : 0;   /* 2: turning the cube */
             g->drag_x = in->mx;
             g->drag_y = in->my;
             ctx->active = id;
             ctx->dirty = 1;
         }
         if (g->dragging && (in->buttons & LP_BUTTON_LEFT) && !isnan(in->mx)) {
-            g->pan_x += in->mx - g->drag_x;
-            g->pan_y += in->my - g->drag_y;
+            if (g->dragging == 2) {
+                g->yaw += (in->mx - g->drag_x) * 0.01f;
+                g->pitch += (in->my - g->drag_y) * 0.01f;
+                if (g->pitch > 1.2f) g->pitch = 1.2f;
+                if (g->pitch < -1.2f) g->pitch = -1.2f;
+            } else {
+                g->pan_x += in->mx - g->drag_x;
+                g->pan_y += in->my - g->drag_y;
+            }
             g->drag_x = in->mx;
             g->drag_y = in->my;
             ctx->dirty = 1;
         }
         if (in->released & LP_BUTTON_LEFT) g->dragging = 0;
         if (over) ctx->cursor = lp_graph_hit(g, canvas, in->mx, in->my) >= 0 ? LP_CURSOR_POINTER : LP_CURSOR_ARROW;
-        if (g->settled > 0) {
-            lp_graph_step(g);
-            lp_want_frame_rect(ctx, canvas);
-        }
         return reseed;
     }
     cairo_t *cr = ctx->cr;
     if (!cr) return -1;
+    if (!lp_clip_intersects(cr, canvas)) {
+        /* Off the damage: nothing to paint, but the settle owes a frame if it is still running. */
+        if (g->settled > 0) lp_want_frame_rect(ctx, canvas);
+        return -1;
+    }
+    /* Motion belongs to the DRAW pass: the host schedules frames from what a draw asks for. */
+    int reduced = ctx->settings && ctx->settings->reduced_motion;
+    float dt = g->last_ms > 0 && ctx->now_ms > g->last_ms ? (float)((ctx->now_ms - g->last_ms) / 1000.0) : 0;
+    if (dt > LP_MOTION_MAX_DT) dt = LP_MOTION_MAX_DT;
+    g->last_ms = ctx->now_ms;
+    int spinning = g->mode == LP_GRAPH_3D && !reduced && ctx->now_ms > 0 && !g->dragging && g->selected < 0 && !g->pointer_inside && g->node_count > 1;
+    if (spinning) g->yaw = fmodf(g->yaw + LP_GRAPH_SPIN * dt, 2 * (float)M_PI);
+    if (g->settled > 0 && !reduced) lp_graph_step(g);
+    else if (g->settled > 0) { while (lp_graph_step(g)) {} }
+    if (g->settled > 0 || spinning) lp_want_frame_rect(ctx, canvas);
+
     cairo_save(cr);
     lp_fill_solid(cr, canvas, LP_SURFACE_WELL, 0);
     cairo_rectangle(cr, canvas.x, canvas.y, canvas.w, canvas.h);
@@ -261,42 +358,73 @@ int lp_graph_widget(lp_ctx *ctx, lp_id id, lp_rect canvas, lp_graph *g, int *sel
         cairo_restore(cr);
         return -1;
     }
-    /* edges */
-    for (int e = 0; e < g->edge_count; e++) {
-        float ax, ay, bx, by;
-        to_canvas(g, canvas, &g->nodes[g->edges[e].a], &ax, &ay);
-        to_canvas(g, canvas, &g->nodes[g->edges[e].b], &bx, &by);
-        int touches = g->selected == g->edges[e].a || g->selected == g->edges[e].b;
-        float w = 0.8f + 0.5f * logf(1 + (float)(g->edges[e].weight > 0 ? g->edges[e].weight : 1));
-        lp_set_color(cr, touches ? LP_ACCENT_BLUE_BASE : lp_color_with_alpha(LP_INK_TERTIARY, 0.45f));
-        cairo_set_line_width(cr, touches ? w + 0.6f : w);
-        cairo_move_to(cr, ax, ay);
-        cairo_line_to(cr, bx, by);
-        cairo_stroke(cr);
-        if (g->zoom >= LP_GRAPH_LABEL_ZOOM && touches && g->edges[e].predicate[0]) {
-            lp_text_style ps = ls;
-            ps.color = LP_ACCENT_BLUE_DEEP;
-            lp_text_draw(cr, g->edges[e].predicate, LP_RECT((ax + bx) / 2 - 60, (ay + by) / 2 - 8, 120, 16), &ps, LP_ALIGN_CENTER);
+    /* project once per frame; paint the far first */
+    int order[LP_GRAPH_MAX_NODES];
+    float scales[LP_GRAPH_MAX_NODES];
+    for (int i = 0; i < g->node_count; i++) {
+        lp_graph_node *n = &g->nodes[i];
+        scales[i] = place(g, canvas, n, &n->px, &n->py, &n->depth);
+        order[i] = i;
+    }
+    if (g->mode == LP_GRAPH_3D) {
+        /* insertion sort by depth: at most 120 nodes, nearly sorted between frames */
+        for (int i = 1; i < g->node_count; i++) {
+            int v = order[i], j = i;
+            while (j > 0 && by_depth(&order[j - 1], &v, g) > 0) { order[j] = order[j - 1]; j--; }
+            order[j] = v;
         }
     }
-    /* nodes */
-    for (int i = 0; i < g->node_count; i++) {
-        const lp_graph_node *n = &g->nodes[i];
-        float x, y;
-        to_canvas(g, canvas, n, &x, &y);
-        float r = radius_of(n, g->zoom);
+    /* edges: the ones off the selection in one stroke, the selection's in another */
+    for (int touched = 0; touched < 2; touched++) {
+        cairo_new_path(cr);
+        int any = 0;
+        for (int e = 0; e < g->edge_count; e++) {
+            int t = g->selected == g->edges[e].a || g->selected == g->edges[e].b;
+            if (t != touched) continue;
+            const lp_graph_node *a = &g->nodes[g->edges[e].a], *b = &g->nodes[g->edges[e].b];
+            cairo_move_to(cr, a->px, a->py);
+            cairo_line_to(cr, b->px, b->py);
+            any = 1;
+        }
+        if (!any) continue;
+        lp_set_color(cr, touched ? LP_ACCENT_BLUE_BASE : lp_color_with_alpha(LP_INK_TERTIARY, 0.45f));
+        cairo_set_line_width(cr, touched ? 1.6f : 1.0f);
+        cairo_stroke(cr);
+    }
+    /* the selection's predicates */
+    if (g->selected >= 0 && g->zoom >= LP_GRAPH_LABEL_ZOOM) {
+        for (int e = 0; e < g->edge_count; e++) {
+            if ((g->selected != g->edges[e].a && g->selected != g->edges[e].b) || !g->edges[e].predicate[0]) continue;
+            const lp_graph_node *a = &g->nodes[g->edges[e].a], *b = &g->nodes[g->edges[e].b];
+            lp_text_style ps = ls;
+            ps.color = LP_ACCENT_BLUE_DEEP;
+            lp_text_draw(cr, g->edges[e].predicate, LP_RECT((a->px + b->px) / 2 - 60, (a->py + b->py) / 2 - 8, 120, 16), &ps, LP_ALIGN_CENTER);
+        }
+    }
+    /* nodes, far to near */
+    for (int k = 0; k < g->node_count; k++) {
+        int i = order[k];
+        lp_graph_node *n = &g->nodes[i];
+        float r = radius_of(n, g->zoom) * scales[i];
+        float fade = g->mode == LP_GRAPH_3D ? 0.45f + 0.55f * (n->depth + 0.87f) / 1.74f : 1;
+        if (fade > 1) fade = 1;
+        if (fade < 0.45f) fade = 0.45f;
         lp_color c = lp_graph_kind_color(n->kind);
-        cairo_arc(cr, x, y, r, 0, 2 * M_PI);
-        lp_set_color(cr, c);
+        cairo_arc(cr, n->px, n->py, r, 0, 2 * M_PI);
+        lp_set_color(cr, lp_color_with_alpha(c, fade));
         cairo_fill_preserve(cr);
-        lp_set_color(cr, i == g->selected ? LP_INK_PRIMARY : lp_color_with_alpha(LP_INK_PRIMARY, 0.35f));
+        lp_set_color(cr, i == g->selected ? LP_INK_PRIMARY : lp_color_with_alpha(LP_INK_PRIMARY, 0.35f * fade));
         cairo_set_line_width(cr, i == g->selected ? 2.2f : 1);
         cairo_stroke(cr);
-        if (g->zoom >= LP_GRAPH_LABEL_ZOOM || i == g->selected) {
+        if (i == g->selected) {
             lp_text_style ns = ls;
             ns.ellipsize = 1;
-            if (i == g->selected) ns.weight = LP_TEXT_WEIGHT_SEMIBOLD;
-            lp_text_draw(cr, n->name, LP_RECT(x - 70, y + r + 2, 140, 14), &ns, LP_ALIGN_CENTER);
+            ns.weight = LP_TEXT_WEIGHT_SEMIBOLD;
+            lp_text_draw(cr, n->name, LP_RECT(n->px - LABEL_W / 2, n->py + r + 2, LABEL_W, LABEL_H), &ns, LP_ALIGN_CENTER);
+        } else if (g->zoom >= LP_GRAPH_LABEL_ZOOM) {
+            cairo_surface_t *label = label_of(cr, n);
+            cairo_set_source_surface(cr, label, floorf(n->px - n->label_w / 2), floorf(n->py + r + 2));
+            cairo_paint_with_alpha(cr, fade);
         }
     }
     cairo_restore(cr);

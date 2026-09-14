@@ -43,7 +43,7 @@ static int usage(int status) {
         "       lp-render --terminal <out.png>           Terminal with a short sample session\n"
         "       lp-render --activity <out.png>           Activity Monitor over this machine's /proc\n"
         "       lp-render --diskutil <out.png>           Disk Utility over this machine's drives\n"
-        "       lp-render --thread TAB <out.png>         Threads on one tab (drive|library|document|graph|schemas|ledger|retrieval), with fixtures\n"
+        "       lp-render --thread TAB <out.png>         Threads on one tab (drive|library|document|graph|graph3d|schemas|ledger|retrieval), with fixtures\n"
         "       lp-render --player <out.png>             the Media Player with nothing open\n"
         "       lp-render --calendar <out.png>           Calendar on this month\n"
         "       lp-render --prefs <out.png>              System Settings on its General pane\n"
