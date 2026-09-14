@@ -665,15 +665,13 @@ int lp_mary_send_config(lp_mary *m, int wake, const char *voice) {
 
 int lp_mary_set_wake(lp_mary *m, int on) { return lp_mary_send_config(m, on != 0, NULL); }
 
-int lp_mary_send_recall(lp_mary *m, const char *voice_engine, const char *skill_engine, int personal, int conversation, int application, int behavioral) {
+int lp_mary_send_recall(lp_mary *m, const char *voice_engine, const char *skill_engine, int personal, int behavioral) {
     if (m->fd < 0) return -ENOTCONN;
     struct json_object *o = typed("config");
     if (voice_engine && *voice_engine) json_object_object_add(o, "voice_engine", json_object_new_string(voice_engine));
     if (skill_engine && *skill_engine) json_object_object_add(o, "skill_engine", json_object_new_string(skill_engine));
     struct json_object *recall = json_object_new_object();
     json_object_object_add(recall, "personal", json_object_new_boolean(personal != 0));
-    json_object_object_add(recall, "conversation", json_object_new_boolean(conversation != 0));
-    json_object_object_add(recall, "application", json_object_new_boolean(application != 0));
     json_object_object_add(recall, "behavioral", json_object_new_boolean(behavioral != 0));
     json_object_object_add(o, "recall", recall);
     return send_object(m, o);
@@ -758,7 +756,7 @@ int lp_mary_ambient_state(lp_mary *m) { return -ENOTCONN; }
 int lp_mary_list_trace(lp_mary *m) { return -ENOTCONN; }
 int lp_mary_trace_report(lp_mary *m) { return -ENOTCONN; }
 int lp_mary_confirm_reply(lp_mary *m, int yes) { (void)yes; return -ENOENT; }
-int lp_mary_send_recall(lp_mary *m, const char *voice_engine, const char *skill_engine, int personal, int conversation, int application, int behavioral) { return -ENOTCONN; }
+int lp_mary_send_recall(lp_mary *m, const char *voice_engine, const char *skill_engine, int personal, int behavioral) { return -ENOTCONN; }
 int lp_mary_list_calls(lp_mary *m, int limit) { (void)limit; return -ENOTCONN; }
 int lp_mary_triage(lp_mary *m, const char *text) { (void)text; return -ENOTCONN; }
 int lp_mary_stop(lp_mary *m) { return -ENOTCONN; }

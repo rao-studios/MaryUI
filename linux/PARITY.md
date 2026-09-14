@@ -459,8 +459,9 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   Mac's twin toggles, one per lane — Voice (Lane A) and Skills (Lane B), each `Mistral | Thinking Machines`
   (`mary_voice_engine`, `mary_skill_engine` in settings.conf); Mistral is the one served and the Thinking
   Machines segment is disabled (`lp_segmented_masked`) with the aside that it is a toggle for a later
-  implementation. **Recall** is four switches — Personal, Conversation, Application, Behavioral — naming
-  the record families each storage lane holds (`mary_recall_*`); both reach maryd as a second `config`
+  implementation. **Recall** is two switches — Personal (memory, file, style) and Behavioral (behavior,
+  routing) — naming the record families each storage lane holds (`mary_recall_*`; the conversation and
+  application lanes were retired with their records in 2026-09); both reach maryd as a second `config`
   line (`voice_engine, skill_engine, recall{…}`) on every connect and change. **Network activity** lists
   sewnd's calls ledger through maryd (`calls.list` → `calls{calls}`): time, purpose, provider, path, status
   and ms, newest first, with a total and a pointer to `sewnctl calls`; never a key, never a body.

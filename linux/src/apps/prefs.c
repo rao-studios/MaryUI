@@ -1301,15 +1301,13 @@ static float pane_mary(lp_ctx *ctx, struct prefs *p, lp_desktop *d, float x, flo
     }
 
     section(ctx, "Recall", x, &y, w);
-    note(ctx, "Which of the Thread's lanes a turn may retrieve from. Each is a set of record families on the drive.", x, &y, w);
+    note(ctx, "Which of the Thread's two lanes a turn may retrieve from. Each is a set of record families on the drive.", x, &y, w);
     {
-        struct { const char *name, *families; int *on; } lanes[4] = {
+        struct { const char *name, *families; int *on; } lanes[2] = {
             { "Personal", "memory, file, style \xE2\x80\x94 what you know, wrote and keep", &d->settings.mary_recall_personal },
-            { "Conversation", "conversation \xE2\x80\x94 what was said, turn by turn", &d->settings.mary_recall_conversation },
-            { "Application", "ability, ability-schema, application \xE2\x80\x94 what the apps can do and hold", &d->settings.mary_recall_application },
-            { "Behavioral", "behavior, interaction, routing \xE2\x80\x94 what Mary did before, and how you ask", &d->settings.mary_recall_behavioral },
+            { "Behavioral", "behavior, routing \xE2\x80\x94 what Mary did before, and how you ask", &d->settings.mary_recall_behavioral },
         };
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 2; i++) {
             row_y = y;
             int on = *lanes[i].on;
             if (toggle_row(ctx, lp_id_index(base, 430 + i), lanes[i].name, x, &y, &on)) {
@@ -1370,15 +1368,15 @@ static float pane_mary(lp_ctx *ctx, struct prefs *p, lp_desktop *d, float x, flo
 
     section(ctx, "Memory", x, &y, w);
     {
-        char counts[200] = "The drive's memory is threadd; it has not answered yet.";
+        char counts[240] = "The drive's memory is threadd; it has not answered yet.";
 #ifdef HAVE_JSONC
         struct json_object *stats = lp_thread_answer(&d->thread, LP_THREAD_STATS), *v;
         if (stats) {
             long documents = json_object_object_get_ex(stats, "documents", &v) ? json_object_get_int(v) : 0;
             long files = json_object_object_get_ex(stats, "files", &v) ? json_object_get_int(v) : 0;
             long entities = json_object_object_get_ex(stats, "entities", &v) ? json_object_get_int(v) : 0;
-            snprintf(counts, sizeof counts, "%ld record%s on the drive, %ld of them files \xC2\xB7 %ld entit%s in the graph", documents, documents == 1 ? "" : "s", files,
-                     entities, entities == 1 ? "y" : "ies");
+            snprintf(counts, sizeof counts, "%ld record%s on the drive, %ld of them files; the rest what Sewn remembered and what Mary did \xC2\xB7 %ld entit%s in the graph",
+                     documents, documents == 1 ? "" : "s", files, entities, entities == 1 ? "y" : "ies");
         }
 #endif
         label(ctx, "The Thread", x, y);

@@ -373,7 +373,7 @@ static void paint_document(lp_ctx *ctx, struct thread_app *a, lp_rect area, lp_i
         }
         if (ep) json_object_put(ep);
     } else {
-        paragraph(ctx, LP_RECT(c.x, c.y, c.w, extent.h), joined ? joined : "", LP_INK_PRIMARY, family && strcmp(family, "conversation") == 0);
+        paragraph(ctx, LP_RECT(c.x, c.y, c.w, extent.h), joined ? joined : "", LP_INK_PRIMARY, family && strcmp(family, "memory") == 0);   /* a memory reads as Sewn wrote it */
     }
     free(joined);
     lp_scroll_end(ctx);

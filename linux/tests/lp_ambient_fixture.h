@@ -31,7 +31,7 @@ static const char LP_AMBIENT_STATE_LINE[] =
 #define LP_AMBIENT_ROUTE_ASK \
     "{\"intent\":\"ask\",\"decidedBy\":\"namedPart\",\"verdicts\":{\"actionTurn\":false,\"namedPart\":\"tide\",\"namesAmbientSource\":false,\"isDeictic\":false,\"namesTransform\":false},"\
     "\"gate\":{\"questions\":[\"what\"],\"requestedAbilities\":[],\"applications\":[],\"memory\":{\"lanes\":[\"personal\"],\"abilityTargets\":[],\"lanePriority\":[\"personal\"],"\
-    "\"relationshipHints\":[\"contains\",\"describes\",\"is\"],\"expandDisciplineUsage\":false,\"storageLanes\":[\"personal\",\"conversation\"]},\"semanticProjection\":\"what does the document say about the tide? [relationships: contains, describes, is]\"},"\
+    "\"relationshipHints\":[\"contains\",\"describes\",\"is\"],\"expandDisciplineUsage\":false,\"storageLanes\":[\"personal\"]},\"semanticProjection\":\"what does the document say about the tide? [relationships: contains, describes, is]\"},"\
     "\"world\":{\"sense\":\"workspace\",\"attention\":\"applications\",\"subject\":\"Tides\",\"applicationID\":\"textedit\",\"fresh\":true},\"selectionDefinesTurn\":false,"\
     "\"leadApplicationID\":\"textedit\",\"leadPlace\":{\"token\":\"applications:textedit\",\"name\":\"TextEdit\",\"class\":\"workspace\",\"hasEyes\":true,\"focus\":\"writing\"},\"namedPlaces\":[],"\
     "\"realm\":{\"need\":{\"abilities\":[]},\"candidates\":["\
@@ -44,7 +44,7 @@ static const char LP_AMBIENT_STATE_LINE[] =
 #define LP_AMBIENT_ROUTE_CHAT \
     "{\"intent\":\"converse\",\"decidedBy\":\"none\",\"verdicts\":{\"actionTurn\":false,\"namesAmbientSource\":false,\"isDeictic\":false,\"namesTransform\":false},"\
     "\"gate\":{\"questions\":[\"how\"],\"requestedAbilities\":[],\"applications\":[],\"memory\":{\"lanes\":[\"personal\"],\"abilityTargets\":[],\"lanePriority\":[\"personal\"],\"relationshipHints\":[\"operates\",\"supports\",\"workflow\"],"\
-    "\"expandDisciplineUsage\":false,\"storageLanes\":[\"personal\",\"conversation\"]},\"semanticProjection\":\"how was your day [relationships: operates, supports, workflow]\"},"\
+    "\"expandDisciplineUsage\":false,\"storageLanes\":[\"personal\"]},\"semanticProjection\":\"how was your day [relationships: operates, supports, workflow]\"},"\
     "\"selectionDefinesTurn\":false,\"namedPlaces\":[],\"realm\":{\"need\":{\"abilities\":[]},\"candidates\":[],\"decidedBy\":\"none\"},"\
     "\"candidateAttentions\":[\"applications\",\"mac\",\"system\",\"window-management\",\"typer\"],\"needsLocate\":false,\"needsPreRead\":false,\"needsExecution\":false,\"rankingMode\":\"relevance\",\"isActionTurn\":false}"
 
@@ -54,11 +54,11 @@ static const char LP_AMBIENT_TRACE_LINE[] =
     "\"systemPromptChars\":4180,\"exposedSkillCount\":0,\"packageIDs\":[\"textedit\",\"finder\",\"preview\",\"calendar\",\"media\",\"terminal\",\"settings\",\"calculator\"],"
     "\"skillRuns\":[{\"app\":\"textedit\",\"skill\":\"read\",\"invocation\":\"textedit.read\",\"status\":\"completed\",\"effect\":\"read\",\"started\":1757700003200,\"finished\":1757700003260,\"foundNothing\":false,\"args\":\"{\\\"about\\\":\\\"tide\\\"}\",\"result\":\"{\\\"passage\\\":\\\"The tide comes in twice a day\\\"}\"}],"
     "\"coActivePlaces\":[{\"token\":\"applications:media\",\"name\":\"Media Player\"}],\"glancedPlaces\":[],"
-    "\"retrieval\":[{\"name\":\"context\",\"lanes\":[\"personal\",\"conversation\"],\"returned\":[{\"document_id\":\"file-2b3c4d5e6f7a8b9c\",\"group_id\":\"files-mary\",\"family\":\"file\",\"lane\":\"personal\",\"score\":4.21},"
-    "{\"document_id\":\"mary-turn-1757699000000-c3d4\",\"group_id\":\"conversation-mary\",\"family\":\"conversation\",\"lane\":\"conversation\",\"score\":3.02}]}],"
+    "\"retrieval\":[{\"name\":\"context\",\"lanes\":[\"personal\"],\"returned\":[{\"document_id\":\"file-2b3c4d5e6f7a8b9c\",\"group_id\":\"files-mary\",\"family\":\"file\",\"lane\":\"personal\",\"score\":4.21},"
+    "{\"document_id\":\"1122334455667788990011\",\"group_id\":\"memory-mary\",\"family\":\"memory\",\"lane\":\"personal\",\"score\":3.02}]}],"
     "\"contribution\":\"1 owner, 2 documents, 3 passages\"},"
     "{\"id\":\"mary-turn-1757699900000-e5f6\",\"date\":1757699900000,\"age\":115,\"utterance\":\"how was your day\",\"route\":" LP_AMBIENT_ROUTE_CHAT ","
     "\"systemPromptChars\":2311,\"exposedSkillCount\":0,\"packageIDs\":[],\"skillRuns\":[],\"coActivePlaces\":[],\"glancedPlaces\":[],"
-    "\"retrieval\":[{\"name\":\"context\",\"lanes\":[\"personal\",\"conversation\"],\"returned\":[],\"warning\":\"asked nothing back\"}]}]}\n";
+    "\"retrieval\":[{\"name\":\"context\",\"lanes\":[\"personal\"],\"returned\":[],\"warning\":\"asked nothing back\"}]}]}\n";
 
 #endif

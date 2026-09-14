@@ -41,7 +41,7 @@ int lp_desktop_publish_mary_config(lp_desktop *d) {
     int rc = lp_mary_send_config(&d->mary, d->settings.mary_wake != 0, d->settings.mary_voice[0] ? d->settings.mary_voice : NULL);
     if (rc == 0)
         rc = lp_mary_send_recall(&d->mary, d->settings.mary_voice_engine, d->settings.mary_skill_engine, d->settings.mary_recall_personal,
-                                 d->settings.mary_recall_conversation, d->settings.mary_recall_application, d->settings.mary_recall_behavioral);
+                                 d->settings.mary_recall_behavioral);
     return rc;
 }
 

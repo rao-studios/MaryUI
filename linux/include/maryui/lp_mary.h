@@ -212,9 +212,9 @@ int lp_mary_verify_key(lp_mary *m);
 int lp_mary_set_wake(lp_mary *m, int on);
 /* config: `wake` 0 or 1 (-1 leaves it out), and a voice id (NULL leaves it out). */
 int lp_mary_send_config(lp_mary *m, int wake, const char *voice);
-/* config{voice_engine, skill_engine, recall{personal, conversation, application, behavioral}}: the engine of each lane
- * ("mistral" | "tinker"; NULL leaves it out) and which storage lanes retrieval may draw on. */
-int lp_mary_send_recall(lp_mary *m, const char *voice_engine, const char *skill_engine, int personal, int conversation, int application, int behavioral);
+/* config{voice_engine, skill_engine, recall{personal, behavioral}}: the engine of each lane ("mistral" | "tinker"; NULL
+ * leaves it out) and which of the Thread's two storage lanes retrieval may draw on. */
+int lp_mary_send_recall(lp_mary *m, const char *voice_engine, const char *skill_engine, int personal, int behavioral);
 /* calls.list{limit}: sewnd's calls ledger through maryd (the answer sets LP_MARY_CHANGED_CALLS). */
 int lp_mary_list_calls(lp_mary *m, int limit);
 /* voices.list; the answer fills voices[] (LP_MARY_CHANGED_VOICES). */

@@ -41,7 +41,7 @@ typedef struct lp_settings {
     char mary_voice_engine[16];
     char mary_skill_engine[16];
     /* Recall: which storage lanes of the Thread a turn may retrieve from (personal, conversation, application, behavioral). */
-    int mary_recall_personal, mary_recall_conversation, mary_recall_application, mary_recall_behavioral;
+    int mary_recall_personal, mary_recall_behavioral;   /* the Thread's two storage lanes a turn may draw on (System Settings › Mary › Recall) */
 } lp_settings;
 
 /* "mistral" or "tinker": the engines the wire knows (only Mistral is served this phase). */

@@ -16,7 +16,7 @@ lp_settings lp_settings_defaults(void) {
                           .wallpaper = LP_WALLPAPER_MOLTEN, .molten_tone = LP_MOLTEN_PLATINUM, .reduced_motion = 0,
                           .clock = 1, .key_repeat_rate = 25, .key_repeat_delay = 600, .mary_wake = 1,
                           .mary_voice = "fr_marie_neutral", .mary_voice_engine = "mistral", .mary_skill_engine = "mistral",
-                          .mary_recall_personal = 1, .mary_recall_conversation = 1, .mary_recall_application = 1, .mary_recall_behavioral = 1 };
+                          .mary_recall_personal = 1, .mary_recall_behavioral = 1 };
 }
 
 void lp_config_path(const char *name, char *out, size_t n, int mkdirs) {
@@ -79,8 +79,6 @@ lp_settings lp_settings_load(void) {
         else if (strcmp(key, "mary_voice_engine") == 0 && lp_settings_engine_known(value)) snprintf(s.mary_voice_engine, sizeof s.mary_voice_engine, "%s", value);
         else if (strcmp(key, "mary_skill_engine") == 0 && lp_settings_engine_known(value)) snprintf(s.mary_skill_engine, sizeof s.mary_skill_engine, "%s", value);
         else if (strcmp(key, "mary_recall_personal") == 0) s.mary_recall_personal = strcmp(value, "off") != 0 && strcmp(value, "0") != 0;
-        else if (strcmp(key, "mary_recall_conversation") == 0) s.mary_recall_conversation = strcmp(value, "off") != 0 && strcmp(value, "0") != 0;
-        else if (strcmp(key, "mary_recall_application") == 0) s.mary_recall_application = strcmp(value, "off") != 0 && strcmp(value, "0") != 0;
         else if (strcmp(key, "mary_recall_behavioral") == 0) s.mary_recall_behavioral = strcmp(value, "off") != 0 && strcmp(value, "0") != 0;
     }
     fclose(f);
@@ -113,8 +111,7 @@ int lp_settings_save(const lp_settings *s) {
     fprintf(f, "# Mary\nmary_wake=%s\nmary_voice=%s\n", s->mary_wake ? "on" : "off", voice_name(s->mary_voice) ? s->mary_voice : "fr_marie_neutral");
     fprintf(f, "mary_voice_engine=%s\nmary_skill_engine=%s\n", lp_settings_engine_known(s->mary_voice_engine) ? s->mary_voice_engine : "mistral",
             lp_settings_engine_known(s->mary_skill_engine) ? s->mary_skill_engine : "mistral");
-    fprintf(f, "mary_recall_personal=%s\nmary_recall_conversation=%s\nmary_recall_application=%s\nmary_recall_behavioral=%s\n",
-            s->mary_recall_personal ? "on" : "off", s->mary_recall_conversation ? "on" : "off", s->mary_recall_application ? "on" : "off", s->mary_recall_behavioral ? "on" : "off");
+    fprintf(f, "mary_recall_personal=%s\nmary_recall_behavioral=%s\n", s->mary_recall_personal ? "on" : "off", s->mary_recall_behavioral ? "on" : "off");
     if (s->dock[0]) fprintf(f, "dock=%s\n", s->dock);
     fclose(f);
     return 0;
