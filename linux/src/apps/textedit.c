@@ -275,7 +275,7 @@ static const char *const TE_INSERT_PHRASES[] = { "insert text", "write this down
 static const char *const TE_REPLACE_TOKENS[] = { "replace", "rewrite" };
 static const char *const TE_REPLACE_PHRASES[] = { "replace the selection", "replace this with", "rewrite the selection" };
 static const char *const TE_SAVE_TOKENS[] = { "save" };
-static const char *const TE_NOTE_TOKENS[] = { "note", "new", "document" };
+static const char *const TE_NOTE_TOKENS[] = { "write", "note", "new", "document" };   /* "write" first: the verb the no-model dispatch peels */
 static const char *const TE_NOTE_PHRASES[] = { "write a new note", "new note", "make a new note", "start a new document", "write a note" };
 static const char *const TE_SAVE_PHRASES[] = { "save the document", "save this", "save the file" };
 static const char *const TE_CLASSES[] = { "document", "text", "selection" };
@@ -295,7 +295,7 @@ static const lp_skill textedit_skills[] = {
       .phrases = TE_REPLACE_PHRASES, .phrase_count = 3, .target_classes = TE_CLASSES, .target_class_count = 3 },
     { .id = "new_document", .title = "Write a new note", .summary = "Opens a fresh untitled note and types the text into it, leaving any open document alone.",
       .params = "{\"type\":\"object\",\"properties\":{\"text\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"}}}",
-      .effect = LP_SKILL_ACT, .kind = "effectful", .access = "reversible", .triggers = TE_NOTE_TOKENS, .trigger_count = 3,
+      .effect = LP_SKILL_ACT, .kind = "effectful", .access = "reversible", .triggers = TE_NOTE_TOKENS, .trigger_count = 4,
       .phrases = TE_NOTE_PHRASES, .phrase_count = 5, .target_classes = TE_CLASSES, .target_class_count = 3 },
     { .id = "save", .title = "Save the document", .summary = "Writes the document back where it came from.",
       .effect = LP_SKILL_ACT, .kind = "effectful", .access = "reversible", .triggers = TE_SAVE_TOKENS, .trigger_count = 1,
