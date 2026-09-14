@@ -172,14 +172,30 @@ static int render_segmented(const char *path) {
         lp_segmented(&ctx, slide, 20, 50, TABS, 4, &sliding, LP_CONTROL_MD);
         lp_ctx_end(&ctx);
     }
+    /* the hovered one: at rest until the segment beside the selection went hot 70 ms ago, a frame at a time
+     * since (the bead and the tension ease on springs stepped between frames) */
+    lp_ctx_begin(&ctx, LP_PASS_DRAW, cr, NULL, LP_RECT(0, 0, w, h), 1026);
+    lp_segmented(&ctx, hover, 20, 86, TABS, 4, &hovered, LP_CONTROL_MD);
+    lp_ctx_end(&ctx);
+    lp_size hs = lp_segmented_measure(&ctx, TABS, 4, LP_CONTROL_MD);
+    float hseg = (hs.w - 2 * LP_SIZE_SEGMENTED_PAD) / 4;
+    lp_input over = { 0 };
+    over.mx = 20 + LP_SIZE_SEGMENTED_PAD + hseg * 2.5f;
+    over.my = 86 + hs.h / 2;
+    lp_ctx_begin(&ctx, LP_PASS_EVENT, NULL, &over, LP_RECT(0, 0, w, h), 1026);
+    lp_segmented(&ctx, hover, 20, 86, TABS, 4, &hovered, LP_CONTROL_MD);
+    lp_ctx_end(&ctx);
+    for (int t = 1042; t < 1096; t += 16) {
+        lp_ctx_begin(&ctx, LP_PASS_DRAW, cr, NULL, LP_RECT(0, 0, w, h), t);
+        lp_segmented(&ctx, hover, 20, 86, TABS, 4, &hovered, LP_CONTROL_MD);
+        lp_ctx_end(&ctx);
+    }
     cairo_set_source_rgb(cr, 0.93f, 0.94f, 0.95f);
     cairo_paint(cr);
     lp_ctx_begin(&ctx, LP_PASS_DRAW, cr, NULL, LP_RECT(0, 0, w, h), 1096);
     lp_segmented(&ctx, LP_ID("render.rest"), 20, 14, TABS, 4, &rest, LP_CONTROL_MD);
     lp_segmented(&ctx, slide, 20, 50, TABS, 4, &sliding, LP_CONTROL_MD);
-    ctx.hot = lp_id_index(hover, 2);          /* the segment beside the selection, hovered 70 ms ago */
-    ctx.hot_since_ms = 1096 - 70;
-    lp_segmented(&ctx, hover, 20, 86, TABS, 4, &hovered, LP_CONTROL_MD);
+    lp_segmented(&ctx, hover, 20, 86, TABS, 4, &hovered, LP_CONTROL_MD);   /* the segment beside the selection, hovered 70 ms ago */
     lp_ctx_end(&ctx);
     cairo_destroy(cr);
     int rc = write_png(s, path);

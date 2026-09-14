@@ -36,6 +36,7 @@ struct mui_chrome {
     int painting;                /* a pass is running: a repaint asked for from inside it is left to the caller */
     int ambient;                 /* the last full paint of ambient_rect asked for another frame */
     lp_rect ambient_rect;
+    int ambient_motion;          /* … and part of it answers the person (lp_want_motion_rect): every refresh */
 };
 
 void mui_chrome_init(struct mui_chrome *chrome, struct mui_server *server, struct wlr_scene_tree *parent,
@@ -58,6 +59,8 @@ void mui_chrome_key(struct mui_chrome *chrome, uint32_t keysym, uint32_t mods, c
 void mui_chrome_scroll(struct mui_chrome *chrome, float dx, float dy, double now_ms);
 /* Whether an ambient animation (progress glint, rolling bubble) wants another frame, and where. */
 int mui_chrome_wants_frame(const struct mui_chrome *chrome);
+/* Whether that animation wants the display's rate (lp_want_motion_rect) rather than the ambient 30 Hz. */
+int mui_chrome_wants_motion(const struct mui_chrome *chrome);
 lp_rect mui_chrome_ambient_rect(const struct mui_chrome *chrome);
 /* Repaint the damaged region (or everything on the first paint) and publish it. */
 void mui_chrome_repaint(struct mui_chrome *chrome, double now_ms);

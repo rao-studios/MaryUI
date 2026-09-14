@@ -227,7 +227,9 @@ int mui_desktop_key(struct mui_server *server, uint32_t keysym, uint32_t modifie
 /* A wheel event at the pointer; returns 1 when a chrome consumed it. */
 int mui_desktop_scroll(struct mui_server *server, double lx, double ly, float dx, float dy);
 /* Repaints chromes whose last paint asked for another frame. */
-void mui_desktop_ambient_tick(struct mui_server *server);
+/* Repaints the chromes whose animations asked for a frame; with motion_only, only those that answer the
+ * person (lp_want_motion_rect), between the ambient 30 Hz ticks. */
+void mui_desktop_ambient_tick(struct mui_server *server, int motion_only);
 /* Advances the molten wallpaper while the desktop is already animating, and
  * re-bakes the full-resolution still once it settles. `moving` is whether the
  * motion engine is active this frame. Never asks for a frame of its own. */

@@ -763,13 +763,13 @@ void mui_desktop_molten_tick(struct mui_server *server, double now_ms, float dt,
     }
 }
 
-void mui_desktop_ambient_tick(struct mui_server *server) {
+void mui_desktop_ambient_tick(struct mui_server *server, int motion_only) {
     struct mui_window *win;
     wl_list_for_each(win, &server->windows, link) {
-        if (mui_chrome_wants_frame(&win->chrome)) { mui_chrome_damage(&win->chrome, mui_chrome_ambient_rect(&win->chrome)); mui_chrome_repaint(&win->chrome, mui_now_ms()); }
+        if (mui_chrome_wants_frame(&win->chrome) && (!motion_only || mui_chrome_wants_motion(&win->chrome))) { mui_chrome_damage(&win->chrome, mui_chrome_ambient_rect(&win->chrome)); mui_chrome_repaint(&win->chrome, mui_now_ms()); }
     }
     /* Spotlight's conversation breathes while Mary listens, thinks or speaks. */
-    if (server->spotlight && mui_chrome_wants_frame(server->spotlight)) {
+    if (server->spotlight && mui_chrome_wants_frame(server->spotlight) && (!motion_only || mui_chrome_wants_motion(server->spotlight))) {
         mui_chrome_damage(server->spotlight, mui_chrome_ambient_rect(server->spotlight));
         mui_chrome_repaint(server->spotlight, mui_now_ms());
     }

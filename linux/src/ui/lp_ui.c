@@ -17,6 +17,7 @@ void lp_ctx_begin(lp_ctx *ctx, enum lp_pass pass, cairo_t *cr, const lp_input *i
     ctx->has_next_hot_rect = 0;
     ctx->cursor = LP_CURSOR_ARROW;
     ctx->wants_frame = 0;
+    ctx->wants_motion = 0;
     ctx->wants_frame_rect = LP_RECT(0, 0, 0, 0);
     ctx->has_damage = 0;
     ctx->damage = LP_RECT(0, 0, 0, 0);
@@ -151,15 +152,22 @@ int lp_is_active(const lp_ctx *ctx, lp_id id) { return ctx->active == id; }
 int lp_is_hot(const lp_ctx *ctx, lp_id id) { return ctx->hot == id; }
 void lp_want_frame(lp_ctx *ctx) { lp_want_frame_rect(ctx, ctx->bounds); }
 
-void lp_want_frame_rect(lp_ctx *ctx, lp_rect r) {
+/* 1 when the request was taken (not clipped or off the chrome). */
+static int want_frame(lp_ctx *ctx, lp_rect r) {
     if (ctx->cr) {
-        /* Scrolled out of view (or otherwise clipped away): nothing to animate. */
+        /* Scrolled out of view (or otherwise clipped away): nothing to animate. Partly inside, the whole
+         * rect is owed frames: this pass's damage clip is not the animation's extent, and cutting the
+         * request down to it left a sliding thumb repainting in one strip and catching up in flashes. */
         double x1, y1, x2, y2;
         cairo_clip_extents(ctx->cr, &x1, &y1, &x2, &y2);
-        float cx0 = r.x > x1 ? r.x : (float)x1, cy0 = r.y > y1 ? r.y : (float)y1;
-        float cx1 = r.x + r.w < x2 ? r.x + r.w : (float)x2, cy1 = r.y + r.h < y2 ? r.y + r.h : (float)y2;
-        if (cx1 <= cx0 || cy1 <= cy0) return;
-        r = LP_RECT(cx0, cy0, cx1 - cx0, cy1 - cy0);
+        if (r.x + r.w <= x1 || r.x >= x2 || r.y + r.h <= y1 || r.y >= y2) return 0;
+    }
+    lp_rect b = ctx->bounds;
+    if (b.w > 0 && b.h > 0) {
+        float x0 = r.x > b.x ? r.x : b.x, y0 = r.y > b.y ? r.y : b.y;
+        float x1 = r.x + r.w < b.x + b.w ? r.x + r.w : b.x + b.w, y1 = r.y + r.h < b.y + b.h ? r.y + r.h : b.y + b.h;
+        if (x1 <= x0 || y1 <= y0) return 0;
+        r = LP_RECT(x0, y0, x1 - x0, y1 - y0);
     }
     if (!ctx->wants_frame) {
         ctx->wants_frame_rect = r;
@@ -170,6 +178,13 @@ void lp_want_frame_rect(lp_ctx *ctx, lp_rect r) {
         ctx->wants_frame_rect = LP_RECT(x0, y0, x1 - x0, y1 - y0);
     }
     ctx->wants_frame = 1;
+    return 1;
+}
+
+void lp_want_frame_rect(lp_ctx *ctx, lp_rect r) { want_frame(ctx, r); }
+
+void lp_want_motion_rect(lp_ctx *ctx, lp_rect r) {
+    if (want_frame(ctx, r)) ctx->wants_motion = 1;
 }
 
 int lp_clicked(lp_ctx *ctx, lp_id id, lp_rect r) {

@@ -56,11 +56,18 @@ void mui_engine_wake(void *user) {
     mui_server_schedule_frame(server);
 }
 
+/* 0: nothing; 1: ambient animations only (30 Hz); 2: at least one answers the person (every refresh). */
+static int chrome_pending(const struct mui_chrome *chrome, int pending) {
+    if (!mui_chrome_wants_frame(chrome)) return pending;
+    return mui_chrome_wants_motion(chrome) ? 2 : pending ? pending : 1;
+}
+
 static int ambient_pending(struct mui_server *server) {
+    int pending = 0;
     struct mui_window *win;
-    wl_list_for_each(win, &server->windows, link) if (mui_chrome_wants_frame(&win->chrome)) return 1;
-    if (server->spotlight && mui_chrome_wants_frame(server->spotlight)) return 1;
-    return 0;
+    wl_list_for_each(win, &server->windows, link) pending = chrome_pending(&win->chrome, pending);
+    if (server->spotlight) pending = chrome_pending(server->spotlight, pending);
+    return pending;
 }
 
 /* MARYUI_DEBUG=frames: a histogram of the frame handler's own time, every 5 s while frames run. */
@@ -143,11 +150,17 @@ static void output_frame(struct wl_listener *listener, void *data) {
     active |= mui_desktop_animate(server, now_ms);
     if (server->debug_frames) server->frame_stats.anim_ms += mui_now_ms() - t_anim;
 
-    /* Ambient animations (bubbles rolling, progress glints) repaint at most 30 times a second. */
+    /* Ambient animations (bubbles rolling, progress glints) repaint at most 30 times a second. Motion that
+     * answers the person (a segmented control's thumb sliding to a click, its bead easing under the pointer)
+     * repaints every refresh — at 30 Hz a 200 ms slide is six visible steps — and its pixels commit in this
+     * frame rather than waiting for the next. The ambient ones keep their 30 Hz meanwhile. */
     static double last_ambient = 0;
-    if (ambient_pending(server) && now_ms - last_ambient >= 1000.0 / 30) {
-        last_ambient = now_ms;
-        mui_desktop_ambient_tick(server);
+    int pending = ambient_pending(server);
+    int ambient_due = pending && now_ms - last_ambient >= 1000.0 / 30;
+    if (ambient_due || pending == 2) {
+        if (ambient_due) last_ambient = now_ms;
+        mui_desktop_ambient_tick(server, !ambient_due);
+        if (pending == 2) active = 1;
     }
 
     /* A frame the backend asked for with nothing new to show (no damage, no motion, pointer still)

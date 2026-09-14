@@ -170,10 +170,13 @@ void mui_chrome_repaint(struct mui_chrome *chrome, double now_ms) {
             float x1 = fmaxf(a.x + a.w, r.x + r.w), y1 = fmaxf(a.y + a.h, r.y + r.h);
             r = LP_RECT(x0, y0, x1 - x0, y1 - y0);
         }
+        /* motion stays owed with the old rect it came from, like the rect itself */
+        chrome->ambient_motion = chrome->ctx.wants_motion || (chrome->ambient && !covered && chrome->ambient_motion);
         chrome->ambient = 1;
         chrome->ambient_rect = r;
     } else if (covered) {
         chrome->ambient = 0;
+        chrome->ambient_motion = 0;
     }
     /* This buffer now matches the screen; every other one is behind by what we
      * just painted. */
@@ -234,6 +237,7 @@ void mui_chrome_scroll(struct mui_chrome *chrome, float dx, float dy, double now
 }
 
 int mui_chrome_wants_frame(const struct mui_chrome *chrome) { return chrome->ambient; }
+int mui_chrome_wants_motion(const struct mui_chrome *chrome) { return chrome->ambient && chrome->ambient_motion; }
 lp_rect mui_chrome_ambient_rect(const struct mui_chrome *chrome) { return chrome->ambient_rect; }
 
 void mui_chrome_pointer_leave(struct mui_chrome *chrome, double now_ms) {

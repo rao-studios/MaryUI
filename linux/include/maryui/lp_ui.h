@@ -102,6 +102,7 @@ typedef struct lp_ctx {
     double now_ms;
     int wants_frame;          /* an ambient animation asks for another frame */
     lp_rect wants_frame_rect; /* where it lives (union); the host repaints only this much */
+    int wants_motion;         /* one of those answers the person: the host serves it at the display's rate */
     const struct lp_settings *settings;
     lp_text_menu_request text_menu;
 } lp_ctx;
@@ -133,8 +134,12 @@ float lp_hover_progress(const lp_ctx *ctx, lp_id id, float in_ms, float out_ms, 
 float lp_press_progress(const lp_ctx *ctx, lp_id id, float in_ms, float out_ms, int *moving);
 /* Asks the host for another frame; the whole chrome is repainted. */
 void lp_want_frame(lp_ctx *ctx);
-/* Asks for another frame for r only (a progress glint, a rolling bubble). */
+/* Asks for another frame for r only (a progress glint, a rolling bubble). The compositor serves these at
+ * 30 Hz. A rect partly inside this pass's clip is owed frames whole; one wholly outside it asks nothing. */
 void lp_want_frame_rect(lp_ctx *ctx, lp_rect r);
+/* The same, for motion that answers the person (a thumb sliding to a click, a bead easing under the pointer):
+ * the compositor gives it a frame every refresh, since 30 steps a second show as steps in a 200 ms slide. */
+void lp_want_motion_rect(lp_ctx *ctx, lp_rect r);
 
 /* Layout helpers: cut a strip off an area, split an area into columns/rows. */
 lp_rect lp_rect_inset(lp_rect r, float dx, float dy);

@@ -72,6 +72,8 @@ int lp_segmented_masked(lp_ctx *ctx, lp_id id, float x, float y, const lp_segmen
 /* For tests and renders: where the control's thumb is, in segment units (2.4 = between the third and
  * the fourth), or -1 while the control has never been drawn. */
 float lp_segmented_thumb(lp_id id);
+/* The bead a segment carried on the control's last frame, 0..0.85 (tests): both the rising and the falling one. */
+float lp_segmented_bead(lp_id id, int segment);
 
 /* ProgressBar — an 8px inset rail with a liquid accent fill; value < 0 is indeterminate (barber pole). */
 #define LP_PROGRESS_H 8

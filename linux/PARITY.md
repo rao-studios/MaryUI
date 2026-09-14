@@ -166,7 +166,14 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   the specular dome, the rim shade), which is affordable because the layer is one small track, built
   only when the control is inside the damage clip, and lit at the xxs scale where the filter fuses a
   join rather than reshaping beads. The thumb's slide is a spring and the bead's rise and fall are the
-  web's transitions, all driven from the DRAW pass with `lp_want_frame_rect`.
+  web's transitions, all driven from the DRAW pass with `lp_want_motion_rect`, which the compositor
+  serves every refresh (ambient animations keep their 30 Hz; at 30 Hz a 200 ms slide was six steps). What the browser gives
+  the filter for free had to be written in: the cut is anti-aliased to a one-device-pixel edge (at
+  the tokens' slope it is a tenth of a pixel, so a sliding thumb's edge crawled and a fading bead
+  popped in whole), every bead goes into the layer and eases on its own spring (a crossing merges
+  rather than blinks), the tension eases between rest and flow instead of switching, the EVENT pass measures the segments with Pango as the DRAW pass
+  does, a hover change damages the whole track, and a frame request partly inside the damage clip keeps
+  its whole rect (`lp_want_frame_rect`), since the merge reshapes the thumb well past the hovered segment.
 - **D9 — the Terminal tile.** Spotlight lists `Terminal` as a command on both sides. In C it runs
   `LP_CMD_NEW_TERMINAL` (`spawn("foot")`) and the dock's dot lights while a client window is
   open; on the web it is a no-op — the browser has no processes. Since D15 the built-in Terminal is registered, so

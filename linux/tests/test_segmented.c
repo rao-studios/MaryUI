@@ -81,6 +81,7 @@ LP_TEST(midway_the_thumb_is_between_the_segments_and_the_frame_is_the_tracks) {
     lp_segmented(&ctx, id, 10, 10, THREE, 3, &index, LP_CONTROL_SM);
     lp_size sz = lp_segmented_measure(&ctx, THREE, 3, LP_CONTROL_SM);
     LP_ASSERT(ctx.wants_frame);
+    LP_ASSERT(ctx.wants_motion);                               /* the display's rate: it answers the person */
     lp_rect r = ctx.wants_frame_rect;
     LP_ASSERT(r.x >= 0 && r.x <= 10 && r.w <= sz.w + 12 && r.h <= sz.h + 12);   /* the track, padded, not the chrome */
     lp_ctx_end(&ctx);
@@ -117,11 +118,11 @@ LP_TEST(hovering_a_segment_raises_the_bead_and_leaving_lets_it_fall) {
     event(&ctx, id, &index, pointer(10 + LP_SIZE_SEGMENTED_PAD + seg * 1.5f, 10 + sz.h / 2), 3010);   /* over the second segment */
     LP_ASSERT(lp_is_hot(&ctx, lp_id_index(id, 1)));
     LP_ASSERT_EQ(draw(&ctx, id, &index, 3020), 1);            /* rising */
-    LP_ASSERT_EQ(draw(&ctx, id, &index, 3400), 0);            /* fully up: nothing left to animate */
-    event(&ctx, id, &index, pointer(300, 55), 3410);           /* away */
+    LP_ASSERT_EQ(draw(&ctx, id, &index, 3600), 0);            /* fully up: nothing left to animate */
+    event(&ctx, id, &index, pointer(300, 55), 3610);           /* away */
     LP_ASSERT(!lp_is_hot(&ctx, lp_id_index(id, 1)));
-    LP_ASSERT_EQ(draw(&ctx, id, &index, 3420), 1);            /* falling */
-    LP_ASSERT_EQ(draw(&ctx, id, &index, 3900), 0);            /* gone */
+    LP_ASSERT_EQ(draw(&ctx, id, &index, 3620), 1);            /* falling */
+    LP_ASSERT_EQ(draw(&ctx, id, &index, 4200), 0);            /* gone */
     LP_ASSERT_NEAR(lp_segmented_thumb(id), 0, 1e-6);          /* the thumb never moved */
 }
 
@@ -147,6 +148,147 @@ LP_TEST(a_click_still_selects_and_the_arrows_still_wrap) {
     in.keysym = 0xff53;   /* Right: wraps to the first */
     event(&ctx, id, &index, in, 130);
     LP_ASSERT_EQ(index, 0);
+}
+
+LP_TEST(the_event_pass_measures_what_the_draw_pass_draws) {
+    setup();
+    lp_ctx ctx = { 0 };
+    ctx.settings = &settings;
+    lp_ctx_begin(&ctx, LP_PASS_EVENT, NULL, NULL, LP_RECT(0, 0, 320, 60), 100);
+    lp_size in_event = lp_segmented_measure(&ctx, THREE, 3, LP_CONTROL_SM);
+    lp_ctx_end(&ctx);
+    lp_ctx_begin(&ctx, LP_PASS_DRAW, cr, NULL, LP_RECT(0, 0, 320, 60), 116);
+    lp_size in_draw = lp_segmented_measure(&ctx, THREE, 3, LP_CONTROL_SM);
+    lp_ctx_end(&ctx);
+    LP_ASSERT_NEAR(in_event.w, in_draw.w, 0.01f);    /* no estimate: the hit rects are the drawn rects */
+    LP_ASSERT_NEAR(in_event.h, in_draw.h, 0.01f);
+}
+
+LP_TEST(a_hover_change_damages_the_whole_track) {
+    setup();
+    lp_ctx ctx = { 0 };
+    ctx.settings = &settings;
+    lp_id id = LP_ID("damage");
+    int index = 0;
+    draw(&ctx, id, &index, 4000);
+    lp_size sz = lp_segmented_measure(&ctx, THREE, 3, LP_CONTROL_SM);
+    float seg = (sz.w - 2 * LP_SIZE_SEGMENTED_PAD) / 3;
+    lp_input in = pointer(10 + LP_SIZE_SEGMENTED_PAD + seg * 1.5f, 10 + sz.h / 2);
+    lp_ctx_begin(&ctx, LP_PASS_EVENT, NULL, &in, LP_RECT(0, 0, 320, 60), 4010);
+    lp_segmented(&ctx, id, 10, 10, THREE, 3, &index, LP_CONTROL_SM);
+    LP_ASSERT(ctx.has_damage);                                            /* the pointer came onto a segment */
+    LP_ASSERT(ctx.damage.x <= 10 && ctx.damage.x + ctx.damage.w >= 10 + sz.w);   /* … and the whole track repaints */
+    lp_ctx_end(&ctx);
+    in = pointer(10 + LP_SIZE_SEGMENTED_PAD + seg * 1.5f + 1, 10 + sz.h / 2);   /* a nudge within the same segment */
+    lp_ctx_begin(&ctx, LP_PASS_EVENT, NULL, &in, LP_RECT(0, 0, 320, 60), 4020);
+    lp_segmented(&ctx, id, 10, 10, THREE, 3, &index, LP_CONTROL_SM);
+    LP_ASSERT(!ctx.has_damage);                                           /* nothing changed: nothing to repaint */
+    lp_ctx_end(&ctx);
+    in = pointer(10 + sz.w / 2, 10 + sz.h + 20);                          /* off the track */
+    lp_ctx_begin(&ctx, LP_PASS_EVENT, NULL, &in, LP_RECT(0, 0, 320, 60), 4030);
+    lp_segmented(&ctx, id, 10, 10, THREE, 3, &index, LP_CONTROL_SM);
+    LP_ASSERT(ctx.has_damage);                                            /* the tension went back to rest */
+    lp_ctx_end(&ctx);
+}
+
+LP_TEST(crossing_from_one_segment_to_the_next_keeps_both_beads) {
+    setup();
+    lp_ctx ctx = { 0 };
+    ctx.settings = &settings;
+    lp_id id = LP_ID("crossing");
+    int index = 0;
+    draw(&ctx, id, &index, 5000);
+    lp_size sz = lp_segmented_measure(&ctx, THREE, 3, LP_CONTROL_SM);
+    float seg = (sz.w - 2 * LP_SIZE_SEGMENTED_PAD) / 3;
+    event(&ctx, id, &index, pointer(10 + LP_SIZE_SEGMENTED_PAD + seg * 1.5f, 10 + sz.h / 2), 5010);
+    draw(&ctx, id, &index, 5600);                                         /* the second segment's bead is up */
+    LP_ASSERT(lp_segmented_bead(id, 1) > 0.8f);
+    LP_ASSERT_NEAR(lp_segmented_bead(id, 2), 0, 1e-6);
+    event(&ctx, id, &index, pointer(10 + LP_SIZE_SEGMENTED_PAD + seg * 2.5f, 10 + sz.h / 2), 5610);
+    LP_ASSERT_EQ(draw(&ctx, id, &index, 5650), 1);                       /* one falling, one rising: both there */
+    LP_ASSERT(lp_segmented_bead(id, 1) > 0.1f);
+    LP_ASSERT(lp_segmented_bead(id, 2) > 0.1f);
+    draw(&ctx, id, &index, 6200);
+    LP_ASSERT_NEAR(lp_segmented_bead(id, 1), 0, 1e-6);                   /* gone */
+    LP_ASSERT(lp_segmented_bead(id, 2) > 0.8f);                           /* up */
+    LP_ASSERT_NEAR(lp_segmented_bead(id, 0), 0, 1e-6);                   /* the selected segment never carries one */
+}
+
+LP_TEST(a_quick_sweep_never_drops_a_bead_between_frames) {
+    setup();
+    lp_ctx ctx = { 0 };
+    ctx.settings = &settings;
+    lp_id id = LP_ID("sweep");
+    int index = 0;
+    draw(&ctx, id, &index, 7000);
+    lp_size sz = lp_segmented_measure(&ctx, THREE, 3, LP_CONTROL_SM);
+    float seg = (sz.w - 2 * LP_SIZE_SEGMENTED_PAD) / 3;
+    /* 16 ms frames; the pointer moves over the second segment, then the third, then off the track, each
+     * after two frames: no bead's alpha may fall by more than a frame's worth of easing */
+    float prev[3] = { 0 };
+    const float xs[4] = { seg * 1.5f, seg * 2.5f, -40, -40 };
+    double now = 7000;
+    for (int step = 0; step < 4; step++) {
+        float x = xs[step] < 0 ? 300 : 10 + LP_SIZE_SEGMENTED_PAD + xs[step];
+        event(&ctx, id, &index, pointer(x, xs[step] < 0 ? 55 : 10 + sz.h / 2), now + 1);
+        for (int f = 0; f < 2; f++) {
+            now += 16;
+            draw(&ctx, id, &index, now);
+            for (int i = 1; i < 3; i++) {
+                float b = lp_segmented_bead(id, i);
+                LP_ASSERT(prev[i] - b < 0.25f);           /* falling, never vanishing */
+                prev[i] = b;
+            }
+        }
+    }
+    LP_ASSERT(lp_segmented_bead(id, 1) > 0.02f);           /* still on its way down, 48 ms after it was left */
+}
+
+LP_TEST(a_frame_asked_for_under_a_partial_clip_still_covers_the_track) {
+    setup();
+    lp_ctx ctx = { 0 };
+    ctx.settings = &settings;
+    lp_id id = LP_ID("strip");
+    int index = 0;
+    draw(&ctx, id, &index, 6000);
+    lp_size sz = lp_segmented_measure(&ctx, THREE, 3, LP_CONTROL_SM);
+    index = 2;
+    draw(&ctx, id, &index, 6016);                                         /* sliding */
+    cairo_save(cr);
+    cairo_rectangle(cr, 40, 0, 20, 60);                                   /* a host repainting one strip of it */
+    cairo_clip(cr);
+    lp_ctx_begin(&ctx, LP_PASS_DRAW, cr, NULL, LP_RECT(0, 0, 320, 60), 6032);
+    lp_segmented(&ctx, id, 10, 10, THREE, 3, &index, LP_CONTROL_SM);
+    LP_ASSERT(ctx.wants_frame && ctx.wants_motion);
+    LP_ASSERT(ctx.wants_frame_rect.x <= 10 && ctx.wants_frame_rect.x + ctx.wants_frame_rect.w >= 10 + sz.w);
+    lp_ctx_end(&ctx);
+    cairo_restore(cr);
+    cairo_save(cr);
+    cairo_rectangle(cr, 300, 0, 20, 60);                                  /* a strip the control is not in */
+    cairo_clip(cr);
+    lp_ctx_begin(&ctx, LP_PASS_DRAW, cr, NULL, LP_RECT(0, 0, 320, 60), 6048);
+    lp_segmented(&ctx, id, 10, 10, THREE, 3, &index, LP_CONTROL_SM);
+    LP_ASSERT(!ctx.wants_frame && !ctx.wants_motion);                     /* clipped away: nothing asked */
+    lp_ctx_end(&ctx);
+    cairo_restore(cr);
+}
+
+LP_TEST(motion_and_ambient_requests_are_told_apart) {
+    setup();
+    lp_ctx ctx = { 0 };
+    lp_ctx_begin(&ctx, LP_PASS_DRAW, cr, NULL, LP_RECT(0, 0, 320, 60), 100);
+    lp_want_frame_rect(&ctx, LP_RECT(10, 10, 20, 20));
+    LP_ASSERT(ctx.wants_frame && !ctx.wants_motion);          /* a glint: 30 Hz is plenty */
+    lp_want_motion_rect(&ctx, LP_RECT(400, 10, 20, 20));      /* off the chrome: refused, and no motion either */
+    LP_ASSERT(!ctx.wants_motion);
+    lp_want_motion_rect(&ctx, LP_RECT(40, 10, 20, 20));
+    LP_ASSERT(ctx.wants_motion);
+    LP_ASSERT_NEAR(ctx.wants_frame_rect.x, 10, 1e-6);         /* one union for both */
+    LP_ASSERT_NEAR(ctx.wants_frame_rect.w, 50, 1e-6);
+    lp_ctx_end(&ctx);
+    lp_ctx_begin(&ctx, LP_PASS_DRAW, cr, NULL, LP_RECT(0, 0, 320, 60), 116);
+    LP_ASSERT(!ctx.wants_frame && !ctx.wants_motion);         /* each pass asks afresh */
+    lp_ctx_end(&ctx);
 }
 
 static int painted_pixels(void) {
@@ -182,5 +324,11 @@ int main(void) {
     LP_RUN(hovering_a_segment_raises_the_bead_and_leaving_lets_it_fall);
     LP_RUN(a_click_still_selects_and_the_arrows_still_wrap);
     LP_RUN(text_outside_the_clip_is_never_laid_out);
+    LP_RUN(the_event_pass_measures_what_the_draw_pass_draws);
+    LP_RUN(a_hover_change_damages_the_whole_track);
+    LP_RUN(crossing_from_one_segment_to_the_next_keeps_both_beads);
+    LP_RUN(a_quick_sweep_never_drops_a_bead_between_frames);
+    LP_RUN(motion_and_ambient_requests_are_told_apart);
+    LP_RUN(a_frame_asked_for_under_a_partial_clip_still_covers_the_track);
     LP_TEST_MAIN_END();
 }
