@@ -388,6 +388,53 @@ LP_TEST(events_today_reads_the_calendar_without_opening_it) {
     LP_ASSERT(lp_desktop_app_state(&d, "calendar") == NULL);
 }
 
+LP_TEST(closing_an_apps_window_leaves_the_others_alone) {
+    setup();
+    lp_desktop_register_builtin_apps(&d);
+    char result[LP_SKILL_RESULT_MAX];
+    int status = 1;
+    char note[12];
+    LP_ASSERT(lp_desktop_open_app_with(&d, "textedit", NULL, NULL, note));
+    lp_desktop_open_app(&d, "calculator");                              /* in front of the note */
+    lp_desktop_perform_skill(&d, "desktop", "list_windows", NULL, 0, result, sizeof result, &status);
+    LP_ASSERT(strstr(result, "\"count\":2") != NULL);
+    /* "close the TextEdit window": the note goes, the Calculator in front stays */
+    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "desktop", "close_window", "{\"app\":\"TextEdit\"}", 1, result, sizeof result, &status), LP_SKILL_ALLOWED);
+    LP_ASSERT_EQ(status, 0);
+    LP_ASSERT(strstr(result, "\"app\":\"textedit\"") && strstr(result, "\"landed\":true"));
+    LP_ASSERT(lp_desktop_instance(&d, note) == NULL);
+    lp_desktop_perform_skill(&d, "desktop", "list_windows", NULL, 0, result, sizeof result, &status);
+    LP_ASSERT(strstr(result, "\"count\":1") && strstr(result, "\"app\":\"calculator\"") && strstr(result, "\"front\":true"));
+    /* asked again, there is nothing of TextEdit's to close, and nothing else is touched */
+    lp_desktop_perform_skill(&d, "desktop", "close_window", "{\"app\":\"TextEdit\"}", 1, result, sizeof result, &status);
+    LP_ASSERT_EQ(status, -ENOENT);
+    LP_ASSERT_STR(result, "TextEdit has no window open.");
+    lp_desktop_perform_skill(&d, "desktop", "close_window", "{\"app\":\"Nope\"}", 1, result, sizeof result, &status);
+    LP_ASSERT_EQ(status, -ENOENT);
+    lp_desktop_perform_skill(&d, "desktop", "list_windows", NULL, 0, result, sizeof result, &status);
+    LP_ASSERT(strstr(result, "\"count\":1") != NULL);
+    /* it cannot be undone, so it asks unless the card was answered */
+    LP_ASSERT_EQ(lp_desktop_skill_decide(&d, "desktop", "close_window"), LP_SKILL_NEEDS_CONFIRMATION);
+}
+
+LP_TEST(allow_all_lets_every_enabled_skill_through_without_asking) {
+    setup();
+    LP_ASSERT(!lp_skill_allow_all(&d.skill_policy));                     /* off by default */
+    LP_ASSERT_EQ(lp_desktop_skill_decide(&d, "notes", "add"), LP_SKILL_NEEDS_CONFIRMATION);
+    lp_skill_set_allow_all(&d.skill_policy, 1);
+    LP_ASSERT(lp_skill_allow_all(&d.skill_policy));
+    LP_ASSERT_EQ(lp_desktop_skill_decide(&d, "notes", "add"), LP_SKILL_ALLOWED);
+    LP_ASSERT_EQ(lp_desktop_skill_decide(&d, "notes", "erase"), LP_SKILL_ALLOWED);    /* even what cannot be undone */
+    lp_skill_set_enabled(&d.skill_policy, "notes", "add", 0);
+    LP_ASSERT_EQ(lp_desktop_skill_decide(&d, "notes", "add"), LP_SKILL_DENIED);       /* a switched-off skill stays off */
+    LP_ASSERT_EQ(lp_desktop_skill_decide(&d, "notes", "print"), LP_SKILL_UNKNOWN);
+    char *line = lp_desktop_skills_json(&d);
+    LP_ASSERT(line && strstr(line, "\"allow_all\":true"));              /* maryd hears it, so its lane stops parking calls */
+    free(line);
+    lp_skill_set_allow_all(&d.skill_policy, 0);
+    LP_ASSERT_EQ(lp_desktop_skill_decide(&d, "notes", "erase"), LP_SKILL_NEEDS_CONFIRMATION);
+}
+
 int main(void) {
     LP_RUN(the_policy_starts_open_and_survives_a_save);
     LP_RUN(every_call_is_decided_by_the_desktops_rule);
@@ -399,6 +446,8 @@ int main(void) {
     LP_RUN(textedit_the_finder_the_calculator_and_the_desktop_carry_their_skills);
     LP_RUN(the_skills_message_carries_each_app_and_its_policy);
     LP_RUN(skill_invoke_is_answered_with_skill_result);
+    LP_RUN(closing_an_apps_window_leaves_the_others_alone);
+    LP_RUN(allow_all_lets_every_enabled_skill_through_without_asking);
 #endif
     LP_TEST_MAIN_END();
 }

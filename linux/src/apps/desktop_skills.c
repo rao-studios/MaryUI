@@ -1,6 +1,7 @@
 /* The desktop's own skills (PARITY D30): the window verbs, as the Mac's window-management
  * discipline. An app without a window — nothing to paint, nothing to open — that maryd
- * publishes as `desktop`: list the windows, close or shade the front one, bring an app forward. */
+ * publishes as `desktop`: list the windows, close or shade the front one, close a named app's window, bring
+ * an app forward. */
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
@@ -13,6 +14,7 @@ static const char *const WIN_LIST_TOKENS[] = { "windows", "open" };
 static const char *const WIN_LIST_PHRASES[] = { "what is open", "which windows are open", "list the windows" };
 static const char *const WIN_CLOSE_TOKENS[] = { "close" };
 static const char *const WIN_CLOSE_PHRASES[] = { "close this window", "close the window", "close it" };
+static const char *const WIN_CLOSE_APP_PHRASES[] = { "close the app's window", "close that app's window", "close the window of" };
 static const char *const WIN_SHADE_TOKENS[] = { "shade", "roll", "collapse" };
 static const char *const WIN_SHADE_PHRASES[] = { "shade this window", "roll up the window", "collapse the window" };
 static const char *const WIN_FRONT_TOKENS[] = { "switch", "bring", "front", "focus" };
@@ -23,9 +25,15 @@ static const lp_skill desktop_skills[] = {
     { .id = "list_windows", .title = "List the windows", .summary = "Names every open window, its app and which is in front.",
       .effect = LP_SKILL_READ, .kind = "cognitive", .access = "seamless", .triggers = WIN_LIST_TOKENS, .trigger_count = 2,
       .phrases = WIN_LIST_PHRASES, .phrase_count = 3, .target_classes = WIN_CLASSES, .target_class_count = 2 },
-    { .id = "close_front_window", .title = "Close the front window", .summary = "Closes the window in front, as its close button does; what it held is gone.",
+    { .id = "close_front_window", .title = "Close the front window", .summary = "Closes whatever window is in front, of any app, as its close button does; what it held is gone. To close a named app's window, close_window.",
       .effect = LP_SKILL_DESTRUCTIVE, .kind = "effectful", .access = "confirm", .triggers = WIN_CLOSE_TOKENS, .trigger_count = 1,
       .phrases = WIN_CLOSE_PHRASES, .phrase_count = 3, .target_classes = WIN_CLASSES, .target_class_count = 2 },
+    /* "Close the TextEdit window" named an app, and close_front_window was the only verb: it closed what was in
+     * front, then what came forward, until a lane stopped. A named window is its own call. */
+    { .id = "close_window", .title = "Close an app's window", .summary = "Closes the front-most window of the named app (TextEdit, Calculator …), wherever it is in the stack; other apps' windows are left alone. What it held is gone.",
+      .params = "{\"type\":\"object\",\"properties\":{\"app\":{\"type\":\"string\",\"description\":\"the app whose window to close, by its name\"}},\"required\":[\"app\"]}",
+      .effect = LP_SKILL_DESTRUCTIVE, .kind = "effectful", .access = "confirm", .triggers = WIN_CLOSE_TOKENS, .trigger_count = 1,
+      .phrases = WIN_CLOSE_APP_PHRASES, .phrase_count = 3, .target_classes = WIN_CLASSES, .target_class_count = 2 },
     { .id = "shade_front_window", .title = "Shade the front window", .summary = "Rolls the front window up to its title bar, or down again.",
       .effect = LP_SKILL_ACT, .kind = "effectful", .access = "reversible", .triggers = WIN_SHADE_TOKENS, .trigger_count = 3,
       .phrases = WIN_SHADE_PHRASES, .phrase_count = 3, .target_classes = WIN_CLASSES, .target_class_count = 2 },
@@ -79,6 +87,25 @@ static int desktop_perform(void *state, lp_desktop *d, const char *skill, const 
         }
         return 0;
     }
+    if (strcmp(skill, "close_window") == 0) {
+        char name[80];
+        if (!lp_skill_arg_string(args, "app", name, sizeof name) || !name[0]) { snprintf(result, n, "Which app's window?"); return -EINVAL; }
+        const lp_app *app = app_named(d, name);
+        if (!app) { snprintf(result, n, "There is no app called %.60s.", name); return -ENOENT; }
+        const lp_window_record *top = NULL;
+        for (int i = 0; i < d->wm.count; i++) {
+            const lp_window_record *w = &d->wm.windows[i];
+            if (strcmp(w->app_id, app->id) == 0 && (!top || w->z > top->z)) top = w;
+        }
+        const char *app_name = app->name ? app->name : app->title;
+        if (!top) { snprintf(result, n, "%s has no window open.", app_name); return -ENOENT; }
+        char id[12], title[300];
+        snprintf(id, sizeof id, "%s", top->id);
+        lp_skill_json_escape(top->title, title, sizeof title);
+        lp_desktop_close_window(d, id);
+        snprintf(result, n, "{\"landed\":true,\"window\":\"%s\",\"app\":\"%s\",\"summary\":\"Closed %s.\"}", id, app->id, title);
+        return 0;
+    }
     if (strcmp(skill, "bring_forward") == 0) {
         char name[80];
         if (!lp_skill_arg_string(args, "app", name, sizeof name) || !name[0]) { snprintf(result, n, "Which app?"); return -EINVAL; }
@@ -93,6 +120,6 @@ static int desktop_perform(void *state, lp_desktop *d, const char *skill, const 
 
 const lp_app lp_app_desktop = {
     .id = "desktop", .title = "Desktop", .name = "Desktop", .icon = LP_ICON_DESKTOP, .hidden = 1, .internal = 1,
-    .skills = desktop_skills, .skill_count = 4, .perform = desktop_perform,
+    .skills = desktop_skills, .skill_count = 5, .perform = desktop_perform,
     .summary = "The windows on screen: what is open, what is in front.", .discipline = "window-management", .paradigm = "systemControl",
 };

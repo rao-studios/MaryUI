@@ -1389,6 +1389,14 @@ static float pane_mary(lp_ctx *ctx, struct prefs *p, lp_desktop *d, float x, flo
 
     section(ctx, "Skills", x, &y, w);
     note(ctx, "What Mary may do with each app, and when she asks you first.", x, &y, w);
+    int allow_all = lp_skill_allow_all(&d->skill_policy);
+    if (toggle_row(ctx, lp_id_index(base, 490), "Allow without asking", x, &y, &allow_all)) {
+        lp_skill_set_allow_all(&d->skill_policy, allow_all);
+        lp_desktop_skill_policy_changed(d);
+    }
+    note(ctx, allow_all ? "Mary runs every command you give her straight away, with no card to allow \xE2\x80\x94 including ones that cannot be undone. Each app's \xE2\x80\x9C" "Ask first\xE2\x80\x9D below waits until this is off."
+                        : "Off: each app's \xE2\x80\x9C" "Ask first\xE2\x80\x9D decides, and anything that cannot be undone always asks.",
+         x, &y, w);
     static const lp_segment ASK[3] = { { "Never", LP_ICON_COUNT }, { "Before changes", LP_ICON_COUNT }, { "Always", LP_ICON_COUNT } };
     int group = 0;
     for (int a = 0; a < d->app_count; a++) {

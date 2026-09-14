@@ -215,9 +215,10 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   `desktop.c` into a 160×24 chrome in the `z.menubar` band (reused rather than minting a `z.clock`
   token for the identical stacking slot). It is not hit-tested, so a press over it lands on the
   wallpaper, and it repaints once a minute and only when the string changes, so an idle desktop
-  still schedules no frames. The ink is `ink.primary` with the 1 px emboss the bar drew, which was
-  chosen against a light platinum strip and now sits on the wallpaper instead: `lp-render --clock`
-  exists to keep an eye on that, and a white-on-shadow treatment would want a token of its own.
+  still schedules no frames. Since 2026-09 its letters are brushed platinum: the glyph outlines (`lp_text_path`) clip the
+  desktop's sheet of metal (`lp_surface_paint`, with the chrome's scene position as the world
+  offset), over a dark keyline and a two-step drop shadow so pale metal reads on any wallpaper. There
+  is still no plate behind; `lp-render --clock` keeps an eye on it.
   It is a setting, not a fixture: View › Show Clock (`LP_CMD_TOGGLE_CLOCK`) flips `settings.clock`,
   saved as `clock=on|off` in `settings.conf` — the one key with no `settings.ts` counterpart. It
   defaults to on, and a file without the key keeps it on. Hidden, the chrome's scene node is
@@ -340,7 +341,8 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   Mary can do with it (`skills`: an id, a title, a one-line summary, a JSON Schema for the arguments, and
   whether it reads, acts or cannot be undone) and performs one with `perform`, the same code its menus run —
   nothing reads the screen or synthesises input. System Settings keeps a policy per app in `skills.conf`
-  (`<app>=on|off`, `<app>.ask=never|changes|always`, `<app>.<skill>=on|off`), and before any `perform` runs
+  (`<app>=on|off`, `<app>.ask=never|changes|always`, `<app>.<skill>=on|off`, and `allow_all=on`, which lets every enabled skill through without a card — the
+  skills message carries it as `allow_all` so maryd's lane stops parking calls too), and before any `perform` runs
   `lp_desktop_skill_decide` applies the rule maryd mirrors: unknown, denied, needs confirmation (destructive,
   asks always, or asks before changes and the skill acts), otherwise allowed. The desktop publishes
   `skills{apps}` to maryd on connect and after every policy change, and answers `skill.invoke` with

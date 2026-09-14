@@ -73,6 +73,13 @@ int lp_skill_policy_save(const lp_skill_policy *p) {
 
 int lp_skill_app_enabled(const lp_skill_policy *p, const char *app) { return !is_off(lookup(p, app)); }
 
+int lp_skill_allow_all(const lp_skill_policy *p) {
+    const char *v = lookup(p, "allow_all");
+    return v && (strcmp(v, "on") == 0 || strcmp(v, "1") == 0);
+}
+
+void lp_skill_set_allow_all(lp_skill_policy *p, int on) { put(p, "allow_all", on ? "on" : "off"); }
+
 lp_skill_ask lp_skill_app_ask(const lp_skill_policy *p, const char *app) {
     char key[96];
     snprintf(key, sizeof key, "%s.ask", app);
@@ -137,6 +144,7 @@ lp_skill_decision lp_desktop_skill_decide(const lp_desktop *d, const char *app_i
     const lp_skill *skill = find_skill(d, app_id, skill_id, &app);
     if (!skill || !app->perform) return LP_SKILL_UNKNOWN;
     if (!lp_skill_app_enabled(&d->skill_policy, app->id) || !lp_skill_enabled(&d->skill_policy, app->id, skill->id)) return LP_SKILL_DENIED;
+    if (lp_skill_allow_all(&d->skill_policy)) return LP_SKILL_ALLOWED;     /* the person turned the cards off */
     lp_skill_ask ask = lp_skill_app_ask(&d->skill_policy, app->id);
     if (skill->effect == LP_SKILL_DESTRUCTIVE || ask == LP_SKILL_ASK_ALWAYS || (ask == LP_SKILL_ASK_CHANGES && skill->effect != LP_SKILL_READ))
         return LP_SKILL_NEEDS_CONFIRMATION;
@@ -165,6 +173,7 @@ static struct json_object *str_or_null(const char *s) { return s ? json_object_n
 char *lp_desktop_skills_json(const lp_desktop *d) {
     struct json_object *msg = json_object_new_object(), *apps = json_object_new_array();
     json_object_object_add(msg, "type", json_object_new_string("skills"));
+    json_object_object_add(msg, "allow_all", json_object_new_boolean(lp_skill_allow_all(&d->skill_policy)));
     for (int a = 0; a < d->app_count; a++) {
         const lp_app *app = d->apps[a];
         if (!app->skill_count || !app->perform) continue;

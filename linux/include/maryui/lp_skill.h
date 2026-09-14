@@ -67,6 +67,10 @@ int lp_skill_enabled(const lp_skill_policy *p, const char *app, const char *skil
 void lp_skill_set_app_enabled(lp_skill_policy *p, const char *app, int on);
 void lp_skill_set_app_ask(lp_skill_policy *p, const char *app, lp_skill_ask ask);
 void lp_skill_set_enabled(lp_skill_policy *p, const char *app, const char *skill, int on);
+/* Allow without asking (System Settings › Mary › Skills): every enabled skill runs as soon as Mary calls it, even
+ * one that cannot be undone — no card. Saved as `allow_all=on`; off by default. */
+int lp_skill_allow_all(const lp_skill_policy *p);
+void lp_skill_set_allow_all(lp_skill_policy *p, int on);
 
 typedef enum lp_skill_decision {
     LP_SKILL_ALLOWED,
@@ -91,7 +95,7 @@ lp_skill_decision lp_desktop_skill_decide(const struct lp_desktop *d, const char
  * call ran. */
 lp_skill_decision lp_desktop_perform_skill(struct lp_desktop *d, const char *app, const char *skill, const char *args_json,
                                            int confirmed, char *result, size_t n, int *status);
-/* {"type":"skills","apps":[{id, name, title, summary, aliases, paradigm, discipline, enabled, ask,
+/* {"type":"skills","allow_all":bool,"apps":[{id, name, title, summary, aliases, paradigm, discipline, enabled, ask,
  *  skills:[{id, title, summary, params, effect, enabled, kind, access, triggers{tokens, phrases}, target_classes, spoken}]}]}
  * for every app that declares skills, as one line (heap; NULL without json-c). */
 char *lp_desktop_skills_json(const struct lp_desktop *d);
