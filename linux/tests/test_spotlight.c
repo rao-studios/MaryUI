@@ -25,20 +25,19 @@ LP_TEST(empty_query_shows_dock) {
     lp_desktop_open_app(&d, "finder");
     lp_spotlight_item r[LP_SPOTLIGHT_MAX_RESULTS];
     int n = results("", r);
-    LP_ASSERT_EQ(n, 8);   /* the pinned apps only: Gallery, About, Calculator and the utilities are found by typing */
+    LP_ASSERT_EQ(n, 7);   /* the seven pins: Gallery, About, the Media Player, Calculator and the utilities are found by typing */
     LP_ASSERT_STR(r[0].title, "Finder");
     LP_ASSERT_STR(r[1].title, "TextEdit");
     LP_ASSERT_STR(r[2].title, "Preview");
     LP_ASSERT_STR(r[3].title, "Terminal");
     LP_ASSERT_EQ(r[3].kind, LP_SPOT_APP);
-    LP_ASSERT_STR(r[4].title, "Media Player");
-    LP_ASSERT_STR(r[5].title, "Calendar");
-    LP_ASSERT_STR(r[6].title, "Settings");
-    LP_ASSERT_STR(r[7].title, "Threads");
+    LP_ASSERT_STR(r[4].title, "Calendar");
+    LP_ASSERT_STR(r[5].title, "Settings");
+    LP_ASSERT_STR(r[6].title, "Threads");
     LP_ASSERT_EQ(r[0].running, 1);
     LP_ASSERT_EQ(r[1].running, 0);
     for (int i = 0; i < n; i++) LP_ASSERT(r[i].kind != LP_SPOT_WINDOW);
-    LP_ASSERT_EQ(results("   ", r), 8);
+    LP_ASSERT_EQ(results("   ", r), 7);
 }
 
 LP_TEST(filters_apps_by_title_prefix_and_substring) {
@@ -148,7 +147,7 @@ LP_TEST(ctrl_space_toggles_and_escape_closes) {
     LP_ASSERT_EQ(d.spotlight.selection, 1);
     LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_Up, 0), 1);
     LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_Up, 0), 1);
-    LP_ASSERT_EQ(d.spotlight.selection, 7);
+    LP_ASSERT_EQ(d.spotlight.selection, 6);          /* wrapped to the last of the seven pins */
     LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_x, 0), 0); /* the bar's */
     LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_w, LP_MOD_CTRL), 0); /* window shortcuts are suspended */
     LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_Escape, 0), 1);

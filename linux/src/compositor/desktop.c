@@ -160,6 +160,7 @@ static void desktop_changed(lp_desktop *d, uint64_t changed) {
     if (d->open_menu != LP_DESKTOP_MENU_POPUP && server->menu) sync_popup_chrome(server);
     /* The window list is part of Spotlight's results; deferred, since this may run inside its EVENT pass. */
     if (server->spotlight || d->spotlight.open) mui_spotlight_request_sync(server);
+    if (server->launchpad || d->launchpad.open) mui_launchpad_request_sync(server);
 }
 
 static void desktop_settings(lp_desktop *d) {
@@ -291,6 +292,7 @@ void mui_desktop_finish(struct mui_server *server) {
     mui_files_finish(server);
     close_menu_chrome(server);
     mui_spotlight_finish(server);
+    mui_launchpad_finish(server);
     struct mui_window *win, *tmp;
     wl_list_for_each_safe(win, tmp, &server->windows, link) mui_window_destroy(win);
     if (server->clock) {
@@ -301,6 +303,7 @@ void mui_desktop_finish(struct mui_server *server) {
 }
 
 void mui_desktop_settings_changed(struct mui_server *server) {
+    mui_launchpad_invalidate(server);   /* the wallpaper may have changed: the softened copy goes */
     mui_input_apply_settings(server);
     format_clock(server->clock_text, sizeof server->clock_text, server->desktop.settings.clock_24h);
     struct mui_window *win;
@@ -399,7 +402,8 @@ void mui_desktop_hit(struct mui_server *server, double lx, double ly, struct mui
             return;
         }
     }
-    /* Spotlight's panel (its shadow falls through). */
+    /* The Launchpad covers the screen while it is up; Spotlight's panel (its shadow falls through). */
+    if (mui_launchpad_hit(server, lx, ly, hit)) return;
     if (mui_spotlight_hit(server, lx, ly, hit)) return;
     /* The dropdown, inside its shadow margin. */
     if (server->menu) {
@@ -643,8 +647,21 @@ int mui_desktop_key(struct mui_server *server, uint32_t keysym, uint32_t modifie
     int had_menu = d->open_menu;
     int was_open = d->spotlight.open;
     int had_chat = d->spotlight_chat;
+    int had_pad = d->launchpad.open;
     server->key_to_chrome = 0;
     int handled = pressed ? lp_desktop_key(d, keysym, modifiers) : 0;
+    if (had_pad || d->launchpad.open) {
+        /* The Launchpad owns the keyboard the way Spotlight does: Esc, the arrows and Enter were the desktop's, the
+         * rest types into its field. Ctrl+Space may have handed over to Spotlight: both sync. */
+        if (!pressed) { if (!d->launchpad.open) mui_launchpad_sync(server); return 0; }
+        if (!handled && d->launchpad.open && server->launchpad) {
+            mui_chrome_key(server->launchpad, keysym, modifiers, utf8, pressed, mui_now_ms());
+            server->key_to_chrome = 1;
+        }
+        mui_launchpad_sync(server);
+        if (was_open != d->spotlight.open) mui_spotlight_sync(server);
+        return 1;
+    }
     if (was_open || d->spotlight.open) {
         /* Spotlight owns the keyboard while it is up: Esc/↑/↓/Enter were the desktop's, the rest edits the
          * query in the bar. Presses never reach clients; releases pass (a release without its press is inert). */
@@ -655,7 +672,7 @@ int mui_desktop_key(struct mui_server *server, uint32_t keysym, uint32_t modifie
         }
         /* ←/→ can have switched pills, and typing can have closed one: size the
          * panel before the sync repaints it. */
-        if (had_menu != d->open_menu || had_chat != d->spotlight_chat) mui_spotlight_resize(server);   /* Ctrl+Return: into the conversation */
+        if (had_menu != d->open_menu || had_chat != d->spotlight_chat) mui_spotlight_resize(server);   /* Shift+Return: into the conversation */
         mui_spotlight_sync(server);
         if (had_menu >= 0 || d->open_menu >= 0) sync_popup_chrome(server);
         return 1;
@@ -707,6 +724,7 @@ static int animate_menu(struct mui_server *server, double now_ms) {
 int mui_desktop_animate(struct mui_server *server, double now_ms) {
     int active = animate_menu(server, now_ms);
     active |= mui_spotlight_animate(server, now_ms);
+    active |= mui_launchpad_animate(server, now_ms);
     return active;
 }
 

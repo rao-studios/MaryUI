@@ -14,6 +14,7 @@
 #include "maryui/lp_mary.h"
 
 #define CTRL 4
+#define SHIFT 1
 
 static lp_desktop d;
 static int maryd = -1;          /* maryd's end of the socket */
@@ -50,11 +51,11 @@ static void say(lp_mary_role role, const char *text) {
     m->len = strlen(text);
 }
 
-LP_TEST(ctrl_return_asks_mary_and_opens_the_conversation) {
+LP_TEST(shift_return_asks_mary_and_opens_the_conversation) {
     setup(1);
     if (!lp_mary_available()) { teardown(); return; }
     lp_spotlight_set_query(&d.spotlight, "tell me a joke");
-    LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_Return, CTRL), 1);
+    LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_Return, SHIFT), 1);
     LP_ASSERT(d.spotlight.open);
     LP_ASSERT(d.spotlight_chat);
     LP_ASSERT_STR(d.spotlight.query.text, "");
@@ -145,7 +146,7 @@ LP_TEST(what_was_typed_stays_in_the_bar_while_maryd_is_away) {
     setup(0);
     if (!lp_mary_available()) { teardown(); return; }
     lp_spotlight_set_query(&d.spotlight, "hello?");
-    LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_Return, CTRL), 1);
+    LP_ASSERT_EQ(lp_desktop_key(&d, XKB_KEY_Return, SHIFT), 1);
     LP_ASSERT(d.spotlight_chat);
     LP_ASSERT_STR(d.spotlight.query.text, "hello?");
     teardown();
@@ -262,7 +263,7 @@ LP_TEST(the_card_and_the_run_chips_draw_and_the_keys_answer_the_card) {
 }
 
 int main(void) {
-    LP_RUN(ctrl_return_asks_mary_and_opens_the_conversation);
+    LP_RUN(shift_return_asks_mary_and_opens_the_conversation);
     LP_RUN(a_blank_bar_opens_the_microphone);
     LP_RUN(plain_return_still_opens_the_selection);
     LP_RUN(in_the_conversation_return_asks_and_the_arrows_scroll);

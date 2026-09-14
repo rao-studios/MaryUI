@@ -64,6 +64,13 @@ static void paint_spotlight(lp_ctx *ctx, struct mui_chrome *chrome, void *data) 
         mui_spotlight_resize(server);
         ctx->dirty = 1;
     }
+    if (res.launchpad_pressed) {
+        /* All Applications: the grid takes over from the panel (PARITY D32) */
+        lp_desktop_launchpad_open(d);
+        mui_spotlight_request_sync(server);      /* CLOSES: deferred, never from here */
+        mui_launchpad_request_sync(server);
+        ctx->dirty = 1;
+    }
     if (res.hovered >= 0 && res.hovered != d->spotlight.selection) { d->spotlight.selection = res.hovered; ctx->dirty = 1; }
 
     /* The command pills. Press opens, as a pull-down menu does. */

@@ -109,6 +109,11 @@ struct mui_server {
     int spotlight_x, spotlight_y;        /* the panel chrome's resting position */
     lp_rect spotlight_panel;             /* the painted panel inside the chrome (chrome-local), for hit-testing */
     struct wl_event_source *spotlight_idle; /* a deferred sync after a WM change */
+    struct mui_chrome *launchpad;        /* the Launchpad while it is open (launchpad.c, PARITY D32) */
+    struct mui_tween launchpad_anim;     /* its appear: opacity 0→1, scale 1.06→1 about the centre */
+    struct wl_event_source *launchpad_idle;
+    cairo_surface_t *launchpad_backdrop; /* the wallpaper softened, once per screen size */
+    int launchpad_backdrop_w, launchpad_backdrop_h;
     lp_clipboard_port clipboard_port;   /* the host's clipboard, in a VM (PARITY D22) */
     struct wl_event_source *repaint_idle;   /* a deferred repaint of windows an app dirtied from inside an EVENT pass */
     struct mui_chrome *drag_ghost;          /* the drag session's ghost (drag.c), while one is active */
@@ -253,6 +258,14 @@ void mui_spotlight_resize(struct mui_server *server);
 int mui_spotlight_hit(struct mui_server *server, double lx, double ly, struct mui_hit *hit);
 int mui_spotlight_animate(struct mui_server *server, double now_ms);
 void mui_spotlight_finish(struct mui_server *server);
+/* The Launchpad (launchpad.c, PARITY D32): a full-screen chrome that follows desktop.launchpad. The same
+ * rules as Spotlight's: anything that CLOSES it goes through mui_launchpad_request_sync. */
+void mui_launchpad_sync(struct mui_server *server);
+void mui_launchpad_request_sync(struct mui_server *server);
+int mui_launchpad_hit(struct mui_server *server, double lx, double ly, struct mui_hit *hit);
+int mui_launchpad_animate(struct mui_server *server, double now_ms);
+void mui_launchpad_invalidate(struct mui_server *server);
+void mui_launchpad_finish(struct mui_server *server);
 /* Drag and drop (drag.c): the ghost chrome and the grab that routes HOVER / LEAVE / DROP to app windows. */
 void mui_drag_begin(struct mui_server *server);
 void mui_drag_finish(struct mui_server *server);

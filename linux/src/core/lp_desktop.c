@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <xkbcommon/xkbcommon-keysyms.h>
 
+#include "maryui/lp_launchpad.h"
 #include "maryui/lp_desktop.h"
 #include "maryui/lp_files.h"
 #include "maryui/lp_tokens.h"
@@ -625,6 +627,49 @@ int lp_desktop_ask_mary(lp_desktop *d) {
     return 1;
 }
 
+/* MARK: - Launchpad (Linux, PARITY D32) */
+
+void lp_desktop_launchpad_open(lp_desktop *d) {
+    lp_spotlight_close(&d->spotlight);
+    lp_desktop_leave_chat(d);
+    lp_desktop_close_menu(d);
+    d->launchpad.open = 1;
+    d->launchpad.selection = 0;
+    d->launchpad.page = 0;
+    lp_text_buffer_set(&d->launchpad.query, "");
+}
+
+void lp_desktop_launchpad_close(lp_desktop *d) { d->launchpad.open = 0; }
+
+static int by_title(const void *a, const void *b) {
+    const lp_spotlight_item *x = a, *y = b;
+    return strcasecmp(x->title, y->title);
+}
+
+int lp_desktop_launchpad_items(const lp_desktop *d, lp_spotlight_item *out, int max) {
+    lp_spotlight_item all[LP_SPOTLIGHT_MAX_ITEMS], apps[LP_SPOTLIGHT_MAX_ITEMS];
+    int n = lp_spotlight_items(d, all, LP_SPOTLIGHT_MAX_ITEMS), count = 0;
+    for (int i = 0; i < n; i++) if (all[i].kind != LP_SPOT_WINDOW) apps[count++] = all[i];
+    qsort(apps, (size_t)count, sizeof apps[0], by_title);   /* alphabetical, and so within a rank once typed at */
+    if (!lp_spotlight_query_is_blank(d->launchpad.query.text)) return lp_spotlight_results(apps, count, d->launchpad.query.text, out, max);
+    if (count > max) count = max;
+    memcpy(out, apps, (size_t)count * sizeof apps[0]);
+    return count;
+}
+
+void lp_desktop_launchpad_activate(lp_desktop *d, int index) {
+    lp_spotlight_item items[LP_SPOTLIGHT_MAX_ITEMS];
+    int n = lp_desktop_launchpad_items(d, items, LP_SPOTLIGHT_MAX_ITEMS);
+    lp_desktop_launchpad_close(d);
+    if (index < 0 || index >= n) return;
+    const lp_spotlight_item *it = &items[index];
+    switch (it->kind) {
+    case LP_SPOT_APP: lp_desktop_open_app(d, it->id); break;
+    case LP_SPOT_COMMAND: if (strcmp(it->id, "terminal") == 0) lp_desktop_run_command(d, LP_CMD_NEW_TERMINAL, 0); break;
+    default: break;
+    }
+}
+
 void lp_desktop_mary_wake(lp_desktop *d) {
     if (!d->spotlight.open) lp_spotlight_open(&d->spotlight);
     lp_desktop_close_menu(d);
@@ -643,14 +688,35 @@ int lp_desktop_key(lp_desktop *d, uint32_t keysym, uint32_t mods) {
     int mod = (mods & (4 | 64)) != 0; /* Ctrl or Logo (⌘) */
     if (mod && keysym == XKB_KEY_space) {
         lp_desktop_close_menu(d);
+        if (d->launchpad.open) lp_desktop_launchpad_close(d);   /* Spotlight takes over from the grid */
         lp_spotlight_toggle(&d->spotlight);
         if (!d->spotlight.open) lp_desktop_leave_chat(d);
+        return 1;
+    }
+    if (d->launchpad.open) {
+        /* The grid owns the keyboard: Esc closes, the arrows walk it, Enter launches; the rest types into its field. */
+        lp_spotlight_item items[LP_SPOTLIGHT_MAX_ITEMS];
+        int n = lp_desktop_launchpad_items(d, items, LP_SPOTLIGHT_MAX_ITEMS);
+        int cols = lp_launchpad_columns(d->wm.bounds.w), per_page = cols * lp_launchpad_rows(d->wm.bounds.h);
+        int *sel = &d->launchpad.selection, step = 0;
+        switch (keysym) {
+        case XKB_KEY_Escape: lp_desktop_launchpad_close(d); return 1;
+        case XKB_KEY_Return: case XKB_KEY_KP_Enter: lp_desktop_launchpad_activate(d, *sel); return 1;
+        case XKB_KEY_Right: step = 1; break;
+        case XKB_KEY_Left: step = -1; break;
+        case XKB_KEY_Down: step = cols; break;
+        case XKB_KEY_Up: step = -cols; break;
+        default: return 0;   /* the field types it */
+        }
+        int next = *sel + step;
+        if (next >= 0 && next < n) *sel = next;
+        if (per_page > 0) d->launchpad.page = *sel / per_page;
         return 1;
     }
     if (d->spotlight.open) {
         lp_spotlight_item results[LP_SPOTLIGHT_MAX_RESULTS];
         int enter = keysym == XKB_KEY_Return || keysym == XKB_KEY_KP_Enter;
-        if (enter && mod && lp_mary_available()) return lp_desktop_ask_mary(d);
+        if (enter && (mods & LP_MOD_SHIFT) && lp_mary_available()) return lp_desktop_ask_mary(d);   /* Shift+Enter: into the conversation */
         if (d->spotlight_chat) {
             switch (keysym) {
             case XKB_KEY_Return: case XKB_KEY_KP_Enter:

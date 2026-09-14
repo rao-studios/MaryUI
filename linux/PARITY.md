@@ -466,6 +466,18 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   and ms, newest first, with a total and a pointer to `sewnctl calls`; never a key, never a body.
   **Memory** shows the drive's counts from threadd's stats and opens Threads. `lp-render --prefs-mary`
   draws them over fixtures. The web has no assistant.
+- **D32 — the Launchpad.** Linux only. Spotlight's command row ends in an **All Applications** pill
+  (`Spotlight.c`, `lp_spotlight_result.launchpad_pressed`); it opens the Launchpad: a full-screen chrome
+  in the top layer (`src/compositor/launchpad.c`) over the wallpaper softened once per screen size
+  (`lp_launchpad_backdrop`: scaled down by four, blurred, scaled back) under a platinum scrim, with a
+  round search field and every application on a grid of its marks (`src/ui/lp_launchpad.c`, C-only UI like the graph and the pane kit), seven columns
+  at most, paged with dots when more than fit. The model is `lp_desktop.launchpad` (open, query,
+  selection, page): opening it closes Spotlight, typing ranks the apps as Spotlight ranks them, the arrows
+  walk the grid, Return launches, Esc or a click on the scrim closes, Ctrl+Space hands over to Spotlight.
+  It appears with the same scale-and-fade as the panel, from a little larger. `lp-render --launchpad
+  [QUERY]`. The web has no Launchpad. In the same change the pins became seven — Finder, TextEdit,
+  Preview, Terminal, Calendar, Settings, Threads (the Media Player is one query away) — and Shift+Enter
+  asks Mary from the bar where Ctrl+Enter did.
 - **Close animation.** `lp-window-close` (scale .96 + fade over `motion.fast`, `CLOSE` after
   fast + 80 ms) runs for built-in windows. A client that unmaps is gone at once — the compositor
   has no pixels left to fade.

@@ -75,6 +75,8 @@ typedef struct lp_spotlight_result {
     int run_message;
     /* The confirmation card was answered this event: 1 Allow, 0 Not now, -1 neither. The host sends skill.confirm.reply. */
     int confirm_answer;
+    /* The All Applications pill at the end of the command row was clicked (PARITY D32): the host opens the Launchpad. */
+    int launchpad_pressed;
     lp_rect panel;       /* where the panel was painted */
 } lp_spotlight_result;
 

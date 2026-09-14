@@ -70,13 +70,17 @@ static lp_text_style pill_style(void) {
  * pill. Measured with lp_text_measure, which keeps a scratch context, so the
  * EVENT pass lays them out exactly where the DRAW pass will.
  */
+#define ALL_APPS "All Applications"
+#define ALL_APPS_ICON 13
+
 static int pill_layout(cairo_t *cr, const lp_spotlight_view *v, lp_rect box, lp_rect *rects) {
     lp_text_style ps = pill_style();
     float x = box.x, y = box.y;
     int rows = 1;
-    for (int i = 0, n = pill_count(v); i < n; i++) {
-        const char *label = v->menus[i].label ? v->menus[i].label : "";
-        float inner = i == 0 ? PILL_MARK : lp_text_measure(cr, label, &ps).w;
+    int n = pill_count(v);
+    for (int i = 0; i <= n; i++) {   /* the menus, then the All Applications pill (PARITY D32) */
+        const char *label = i < n ? (v->menus[i].label ? v->menus[i].label : "") : ALL_APPS;
+        float inner = i == 0 ? PILL_MARK : (i == n ? ALL_APPS_ICON + LP_SPACE_1 : 0) + lp_text_measure(cr, label, &ps).w;
         float w = inner + 2 * LP_SPACE_3;
         if (x > box.x && x + w > box.x + box.w) {
             x = box.x;
@@ -202,9 +206,22 @@ static void commands(lp_ctx *ctx, const lp_spotlight_view *v, lp_rect panel, flo
     }
 
     y += PILLS_PAD_TOP;
-    lp_rect pills[LP_SPOTLIGHT_MAX_PILLS];
+    lp_rect pills[LP_SPOTLIGHT_MAX_PILLS + 1];
     int n = pill_count(v);
     int rows = pill_layout(cr, v, LP_RECT(inner_x, y, inner_w, 0), pills);
+    /* All Applications: a button, not a menu — it opens the Launchpad on release */
+    {
+        lp_rect pr = pills[n];
+        lp_id aid = lp_id_index(base, 300 + LP_SPOTLIGHT_MAX_PILLS);
+        if (lp_clicked(ctx, aid, pr)) res->launchpad_pressed = 1;
+        if (draw) {
+            lp_fill_solid(cr, pr, lp_is_hot(ctx, aid) ? LP_RGBA(0, 0, 0, 0.08f) : LP_RGBA(0, 0, 0, 0.045f), LP_RADIUS_PILL);
+            lp_icon_draw(cr, LP_ICON_GRID, pr.x + LP_SPACE_3, pr.y + (pr.h - ALL_APPS_ICON) / 2, ALL_APPS_ICON, 1.6f, LP_INK_PRIMARY);
+            lp_text_style ps = pill_style();
+            ps.color = LP_INK_PRIMARY;
+            lp_text_draw(cr, ALL_APPS, LP_RECT(pr.x + LP_SPACE_3 + ALL_APPS_ICON + LP_SPACE_1, pr.y, pr.w - 2 * LP_SPACE_3 - ALL_APPS_ICON - LP_SPACE_1 + 2, pr.h), &ps, LP_ALIGN_START);
+        }
+    }
     for (int i = 0; i < n; i++) {
         lp_rect pr = pills[i];
         if (lp_hot(ctx, lp_id_index(base, 300 + i), pr)) {
@@ -254,7 +271,7 @@ static void commands(lp_ctx *ctx, const lp_spotlight_view *v, lp_rect panel, flo
 
 void lp_spotlight_panel(lp_ctx *ctx, float x, float y, const lp_spotlight_view *v, lp_spotlight_result *out) {
     lp_spotlight_result res = { .hovered = -1, .activated = -1, .menu_pressed = -1, .menu_hovered = -1, .contribution_message = -1, .contribution_owner = -1,
-                                .entry_hovered = -1, .entry_selected = -1, .run_message = -1, .confirm_answer = -1 };
+                                .entry_hovered = -1, .entry_selected = -1, .run_message = -1, .confirm_answer = -1, .launchpad_pressed = 0 };
     lp_size size = lp_spotlight_measure(v);
     lp_rect panel = LP_RECT(x, y, size.w, size.h);
     res.panel = panel;

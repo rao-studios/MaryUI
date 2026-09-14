@@ -93,6 +93,7 @@ typedef struct lp_desktop {
     lp_drag drag;             /* the drag session, when active */
     int menu_active;          /* highlighted entry of the open menu, -1 */
     lp_spotlight spotlight;   /* Ctrl+Space: the search bar and dock */
+    struct { int open; lp_text_buffer query; int selection; int page; } launchpad;   /* All Applications, over the desktop (Linux, PARITY D32) */
     lp_mary mary;             /* the conversation with maryd, shown in Spotlight */
     lp_thread thread;         /* the hard drive's memory, from threadd (the Thread app, Disk Utility, Get Info; PARITY D25) */
     lp_audio audio;           /* PipeWire's speakers and microphones (System Settings › Sound, PARITY D23) */
@@ -188,6 +189,15 @@ void lp_desktop_spotlight_query_changed(lp_desktop *d);
  * with a blank bar, opens the microphone, or stops Mary while she listens, thinks or speaks. The
  * Ask Mary orb and Ctrl/Logo+Return both come here. Returns 1. */
 int lp_desktop_ask_mary(lp_desktop *d);
+/* Launchpad (Linux, PARITY D32): every application on a grid over the desktop, from Spotlight's All Applications
+ * pill. Opening it closes Spotlight and empties the grid's query. */
+void lp_desktop_launchpad_open(lp_desktop *d);
+void lp_desktop_launchpad_close(lp_desktop *d);
+/* The apps (and the Terminal command while no terminal app is registered), alphabetical; or, with a query,
+ * ranked as Spotlight ranks them — never windows. Returns the count. */
+int lp_desktop_launchpad_items(const lp_desktop *d, lp_spotlight_item *out, int max);
+/* Opens the item (as Spotlight would) and closes the Launchpad. */
+void lp_desktop_launchpad_activate(lp_desktop *d, int index);
 /* "Hey Mary": Spotlight opens on the conversation. */
 void lp_desktop_mary_wake(lp_desktop *d);
 /* Back to the dock; the conversation is kept, and Mary is dismissed if she was busy. */

@@ -395,7 +395,7 @@ static int player_perform(void *state, lp_desktop *d, const char *skill, const c
 
 static int player_surface(void *state, lp_desktop *d, lp_app_surface *out);
 const lp_app lp_app_player = {
-    .id = "media", .title = "Media Player", .name = "Media Player", .icon = LP_ICON_PLAY, .object = "appMusic", .hidden = 1, .dock = 1,
+    .id = "media", .title = "Media Player", .name = "Media Player", .icon = LP_ICON_PLAY, .object = "appMusic", .hidden = 1, .dock = 0,   /* Threads took its place among the seven pins */
     .default_rect = { NAN, NAN, 640, 440 }, .min_size = { 420, 300 }, .singleton = 0, .resizable = 1,
     .create = player_create, .paint = player_paint, .destroy = player_destroy,
     .open = player_open, .command = player_command, .menu_entries = player_menu_entries,

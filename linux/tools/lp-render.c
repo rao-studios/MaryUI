@@ -11,6 +11,7 @@
 
 #include "maryui/maryui.h"
 #include "maryui/lp_text.h"
+#include "maryui/lp_launchpad.h"
 #include "maryui/components/lp_spotlight_panel.h"
 #include "maryui/components/lp_surface.h"
 #include "maryui/components/lp_window.h"
@@ -52,6 +53,7 @@ static int usage(int status) {
         "       lp-render --spotlight [QUERY] <out.png>  Spotlight over the desktop: the dock and its command pills, or the results for QUERY\n"
         "       lp-render --spotlight-menu NAME <out.png>  the same with the NAME pill open (rao|file|edit|view|go|window|help)\n"
         "       lp-render --spotlight-chat STATE <out.png>  Spotlight on the conversation with Mary: idle|listening|thinking|streaming|speaking|error|nokey|offline|highlighted|confirm\n"
+        "       lp-render --launchpad [QUERY] <out.png>  the Launchpad over the blurred wallpaper: every app on a grid, or the ones QUERY finds\n"
         "       lp-render --contribution <out.png>       \"From the thread\": what a highlighted passage drew on, with fixtures\n"
         "       lp-render --ambient TAB <out.png>        Ambient on one tab (world|realms|routes|runs), with fixtures\n"
         "       lp-render --abilities PANE <out.png>     Abilities on TextEdit's pane (surface|tune|skills), a rehearsal fed\n"
@@ -463,6 +465,36 @@ static void chat_line(lp_mary *m, lp_mary_role role, const char *text, int strea
 
 /* Spotlight on the conversation with Mary (Linux, PARITY D18), in one state, from a fixture:
  * idle, listening, thinking, streaming, speaking, error, nokey or offline. */
+/* The Launchpad (PARITY D32) over the softened wallpaper, with the Finder and Threads open. */
+static int render_launchpad(const char *query, const char *path) {
+    int w = 1280, h = 800;
+    cairo_surface_t *s = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, w, h);
+    cairo_t *cr = cairo_create(s);
+    cairo_surface_t *wp = lp_wallpaper_render(w, h);
+    cairo_surface_t *backdrop = lp_launchpad_backdrop(wp, w, h);
+    cairo_surface_destroy(wp);
+    lp_desktop d;
+    lp_desktop_init(&d, LP_RECT(0, 0, w, h), NULL);
+    lp_desktop_register_builtin_apps(&d);
+    lp_desktop_open_app(&d, "finder");
+    lp_desktop_open_app(&d, "thread");
+    lp_desktop_launchpad_open(&d);
+    if (query) lp_text_buffer_set(&d.launchpad.query, query);
+    lp_spotlight_item items[LP_SPOTLIGHT_MAX_ITEMS];
+    int n = lp_desktop_launchpad_items(&d, items, LP_SPOTLIGHT_MAX_ITEMS);
+    lp_launchpad_view v = { .query = &d.launchpad.query, .items = items, .count = n, .selection = 0, .width = w, .height = h, .backdrop = backdrop };
+    lp_ctx ctx = { 0 };
+    ctx.settings = &d.settings;
+    lp_ctx_begin(&ctx, LP_PASS_DRAW, cr, NULL, LP_RECT(0, 0, w, h), 0);
+    lp_launchpad_panel(&ctx, &v, NULL);
+    lp_ctx_end(&ctx);
+    cairo_destroy(cr);
+    cairo_surface_destroy(backdrop);
+    int rc = write_png(s, path);
+    cairo_surface_destroy(s);
+    return rc;
+}
+
 static int render_spotlight_chat(const char *state, const char *path) {
     static const char *const states[] = { "idle", "listening", "thinking", "streaming", "speaking", "error", "nokey", "offline", "highlighted", "confirm" };
     int which = -1;
@@ -614,6 +646,8 @@ int main(int argc, char **argv) {
     if (strcmp(argv[1], "--spotlight") == 0 && argc == 4) return render_spotlight(argv[2], NULL, argv[3]);
     if (strcmp(argv[1], "--spotlight-menu") == 0 && argc == 4) return render_spotlight(NULL, argv[2], argv[3]);
     if (strcmp(argv[1], "--spotlight-chat") == 0 && argc == 4) return render_spotlight_chat(argv[2], argv[3]);
+    if (strcmp(argv[1], "--launchpad") == 0 && argc == 3) return render_launchpad(NULL, argv[2]);
+    if (strcmp(argv[1], "--launchpad") == 0 && argc == 4) return render_launchpad(argv[2], argv[3]);
     if (strcmp(argv[1], "--all") == 0 && argc == 3) {
         if (ensure_dir(argv[2]) != 0) return 1;
         char path[1024];

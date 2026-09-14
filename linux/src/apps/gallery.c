@@ -167,9 +167,9 @@ static void controls_tab(struct gallery *g, lp_ctx *ctx, lp_rect *c) {
         { .kind = LP_SPOT_APP, .id = "textedit", .title = "TextEdit", .subtitle = "Application", .icon = LP_ICON_PENCIL, .index = 3, .dock = 1 },
         { .kind = LP_SPOT_APP, .id = "preview", .title = "Preview", .subtitle = "Application", .icon = LP_ICON_IMAGE, .object = "docImage", .index = 6, .dock = 1 },
         { .kind = LP_SPOT_APP, .id = "terminal", .title = "Terminal", .subtitle = "Application", .icon = LP_ICON_TERMINAL, .object = "terminal", .index = 7, .running = 1, .dock = 1 },
-        { .kind = LP_SPOT_APP, .id = "media", .title = "Media Player", .subtitle = "Application", .icon = LP_ICON_PLAY, .object = "appMusic", .index = 10, .dock = 1 },
         { .kind = LP_SPOT_APP, .id = "calendar", .title = "Calendar", .subtitle = "Application", .icon = LP_ICON_CLOCK, .object = "appCalendar", .index = 11, .dock = 1 },
         { .kind = LP_SPOT_APP, .id = "settings", .title = "Settings", .subtitle = "Application", .icon = LP_ICON_GEAR, .index = 12, .dock = 1 },
+        { .kind = LP_SPOT_APP, .id = "thread", .title = "Threads", .subtitle = "Application", .icon = LP_ICON_DRIVE, .object = "volumeInternal", .index = 13, .dock = 1 },
     };
     /* A static stand-in for lp_desktop_build_menus, so the preview does not
      * reach into the real desktop's state (ControlsTab.tsx does the same). */

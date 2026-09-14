@@ -433,7 +433,7 @@ void lp_spotlight_chat(lp_ctx *ctx, const lp_spotlight_view *v, lp_rect panel, f
         lp_text_style st = lp_text_style_default();
         st.size_px = LP_TEXT_SM;
         st.color = LP_INK_TERTIARY;
-        const char *hint = lp_mary_connected(m) ? "Ask Mary anything — say “Hey Mary”, or type and press ⌃↩."
+        const char *hint = lp_mary_connected(m) ? "Ask Mary anything — say “Hey Mary”, or type and press ⇧↩."
                                                 : "Mary will be back as soon as maryd is running again.";
         lp_text_draw(cr, hint, LP_RECT(well.x + TEXT_INSET, well.y, column, well.h), &st, LP_ALIGN_CENTER);
     } else if (draw) {
