@@ -275,6 +275,8 @@ static const char *const TE_INSERT_PHRASES[] = { "insert text", "write this down
 static const char *const TE_REPLACE_TOKENS[] = { "replace", "rewrite" };
 static const char *const TE_REPLACE_PHRASES[] = { "replace the selection", "replace this with", "rewrite the selection" };
 static const char *const TE_SAVE_TOKENS[] = { "save" };
+static const char *const TE_NOTE_TOKENS[] = { "note", "new", "document" };
+static const char *const TE_NOTE_PHRASES[] = { "write a new note", "new note", "make a new note", "start a new document", "write a note" };
 static const char *const TE_SAVE_PHRASES[] = { "save the document", "save this", "save the file" };
 static const char *const TE_CLASSES[] = { "document", "text", "selection" };
 
@@ -291,6 +293,10 @@ static const lp_skill textedit_skills[] = {
       .params = "{\"type\":\"object\",\"properties\":{\"text\":{\"type\":\"string\"}},\"required\":[\"text\"]}",
       .effect = LP_SKILL_ACT, .kind = "effectful", .access = "reversible", .triggers = TE_REPLACE_TOKENS, .trigger_count = 2,
       .phrases = TE_REPLACE_PHRASES, .phrase_count = 3, .target_classes = TE_CLASSES, .target_class_count = 3 },
+    { .id = "new_document", .title = "Write a new note", .summary = "Opens a fresh untitled note and types the text into it, leaving any open document alone.",
+      .params = "{\"type\":\"object\",\"properties\":{\"text\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"}}}",
+      .effect = LP_SKILL_ACT, .kind = "effectful", .access = "reversible", .triggers = TE_NOTE_TOKENS, .trigger_count = 3,
+      .phrases = TE_NOTE_PHRASES, .phrase_count = 5, .target_classes = TE_CLASSES, .target_class_count = 3 },
     { .id = "save", .title = "Save the document", .summary = "Writes the document back where it came from.",
       .effect = LP_SKILL_ACT, .kind = "effectful", .access = "reversible", .triggers = TE_SAVE_TOKENS, .trigger_count = 1,
       .phrases = TE_SAVE_PHRASES, .phrase_count = 3, .target_classes = TE_CLASSES, .target_class_count = 3 },
@@ -298,8 +304,50 @@ static const lp_skill textedit_skills[] = {
 
 #define TE_READ_MAX 6000
 
+/* "Note", then "Note 2", "Note 3" …: the first name with no file of its own in the folder. */
+static void new_note_name(const struct textedit *t, char *out, size_t n) {
+    for (int i = 1; i < 1000; i++) {
+        if (i == 1) snprintf(out, n, "Note");
+        else snprintf(out, n, "Note %d", i);
+        char path[LP_FILES_PATH_MAX];
+        lp_files_join(t->dir, out, path, sizeof path);
+        size_t len = strlen(path);
+        snprintf(path + len, sizeof path - len, ".txt");
+        if (!lp_files_exists(path, NULL)) return;
+    }
+}
+
 static int textedit_perform(void *state, lp_desktop *d, const char *skill, const char *args, char *result, size_t n) {
     struct textedit *t = state;
+    if (strcmp(skill, "new_document") == 0) {
+        /* always a fresh window with an empty note of its own name — never the document in front, never the reopened Untitled */
+        char id[12];
+        if (!d || !lp_desktop_open_app_with(d, "textedit", NULL, NULL, id)) { snprintf(result, n, "TextEdit would not open."); return -EIO; }
+        lp_app_instance *inst = lp_desktop_instance(d, id);
+        struct textedit *fresh = inst ? inst->state : NULL;
+        if (!fresh) { snprintf(result, n, "TextEdit would not open."); return -EIO; }
+        char name[64];
+        if (!lp_skill_arg_string(args, "name", name, sizeof name) || !name[0]) new_note_name(fresh, name, sizeof name);
+        lp_text_buffer_set(&fresh->name, name);
+        fresh->path[0] = 0;
+        set_document_text(fresh, "");
+        fresh->status[0] = 0;
+        fresh->dirty = 0;
+        char *text = malloc(LP_SKILL_RESULT_MAX);
+        int chars = 0;
+        if (text && lp_skill_arg_string(args, "text", text, LP_SKILL_RESULT_MAX) && text[0]) {
+            lp_text_doc_insert(&fresh->area.doc, text, (int)strlen(text));
+            for (const char *c = text; *c; c++) if (((unsigned char)*c & 0xC0) != 0x80) chars++;
+            fresh->dirty = 1;
+        }
+        free(text);
+        if (d->on_app_dirty) d->on_app_dirty(d, fresh->window_id);
+        char nameq[520];
+        lp_skill_json_escape(name, nameq, sizeof nameq);
+        snprintf(result, n, "{\"landed\":true,\"name\":\"%s\",\"chars\":%d,\"summary\":\"%s\"}", nameq, chars,
+                 chars ? "Wrote it in a new note." : "Opened a new note.");
+        return 0;
+    }
     if (!t && d) {                      /* the skill needs a window: open the document */
         lp_desktop_open_app(d, "textedit");
         t = lp_desktop_app_state(d, "textedit");
@@ -382,7 +430,7 @@ const lp_app lp_app_textedit = {
     .default_rect = { 200, 120, 560, 420 }, .min_size = { 320, 220 }, .singleton = 0, .resizable = 1,
     .create = textedit_create, .paint = textedit_paint, .destroy = textedit_destroy,
     .open = textedit_open, .command = textedit_command, .menu_entries = textedit_menu_entries,
-    .skills = textedit_skills, .skill_count = 4, .perform = textedit_perform,
+    .skills = textedit_skills, .skill_count = 5, .perform = textedit_perform,
     .surface = textedit_surface, .surface_poll_s = 15,
     .summary = "Writes and reads plain text documents.", .discipline = "writing",
 };

@@ -30,7 +30,7 @@ LP_TEST(the_rail_lists_every_app_with_skills_and_the_disciplines) {
     LP_ASSERT_EQ(lp_abilities_app_selected(state), 0);
     LP_ASSERT_EQ(lp_abilities_app_skill_count(state), 2);          /* the Finder: open, reveal */
     lp_abilities_app_select(state, 1);
-    LP_ASSERT_EQ(lp_abilities_app_skill_count(state), 4);          /* TextEdit: read, insert, replace, save */
+    LP_ASSERT_EQ(lp_abilities_app_skill_count(state), 5);          /* TextEdit: read, insert, replace, a new note, save */
     lp_abilities_app_select(state, 7);
     LP_ASSERT_EQ(lp_abilities_app_skill_count(state), 3);          /* awareness: the Finder's two and Calendar's one */
 }

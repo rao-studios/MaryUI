@@ -275,6 +275,18 @@ LP_TEST(textedit_the_finder_the_calculator_and_the_desktop_carry_their_skills) {
     lp_textedit_select(lp_desktop_instance(&d, id)->state, 0, 8);
     LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "textedit", "replace_selection", "{\"text\":\"A wave\"}", result, sizeof result, &status), LP_SKILL_ALLOWED);
     LP_ASSERT_STR(lp_textedit_text(lp_desktop_instance(&d, id)->state), "A wave comes in. Twice a day.");
+    /* a new note is a fresh window of its own, whatever is open: the document in front is left alone */
+    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "textedit", "new_document", "{\"text\":\"hello world\"}", result, sizeof result, &status), LP_SKILL_ALLOWED);
+    LP_ASSERT_EQ(status, 0);
+    LP_ASSERT(strstr(result, "\"landed\":true") && strstr(result, "\"name\":\"Note\"") && strstr(result, "Wrote it in a new note."));
+    LP_ASSERT_STR(lp_textedit_text(lp_desktop_instance(&d, id)->state), "A wave comes in. Twice a day.");
+    int textedits = 0;
+    const char *note_id = NULL;
+    for (int i = 0; i < d.instance_count; i++)
+        if (d.instances[i].app == &lp_app_textedit) { textedits++; if (strcmp(d.instances[i].window_id, id) != 0) note_id = d.instances[i].window_id; }
+    LP_ASSERT_EQ(textedits, 2);
+    LP_ASSERT(note_id != NULL);
+    if (note_id) LP_ASSERT_STR(lp_textedit_text(lp_desktop_instance(&d, note_id)->state), "hello world");
     /* the Finder refuses what is not there */
     lp_desktop_perform_skill(&d, "finder", "reveal", "{\"path\":\"~/no-such-file-here\"}", result, sizeof result, &status);
     LP_ASSERT_EQ(status, -ENOENT);
@@ -292,7 +304,7 @@ LP_TEST(textedit_the_finder_the_calculator_and_the_desktop_carry_their_skills) {
             LP_ASSERT_STR(json_object_get_string(field(app, "discipline")), "writing");
             LP_ASSERT_STR(json_object_get_string(field(app, "paradigm")), "applicationExpertise");
             struct json_object *skills = field(app, "skills"), *insert = json_object_array_get_idx(skills, 1);
-            LP_ASSERT_EQ(json_object_array_length(skills), 4);
+            LP_ASSERT_EQ(json_object_array_length(skills), 5);
             LP_ASSERT_STR(json_object_get_string(field(insert, "kind")), "effectful");
             LP_ASSERT_STR(json_object_get_string(field(insert, "access")), "reversible");
             LP_ASSERT_EQ(json_object_array_length(field(field(insert, "triggers"), "tokens")), 4);
@@ -304,6 +316,25 @@ LP_TEST(textedit_the_finder_the_calculator_and_the_desktop_carry_their_skills) {
     }
 }
 #endif
+
+LP_TEST(a_new_note_opens_textedit_when_nothing_is) {
+    setup();
+    lp_desktop_register_builtin_apps(&d);
+    lp_skill_set_app_ask(&d.skill_policy, "textedit", LP_SKILL_ASK_NEVER);
+    char result[LP_SKILL_RESULT_MAX];
+    int status = 1;
+    LP_ASSERT(lp_desktop_app_state(&d, "textedit") == NULL);
+    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "textedit", "new_document", "{\"text\":\"hello world\"}", result, sizeof result, &status), LP_SKILL_ALLOWED);
+    LP_ASSERT_EQ(status, 0);
+    void *state = lp_desktop_app_state(&d, "textedit");
+    LP_ASSERT(state != NULL);
+    if (state) LP_ASSERT_STR(lp_textedit_text(state), "hello world");
+    const lp_window_record *front = lp_wm_focused(&d.wm);
+    LP_ASSERT(front && strcmp(front->app_id, "textedit") == 0);
+    /* without text it still opens, empty and named */
+    LP_ASSERT_EQ(lp_desktop_perform_skill(&d, "textedit", "new_document", NULL, result, sizeof result, &status), LP_SKILL_ALLOWED);
+    LP_ASSERT(strstr(result, "Opened a new note.") != NULL);
+}
 
 LP_TEST(events_today_reads_the_calendar_without_opening_it) {
     if (!lp_calendar_available()) return;
@@ -343,6 +374,7 @@ int main(void) {
     LP_RUN(every_call_is_decided_by_the_desktops_rule);
     LP_RUN(perform_runs_only_what_is_allowed);
     LP_RUN(settings_media_and_calendar_carry_the_first_skills);
+    LP_RUN(a_new_note_opens_textedit_when_nothing_is);
     LP_RUN(events_today_reads_the_calendar_without_opening_it);
 #ifdef HAVE_JSONC
     LP_RUN(textedit_the_finder_the_calculator_and_the_desktop_carry_their_skills);
