@@ -20,8 +20,8 @@ cairo_surface_t *lp_wallpaper_render(int w, int h);
  * $XDG_CACHE_HOME/maryui/, else render and cache. The procedural chain. */
 cairo_surface_t *lp_wallpaper_cached(int w, int h);
 
-/* The wallpaper the settings ask for, cached the same way: the molten shader
- * when the mode selects it and EGL exists, otherwise the procedural chain.
+/* The wallpaper the settings ask for, cached the same way: lava's first moment (never cached: it is quick),
+ * the molten shader when the mode selects it and EGL exists, otherwise the procedural chain.
  * Always returns a surface — this is the fallback chain, not a query. */
 cairo_surface_t *lp_wallpaper_for(int w, int h, const struct lp_settings *settings);
 

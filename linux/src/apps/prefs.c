@@ -558,9 +558,10 @@ static float pane_general(lp_ctx *ctx, struct prefs *p, lp_desktop *d, float x, 
     static const lp_segment FOLDERS[2] = { { "Slate", LP_ICON_COUNT }, { "Manila", LP_ICON_COUNT } };
     int folders = s.folders == LP_FOLDER_MANILA;
     if (segmented_row(ctx, lp_id_index(base, 2), "Folders", x, &y, FOLDERS, 2, &folders)) run(d, LP_CMD_SET_FOLDERS, folders ? LP_FOLDER_MANILA : LP_FOLDER_SLATE);
-    static const lp_segment WALLPAPERS[2] = { { "Molten", LP_ICON_COUNT }, { "Procedural", LP_ICON_COUNT } };
-    int wallpaper = s.wallpaper == LP_WALLPAPER_PROCEDURAL;
-    if (segmented_row(ctx, lp_id_index(base, 3), "Wallpaper", x, &y, WALLPAPERS, 2, &wallpaper)) run(d, LP_CMD_SET_WALLPAPER, wallpaper ? LP_WALLPAPER_PROCEDURAL : LP_WALLPAPER_MOLTEN);
+    static const lp_segment WALLPAPERS[3] = { { "Lava", LP_ICON_COUNT }, { "Molten", LP_ICON_COUNT }, { "Procedural", LP_ICON_COUNT } };
+    static const enum lp_wallpaper_mode WALLPAPER_MODES[3] = { LP_WALLPAPER_LAVA, LP_WALLPAPER_MOLTEN, LP_WALLPAPER_PROCEDURAL };
+    int wallpaper = s.wallpaper == LP_WALLPAPER_MOLTEN ? 1 : s.wallpaper == LP_WALLPAPER_LAVA ? 0 : 2;
+    if (segmented_row(ctx, lp_id_index(base, 3), "Wallpaper", x, &y, WALLPAPERS, 3, &wallpaper)) run(d, LP_CMD_SET_WALLPAPER, WALLPAPER_MODES[wallpaper]);
     static const lp_segment TONES[2] = { { "Platinum", LP_ICON_COUNT }, { "Faithful", LP_ICON_COUNT } };
     int tone = s.molten_tone == LP_MOLTEN_FAITHFUL;
     if (segmented_row(ctx, lp_id_index(base, 4), "Molten tone", x, &y, TONES, 2, &tone)) run(d, LP_CMD_SET_MOLTEN_TONE, tone ? LP_MOLTEN_FAITHFUL : LP_MOLTEN_PLATINUM);

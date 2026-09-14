@@ -22,7 +22,9 @@
 #include "maryui/lp_thread.h"
 #include "maryui/lp_tokens.h"
 #include "maryui/lp_ui.h"
+#include "maryui/lp_lava.h"
 #include "maryui/lp_molten.h"
+#include <time.h>
 #include "maryui/lp_wallpaper.h"
 
 #ifdef HAVE_JSONC
@@ -34,6 +36,9 @@ static int usage(int status) {
         "usage: lp-render --brush <out.png>              the 512px brushed-platinum tile\n"
         "       lp-render --wallpaper WxH <out.png>      the wallpaper cover-fitted to WxH\n"
         "       lp-render --molten WxH [TONE] <out.png>  the molten shader at WxH (TONE platinum|faithful); needs EGL\n"
+        "       lp-render --lava WxH [SECONDS [TONE]] <out.png>  the lava wallpaper at a moment, stretched as the desktop shows it\n"
+        "       lp-render --lava-strip WxH <out.png>     four moments of the lava stacked (0, 6, 12, 24 s), to judge its motion\n"
+        "       lp-render --lava-bench WxH               CPU time per lava frame for a WxH output\n"
         "       lp-render --clock W <out.png>            the ambient clock, W px wide, over the wallpaper\n"
         "       lp-render --window <out.png>             a focused About window and an inactive one, over the wallpaper\n"
         "       lp-render --segmented <out.png>          three segmented controls: at rest, mid-slide, and with a hovered segment's bead necking in\n"
@@ -115,6 +120,61 @@ static int render_molten(int w, int h, const char *tone_name, const char *path) 
     int rc = write_png(s, path);
     cairo_surface_destroy(s);
     return rc;
+}
+
+/* The lava wallpaper at a moment, stretched as the scene stretches it. */
+static int render_lava(int w, int h, double seconds, const char *tone_name, const char *path) {
+    enum lp_molten_tone tone = tone_name && strcmp(tone_name, "faithful") == 0 ? LP_MOLTEN_FAITHFUL : LP_MOLTEN_PLATINUM;
+    cairo_surface_t *s = lp_lava_still(w, h, seconds * LP_LAVA_SPEED, tone);
+    if (!s) return 1;
+    int rc = write_png(s, path);
+    cairo_surface_destroy(s);
+    return rc;
+}
+
+static int render_lava_strip(int w, int h, const char *path) {
+    static const double moments[4] = { 0, 6, 12, 24 };
+    cairo_surface_t *out = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, w, h * 4 + 6);
+    cairo_t *cr = cairo_create(out);
+    cairo_set_source_rgb(cr, 1, 1, 1);
+    cairo_paint(cr);
+    for (int i = 0; i < 4; i++) {
+        cairo_surface_t *s = lp_lava_still(w, h, moments[i] * LP_LAVA_SPEED, LP_MOLTEN_PLATINUM);
+        if (!s) continue;
+        cairo_set_source_surface(cr, s, 0, i * (h + 2));
+        cairo_paint(cr);
+        cairo_surface_destroy(s);
+    }
+    cairo_destroy(cr);
+    int rc = write_png(out, path);
+    cairo_surface_destroy(out);
+    return rc;
+}
+
+static double cpu_ms(void) {
+    struct timespec t;
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t);
+    return t.tv_sec * 1000.0 + t.tv_nsec / 1e6;
+}
+
+/* What the compositor's timer spends a frame: CPU time, which a loaded machine does not inflate. */
+static int bench_lava(int w, int h) {
+    const int frames = 45;
+    double total = 0, worst = 0;
+    int fw, fh;
+    lp_lava_frame_size(w, h, &fw, &fh);
+    cairo_surface_destroy(lp_lava_frame(w, h, 0, LP_MOLTEN_PLATINUM));   /* the tables */
+    for (int i = 0; i < frames; i++) {
+        double t0 = cpu_ms();
+        cairo_surface_t *s = lp_lava_frame(w, h, i * (double)LP_LAVA_SPEED / LP_LAVA_FPS, LP_MOLTEN_PLATINUM);
+        double ms = cpu_ms() - t0;
+        cairo_surface_destroy(s);
+        total += ms;
+        if (ms > worst) worst = ms;
+    }
+    printf("lava %dx%d (frame %dx%d): %.2f ms CPU a frame on average, %.2f worst, over %d frames; %.1f%% of one core at %d fps\n",
+           w, h, fw, fh, total / frames, worst, frames, total / frames * LP_LAVA_FPS / 10.0, LP_LAVA_FPS);
+    return 0;
 }
 
 /* The ambient clock in its corner — all that is left on the desktop itself. */
@@ -626,6 +686,21 @@ int main(int argc, char **argv) {
         if (!parse_size(argv[2], &w, &h)) return usage(2);
         return render_wallpaper(w, h, argv[3]);
     }
+    if (strcmp(argv[1], "--lava") == 0 && argc >= 4 && argc <= 6) {
+        int w, h;
+        if (!parse_size(argv[2], &w, &h)) return usage(2);
+        return render_lava(w, h, argc >= 5 ? atof(argv[3]) : 0, argc == 6 ? argv[4] : NULL, argv[argc - 1]);
+    }
+    if (strcmp(argv[1], "--lava-strip") == 0 && argc == 4) {
+        int w, h;
+        if (!parse_size(argv[2], &w, &h)) return usage(2);
+        return render_lava_strip(w, h, argv[3]);
+    }
+    if (strcmp(argv[1], "--lava-bench") == 0 && argc == 3) {
+        int w, h;
+        if (!parse_size(argv[2], &w, &h)) return usage(2);
+        return bench_lava(w, h);
+    }
     if (strcmp(argv[1], "--molten") == 0 && (argc == 4 || argc == 5)) {
         int w, h;
         if (!parse_size(argv[2], &w, &h)) return usage(2);
@@ -680,6 +755,8 @@ int main(int argc, char **argv) {
         } else {
             fprintf(stderr, "lp-render: no EGL here; the molten wallpaper is not baked\n");
         }
+        snprintf(path, sizeof path, "%s/lava-1280x800.png", argv[2]);
+        rc |= render_lava(1280, 800, 0, NULL, path);
         snprintf(path, sizeof path, "%s/clock.png", argv[2]);
         rc |= render_clock(640, path);
         snprintf(path, sizeof path, "%s/window.png", argv[2]);

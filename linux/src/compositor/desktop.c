@@ -18,6 +18,7 @@
 #include "maryui/lp_text.h"
 #include "maryui/lp_tokens.h"
 #include "maryui/lp_clock.h"
+#include "maryui/lp_lava.h"
 #include "maryui/lp_molten.h"
 #include "maryui/lp_wallpaper.h"
 #include "chrome.h"
@@ -253,6 +254,8 @@ void mui_desktop_init(struct mui_server *server) {
     format_clock(server->clock_text, sizeof server->clock_text, server->desktop.settings.clock_24h);
     struct wl_event_loop *loop = wl_display_get_event_loop(server->display);
     server->clock_timer = wl_event_loop_add_timer(loop, clock_tick, server);
+    server->lava_start_ms = mui_now_ms();
+    server->wallpaper_look = 0;
     time_t now = time(NULL);
     wl_event_source_timer_update(server->clock_timer, (int)((60 - now % 60) * 1000 + 50));
     wl_event_loop_add_signal(loop, SIGCHLD, reap, server);
@@ -285,6 +288,8 @@ void mui_desktop_finish(struct mui_server *server) {
     lp_clipboard_port_close(&server->clipboard_port);
     if (server->clock_timer) wl_event_source_remove(server->clock_timer);
     server->clock_timer = NULL;
+    if (server->lava_timer) wl_event_source_remove(server->lava_timer);
+    server->lava_timer = NULL;
     if (server->repaint_idle) wl_event_source_remove(server->repaint_idle);
     server->repaint_idle = NULL;
     mui_drag_finish(server);
@@ -301,8 +306,12 @@ void mui_desktop_finish(struct mui_server *server) {
     }
 }
 
+static void wallpaper_apply(struct mui_server *server);
+static unsigned wallpaper_look(const struct mui_server *server);
+
 void mui_desktop_settings_changed(struct mui_server *server) {
     mui_launchpad_invalidate(server);   /* the wallpaper may have changed: the softened copy goes */
+    if (server->wallpaper_look && wallpaper_look(server) != server->wallpaper_look) wallpaper_apply(server);
     mui_input_apply_settings(server);
     format_clock(server->clock_text, sizeof server->clock_text, server->desktop.settings.clock_24h);
     struct mui_window *win;
@@ -315,15 +324,132 @@ void mui_desktop_settings_changed(struct mui_server *server) {
     if (server->spotlight) { mui_chrome_damage_all(server->spotlight); mui_chrome_repaint(server->spotlight, mui_now_ms()); }
 }
 
-/* Hands a finished wallpaper image to the scene, scaled to fill the output. */
-static void publish_wallpaper(struct mui_output *output, cairo_surface_t *argb) {
+/* Hands a finished wallpaper image to the scene, scaled to fill the output. `crop` is the part of the buffer the
+ * output shows (a lava frame's interior, inside its margin), or NULL for all of it. */
+static void publish_wallpaper_crop(struct mui_output *output, cairo_surface_t *argb, const struct wlr_fbox *crop) {
     struct mui_server *server = output->server;
     if (output->wallpaper_buffer) wlr_buffer_drop(&output->wallpaper_buffer->base);
     output->wallpaper_buffer = lp_cairo_buffer_from_surface(argb);
     if (!output->wallpaper) output->wallpaper = wlr_scene_buffer_create(server->layer_wallpaper, NULL);
     wlr_scene_buffer_set_buffer(output->wallpaper, &output->wallpaper_buffer->base);
-    /* A reduced-scale frame is stretched to the output; the still is 1:1. */
+    wlr_scene_buffer_set_source_box(output->wallpaper, crop);
+    /* A reduced-scale frame is stretched to the output — smoothly, which is what blurs the lava; the still is 1:1. */
+    wlr_scene_buffer_set_filter_mode(output->wallpaper, WLR_SCALE_FILTER_BILINEAR);
     wlr_scene_buffer_set_dest_size(output->wallpaper, output->width, output->height);
+}
+
+static void publish_wallpaper(struct mui_output *output, cairo_surface_t *argb) { publish_wallpaper_crop(output, argb, NULL); }
+
+/* MARK: - The lava wallpaper (PARITY D33) */
+
+static int lava_live(const struct mui_server *server) {
+    return server->settings && server->settings->wallpaper == LP_WALLPAPER_LAVA && !server->settings->reduced_motion;
+}
+
+static double lava_time(const struct mui_server *server) { return (mui_now_ms() - server->lava_start_ms) / 1000.0 * LP_LAVA_SPEED; }
+
+/* One lava frame for the output, a quarter of its size, stretched by the scene. */
+static int publish_lava(struct mui_output *output, double time) {
+    struct mui_server *server = output->server;
+    cairo_surface_t *frame = lp_lava_frame(output->width, output->height, time, server->settings->molten_tone);
+    if (!frame) return 0;
+    int fw = cairo_image_surface_get_width(frame), fh = cairo_image_surface_get_height(frame);
+    struct wlr_fbox crop = { LP_LAVA_MARGIN, LP_LAVA_MARGIN, fw - 2 * LP_LAVA_MARGIN, fh - 2 * LP_LAVA_MARGIN };
+    publish_wallpaper_crop(output, frame, &crop);
+    cairo_surface_destroy(frame);
+    return 1;
+}
+
+static int lava_tick(void *data) {
+    struct mui_server *server = data;
+    if (!lava_live(server)) return 0;
+    double t0 = mui_now_ms(), time = lava_time(server);
+    int published = 0;
+    struct mui_output *output;
+    wl_list_for_each(output, &server->outputs, link) {
+        if (output->width <= 0 || output->height <= 0 || !output->wallpaper) continue;
+        /* Windows cover all of it: nothing would show, so nothing is drawn. The clock runs on regardless, so the
+         * wax is where it would have been when a window moves away. */
+        if (!pixman_region32_not_empty(&output->wallpaper->node.visible)) { server->lava_covered++; continue; }
+        published |= publish_lava(output, time);
+    }
+    if (published) mui_server_schedule_frame(server);
+    double spent = mui_now_ms() - t0;
+    if (published) {
+        server->lava_frames++;
+        server->lava_ms += spent;
+        if (spent > server->lava_max_ms) server->lava_max_ms = spent;
+    }
+    if (server->debug_frames) {
+        if (server->lava_report_ms == 0) server->lava_report_ms = t0;
+        if (t0 - server->lava_report_ms >= 5000) {
+            wlr_log(WLR_INFO, "lava: %u frames in %.1f s, avg %.2f ms, max %.1f ms, %u covered",
+                    server->lava_frames, (t0 - server->lava_report_ms) / 1000, server->lava_frames ? server->lava_ms / server->lava_frames : 0,
+                    server->lava_max_ms, server->lava_covered);
+            server->lava_frames = server->lava_covered = 0;
+            server->lava_ms = server->lava_max_ms = 0;
+            server->lava_report_ms = t0;
+        }
+    }
+    int next = (int)(1000.0 / LP_LAVA_FPS - spent + 0.5);
+    wl_event_source_timer_update(server->lava_timer, next < 5 ? 5 : next);
+    return 0;
+}
+
+/* The still: whatever lp_wallpaper_for says, with the Cairo vignette topping up the ones that have none. */
+static void publish_still(struct mui_output *output) {
+    struct mui_server *server = output->server;
+    int w = output->width, h = output->height;
+    cairo_surface_t *wp = lp_wallpaper_for(w, h, server->settings);
+    cairo_surface_t *argb = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, w, h);
+    cairo_t *cr = cairo_create(argb);
+    cairo_set_source_surface(cr, wp, 0, 0);
+    cairo_paint(cr);
+    /* The shader grades its own vignette, so the Cairo one only tops it up —
+     * Wallpaper.module.css drops to 0.35 under molten for the same reason. Lava grades all of its own. */
+    enum lp_wallpaper_mode mode = server->settings ? server->settings->wallpaper : LP_WALLPAPER_PROCEDURAL;
+    if (mode != LP_WALLPAPER_LAVA) lp_wallpaper_vignette_at(cr, w, h, mode == LP_WALLPAPER_MOLTEN ? 0.35f : 1.0f);
+    cairo_destroy(cr);
+    cairo_surface_destroy(wp);
+    publish_wallpaper(output, argb);
+    cairo_surface_destroy(argb);
+}
+
+static unsigned wallpaper_look(const struct mui_server *server) {
+    const lp_settings *s = server->settings;
+    if (!s) return 1;
+    return 1u + (unsigned)s->wallpaper + ((unsigned)s->molten_tone << 4) + ((unsigned)(s->reduced_motion != 0) << 8);
+}
+
+/* Lava live: its timer runs. Anything else: it does not. */
+static void lava_timer_sync(struct mui_server *server) {
+    if (lava_live(server)) {
+        if (!server->lava_timer) {
+            struct wl_event_loop *loop = wl_display_get_event_loop(server->display);
+            server->lava_timer = wl_event_loop_add_timer(loop, lava_tick, server);
+        }
+        if (server->lava_timer) wl_event_source_timer_update(server->lava_timer, (int)(1000.0 / LP_LAVA_FPS));
+    } else if (server->lava_timer) {
+        wl_event_source_remove(server->lava_timer);
+        server->lava_timer = NULL;
+    }
+}
+
+/* One output's wallpaper as the settings ask: a lava frame while lava is live, else the still. */
+static void wallpaper_publish(struct mui_output *output) {
+    if (lava_live(output->server) && publish_lava(output, lava_time(output->server))) return;
+    publish_still(output);
+}
+
+/* The settings moved the wallpaper: every output again, and the lava timer started or stopped. */
+static void wallpaper_apply(struct mui_server *server) {
+    struct mui_output *output;
+    wl_list_for_each(output, &server->outputs, link) {
+        if (output->width > 0 && output->height > 0) wallpaper_publish(output);
+    }
+    server->wallpaper_look = wallpaper_look(server);
+    lava_timer_sync(server);
+    mui_server_schedule_frame(server);
 }
 
 void mui_desktop_output_ready(struct mui_output *output) {
@@ -332,19 +458,9 @@ void mui_desktop_output_ready(struct mui_output *output) {
     if (w <= 0 || h <= 0) return;
 
     double t0 = mui_now_ms();
-    cairo_surface_t *wp = lp_wallpaper_for(w, h, server->settings);
-    cairo_surface_t *argb = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, w, h);
-    cairo_t *cr = cairo_create(argb);
-    cairo_set_source_surface(cr, wp, 0, 0);
-    cairo_paint(cr);
-    /* The shader grades its own vignette, so the Cairo one only tops it up —
-     * Wallpaper.module.css drops to 0.35 under molten for the same reason. */
-    int molten = server->settings && server->settings->wallpaper == LP_WALLPAPER_MOLTEN;
-    lp_wallpaper_vignette_at(cr, w, h, molten ? 0.35f : 1.0f);
-    cairo_destroy(cr);
-    cairo_surface_destroy(wp);
-    publish_wallpaper(output, argb);
-    cairo_surface_destroy(argb);
+    wallpaper_publish(output);
+    server->wallpaper_look = wallpaper_look(server);
+    lava_timer_sync(server);
     struct wlr_box box;
     wlr_output_layout_get_box(server->output_layout, output->wlr_output, &box);
     wlr_scene_node_set_position(&output->wallpaper->node, box.x, box.y);

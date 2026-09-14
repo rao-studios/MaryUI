@@ -15,7 +15,8 @@
 enum lp_accent_kind { LP_ACCENT_BLUE, LP_ACCENT_GRAPHITE };
 /* Warm card stock, or the cool blue-grey Mac OS 8/9 drew folders in. */
 enum lp_folder_appearance { LP_FOLDER_MANILA, LP_FOLDER_SLATE };
-enum lp_wallpaper_mode { LP_WALLPAPER_MOLTEN, LP_WALLPAPER_PROCEDURAL, LP_WALLPAPER_RASTER };
+/* LAVA is C only (PARITY D33): the molten field, lighter and live (lp_lava.h). It is the default. */
+enum lp_wallpaper_mode { LP_WALLPAPER_MOLTEN, LP_WALLPAPER_PROCEDURAL, LP_WALLPAPER_RASTER, LP_WALLPAPER_LAVA };
 
 typedef struct lp_settings {
     enum lp_accent_kind accent;

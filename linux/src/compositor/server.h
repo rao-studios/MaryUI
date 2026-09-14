@@ -165,6 +165,14 @@ struct mui_server {
     int clock_x, clock_y;                /* where its chrome sits on the desktop: the capsule's world offset */
     struct wl_event_source *clock_timer;
     char clock_text[32];
+    /* The wallpaper as it is showing — mode, tone and reduced motion — so a settings change republishes only when
+     * one of them moved (0: nothing published yet). And the lava's clock: wall time since the desktop started,
+     * stepped by lava_timer at lava.fps while lava is live, with MARYUI_DEBUG=frames statistics. */
+    unsigned wallpaper_look;
+    struct wl_event_source *lava_timer;
+    double lava_start_ms;
+    unsigned lava_frames, lava_covered;
+    double lava_ms, lava_max_ms, lava_report_ms;
     struct wl_list keyboards; /* struct mui_keyboard */
     struct wl_list pointers;  /* struct mui_pointer (input.c): System Settings reconfigures them */
     struct wl_listener new_input;

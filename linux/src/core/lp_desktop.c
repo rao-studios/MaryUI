@@ -432,13 +432,14 @@ void lp_desktop_build_menus(lp_desktop *d) {
     add(m, "Show Clock", NULL, LP_CMD_TOGGLE_CLOCK, 0)->checked = d->settings.clock;
     add(m, "Liquid Merge", NULL, LP_CMD_TOGGLE_GOO, 0)->checked = d->settings.goo;
     sep(m);
+    add(m, "Lava Wallpaper", NULL, LP_CMD_SET_WALLPAPER, LP_WALLPAPER_LAVA)->checked = d->settings.wallpaper == LP_WALLPAPER_LAVA;
     add(m, "Molten Wallpaper", NULL, LP_CMD_SET_WALLPAPER, LP_WALLPAPER_MOLTEN)->checked = d->settings.wallpaper == LP_WALLPAPER_MOLTEN;
     add(m, "Procedural Wallpaper", NULL, LP_CMD_SET_WALLPAPER, LP_WALLPAPER_PROCEDURAL)->checked = d->settings.wallpaper == LP_WALLPAPER_PROCEDURAL;
     add(m, "Raster Wallpaper", NULL, LP_CMD_SET_WALLPAPER, LP_WALLPAPER_RASTER)->checked = d->settings.wallpaper == LP_WALLPAPER_RASTER;
     sep(m);
     {
-        /* The two grades only mean anything while the shader is what is showing. */
-        int molten = d->settings.wallpaper == LP_WALLPAPER_MOLTEN;
+        /* The two grades only mean anything while the shader, or its lava variant, is what is showing. */
+        int molten = d->settings.wallpaper == LP_WALLPAPER_MOLTEN || d->settings.wallpaper == LP_WALLPAPER_LAVA;
         lp_menu_entry *it = add(m, "Molten · Platinum", NULL, LP_CMD_SET_MOLTEN_TONE, LP_MOLTEN_PLATINUM);
         it->checked = d->settings.molten_tone == LP_MOLTEN_PLATINUM;
         it->disabled = !molten;

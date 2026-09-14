@@ -8,12 +8,12 @@
 #include "maryui/lp_tokens.h"
 
 lp_settings lp_settings_defaults(void) {
-    /* Molten is the default, as it is on the web; it falls back on its own
-     * when the image has no EGL (lp_wallpaper_cached). */
+    /* Lava is the default (PARITY D33): the molten field, live and light enough for a CPU. The web's default,
+     * the molten shader, is a choice away; it falls back on its own when the image has no EGL. */
     /* Slate folders, as object.folder-appearance says and base.css's bare :root maps. */
     /* The clock shows until someone hides it, so a file written before the key existed keeps it. */
     return (lp_settings){ .accent = LP_ACCENT_BLUE, .folders = LP_FOLDER_SLATE, .goo = 1,
-                          .wallpaper = LP_WALLPAPER_MOLTEN, .molten_tone = LP_MOLTEN_PLATINUM, .reduced_motion = 0,
+                          .wallpaper = LP_WALLPAPER_LAVA, .molten_tone = LP_MOLTEN_PLATINUM, .reduced_motion = 0,
                           .clock = 1, .key_repeat_rate = 25, .key_repeat_delay = 600, .mary_wake = 1,
                           .mary_voice = "fr_marie_neutral", .mary_voice_engine = "mistral", .mary_skill_engine = "mistral",
                           .mary_recall_personal = 1, .mary_recall_behavioral = 1 };
@@ -62,7 +62,8 @@ lp_settings lp_settings_load(void) {
         else if (strcmp(key, "wallpaper") == 0)
             s.wallpaper = strcmp(value, "raster") == 0 ? LP_WALLPAPER_RASTER
                         : strcmp(value, "procedural") == 0 ? LP_WALLPAPER_PROCEDURAL
-                                                           : LP_WALLPAPER_MOLTEN;
+                        : strcmp(value, "molten") == 0     ? LP_WALLPAPER_MOLTEN
+                                                           : LP_WALLPAPER_LAVA;
         else if (strcmp(key, "molten_tone") == 0)
             s.molten_tone = strcmp(value, "faithful") == 0 ? LP_MOLTEN_FAITHFUL : LP_MOLTEN_PLATINUM;
         else if (strcmp(key, "reduced_motion") == 0) s.reduced_motion = strcmp(value, "on") == 0 || strcmp(value, "1") == 0;
@@ -102,7 +103,8 @@ int lp_settings_save(const lp_settings *s) {
     fprintf(f, "accent=%s\nfolders=%s\ngoo=%s\nwallpaper=%s\nmolten_tone=%s\nreduced_motion=%s\nclock=%s\n",
         s->accent == LP_ACCENT_GRAPHITE ? "graphite" : "blue",
         s->folders == LP_FOLDER_MANILA ? "manila" : "slate", s->goo ? "on" : "off",
-        s->wallpaper == LP_WALLPAPER_RASTER ? "raster" : s->wallpaper == LP_WALLPAPER_PROCEDURAL ? "procedural" : "molten",
+        s->wallpaper == LP_WALLPAPER_RASTER ? "raster" : s->wallpaper == LP_WALLPAPER_PROCEDURAL ? "procedural"
+        : s->wallpaper == LP_WALLPAPER_MOLTEN ? "molten" : "lava",
         s->molten_tone == LP_MOLTEN_FAITHFUL ? "faithful" : "platinum", s->reduced_motion ? "on" : "off",
         s->clock ? "on" : "off");
     fprintf(f, "# System Settings\nkey_repeat_rate=%d\nkey_repeat_delay=%d\nkeyboard_layout=%s\npointer_speed=%.2f\nnatural_scroll=%s\nclock_24h=%s\n",

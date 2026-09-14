@@ -49,13 +49,13 @@ README, or when a file under `web/src/lib` or `web/src/desktop` is missing from 
 | `desktop/wm/actions.ts`, `desktop/wm/types.ts` | `lp_wm_action`, `lp_window_record`, `lp_open_spec` in `lp_wm.h` | ✓ |
 | `desktop/wm/selectors.ts` | `lp_wm_focused`, `lp_wm_find` | ✓ |
 | `desktop/wm/store.ts`, `desktop/wm/useWM.ts` | `lp_desktop_dispatch` + `on_change` (the host syncs from the change mask) | ≈ no subscriptions: one host, one callback |
-| `desktop/settings.ts` | `lp_settings.h`, `src/core/lp_settings.c` (`$XDG_CONFIG_HOME/maryui/settings.conf`) | ≈ **D6** raster wallpaper stored, not rendered; plus `clock`, C-only (**D13**) |
+| `desktop/settings.ts` | `lp_settings.h`, `src/core/lp_settings.c` (`$XDG_CONFIG_HOME/maryui/settings.conf`) | ≈ **D6** raster wallpaper stored, not rendered; plus `clock`, C-only (**D13**), and `wallpaper=lava`, C-only and the default (**D33**) |
 | `desktop/menus.ts` | `include/maryui/lp_menus.h` (the models), `lp_desktop_build_menus` in `src/core/lp_desktop.c` | ≈ **D11** plus File › New Terminal (`spawn("foot")`), a Go menu, and the focused app's entries (`lp_app.menu_entries`); both sides draw them as Spotlight's pills |
 | `desktop/apps/registry.ts` | `lp_desktop_register_builtin_apps`, `lp_app.h` (`name`, `icon`, `hidden`, `internal`, `dock`, `raw_ctrl`, `open`, `command`, `menu_entries`, `notify`) | ≈ **D11** **D15** finder, gallery, about, textedit (hidden: Spotlight only), info (internal: opened by the Finder), and the Linux-only system apps: calculator, preview (hidden: Spotlight and the Finder), terminal (hidden: Spotlight and File › New Terminal), activity, diskutil, media (the Media Player; hidden: Spotlight and the Finder), calendar, settings (System Settings); `dock` pins Finder, TextEdit, Preview, Terminal, the Media Player, Calendar and System Settings, and System Settings › Dock can choose the set (`settings.dock`, `lp_desktop_in_dock`) |
 | `desktop/spotlight.ts` | `include/maryui/lp_spotlight.h`, `src/core/lp_spotlight.c`, `lp_desktop_spotlight_*` in `src/core/lp_desktop.c`, `tests/test_spotlight.c` | ≈ **D15** 9/9 cases: the dock for a blank query (the pinned apps only), ranking (prefix, word prefix, substring), windows as items, wrap, cap 8; the C tests add the Ctrl+Space / Esc / Enter key cases and seven for the command pills |
 | `desktop/SpotlightHost.tsx` | `src/compositor/spotlight.c` (one chrome in the `z.spotlight` layer sized for the no-menu panel so typing never reallocates, `mui_spotlight_resize` when a pill opens, `lp-spotlight-in` tween, hit-test inside the panel, outside-press closes); the view is `lp_desktop_spotlight_view` | ≈ **D9** the Terminal tile |
 | `desktop/Desktop.tsx` | `src/compositor/desktop.c` (the ambient clock, the context menu, pointer/keyboard routing), `src/core/lp_desktop.c` (commands, keys) | ≈ **D13** the clock; opens Finder + Gallery at start like the web, windows use the whole output, hit-testing skips shadows like CSS |
-| `desktop/Wallpaper.tsx` | `mui_desktop_output_ready` + `lp_wallpaper_cached` | ≈ **D5** |
+| `desktop/Wallpaper.tsx` | `mui_desktop_output_ready` + `lp_wallpaper_cached`; the lava timer (`lava_tick`, `src/draw/lp_lava.c`) | ≈ **D5**, **D33** |
 | `desktop/WindowLayer.tsx` | `src/compositor/window.c` (`mui_windows_sync`) | ✓ z from the WM, focused shadow, shaded crop, zoomed radius 0 |
 | `desktop/apps/AboutApp/AboutApp.tsx` | `src/apps/about.c` | ✓ monogram, `PRETTY_NAME` from `/etc/os-release` |
 | `desktop/apps/FinderApp/FinderApp.tsx`, `desktop/apps/FinderApp/files.ts` | `src/apps/finder.c`, `src/apps/finder_mock.c`, `src/core/lp_files.c`, `src/apps/info.c` | ≈ **D11** a real file manager; `files.ts` lives on as the preview lp-render shows |
@@ -490,6 +490,23 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   [QUERY]`. The web has no Launchpad. In the same change the pins became seven — Finder, TextEdit,
   Preview, Terminal, Calendar, Settings, Threads (the Media Player is one query away) — and Shift+Enter
   asks Mary from the bar where Ctrl+Enter did.
+- **D33 — the lava wallpaper.** Linux only, and the C desktop's default. Rao asked for a live background: the
+  molten shader, lighter, moving slowly on its own like a blurry wavy lava lamp. The web's molten wallpaper
+  cannot be that here — it moves only with window motion (D12), and under the VM's software rasteriser one
+  frame costs seconds. `lp_lava.c` keeps the shader's structure (onoise folded into an fbm, a domain warp
+  turned by time, a tanh height lit by the same two lights, its shadow term, grade and vignette) and drops
+  what makes it expensive and creased: the value-noise sign flips, all but three octaves, onoise's crossfade
+  turned only 0.28 of the way, four normal samples (the normal comes from the grid). It runs on the CPU with
+  no GL at a quarter of the output each way, sine from a table, the grade's curve from a table: about 3 ms of
+  CPU a frame on the Mac and 4.5 ms in Noble for a 1280×800 output. The compositor publishes each frame to
+  the wallpaper node with a one-pixel margin cropped by `wlr_scene_buffer_set_source_box`, and the scene
+  stretches it bilinearly — the blur — at `lava.fps` 15 from a wall-clock timer (`lava_tick`). The timer
+  skips an output whose wallpaper windows hide entirely (the node's visible region is empty), stops when
+  another wallpaper is chosen, and holds a still under Reduce Motion. This gives up the rule that an idle
+  desktop schedules no frames while lava shows; Molten and Procedural keep it. System Settings › General ›
+  Wallpaper and the View pill offer Lava, Molten and Procedural; `settings.conf` writes `wallpaper=lava`,
+  and an unknown value reads as lava. The web has no lava. `lp-render --lava WxH [SECONDS [TONE]]`,
+  `--lava-strip`, `--lava-bench`.
 - **Close animation.** `lp-window-close` (scale .96 + fade over `motion.fast`, `CLOSE` after
   fast + 80 ms) runs for built-in windows. A client that unmaps is gone at once — the compositor
   has no pixels left to fade.

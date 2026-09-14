@@ -6,6 +6,7 @@
 
 #include "maryui/lp_blur.h"
 #include "maryui/lp_draw.h"
+#include "maryui/lp_lava.h"
 #include "maryui/lp_molten.h"
 #include "maryui/lp_noise.h"
 #include "maryui/lp_tokens.h"
@@ -179,6 +180,11 @@ cairo_surface_t *lp_wallpaper_cached(int w, int h) {
 cairo_surface_t *lp_wallpaper_for(int w, int h, const lp_settings *settings) {
     /* View › Raster Wallpaper is remembered but still renders the procedural
      * chain: no platinum.jpg ships in the image yet (PARITY.md D6). */
+    /* Lava renders in milliseconds, so it is never cached: its first moment, stretched as the scene shows it. */
+    if (settings && settings->wallpaper == LP_WALLPAPER_LAVA) {
+        cairo_surface_t *lava = lp_lava_still(w, h, 0, settings->molten_tone);
+        if (lava) return lava;
+    }
     if (!settings || settings->wallpaper != LP_WALLPAPER_MOLTEN) return lp_wallpaper_cached(w, h);
     if (!lp_molten_available()) return lp_wallpaper_cached(w, h);
 
