@@ -94,7 +94,7 @@ LP_TEST(the_cubes_centre_projects_to_the_canvas_centre_at_any_turn) {
     /* flat: the same node, no perspective */
     g->mode = LP_GRAPH_2D;
     LP_ASSERT(lp_graph_project(g, CANVAS, 0, &x, &y, &depth));
-    LP_ASSERT_NEAR(x, 200 + (0.3f - 0.5f) * 300, 1e-3);
+    LP_ASSERT_NEAR(x, 200 + (0.3f - 0.5f) * (300 - 2 * LP_GRAPH_MARGIN), 1e-3);   /* the square less its margin */
     LP_ASSERT_NEAR(depth, 0, 1e-6);
     lp_graph_free(g);
 }

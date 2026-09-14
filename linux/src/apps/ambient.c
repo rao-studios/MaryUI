@@ -16,6 +16,7 @@
 #include "maryui/lp_desktop.h"
 #include "maryui/lp_draw.h"
 #include "maryui/lp_mary.h"
+#include "maryui/lp_pane.h"
 #include "maryui/lp_text.h"
 #include "maryui/lp_tokens.h"
 
@@ -24,9 +25,9 @@
 #endif
 
 #define TABS 4
-#define CARD_PAD LP_SPACE_4
+#define CARD_PAD LP_PANE_CARD_PAD
 #define REFRESH_MS 5000
-#define ROW 18
+#define ROW LP_PANE_ROW
 #define MAX_ROUTES 50
 
 enum { TAB_WORLD, TAB_REALMS, TAB_ROUTES, TAB_RUNS };
@@ -114,116 +115,20 @@ static int on_tick(int fd, uint32_t mask, void *data) {
     return 0;
 }
 
-/* MARK: - Drawing helpers (the Threads app's) */
+/* MARK: - Drawing helpers: the pane kit's (lp_pane.h), so Ambient lines up with Threads and Abilities */
 
 static int drawing(lp_ctx *ctx) { return ctx->pass == LP_PASS_DRAW && ctx->cr != NULL; }
+static int lines_of(const char *text, float w) { return lp_pane_lines_of(text, w); }
+static void card_frame(lp_ctx *ctx, lp_rect box, const char *title) { lp_pane_card_frame(ctx, box, title); }
+static void row(lp_ctx *ctx, float x, float *y, float w, const char *label, const char *value) { lp_pane_row(ctx, x, y, w, label, value); }
+static void paragraph(lp_ctx *ctx, float x, float *y, float w, const char *text, lp_color color, int italic) { lp_pane_paragraph(ctx, x, y, w, text, color, italic); }
+static int chip(lp_ctx *ctx, lp_id id, float x, float y, const char *label, int selected, lp_size *size) { return lp_pane_chip(ctx, id, x, y, label, selected, size); }
+static void live_dot(lp_ctx *ctx, float x, float y, int on) { lp_pane_live_dot(ctx, x, y, on); }
+static void empty(lp_ctx *ctx, lp_rect area, const char *text) { lp_pane_empty(ctx, area, text); }
 
-/* Lines a text takes at LP_TEXT_SM across `w`, estimated (no layout in the EVENT pass). */
-static int lines_of(const char *text, float w) {
-    if (!text || !*text) return 1;
-    float per_line = w / 6.4f;
-    if (per_line < 8) per_line = 8;
-    int lines = 0;
-    const char *p = text;
-    while (*p) {
-        const char *nl = strchr(p, '\n');
-        size_t len = nl ? (size_t)(nl - p) : strlen(p);
-        lines += 1 + (int)((float)len / per_line);
-        p += len + (nl ? 1 : 0);
-    }
-    return lines ? lines : 1;
-}
-
-static void card_frame(lp_ctx *ctx, lp_rect box, const char *title) {
-    if (!drawing(ctx)) return;
-    lp_fill_solid(ctx->cr, box, LP_SURFACE_WELL, LP_RADIUS_MD);
-    lp_draw_hairline(ctx->cr, box, LP_EDGE_TOP | LP_EDGE_BOTTOM | LP_EDGE_LEFT | LP_EDGE_RIGHT, LP_EDGE_DIVIDER);
-    lp_text_style ts = lp_text_style_default();
-    ts.size_px = LP_TEXT_SM;
-    ts.weight = LP_TEXT_WEIGHT_SEMIBOLD;
-    ts.uppercase = 1;
-    ts.letter_spacing = 0.6f;
-    ts.color = LP_INK_TERTIARY;
-    ts.ellipsize = 1;
-    lp_text_draw(ctx->cr, title, LP_RECT(box.x + CARD_PAD, box.y + 8, box.w - 2 * CARD_PAD, 16), &ts, LP_ALIGN_START);
-}
-
-static void row(lp_ctx *ctx, float x, float *y, float w, const char *label, const char *value) {
-    if (drawing(ctx)) {
-        lp_text_style ls = lp_text_style_default();
-        ls.size_px = LP_TEXT_SM;
-        ls.color = LP_INK_TERTIARY;
-        lp_text_style vs = lp_text_style_default();
-        vs.size_px = LP_TEXT_SM;
-        vs.ellipsize = 1;
-        lp_text_draw(ctx->cr, label, LP_RECT(x, *y, 130, ROW), &ls, LP_ALIGN_END);
-        lp_text_draw(ctx->cr, or_dash(value), LP_RECT(x + 140, *y, w - 140, ROW), &vs, LP_ALIGN_START);
-    }
-    *y += ROW;
-}
-
-static void paragraph(lp_ctx *ctx, float x, float *y, float w, const char *text, lp_color color, int italic) {
-    int lines = lines_of(text, w);
-    if (drawing(ctx) && text) {
-        lp_text_style s = lp_text_style_default();
-        s.size_px = LP_TEXT_SM;
-        s.color = color;
-        s.italic = italic;
-        if (italic) s.font = LP_FONT_DISPLAY;
-        lp_text_layout *l = lp_text_layout_new(ctx->cr, text, -1, &s, w);
-        lp_size size = lp_text_layout_size(l);
-        cairo_save(ctx->cr);
-        cairo_rectangle(ctx->cr, x, *y, w, size.h + 4);
-        cairo_clip(ctx->cr);
-        lp_text_layout_draw(ctx->cr, l, x, *y, color);
-        cairo_restore(ctx->cr);
-        lp_text_layout_free(l);
-        *y += size.h + 4;
-        return;
-    }
-    *y += (float)lines * 17 + 4;
-}
-
-static int chip(lp_ctx *ctx, lp_id id, float x, float y, const char *label, int selected, lp_size *size) {
-    lp_button_opts o = { selected ? LP_BUTTON_PRIMARY : LP_BUTTON_DEFAULT, LP_CONTROL_SM, LP_ICON_COUNT, 0, 0 };
-    *size = lp_button_measure(ctx, label, o);
-    return lp_button(ctx, id, LP_RECT(x, y, size->w, size->h), label, o);
-}
-
-static void capsule(lp_ctx *ctx, float x, float y, const char *label, lp_color color) {
-    if (!drawing(ctx)) return;
-    lp_text_style s = lp_text_style_default();
-    s.size_px = LP_TEXT_XS;
-    s.weight = LP_TEXT_WEIGHT_SEMIBOLD;
-    s.uppercase = 1;
-    s.letter_spacing = 0.5f;
-    s.color = color;
-    lp_size size = lp_text_measure(ctx->cr, label, &s);
-    lp_rect r = LP_RECT(x, y, size.w + 12, 16);
-    lp_color fill = color;
-    fill.a = 0.16f;
-    lp_fill_solid(ctx->cr, r, fill, 8);
-    lp_text_draw(ctx->cr, label, LP_RECT(r.x + 6, r.y, size.w, r.h), &s, LP_ALIGN_START);
-}
-
-static void live_dot(lp_ctx *ctx, float x, float y, int on) {
-    if (!drawing(ctx)) return;
-    cairo_arc(ctx->cr, x, y, 4, 0, 2 * M_PI);
-    lp_set_color(ctx->cr, on ? (lp_color){ 0.38f, 0.65f, 0.38f, 1 } : LP_INK_DISABLED);
-    cairo_fill(ctx->cr);
-}
-
-static void empty(lp_ctx *ctx, lp_rect area, const char *text) {
-    if (!drawing(ctx)) return;
-    lp_text_style s = lp_text_style_default();
-    s.size_px = LP_TEXT_SM;
-    s.color = LP_INK_TERTIARY;
-    lp_text_draw(ctx->cr, text, LP_RECT(area.x + CARD_PAD, area.y + CARD_PAD, area.w - 2 * CARD_PAD, 20), &s, LP_ALIGN_START);
-}
-
-static const lp_color GOLD = { 0.68f, 0.56f, 0.38f, 1 };
-static const lp_color SAGE = { 0.38f, 0.55f, 0.38f, 1 };
-static const lp_color BLUE = { 0.22f, 0.44f, 0.65f, 1 };
+#define GOLD LP_PANE_GOLD
+#define SAGE LP_PANE_SAGE
+#define BLUE LP_PANE_BLUE
 
 /* MARK: - The tabs. Each paints when `measure` is 0 and only adds heights when it is 1. */
 
@@ -231,7 +136,7 @@ static const lp_color BLUE = { 0.22f, 0.44f, 0.65f, 1 };
 
 static float paint_world(lp_ctx *ctx, struct ambient_app *a, lp_rect c, lp_id base, int measure) {
     struct json_object *state = a->desk ? a->desk->mary.ambient : NULL, *places = arr(state, "places");
-    float y = c.y + CARD_PAD, w = c.w - 2 * CARD_PAD, inner = w - 2 * CARD_PAD;
+    float y = c.y, w = c.w, inner = w - 2 * CARD_PAD;
     if (!alen(places)) {
         if (!measure) empty(ctx, c, !a->desk || !lp_mary_connected(&a->desk->mary) ? "maryd is not running." : "Nothing is on screen yet: no app has published a surface.");
         return 40;
@@ -245,14 +150,15 @@ static float paint_world(lp_ctx *ctx, struct ambient_app *a, lp_rect c, lp_id ba
         body += 2 * ROW;
         for (size_t f = 0; f < alen(facts); f++) body += (float)lines_of(str(at(facts, f), "mention"), inner - 12) * 17 + 4;
         float h = body + 30 + CARD_PAD;
-        lp_rect box = LP_RECT(c.x + CARD_PAD, y, w, h - CARD_PAD);
+        lp_rect box = LP_RECT(c.x, y, w, h - CARD_PAD);
         if (!measure) {
             card_frame(ctx, box, name);
             live_dot(ctx, box.x + box.w - CARD_PAD - 4, box.y + 16, surface && boolean(surface, "fresh"));
-            float cx = box.x + CARD_PAD + (float)strlen(name) * 8 + 12;
-            if (boolean(card, "isLead")) { capsule(ctx, cx, box.y + 8, "focus", GOLD); cx += 60; }
-            if (boolean(card, "isCoActive")) { capsule(ctx, cx, box.y + 8, "co-active", SAGE); cx += 84; }
-            if (boolean(card, "isGlanced")) capsule(ctx, cx, box.y + 8, "glanced", BLUE);
+            /* the capsules sit at the title band's right, measured, the dot outermost */
+            float rx = box.x + box.w - CARD_PAD - 8 - LP_SPACE_3;
+            if (boolean(card, "isGlanced")) rx -= lp_pane_capsule_right(ctx, rx, box.y + 7, "glanced", BLUE) + 6;
+            if (boolean(card, "isCoActive")) rx -= lp_pane_capsule_right(ctx, rx, box.y + 7, "co-active", SAGE) + 6;
+            if (boolean(card, "isLead")) lp_pane_capsule_right(ctx, rx, box.y + 7, "focus", GOLD);
             float yy = box.y + 30;
             paragraph(ctx, box.x + CARD_PAD, &yy, inner, line ? line : "No surface right now.", LP_INK_PRIMARY, 0);
             char seen[64], holding[64];
@@ -277,7 +183,7 @@ static float paint_world(lp_ctx *ctx, struct ambient_app *a, lp_rect c, lp_id ba
     if (selection) {
         const char *text = str(selection, "text");
         float body = (float)lines_of(text, inner) * 17 + 4 + 2 * ROW, h = body + 30 + CARD_PAD;
-        lp_rect box = LP_RECT(c.x + CARD_PAD, y, w, h - CARD_PAD);
+        lp_rect box = LP_RECT(c.x, y, w, h - CARD_PAD);
         if (!measure) {
             card_frame(ctx, box, "Selection");
             float yy = box.y + 30;
@@ -293,12 +199,26 @@ static float paint_world(lp_ctx *ctx, struct ambient_app *a, lp_rect c, lp_id ba
     return y - c.y;
 }
 
+/* The header's second line: what the section is looking at right now. */
+static void subtitle_of(struct ambient_app *a, lp_desktop *d, char *out, size_t n) {
+    struct json_object *state = d ? d->mary.ambient : NULL, *records = d ? d->mary.trace : NULL, *places = arr(state, "places");
+    size_t count = alen(places), turns = alen(records);
+    const char *lead = NULL;
+    for (size_t i = 0; i < count && !lead; i++) if (boolean(at(places, i), "isLead")) lead = str(obj(at(places, i), "place"), "name");
+    switch (a->tab) {
+    case TAB_WORLD: snprintf(out, n, "%zu place%s on screen%s%s", count, count == 1 ? "" : "s", lead ? " \xC2\xB7 focus: " : "", lead ? lead : ""); break;
+    case TAB_REALMS: snprintf(out, n, "The last turn's need, and who could have served it"); break;
+    case TAB_ROUTES: snprintf(out, n, "%zu turn%s routed%s%s", turns, turns == 1 ? "" : "s", a->filter[0] ? " \xC2\xB7 only " : "", a->filter[0] ? a->filter : ""); break;
+    default: snprintf(out, n, "The skills each turn invoked, and what came of them"); break;
+    }
+}
+
 static float realm_card(lp_ctx *ctx, lp_rect c, float y, const char *title, struct json_object *realm, int measure) {
-    float w = c.w - 2 * CARD_PAD, inner = w - 2 * CARD_PAD;
+    float w = c.w, inner = w - 2 * CARD_PAD;
     struct json_object *need = obj(realm, "need"), *candidates = arr(realm, "candidates");
     float body = 3 * ROW + (float)(alen(candidates) ? alen(candidates) : 1) * ROW + ROW;
     float h = body + 30 + CARD_PAD;
-    lp_rect box = LP_RECT(c.x + CARD_PAD, y, w, h - CARD_PAD);
+    lp_rect box = LP_RECT(c.x, y, w, h - CARD_PAD);
     if (!measure) {
         card_frame(ctx, box, title);
         float yy = box.y + 30;
@@ -341,7 +261,7 @@ static float realm_card(lp_ctx *ctx, lp_rect c, float y, const char *title, stru
 
 static float paint_realms(lp_ctx *ctx, struct ambient_app *a, lp_rect c, lp_id base, int measure) {
     struct json_object *records = a->desk ? a->desk->mary.trace : NULL;
-    float y = c.y + CARD_PAD;
+    float y = c.y;
     if (!alen(records)) {
         if (!measure) empty(ctx, c, "No turn has been resolved yet.");
         return 40;
@@ -352,8 +272,8 @@ static float paint_realms(lp_ctx *ctx, struct ambient_app *a, lp_rect c, lp_id b
     y += realm_card(ctx, c, y, title, obj(obj(last, "route"), "realm"), measure);
     /* the last twenty turns: what each settled on */
     size_t n = alen(records) < 20 ? alen(records) : 20;
-    float w = c.w - 2 * CARD_PAD, inner = w - 2 * CARD_PAD, h = (float)n * ROW + 30 + CARD_PAD;
-    lp_rect box = LP_RECT(c.x + CARD_PAD, y, w, h - CARD_PAD);
+    float w = c.w, inner = w - 2 * CARD_PAD, h = (float)n * ROW + 30 + CARD_PAD;
+    lp_rect box = LP_RECT(c.x, y, w, h - CARD_PAD);
     if (!measure) {
         card_frame(ctx, box, "History");
         float yy = box.y + 30;
@@ -376,14 +296,14 @@ static int route_matches(struct ambient_app *a, struct json_object *rec) {
 }
 
 static float route_card(lp_ctx *ctx, lp_rect c, float y, struct json_object *rec, int measure) {
-    float w = c.w - 2 * CARD_PAD, inner = w - 2 * CARD_PAD;
+    float w = c.w, inner = w - 2 * CARD_PAD;
     struct json_object *route = obj(rec, "route"), *gate = obj(route, "gate"), *memory = obj(gate, "memory"), *verdicts = obj(route, "verdicts"), *retrieval = arr(rec, "retrieval");
     const char *utterance = str(rec, "utterance");
     int retrieval_rows = 0;
     for (size_t i = 0; i < alen(retrieval); i++) retrieval_rows += 1 + (int)alen(arr(at(retrieval, i), "returned"));
     float body = (float)lines_of(utterance, inner) * 17 + 4 + 21 * ROW + (float)retrieval_rows * ROW + (str(rec, "contribution") ? ROW : 0);
     float h = body + 30 + CARD_PAD;
-    lp_rect box = LP_RECT(c.x + CARD_PAD, y, w, h - CARD_PAD);
+    lp_rect box = LP_RECT(c.x, y, w, h - CARD_PAD);
     if (measure) return h;
     char title[160], ag[32];
     age_text(num(rec, "age"), ag, sizeof ag);
@@ -457,14 +377,14 @@ static float route_card(lp_ctx *ctx, lp_rect c, float y, struct json_object *rec
 
 static float paint_routes(lp_ctx *ctx, struct ambient_app *a, lp_rect c, lp_id base, int measure) {
     struct json_object *records = a->desk ? a->desk->mary.trace : NULL;
-    float y = c.y + CARD_PAD;
+    float y = c.y;
     if (!alen(records)) {
         if (!measure) empty(ctx, c, "No turn has been resolved yet.");
         return 40;
     }
     /* the intents present, as chips */
     static const char *const INTENTS[] = { "architect", "decide", "halt", "revise", "compose", "operate", "perceive", "ask", "converse" };
-    float x = c.x + CARD_PAD;
+    float x = c.x;
     lp_size size;
     if (!measure) {
         if (chip(ctx, lp_id_index(base, 300), x, y, "All", !a->filter[0], &size)) { a->filter[0] = 0; ctx->dirty = 1; }
@@ -493,14 +413,14 @@ static float paint_routes(lp_ctx *ctx, struct ambient_app *a, lp_rect c, lp_id b
 
 static float paint_runs(lp_ctx *ctx, struct ambient_app *a, lp_rect c, lp_id base, int measure) {
     struct json_object *records = a->desk ? a->desk->mary.trace : NULL;
-    float y = c.y + CARD_PAD, w = c.w - 2 * CARD_PAD, inner = w - 2 * CARD_PAD;
+    float y = c.y, w = c.w, inner = w - 2 * CARD_PAD;
     int any = 0;
     for (size_t i = 0; i < alen(records); i++) {
         struct json_object *rec = at(records, i), *runs = arr(rec, "skillRuns");
         if (!alen(runs) && !str(rec, "confirmation")) continue;
         any = 1;
         float body = (float)alen(runs) * 4 * ROW + (str(rec, "confirmation") ? ROW : 0), h = body + 30 + CARD_PAD;
-        lp_rect box = LP_RECT(c.x + CARD_PAD, y, w, h - CARD_PAD);
+        lp_rect box = LP_RECT(c.x, y, w, h - CARD_PAD);
         if (!measure) {
             char title[600], ag[32];
             age_text(num(rec, "age"), ag, sizeof ag);
@@ -536,56 +456,49 @@ static float paint_runs(lp_ctx *ctx, struct ambient_app *a, lp_rect c, lp_id bas
 
 /* MARK: - The window */
 
+static const char *const SECTION_TITLES[TABS] = { "World", "Realms", "Routes", "Runs" };
+static const lp_icon SECTION_ICONS[TABS] = { LP_ICON_DESKTOP, LP_ICON_HOME, LP_ICON_FORWARD, LP_ICON_PLAY };
+
 static void ambient_paint(void *state, lp_ctx *ctx, lp_rect body, lp_desktop *d) {
     static struct ambient_app preview;
     struct ambient_app *a = state ? state : &preview;
     if (!a->desk) a->desk = d;
     lp_id base = LP_ID("ambient");
     if (state && !a->asked && lp_mary_connected(&d->mary)) ask_all(a);
+    /* the sections, as a source list */
     lp_rect area = body;
-    lp_rect bar = lp_toolbar(ctx, &area);
-    static const lp_segment TABS_UI[TABS] = { { "World", LP_ICON_COUNT }, { "Realms", LP_ICON_COUNT }, { "Routes", LP_ICON_COUNT }, { "Runs", LP_ICON_COUNT } };
-    lp_size ss = lp_segmented_measure(ctx, TABS_UI, TABS, LP_CONTROL_SM);
-    int tab = a->tab;
-    if (lp_segmented(ctx, lp_id_index(base, 1), bar.x + LP_SPACE_2, bar.y + bar.h / 2 - ss.h / 2, TABS_UI, TABS, &tab, LP_CONTROL_SM) && tab != a->tab) {
-        a->tab = tab;
-        ctx->dirty = 1;
-    }
-    if (drawing(ctx)) {
-        lp_text_style ts = lp_text_style_default();
-        ts.font = LP_FONT_DISPLAY;
-        ts.italic = 1;
-        ts.size_px = LP_TEXT_LG;
-        ts.color = LP_INK_SECONDARY;
-        lp_text_draw(ctx->cr, "Ambient", LP_RECT(bar.x + LP_SPACE_2 + ss.w + LP_SPACE_4, bar.y, 140, bar.h), &ts, LP_ALIGN_START);
-    }
-    lp_button_opts co = { LP_BUTTON_DEFAULT, LP_CONTROL_SM, LP_ICON_COUNT, 0, !d || !lp_mary_connected(&d->mary) };
-    lp_size cs = lp_button_measure(ctx, "Copy Report", co);
+    lp_rect cursor = lp_sidebar(ctx, &area);
+    lp_sidebar_section(ctx, &cursor, "Ambient");
+    for (int i = 0; i < TABS; i++)
+        if (lp_sidebar_item(ctx, lp_id_index(base, 200 + i), &cursor, SECTION_ICONS[i], SECTION_TITLES[i], a->tab == i) && a->tab != i) { a->tab = i; ctx->dirty = 1; }
+    if (drawing(ctx)) lp_fill_solid(ctx->cr, area, LP_SURFACE_BODY, 0);
+    /* the header: the section, what it looks at, the daemon's dot; Copy Report and Reload at its right */
+    int connected = d && lp_mary_connected(&d->mary);
+    char subtitle[240] = "";
+#ifdef HAVE_JSONC
+    subtitle_of(a, d, subtitle, sizeof subtitle);
+#endif
+    lp_pane_header h = { .title = SECTION_TITLES[a->tab], .subtitle = a->status[0] ? a->status : subtitle, .live = connected, .status = connected ? "maryd" : "maryd is away" };
+    lp_rect controls = lp_pane_header_paint(ctx, &area, &h);
     lp_button_opts ro = { LP_BUTTON_DEFAULT, LP_CONTROL_SM, LP_ICON_RELOAD, 1, 0 };
     lp_size rs = lp_button_measure(ctx, "", ro);
-    float right = bar.x + bar.w - LP_SPACE_2;
-    if (lp_button(ctx, lp_id_index(base, 2), LP_RECT(right - rs.w, bar.y + bar.h / 2 - rs.h / 2, rs.w, rs.h), "", ro) && state) { ask_all(a); ctx->dirty = 1; }
+    float right = controls.x + controls.w, cy = controls.y + controls.h / 2;
+    if (lp_button(ctx, lp_id_index(base, 2), LP_RECT(right - rs.w, cy - rs.h / 2, rs.w, rs.h), "", ro) && state) { ask_all(a); ctx->dirty = 1; }
     right -= rs.w + LP_SPACE_2;
-    if (lp_button(ctx, lp_id_index(base, 3), LP_RECT(right - cs.w, bar.y + bar.h / 2 - cs.h / 2, cs.w, cs.h), "Copy Report", co) && state && d) {
+    lp_button_opts co = { LP_BUTTON_DEFAULT, LP_CONTROL_SM, LP_ICON_COUNT, 0, !connected };
+    lp_size cs = lp_button_measure(ctx, "Copy Report", co);
+    if (lp_button(ctx, lp_id_index(base, 3), LP_RECT(right - cs.w, cy - cs.h / 2, cs.w, cs.h), "Copy Report", co) && state && d) {
         a->want_report = lp_mary_trace_report(&d->mary) == 0;
         snprintf(a->status, sizeof a->status, a->want_report ? "Asking maryd for the report\xE2\x80\xA6" : "maryd is not running.");
         ctx->dirty = 1;
     }
-    live_dot(ctx, right - cs.w - LP_SPACE_3 - 4, bar.y + bar.h / 2, d && lp_mary_connected(&d->mary));
-    if (drawing(ctx)) lp_fill_solid(ctx->cr, area, LP_SURFACE_BODY, 0);
-    if (a->status[0] && drawing(ctx)) {
-        lp_text_style st = lp_text_style_default();
-        st.size_px = LP_TEXT_XS;
-        st.color = LP_INK_TERTIARY;
-        st.ellipsize = 1;
-        lp_text_draw(ctx->cr, a->status, LP_RECT(bar.x + LP_SPACE_2 + ss.w + LP_SPACE_4 + 140, bar.y, right - cs.w - LP_SPACE_4 - (bar.x + LP_SPACE_2 + ss.w + LP_SPACE_4 + 140), bar.h), &st, LP_ALIGN_START);
-    }
 #ifdef HAVE_JSONC
     float (*paint)(lp_ctx *, struct ambient_app *, lp_rect, lp_id, int) =
         a->tab == TAB_WORLD ? paint_world : a->tab == TAB_REALMS ? paint_realms : a->tab == TAB_ROUTES ? paint_routes : paint_runs;
-    lp_rect probe = LP_RECT(area.x, 0, area.w, 1e6f);
+    lp_rect column = lp_pane_content(area);
+    lp_rect probe = LP_RECT(column.x, 0, column.w, 1e6f);
     float extent = paint(ctx, a, probe, base, 1) + CARD_PAD;
-    lp_rect content = lp_scroll_begin(ctx, lp_id_index(base, 10 + a->tab), area, (lp_size){ area.w, extent }, &a->scroll[a->tab]);
+    lp_rect content = lp_scroll_begin(ctx, lp_id_index(base, 10 + a->tab), column, (lp_size){ column.w, extent }, &a->scroll[a->tab]);
     paint(ctx, a, content, base, 0);
     lp_scroll_end(ctx);
 #else

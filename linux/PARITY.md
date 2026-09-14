@@ -386,6 +386,9 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   re-extract), **Schemas** (one card per record family), **Ledger** (every event, by kind) and **Retrieval**
   (what each search returned, in rank order, each a link into the Library). `lp-render --thread TAB` draws it
   over fixtures. The web has none of it.
+  Since the pane kit (`lp_pane.h`, 2026-09), Threads navigates by a sidebar of sections rather than a
+  segmented control, and its header, cards, rows (one 120-px label column) and capsules are the kit's,
+  shared with Ambient and Abilities so the three read as one family.
 - **D26 — Mary's dialogue on paper.** Linux only. Spotlight's conversation draws Mary's replies the way the
   Mac's session window does (`ContributionHighlightText.swift`): `font.display` italic at 18 px, kerned 0.3,
   7 px between lines, the ink at 0.75; paragraphs split on blank lines 16 px apart, exchanges 28 apart, earlier
@@ -427,6 +430,9 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   **Runs** — the skills a turn invoked, their status, effect, arguments, result and timing, and the
   confirmation state. Copy Report puts the RouteReport text on the clipboard. `lp-render --ambient TAB`
   draws it over fixtures (`tests/lp_ambient_fixture.h`). The web has none of it.
+  Set in the pane kit: a sidebar of its four sections, the header naming what the section is looking
+  at (the places on screen and the focus, the turns routed), Copy Report and Reload at its right, and
+  the cards' capsules measured and right-aligned rather than placed by a guess at the name's width.
 - **D30 — abilities: the schema, the card, the chips and the Abilities app.** Linux only. On the Mac an
   ability is an authored package with recorded recipes; on MaryOS each app declares its skills in code, so
   `lp_skill` carries the Mac's `SkillSchema` words (kind, access, triggers, phrases, target classes, spoken
@@ -447,6 +453,8 @@ README (anatomy, variants, states, tokens) and adds a **C** section naming the h
   is a change to the app. **Rehearse** sends a sentence through maryd's `triage` and prints who would answer
   without a model. `lp-render --abilities PANE` and `--spotlight-chat confirm` draw them. The web has none
   of it.
+  Set in the pane kit too: the rail stays a sidebar, the header carries the package, its paradigm and
+  count and its summary in the serif, the pane bar holds the panes and Rehearse at the content insets.
 - **D31 — Settings › Mary: engines, recall, network activity, memory.** Linux only. **Engines** is the
   Mac's twin toggles, one per lane — Voice (Lane A) and Skills (Lane B), each `Mistral | Thinking Machines`
   (`mary_voice_engine`, `mary_skill_engine` in settings.conf); Mistral is the one served and the Thinking

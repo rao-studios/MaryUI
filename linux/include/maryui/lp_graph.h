@@ -26,6 +26,8 @@
 #define LP_GRAPH_SPIN 0.15f
 /* How much of the canvas's shorter side the turned cube may span: a near corner would otherwise leave it. */
 #define LP_GRAPH_FIT_3D 0.5f
+/* Kept clear around the layout, so a node at the edge keeps its label on the canvas. */
+#define LP_GRAPH_MARGIN 44.0f
 
 struct json_object;
 

@@ -189,7 +189,8 @@ LP_TEST(the_graph_lays_out_selects_and_finds_nodes) {
     LP_ASSERT(ab < ac);
     /* a click on a node selects it; the picture survives a reload with the selection kept */
     lp_rect canvas = LP_RECT(0, 0, 400, 400);
-    float x = canvas.x + g.nodes[0].x * 400, y = canvas.y + g.nodes[0].y * 400;
+    float x, y;
+    LP_ASSERT(lp_graph_project(&g, canvas, 0, &x, &y, NULL));
     LP_ASSERT_EQ(lp_graph_hit(&g, canvas, x, y), 0);
     LP_ASSERT_EQ(lp_graph_hit(&g, canvas, -50, -50), -1);
     g.selected = 1;

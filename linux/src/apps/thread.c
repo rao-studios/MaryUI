@@ -22,6 +22,7 @@
 #include "maryui/lp_graph.h"
 #include "maryui/lp_icon.h"
 #include "maryui/lp_job.h"
+#include "maryui/lp_pane.h"
 #include "maryui/lp_text.h"
 #include "maryui/lp_thread.h"
 #include "maryui/lp_tokens.h"
@@ -31,7 +32,7 @@
 #endif
 
 #define TABS 6
-#define CARD_PAD LP_SPACE_4
+#define CARD_PAD LP_PANE_CARD_PAD
 #define SIDE_W 280
 #define REFRESH_MS 5000
 
@@ -162,81 +163,21 @@ static int on_tick(int fd, uint32_t mask, void *data) {
 
 static void set_tab(struct thread_app *a, int tab) {
     if (tab < 0 || tab >= TABS) return;
+    if (a->tab != tab) a->status[0] = 0;
     a->tab = tab;
     ask_tab(a, tab);
 }
 
-/* MARK: - Drawing helpers */
+/* MARK: - Drawing helpers: the pane kit's (lp_pane.h), shared with Ambient and Abilities */
 
-static float card(lp_ctx *ctx, lp_rect *area, const char *title, float body_h) {
-    lp_rect r = lp_rect_cut_top(area, body_h + 30 + CARD_PAD);
-    lp_rect box = LP_RECT(r.x, r.y, r.w, r.h - CARD_PAD);
-    if (ctx->pass == LP_PASS_DRAW && ctx->cr) {
-        lp_fill_solid(ctx->cr, box, LP_SURFACE_WELL, LP_RADIUS_MD);
-        lp_draw_hairline(ctx->cr, box, LP_EDGE_TOP | LP_EDGE_BOTTOM | LP_EDGE_LEFT | LP_EDGE_RIGHT, LP_EDGE_DIVIDER);
-        lp_text_style ts = lp_text_style_default();
-        ts.size_px = LP_TEXT_SM;
-        ts.weight = LP_TEXT_WEIGHT_SEMIBOLD;
-        ts.uppercase = 1;
-        ts.letter_spacing = 0.6f;
-        ts.color = LP_INK_TERTIARY;
-        lp_text_draw(ctx->cr, title, LP_RECT(box.x + CARD_PAD, box.y + 8, box.w - 2 * CARD_PAD, 16), &ts, LP_ALIGN_START);
-    }
-    return box.y + 30;
-}
-
-static void row(lp_ctx *ctx, float x, float *y, float w, const char *label, const char *value) {
-    if (ctx->pass == LP_PASS_DRAW && ctx->cr) {
-        lp_text_style ls = lp_text_style_default();
-        ls.size_px = LP_TEXT_SM;
-        ls.color = LP_INK_TERTIARY;
-        lp_text_style vs = lp_text_style_default();
-        vs.size_px = LP_TEXT_SM;
-        vs.ellipsize = 1;
-        lp_text_draw(ctx->cr, label, LP_RECT(x, *y, 130, 18), &ls, LP_ALIGN_END);
-        lp_text_draw(ctx->cr, value, LP_RECT(x + 140, *y, w - 140, 18), &vs, LP_ALIGN_START);
-    }
-    *y += 18;
-}
-
-static void mono(lp_ctx *ctx, lp_rect r, const char *text, lp_color color) {
-    if (ctx->pass != LP_PASS_DRAW || !ctx->cr) return;
-    lp_text_style ms = lp_text_style_default();
-    ms.font = LP_FONT_MONO;
-    ms.size_px = LP_TEXT_XS;
-    ms.color = color;
-    ms.ellipsize = 1;
-    lp_text_draw(ctx->cr, text, r, &ms, LP_ALIGN_START);
-}
-
-/* A capsule with a word in it (a family badge, a kind chip). Returns 1 when clicked. */
-static int chip(lp_ctx *ctx, lp_id id, float x, float y, const char *label, int selected, lp_size *size) {
-    lp_button_opts o = { selected ? LP_BUTTON_PRIMARY : LP_BUTTON_DEFAULT, LP_CONTROL_SM, LP_ICON_COUNT, 0, 0 };
-    *size = lp_button_measure(ctx, label, o);
-    return lp_button(ctx, id, LP_RECT(x, y, size->w, size->h), label, o);
-}
-
-static void live_dot(lp_ctx *ctx, float x, float y, int on) {
-    if (ctx->pass != LP_PASS_DRAW || !ctx->cr) return;
-    cairo_arc(ctx->cr, x, y, 4, 0, 2 * M_PI);
-    lp_set_color(ctx->cr, on ? (lp_color){ 0.38f, 0.65f, 0.38f, 1 } : LP_INK_DISABLED);
-    cairo_fill(ctx->cr);
-}
-
+/* A card cut off the top of *area; returns the y its body starts at. */
+static float card(lp_ctx *ctx, lp_rect *area, const char *title, float body_h) { return lp_pane_card(ctx, area, title, body_h, NULL).y; }
+static void row(lp_ctx *ctx, float x, float *y, float w, const char *label, const char *value) { lp_pane_row(ctx, x, y, w, label, value); }
+static void mono(lp_ctx *ctx, lp_rect r, const char *text, lp_color color) { lp_pane_mono(ctx, r.x, r.y, r.w, text, color); }
+static int chip(lp_ctx *ctx, lp_id id, float x, float y, const char *label, int selected, lp_size *size) { return lp_pane_chip(ctx, id, x, y, label, selected, size); }
 static void paragraph(lp_ctx *ctx, lp_rect r, const char *text, lp_color color, int italic) {
-    if (ctx->pass != LP_PASS_DRAW || !ctx->cr || !text) return;
-    lp_text_style s = lp_text_style_default();
-    s.size_px = LP_TEXT_SM;
-    s.color = color;
-    s.italic = italic;
-    if (italic) s.font = LP_FONT_DISPLAY;
-    lp_text_layout *l = lp_text_layout_new(ctx->cr, text, -1, &s, r.w);
-    cairo_save(ctx->cr);
-    cairo_rectangle(ctx->cr, r.x, r.y, r.w, r.h);
-    cairo_clip(ctx->cr);
-    lp_text_layout_draw(ctx->cr, l, r.x, r.y, color);
-    cairo_restore(ctx->cr);
-    lp_text_layout_free(l);
+    float y = r.y;
+    lp_pane_paragraph(ctx, r.x, &y, r.w, text, color, italic);
 }
 
 /* MARK: - Drive */
@@ -260,12 +201,13 @@ static void reconcile(struct thread_app *a) {
 
 static void paint_drive(lp_ctx *ctx, struct thread_app *a, lp_rect area, lp_id base) {
     lp_thread *t = &a->desk->thread;
-    lp_rect inner = lp_rect_inset(area, LP_SPACE_5, LP_SPACE_4);
-    lp_size extent = { inner.w, 3 * 150 + 120 };
+    lp_rect inner = lp_pane_content(area);
+    const float chrome = LP_PANE_CARD_TITLE_H + LP_PANE_CARD_PAD + LP_PANE_CARD_GAP;
+    lp_size extent = { inner.w, 3 * chrome + 3 * LP_PANE_ROW + 8 * LP_PANE_ROW + 84 + LP_SPACE_4 };
     lp_rect c = lp_scroll_begin(ctx, lp_id_index(base, 10), inner, extent, &a->scroll[TAB_DRIVE]);
     char v1[64], v2[64], v3[64];
     /* the volume */
-    float y = card(ctx, &c, "The volume", 74);
+    float y = card(ctx, &c, "The volume", 3 * LP_PANE_ROW);
     struct statvfs vfs;
     if (statvfs("/", &vfs) == 0) {
         int64_t total = (int64_t)vfs.f_blocks * (int64_t)vfs.f_frsize, avail = (int64_t)vfs.f_bavail * (int64_t)vfs.f_frsize;
@@ -278,9 +220,8 @@ static void paint_drive(lp_ctx *ctx, struct thread_app *a, lp_rect area, lp_id b
     row(ctx, c.x + CARD_PAD, &y, c.w - 2 * CARD_PAD, "Name", a->desk->branding.name[0] ? a->desk->branding.name : "MaryOS");
     row(ctx, c.x + CARD_PAD, &y, c.w - 2 * CARD_PAD, "Size", v1);
     row(ctx, c.x + CARD_PAD, &y, c.w - 2 * CARD_PAD, "Available", v2);
-    live_dot(ctx, c.x + c.w - CARD_PAD - 4, y - 74 + 8, lp_thread_connected(t));
     /* the database */
-    y = card(ctx, &c, "The database", 8 * 18 + 6);
+    y = card(ctx, &c, "The database", 8 * LP_PANE_ROW);
 #ifdef HAVE_JSONC
     struct json_object *stats = lp_thread_answer(t, LP_THREAD_STATS);
     if (stats) {
@@ -316,7 +257,7 @@ static void paint_drive(lp_ctx *ctx, struct thread_app *a, lp_rect area, lp_id b
         row(ctx, c.x + CARD_PAD, &y, c.w - 2 * CARD_PAD, "Database", lp_thread_connected(t) ? "Asking threadd…" : "threadd is not running");
     }
     /* parity */
-    y = card(ctx, &c, "Parity with the disk", 96);
+    y = card(ctx, &c, "Parity with the disk", 84);
 #ifdef HAVE_JSONC
     struct json_object *parity = lp_thread_answer(t, LP_THREAD_PARITY);
     int64_t files = num(parity, "files"), seen = num(parity, "seen"), recorded = num(parity, "recorded");
@@ -331,7 +272,7 @@ static void paint_drive(lp_ctx *ctx, struct thread_app *a, lp_rect area, lp_id b
             gs.size_px = LP_TEXT_LG;
             gs.weight = LP_TEXT_WEIGHT_SEMIBOLD;
             lp_text_draw(ctx->cr, gauge, LP_RECT(c.x + CARD_PAD, y, c.w - 2 * CARD_PAD, 22), &gs, LP_ALIGN_START);
-            lp_progress(ctx, LP_RECT(c.x + CARD_PAD, y + 26, c.w - 2 * CARD_PAD - 120, LP_PROGRESS_H), seen ? (float)((double)recorded / (double)seen) : 1);
+            lp_progress(ctx, LP_RECT(c.x + CARD_PAD, y + 26, c.w - 2 * CARD_PAD, LP_PROGRESS_H), seen ? (float)((double)recorded / (double)seen) : 1);
         }
         when(num(parity, "finished_ms"), last, sizeof last);
         snprintf(counts, sizeof counts, "%lld missing · %lld stale · %lld orphaned · last reconcile %s", (long long)missing, (long long)stale, (long long)orphaned, last);
@@ -343,19 +284,6 @@ static void paint_drive(lp_ctx *ctx, struct thread_app *a, lp_rect area, lp_id b
 #endif
     {
         row(ctx, c.x + CARD_PAD, &y, c.w - 2 * CARD_PAD, "Parity", "No reconcile has run yet.");
-        y += 36;
-    }
-    lp_button_opts bo = { LP_BUTTON_DEFAULT, LP_CONTROL_SM, LP_ICON_RELOAD, 0, a->job != NULL || !a->run };
-    lp_size bs = lp_button_measure(ctx, "Reconcile", bo);
-    if (lp_button(ctx, lp_id_index(base, 11), LP_RECT(c.x + c.w - CARD_PAD - bs.w, y - 36 - 8, bs.w, bs.h), "Reconcile", bo)) {
-        reconcile(a);
-        ctx->dirty = 1;
-    }
-    if (a->status[0] && ctx->pass == LP_PASS_DRAW && ctx->cr) {
-        lp_text_style ss = lp_text_style_default();
-        ss.size_px = LP_TEXT_SM;
-        ss.color = LP_INK_SECONDARY;
-        lp_text_draw(ctx->cr, a->status, LP_RECT(c.x, c.y, c.w, 18), &ss, LP_ALIGN_START);
     }
     lp_scroll_end(ctx);
 }
@@ -370,7 +298,7 @@ static void paint_document(lp_ctx *ctx, struct thread_app *a, lp_rect area, lp_i
         const char *id = str(at(list, i), "id");
         if (id && strcmp(id, a->open_document) == 0) doc = at(list, i);
     }
-    lp_rect inner = lp_rect_inset(area, LP_SPACE_5, LP_SPACE_4);
+    lp_rect inner = lp_pane_content(area);
     lp_button_opts bo = { LP_BUTTON_DEFAULT, LP_CONTROL_SM, LP_ICON_BACK, 0, 0 };
     lp_size bs = lp_button_measure(ctx, "Library", bo);
     if (lp_button(ctx, lp_id_index(base, 20), LP_RECT(inner.x, inner.y, bs.w, bs.h), "Library", bo)) {
@@ -462,7 +390,7 @@ static void paint_library(lp_ctx *ctx, struct thread_app *a, lp_rect area, lp_id
 #ifdef HAVE_JSONC
     lp_thread *t = &a->desk->thread;
     struct json_object *schemas = lp_thread_answer(t, LP_THREAD_SCHEMAS), *library = lp_thread_answer(t, LP_THREAD_LIBRARY);
-    lp_rect inner = lp_rect_inset(area, LP_SPACE_5, LP_SPACE_4);
+    lp_rect inner = lp_pane_content(area);
     /* family chips with counts */
     float x = inner.x, y = inner.y;
     lp_size cs;
@@ -506,7 +434,7 @@ static void paint_library(lp_ctx *ctx, struct thread_app *a, lp_rect area, lp_id
         int open = strcmp(a->open_group, id) == 0;
         lp_rect gr = LP_RECT(c.x, gy, c.w, 52);
         if (ctx->pass == LP_PASS_DRAW && ctx->cr) {
-            lp_fill_solid(ctx->cr, gr, open ? LP_SURFACE_SELECTED : LP_SURFACE_WELL, LP_RADIUS_SM);
+            lp_fill_solid(ctx->cr, gr, open ? LP_SURFACE_SELECTED : LP_RGBA(1, 1, 1, 0.6f), LP_RADIUS_SM);
             lp_text_style ns = lp_text_style_default();
             ns.weight = LP_TEXT_WEIGHT_SEMIBOLD;
             ns.ellipsize = 1;
@@ -589,18 +517,18 @@ static void paint_node_card(lp_ctx *ctx, struct thread_app *a, lp_rect side, lp_
         }
         y += 22;
         char v[64], d1[48], d2[48];
-        row(ctx, inner.x - 60, &y, inner.w + 60, "Path", or_dash(str(file, "path")));
-        row(ctx, inner.x - 60, &y, inner.w + 60, "Kind", or_dash(str(file, "kind")));
+        row(ctx, inner.x, &y, inner.w, "Path", or_dash(str(file, "path")));
+        row(ctx, inner.x, &y, inner.w, "Kind", or_dash(str(file, "kind")));
         lp_files_format_size(num(file, "size"), 0, v, sizeof v);
-        row(ctx, inner.x - 60, &y, inner.w + 60, "Size", v);
+        row(ctx, inner.x, &y, inner.w, "Size", v);
         when(num(file, "mtime_ms"), d1, sizeof d1);
-        row(ctx, inner.x - 60, &y, inner.w + 60, "Modified", d1);
+        row(ctx, inner.x, &y, inner.w, "Modified", d1);
         when(num(file, "seen_ms"), d2, sizeof d2);
-        row(ctx, inner.x - 60, &y, inner.w + 60, "Indexed", d2);
+        row(ctx, inner.x, &y, inner.w, "Indexed", d2);
         snprintf(v, sizeof v, "%zu", alen(arr(record, "partitions")));
-        row(ctx, inner.x - 60, &y, inner.w + 60, "Chunks", v);
-        row(ctx, inner.x - 60, &y, inner.w + 60, "State", or_dash(str(record, "enrich_state")));
-        row(ctx, inner.x - 60, &y, inner.w + 60, "Group", or_dash(str(doc, "group_id")));
+        row(ctx, inner.x, &y, inner.w, "Chunks", v);
+        row(ctx, inner.x, &y, inner.w, "State", or_dash(str(record, "enrich_state")));
+        row(ctx, inner.x, &y, inner.w, "Group", or_dash(str(doc, "group_id")));
         mono(ctx, LP_RECT(inner.x, y, inner.w, 14), or_dash(str(file, "content_hash")), LP_INK_TERTIARY);
         y += 20;
         if (ctx->pass == LP_PASS_DRAW && ctx->cr) lp_draw_hairline(ctx->cr, LP_RECT(inner.x, y, inner.w, 0), LP_EDGE_TOP, LP_EDGE_DIVIDER);
@@ -609,9 +537,7 @@ static void paint_node_card(lp_ctx *ctx, struct thread_app *a, lp_rect side, lp_
 #endif
     lp_graph *g = &a->graph;
     if (g->selected < 0 || g->selected >= g->node_count) {
-
-        paragraph(ctx, LP_RECT(inner.x, y, inner.w, 40), totals_text(g), LP_INK_TERTIARY, 0);
-        paragraph(ctx, LP_RECT(inner.x, y + 44, inner.w, 76), a->graph.mode == LP_GRAPH_3D
+        paragraph(ctx, LP_RECT(inner.x, y, inner.w, 76), a->graph.mode == LP_GRAPH_3D
                   ? "Click a node to see it, double-click to re-seed the graph on it; drag to turn the graph, Shift+drag to pan; Ctrl+wheel zooms. It turns on its own while nothing is selected."
                   : "Click a node to see it, double-click to re-seed the graph on it, drag to pan; Ctrl+wheel zooms.", LP_INK_TERTIARY, 0);
         return;
@@ -629,11 +555,11 @@ static void paint_node_card(lp_ctx *ctx, struct thread_app *a, lp_rect side, lp_
     }
     y += 26;
     char v[64];
-    row(ctx, inner.x - 60, &y, inner.w + 60, "Kind", n->kind);
+    row(ctx, inner.x, &y, inner.w, "Kind", n->kind);
     snprintf(v, sizeof v, "%d", n->mentions);
-    row(ctx, inner.x - 60, &y, inner.w + 60, "Mentions", v);
+    row(ctx, inner.x, &y, inner.w, "Mentions", v);
     snprintf(v, sizeof v, "%d", n->documents);
-    row(ctx, inner.x - 60, &y, inner.w + 60, "Documents", v);
+    row(ctx, inner.x, &y, inner.w, "Documents", v);
     mono(ctx, LP_RECT(inner.x, y, inner.w, 14), n->id, LP_INK_TERTIARY);
     y += 20;
     /* edges */
@@ -706,8 +632,8 @@ static void paint_node_card(lp_ctx *ctx, struct thread_app *a, lp_rect side, lp_
 
 static void paint_graph(lp_ctx *ctx, struct thread_app *a, lp_rect area, lp_id base) {
     lp_thread *t = &a->desk->thread;
-    lp_rect controls = lp_rect_cut_top(&area, 40);
-    float x = controls.x + LP_SPACE_3, cy = controls.y + controls.h / 2;
+    lp_rect controls = lp_pane_bar(ctx, &area);
+    float x = controls.x, cy = controls.y + controls.h / 2;
     lp_id seed_id = lp_id_index(base, 60);
     lp_rect seed = LP_RECT(x, cy - LP_SIZE_CONTROL_HEIGHT / 2, 220, LP_SIZE_CONTROL_HEIGHT);
     lp_text_field(ctx, seed_id, seed, &a->seed, (lp_text_field_opts){ .placeholder = "Seed: an entity's name", .icon = LP_ICON_SEARCH, .round = 1 });
@@ -757,12 +683,6 @@ static void paint_graph(lp_ctx *ctx, struct thread_app *a, lp_rect area, lp_id b
         }
         x += cs.w + LP_SPACE_1;
     }
-    lp_button_opts ro = { LP_BUTTON_DEFAULT, LP_CONTROL_SM, LP_ICON_RELOAD, 1, 0 };
-    lp_size rs = lp_button_measure(ctx, "", ro);
-    if (lp_button(ctx, lp_id_index(base, 63), LP_RECT(controls.x + controls.w - LP_SPACE_3 - rs.w, cy - rs.h / 2, rs.w, rs.h), "", ro)) {
-        ask_graph(a);
-        ctx->dirty = 1;
-    }
     lp_rect side = lp_rect_cut_right(&area, SIDE_W);
     int selection_changed = 0;
     int reseed = lp_graph_widget(ctx, lp_id_index(base, 64), area, &a->graph, &selection_changed);
@@ -787,16 +707,16 @@ static void paint_schemas(lp_ctx *ctx, struct thread_app *a, lp_rect area, lp_id
 #ifdef HAVE_JSONC
     lp_thread *t = &a->desk->thread;
     struct json_object *schemas = lp_thread_answer(t, LP_THREAD_SCHEMAS), *families = arr(schemas, "families");
-    lp_rect inner = lp_rect_inset(area, LP_SPACE_5, LP_SPACE_4);
+    lp_rect inner = lp_pane_content(area);
     float card_h = 0;
-    for (size_t i = 0; i < alen(families); i++) card_h += 30 + CARD_PAD + 8 * 18 + (float)alen(arr(at(families, i), "fields")) * 16 + 44;
+    for (size_t i = 0; i < alen(families); i++) card_h += LP_PANE_CARD_TITLE_H + LP_PANE_CARD_PAD + LP_PANE_CARD_GAP + 8 * LP_PANE_ROW + (float)alen(arr(at(families, i), "fields")) * 16 + 44;
     lp_size extent = { inner.w, card_h > inner.h ? card_h : inner.h };
     lp_rect c = lp_scroll_begin(ctx, lp_id_index(base, 90), inner, extent, &a->scroll[TAB_SCHEMAS]);
     for (size_t i = 0; i < alen(families); i++) {
         struct json_object *f = at(families, i), *fields = arr(f, "fields");
         char title[96], v[96], last[48];
         snprintf(title, sizeof title, "%s \xE2\x80\x94 %s", or_dash(str(f, "name")), or_dash(str(f, "label")));
-        float y = card(ctx, &c, title, 8 * 18 + (float)alen(fields) * 16 + 44);
+        float y = card(ctx, &c, title, 8 * LP_PANE_ROW + (float)alen(fields) * 16 + 44);
         float x = c.x + CARD_PAD, w = c.w - 2 * CARD_PAD;
         paragraph(ctx, LP_RECT(x, y, w, 36), or_dash(str(f, "description")), LP_INK_SECONDARY, 0);
         y += 40;
@@ -816,7 +736,7 @@ static void paint_schemas(lp_ctx *ctx, struct thread_app *a, lp_rect area, lp_id
             struct json_object *field = at(fields, k);
             char line[240];
             snprintf(line, sizeof line, "%s: %s \xE2\x80\x94 %s", or_dash(str(field, "name")), or_dash(str(field, "type")), or_dash(str(field, "description")));
-            mono(ctx, LP_RECT(x + 140, y, w - 140, 14), line, LP_INK_SECONDARY);
+            mono(ctx, LP_RECT(x + LP_PANE_LABEL_W + LP_PANE_GUTTER, y, w - LP_PANE_LABEL_W - LP_PANE_GUTTER, 14), line, LP_INK_SECONDARY);
             y += 16;
         }
     }
@@ -838,7 +758,7 @@ static const char *const LEDGER_KINDS[] = { "deposit", "index", "search", "remov
 static void paint_ledger(lp_ctx *ctx, struct thread_app *a, lp_rect area, lp_id base, int retrieval) {
 #ifdef HAVE_JSONC
     lp_thread *t = &a->desk->thread;
-    lp_rect inner = lp_rect_inset(area, LP_SPACE_5, LP_SPACE_4);
+    lp_rect inner = lp_pane_content(area);
     float y = inner.y;
     if (!retrieval) {
         float x = inner.x;
@@ -937,40 +857,93 @@ static void paint_ledger(lp_ctx *ctx, struct thread_app *a, lp_rect area, lp_id 
 
 /* MARK: - The window */
 
+static const char *const SECTION_TITLES[TABS] = { "Drive", "Library", "Graph", "Schemas", "Ledger", "Retrieval" };
+static const lp_icon SECTION_ICONS[TABS] = { LP_ICON_DRIVE, LP_ICON_FOLDER, LP_ICON_CLOUD, LP_ICON_CODE, LP_ICON_LIST, LP_ICON_SEARCH };
+
+/* The header's second line: what the section holds right now. */
+static void subtitle_of(struct thread_app *a, char *out, size_t n) {
+    lp_thread *t = &a->desk->thread;
+    if (!lp_thread_connected(t)) { snprintf(out, n, "threadd is not running"); return; }
+#ifdef HAVE_JSONC
+    char v1[48], v2[48];
+    switch (a->tab) {
+    case TAB_DRIVE: {
+        struct json_object *parity = lp_thread_answer(t, LP_THREAD_PARITY);
+        if (parity && num(parity, "run_id")) {
+            thousands(num(parity, "recorded"), v1, sizeof v1);
+            thousands(num(parity, "seen"), v2, sizeof v2);
+            snprintf(out, n, "%s \xC2\xB7 %s of %s files in the graph", a->desk->branding.name[0] ? a->desk->branding.name : "MaryOS", v1, v2);
+        } else snprintf(out, n, "%s \xC2\xB7 no reconcile has run yet", a->desk->branding.name[0] ? a->desk->branding.name : "MaryOS");
+        return;
+    }
+    case TAB_LIBRARY: {
+        struct json_object *groups = arr(lp_thread_answer(t, LP_THREAD_LIBRARY), "groups");
+        size_t records = 0;
+        for (size_t g = 0; g < alen(groups); g++) records += alen(arr(at(groups, g), "documents"));
+        thousands((int64_t)records, v1, sizeof v1);
+        snprintf(out, n, "%zu group%s \xC2\xB7 %s record%s", alen(groups), alen(groups) == 1 ? "" : "s", v1, records == 1 ? "" : "s");
+        return;
+    }
+    case TAB_GRAPH: snprintf(out, n, "%s", totals_text(&a->graph)); return;
+    case TAB_SCHEMAS: {
+        size_t families = alen(arr(lp_thread_answer(t, LP_THREAD_SCHEMAS), "families"));
+        snprintf(out, n, "%zu record famil%s, declared once and stamped on every document", families, families == 1 ? "y" : "ies");
+        return;
+    }
+    case TAB_LEDGER: {
+        size_t rows = alen(arr(lp_thread_answer(t, LP_THREAD_LEDGER), "rows"));
+        snprintf(out, n, "%zu event%s%s%s", rows, rows == 1 ? "" : "s", a->ledger_kind[0] ? " \xC2\xB7 only " : "", a->ledger_kind[0] ? a->ledger_kind : "");
+        return;
+    }
+    default: {
+        struct json_object *rows = arr(lp_thread_answer(t, LP_THREAD_LEDGER), "rows");
+        size_t searches = 0;
+        for (size_t i = 0; i < alen(rows); i++) searches += str(at(rows, i), "kind") && strcmp(str(at(rows, i), "kind"), "search") == 0;
+        snprintf(out, n, "%zu search%s, newest first, with what each returned", searches, searches == 1 ? "" : "es");
+        return;
+    }
+    }
+#else
+    snprintf(out, n, "Built without json-c");
+#endif
+}
+
 static void thread_paint(void *state, lp_ctx *ctx, lp_rect body, lp_desktop *d) {
     static struct thread_app empty;
     struct thread_app *a = state ? state : &empty;
     if (!a->desk) a->desk = d;
     lp_id base = LP_ID("thread");
     if (state && !a->asked && lp_thread_connected(&d->thread)) ask_all(a);
+    /* the sections, as a source list */
     lp_rect area = body;
-    lp_rect bar = lp_toolbar(ctx, &area);
-    static const lp_segment TABS_UI[TABS] = {
-        { "Drive", LP_ICON_COUNT }, { "Library", LP_ICON_COUNT }, { "Graph", LP_ICON_COUNT },
-        { "Schemas", LP_ICON_COUNT }, { "Ledger", LP_ICON_COUNT }, { "Retrieval", LP_ICON_COUNT },
-    };
-    lp_size ss = lp_segmented_measure(ctx, TABS_UI, TABS, LP_CONTROL_SM);
-    int tab = a->tab;
-    if (lp_segmented(ctx, lp_id_index(base, 1), bar.x + LP_SPACE_2, bar.y + bar.h / 2 - ss.h / 2, TABS_UI, TABS, &tab, LP_CONTROL_SM) && tab != a->tab) {
-        set_tab(a, tab);
-        ctx->dirty = 1;
-    }
-    if (ctx->pass == LP_PASS_DRAW && ctx->cr) {
-        lp_text_style ts = lp_text_style_default();
-        ts.font = LP_FONT_DISPLAY;
-        ts.italic = 1;
-        ts.size_px = LP_TEXT_LG;
-        ts.color = LP_INK_SECONDARY;
-        lp_text_draw(ctx->cr, "Threads", LP_RECT(bar.x + LP_SPACE_2 + ss.w + LP_SPACE_4, bar.y, 140, bar.h), &ts, LP_ALIGN_START);
-        live_dot(ctx, bar.x + bar.w - LP_SPACE_2 - 40 - 12, bar.y + bar.h / 2, lp_thread_connected(&d->thread));
-    }
+    lp_rect cursor = lp_sidebar(ctx, &area);
+    lp_sidebar_section(ctx, &cursor, "Threads");
+    for (int i = 0; i < TABS; i++)
+        if (lp_sidebar_item(ctx, lp_id_index(base, 200 + i), &cursor, SECTION_ICONS[i], SECTION_TITLES[i], a->tab == i) && a->tab != i) { set_tab(a, i); ctx->dirty = 1; }
+    if (ctx->pass == LP_PASS_DRAW && ctx->cr) lp_fill_solid(ctx->cr, area, LP_SURFACE_BODY, 0);
+    /* the header: the section, what it holds, threadd's dot; Reload (and Reconcile on the Drive) at its right */
+    char subtitle[240];
+    subtitle_of(a, subtitle, sizeof subtitle);
+    int connected = lp_thread_connected(&d->thread);
+    lp_pane_header h = { .title = SECTION_TITLES[a->tab], .subtitle = a->status[0] ? a->status : subtitle, .live = connected, .status = connected ? "threadd" : "threadd is away" };
+    lp_rect controls = lp_pane_header_paint(ctx, &area, &h);
     lp_button_opts ro = { LP_BUTTON_DEFAULT, LP_CONTROL_SM, LP_ICON_RELOAD, 1, 0 };
     lp_size rs = lp_button_measure(ctx, "", ro);
-    if (lp_button(ctx, lp_id_index(base, 2), LP_RECT(bar.x + bar.w - LP_SPACE_2 - rs.w, bar.y + bar.h / 2 - rs.h / 2, rs.w, rs.h), "", ro)) {
+    float right = controls.x + controls.w, cy = controls.y + controls.h / 2;
+    if (lp_button(ctx, lp_id_index(base, 2), LP_RECT(right - rs.w, cy - rs.h / 2, rs.w, rs.h), "", ro)) {
+        a->status[0] = 0;
         ask_all(a);
         ctx->dirty = 1;
     }
-    if (ctx->pass == LP_PASS_DRAW && ctx->cr) lp_fill_solid(ctx->cr, area, LP_SURFACE_BODY, 0);
+    right -= rs.w + LP_SPACE_2;
+    if (a->tab == TAB_DRIVE) {
+        lp_button_opts bo = { LP_BUTTON_DEFAULT, LP_CONTROL_SM, LP_ICON_COUNT, 0, a->job != NULL || !a->run };
+        lp_size bs = lp_button_measure(ctx, "Reconcile", bo);
+        if (lp_button(ctx, lp_id_index(base, 11), LP_RECT(right - bs.w, cy - bs.h / 2, bs.w, bs.h), "Reconcile", bo)) {
+            reconcile(a);
+            ctx->dirty = 1;
+        }
+    }
     switch (a->tab) {
     case TAB_DRIVE: paint_drive(ctx, a, area, base); break;
     case TAB_LIBRARY: paint_library(ctx, a, area, base); break;

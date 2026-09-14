@@ -207,7 +207,9 @@ static float radius_of(const lp_graph_node *n, float zoom) {
  * LP_GRAPH_CAMERA away, so a near node lands further from the centre and larger. Returns the
  * perspective scale (1 in 2D). */
 static float place(const lp_graph *g, lp_rect canvas, const lp_graph_node *n, float *x, float *y, float *depth) {
-    float side = canvas.w < canvas.h ? canvas.w : canvas.h;
+    /* the unit square sits inside the shorter side less a margin, so a label at the edge still fits */
+    float side = (canvas.w < canvas.h ? canvas.w : canvas.h) - 2 * LP_GRAPH_MARGIN;
+    if (side < 60) side = 60;
     float cx = canvas.x + canvas.w / 2, cy = canvas.y + canvas.h / 2;
     float ux = n->x - 0.5f, uy = n->y - 0.5f, scale = 1, near = 0;
     if (g->mode == LP_GRAPH_3D) {

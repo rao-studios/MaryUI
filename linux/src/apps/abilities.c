@@ -17,6 +17,7 @@
 #include "maryui/lp_desktop.h"
 #include "maryui/lp_draw.h"
 #include "maryui/lp_mary.h"
+#include "maryui/lp_pane.h"
 #include "maryui/lp_skill.h"
 #include "maryui/lp_text.h"
 #include "maryui/lp_tokens.h"
@@ -27,8 +28,8 @@
 
 #define PANES 3
 #define PACKAGES_MAX 32
-#define CARD_PAD LP_SPACE_4
-#define ROW 18
+#define CARD_PAD LP_PANE_CARD_PAD
+#define ROW LP_PANE_ROW
 #define RAIL_W 200
 
 enum { PANE_SURFACE, PANE_TUNE, PANE_SKILLS };
@@ -109,96 +110,19 @@ static int package_skills(const lp_desktop *d, const struct package *p) {
 static const char *kind_of(const lp_skill *s) { return s->kind ? s->kind : s->effect == LP_SKILL_READ ? "cognitive" : "effectful"; }
 static const char *access_of(const lp_skill *s) { return s->access ? s->access : s->effect == LP_SKILL_READ ? "seamless" : s->effect == LP_SKILL_ACT ? "reversible" : "confirm"; }
 
-/* MARK: - Drawing helpers (the Ambient app's) */
+/* MARK: - Drawing helpers: the pane kit's (lp_pane.h), shared with Threads and Ambient */
 
 static int drawing(lp_ctx *ctx) { return ctx->pass == LP_PASS_DRAW && ctx->cr != NULL; }
-
-static int lines_of(const char *text, float w) {
-    if (!text || !*text) return 1;
-    float per_line = w / 6.4f;
-    if (per_line < 8) per_line = 8;
-    return 1 + (int)((float)strlen(text) / per_line);
-}
-
-static void card_frame(lp_ctx *ctx, lp_rect box, const char *title) {
-    if (!drawing(ctx)) return;
-    lp_fill_solid(ctx->cr, box, LP_SURFACE_WELL, LP_RADIUS_MD);
-    lp_draw_hairline(ctx->cr, box, LP_EDGE_TOP | LP_EDGE_BOTTOM | LP_EDGE_LEFT | LP_EDGE_RIGHT, LP_EDGE_DIVIDER);
-    lp_text_style ts = lp_text_style_default();
-    ts.size_px = LP_TEXT_SM;
-    ts.weight = LP_TEXT_WEIGHT_SEMIBOLD;
-    ts.uppercase = 1;
-    ts.letter_spacing = 0.6f;
-    ts.color = LP_INK_TERTIARY;
-    ts.ellipsize = 1;
-    lp_text_draw(ctx->cr, title, LP_RECT(box.x + CARD_PAD, box.y + 8, box.w - 2 * CARD_PAD, 16), &ts, LP_ALIGN_START);
-}
-
-static void row(lp_ctx *ctx, float x, float *y, float w, const char *label, const char *value) {
-    if (drawing(ctx)) {
-        lp_text_style ls = lp_text_style_default();
-        ls.size_px = LP_TEXT_SM;
-        ls.color = LP_INK_TERTIARY;
-        lp_text_style vs = lp_text_style_default();
-        vs.size_px = LP_TEXT_SM;
-        vs.ellipsize = 1;
-        lp_text_draw(ctx->cr, label, LP_RECT(x, *y, 110, ROW), &ls, LP_ALIGN_END);
-        lp_text_draw(ctx->cr, value && *value ? value : "\xE2\x80\x94", LP_RECT(x + 120, *y, w - 120, ROW), &vs, LP_ALIGN_START);
-    }
-    *y += ROW;
-}
-
-static void paragraph(lp_ctx *ctx, float x, float *y, float w, const char *text, lp_color color, int italic) {
-    int lines = lines_of(text, w);
-    if (drawing(ctx) && text) {
-        lp_text_style s = lp_text_style_default();
-        s.size_px = LP_TEXT_SM;
-        s.color = color;
-        s.italic = italic;
-        if (italic) s.font = LP_FONT_DISPLAY;
-        lp_text_layout *l = lp_text_layout_new(ctx->cr, text, -1, &s, w);
-        lp_size size = lp_text_layout_size(l);
-        lp_text_layout_draw(ctx->cr, l, x, *y, color);
-        lp_text_layout_free(l);
-        *y += size.h + 4;
-        return;
-    }
-    *y += (float)lines * 17 + 4;
-}
-
-static void mono(lp_ctx *ctx, float x, float y, float w, const char *text, lp_color color) {
-    if (!drawing(ctx)) return;
-    lp_text_style s = lp_text_style_default();
-    s.font = LP_FONT_MONO;
-    s.size_px = LP_TEXT_XS;
-    s.color = color;
-    s.ellipsize = 1;
-    lp_text_draw(ctx->cr, text, LP_RECT(x, y, w, ROW), &s, LP_ALIGN_START);
-}
-
-static void capsule(lp_ctx *ctx, float x, float y, const char *label, lp_color color) {
-    if (!drawing(ctx)) return;
-    lp_text_style s = lp_text_style_default();
-    s.size_px = LP_TEXT_XS;
-    s.weight = LP_TEXT_WEIGHT_SEMIBOLD;
-    s.uppercase = 1;
-    s.letter_spacing = 0.5f;
-    s.color = color;
-    lp_size size = lp_text_measure(ctx->cr, label, &s);
-    lp_rect r = LP_RECT(x, y, size.w + 12, 16);
-    lp_color fill = color;
-    fill.a = 0.16f;
-    lp_fill_solid(ctx->cr, r, fill, 8);
-    lp_text_draw(ctx->cr, label, LP_RECT(r.x + 6, r.y, size.w, r.h), &s, LP_ALIGN_START);
-}
-
-static float capsule_w(const char *label) { return (float)strlen(label) * 7.2f + 12; }
+static int lines_of(const char *text, float w) { return lp_pane_lines_of(text, w); }
+static void card_frame(lp_ctx *ctx, lp_rect box, const char *title) { lp_pane_card_frame(ctx, box, title); }
+static void row(lp_ctx *ctx, float x, float *y, float w, const char *label, const char *value) { lp_pane_row(ctx, x, y, w, label, value); }
+static void paragraph(lp_ctx *ctx, float x, float *y, float w, const char *text, lp_color color, int italic) { lp_pane_paragraph(ctx, x, y, w, text, color, italic); }
+static void mono(lp_ctx *ctx, float x, float y, float w, const char *text, lp_color color) { lp_pane_mono(ctx, x, y, w, text, color); }
 
 static void effect_dot(lp_ctx *ctx, float x, float y, lp_skill_effect effect) {
     if (!drawing(ctx)) return;
-    static const lp_color SAGE = { 0.38f, 0.55f, 0.38f, 1 }, GOLD = { 0.68f, 0.56f, 0.38f, 1 }, RED = { 0.72f, 0.30f, 0.26f, 1 };
     cairo_arc(ctx->cr, x, y, 4, 0, 2 * M_PI);
-    lp_set_color(ctx->cr, effect == LP_SKILL_READ ? SAGE : effect == LP_SKILL_ACT ? GOLD : RED);
+    lp_set_color(ctx->cr, effect == LP_SKILL_READ ? LP_PANE_SAGE : effect == LP_SKILL_ACT ? LP_PANE_GOLD : LP_PANE_RED);
     cairo_fill(ctx->cr);
 }
 
@@ -269,14 +193,14 @@ static void spoken_of(const lp_skill *s, char *out, size_t cap) {
 /* MARK: - The panes. Each paints when `measure` is 0 and only adds heights when it is 1. */
 
 static float paint_surface(lp_ctx *ctx, struct abilities_app *a, const struct package *p, lp_rect c, int measure) {
-    float y = c.y + CARD_PAD, w = c.w - 2 * CARD_PAD, inner = w - 2 * CARD_PAD;
+    float y = c.y, w = c.w, inner = w - 2 * CARD_PAD;
     const lp_app *apps[16];
     int napps = p->app ? 1 : discipline_apps(a->desk, p->discipline, apps, 16);
     if (p->app) apps[0] = p->app;
     int rows = 0;
     for (int i = 0; i < napps; i++) rows += apps[i]->skill_count;
     float h = 30 + (float)rows * (ROW + 6) + (p->app ? 0 : (float)napps * ROW) + CARD_PAD;
-    lp_rect box = LP_RECT(c.x + CARD_PAD, y, w, h);
+    lp_rect box = LP_RECT(c.x, y, w, h);
     if (!measure) {
         card_frame(ctx, box, p->app ? "Callable functions" : "Realized by");
         float yy = box.y + 30;
@@ -316,10 +240,10 @@ static float paint_surface(lp_ctx *ctx, struct abilities_app *a, const struct pa
     y += h + CARD_PAD;
     /* what the graph holds of it */
     char note[300];
-    snprintf(note, sizeof note, "Each function is an ability record in the Thread (family ability, one per skill); the app's manifest lists what it perceives. "
-                                "Nothing is recorded from the screen: the app itself performs the call.");
+    snprintf(note, sizeof note, "Nothing here is recorded: Mary is the operating system, so every function is hers to call as declared. The Thread keeps "
+                                "one style record per discipline naming the apps that realize it; each call she makes is kept as a behaviour record.");
     float nh = (float)lines_of(note, inner) * 17 + 4 + 30 + CARD_PAD;
-    lp_rect nbox = LP_RECT(c.x + CARD_PAD, y, w, nh);
+    lp_rect nbox = LP_RECT(c.x, y, w, nh);
     if (!measure) {
         card_frame(ctx, nbox, "In the Thread");
         float yy = nbox.y + 30;
@@ -330,7 +254,7 @@ static float paint_surface(lp_ctx *ctx, struct abilities_app *a, const struct pa
 }
 
 static float paint_tune(lp_ctx *ctx, struct abilities_app *a, const struct package *p, lp_rect c, int measure) {
-    float y = c.y + CARD_PAD, w = c.w - 2 * CARD_PAD, inner = w - 2 * CARD_PAD;
+    float y = c.y, w = c.w, inner = w - 2 * CARD_PAD;
     const lp_app *apps[16];
     int napps = p->app ? 1 : discipline_apps(a->desk, p->discipline, apps, 16);
     if (p->app) apps[0] = p->app;
@@ -372,7 +296,7 @@ static float paint_tune(lp_ctx *ctx, struct abilities_app *a, const struct packa
     };
     for (size_t i = 0; i < sizeof cards / sizeof *cards; i++) {
         float h = (float)lines_of(cards[i].text, inner) * 17 + 4 + 30 + CARD_PAD;
-        lp_rect box = LP_RECT(c.x + CARD_PAD, y, w, h);
+        lp_rect box = LP_RECT(c.x, y, w, h);
         if (!measure) {
             card_frame(ctx, box, cards[i].title);
             float yy = box.y + 30;
@@ -388,7 +312,7 @@ static float paint_tune(lp_ctx *ctx, struct abilities_app *a, const struct packa
 }
 
 static float paint_skills(lp_ctx *ctx, struct abilities_app *a, const struct package *p, lp_rect c, int measure) {
-    float y = c.y + CARD_PAD, w = c.w - 2 * CARD_PAD, inner = w - 2 * CARD_PAD;
+    float y = c.y, w = c.w, inner = w - 2 * CARD_PAD;
     const lp_app *apps[16];
     int napps = p->app ? 1 : discipline_apps(a->desk, p->discipline, apps, 16);
     if (p->app) apps[0] = p->app;
@@ -404,14 +328,14 @@ static float paint_skills(lp_ctx *ctx, struct abilities_app *a, const struct pac
             spoken_of(s, spoken, sizeof spoken);
             snprintf(invocation, sizeof invocation, "%s__%s", app->id, s->id);
             snprintf(title, sizeof title, "%s%s%s", p->app ? "" : app->name ? app->name : app->title, p->app ? "" : " \xC2\xB7 ", s->title);
-            float body = (float)lines_of(s->summary, inner) * 17 + 4 + 7 * ROW + (float)lines_of(spoken, inner - 120) * 17;
+            float body = (float)lines_of(s->summary, inner) * 17 + 4 + 7 * ROW + (float)lines_of(spoken, inner - LP_PANE_LABEL_W - LP_PANE_GUTTER) * 17;
             float h = body + 30 + CARD_PAD;
-            lp_rect box = LP_RECT(c.x + CARD_PAD, y, w, h);
+            lp_rect box = LP_RECT(c.x, y, w, h);
             if (!measure) {
                 card_frame(ctx, box, title);
                 float cx = box.x + box.w - CARD_PAD;
-                cx -= capsule_w(access_of(s)); capsule(ctx, cx, box.y + 8, access_of(s), (lp_color){ 0.22f, 0.44f, 0.65f, 1 });
-                cx -= capsule_w(kind_of(s)) + 6; capsule(ctx, cx, box.y + 8, kind_of(s), (lp_color){ 0.38f, 0.55f, 0.38f, 1 });
+                cx -= lp_pane_capsule_right(ctx, cx, box.y + 7, access_of(s), LP_PANE_BLUE) + 6;
+                lp_pane_capsule_right(ctx, cx, box.y + 7, kind_of(s), LP_PANE_SAGE);
                 float yy = box.y + 30;
                 paragraph(ctx, box.x + CARD_PAD, &yy, inner, s->summary, LP_INK_PRIMARY, 1);
                 row(ctx, box.x + CARD_PAD, &yy, inner, "Invocation:", invocation);
@@ -425,9 +349,9 @@ static float paint_skills(lp_ctx *ctx, struct abilities_app *a, const struct pac
                     lp_text_style ls = lp_text_style_default();
                     ls.size_px = LP_TEXT_SM;
                     ls.color = LP_INK_TERTIARY;
-                    lp_text_draw(ctx->cr, "Spoken as:", LP_RECT(box.x + CARD_PAD, yy, 110, ROW), &ls, LP_ALIGN_END);
+                    lp_text_draw(ctx->cr, "Spoken as:", LP_RECT(box.x + CARD_PAD, yy, LP_PANE_LABEL_W, ROW), &ls, LP_ALIGN_END);
                 }
-                paragraph(ctx, box.x + CARD_PAD + 120, &yy, inner - 120, spoken, LP_INK_PRIMARY, 0);
+                paragraph(ctx, box.x + CARD_PAD + LP_PANE_LABEL_W + LP_PANE_GUTTER, &yy, inner - LP_PANE_LABEL_W - LP_PANE_GUTTER, spoken, LP_INK_PRIMARY, 0);
             }
             y += h + CARD_PAD;
         }
@@ -501,69 +425,51 @@ static void abilities_paint(void *state, lp_ctx *ctx, lp_rect body, lp_desktop *
     char buf[64];
     const char *title = package_title(p, buf, sizeof buf);
 
-    /* the header: the title in the serif, the paradigm, the count */
-    lp_rect head = lp_rect_cut_top(&area, 96);
-    if (drawing(ctx)) {
-        lp_text_style ts = lp_text_style_default();
-        ts.font = LP_FONT_DISPLAY;
-        ts.italic = 1;
-        ts.size_px = LP_TEXT_XXL;
-        ts.color = LP_INK_PRIMARY;
-        lp_text_draw(ctx->cr, title, LP_RECT(head.x + LP_SPACE_4, head.y + LP_SPACE_3, head.w - 2 * LP_SPACE_4, 34), &ts, LP_ALIGN_START);
-        int skills = package_skills(d, p);
-        char line[160];
-        snprintf(line, sizeof line, "by MaryOS \xC2\xB7 no model calls \xC2\xB7 %d skill%s", skills, skills == 1 ? "" : "s");
-        lp_text_style ls = lp_text_style_default();
-        ls.size_px = LP_TEXT_SM;
-        ls.color = LP_INK_TERTIARY;
-        float cx = head.x + LP_SPACE_4;
-        capsule(ctx, cx, head.y + LP_SPACE_3 + 40, paradigm_of(p), (lp_color){ 0.68f, 0.56f, 0.38f, 1 });
-        cx += capsule_w(paradigm_of(p)) + 8;
-        lp_text_draw(ctx->cr, line, LP_RECT(cx, head.y + LP_SPACE_3 + 40, head.w - cx, 16), &ls, LP_ALIGN_START);
-        if (p->app && p->app->summary) {
-            lp_text_style ss = lp_text_style_default();
-            ss.size_px = LP_TEXT_SM;
-            ss.color = LP_INK_SECONDARY;
-            ss.ellipsize = 1;
-            lp_text_draw(ctx->cr, p->app->summary, LP_RECT(head.x + LP_SPACE_4, head.y + LP_SPACE_3 + 62, head.w - 2 * LP_SPACE_4, 18), &ss, LP_ALIGN_START);
-        }
-    }
+    /* the header: the package, its paradigm and count, its summary in the serif; the daemon's dot */
+    int skills = package_skills(d, p);
+    char subtitle[200];
+    snprintf(subtitle, sizeof subtitle, "%s \xC2\xB7 by MaryOS \xC2\xB7 no model calls \xC2\xB7 %d skill%s", paradigm_of(p), skills, skills == 1 ? "" : "s");
+    int connected = d && lp_mary_connected(&d->mary);
+    lp_pane_header h = { .title = title, .subtitle = subtitle, .note = p->app ? p->app->summary : "The apps that realize this discipline answer for it.",
+                         .live = connected, .status = connected ? "maryd" : "maryd is away" };
+    lp_pane_header_paint(ctx, &area, &h);
 
     /* the pane bar: the segmented control, then Rehearse at the right */
-    lp_rect bar = lp_rect_cut_top(&area, 40);
+    lp_rect bar = lp_pane_bar(ctx, &area);
     static const lp_segment PANES_UI[PANES] = { { "Control surface", LP_ICON_COUNT }, { "Tune", LP_ICON_COUNT }, { "Skills", LP_ICON_COUNT } };
     lp_size ss = lp_segmented_measure(ctx, PANES_UI, PANES, LP_CONTROL_SM);
     int pane = a->pane;
-    if (lp_segmented(ctx, lp_id_index(base, 1), bar.x + LP_SPACE_4, bar.y + bar.h / 2 - ss.h / 2, PANES_UI, PANES, &pane, LP_CONTROL_SM) && pane != a->pane) {
+    if (lp_segmented(ctx, lp_id_index(base, 1), bar.x, bar.y + bar.h / 2 - ss.h / 2, PANES_UI, PANES, &pane, LP_CONTROL_SM) && pane != a->pane) {
         a->pane = pane;
         ctx->dirty = 1;
     }
-    lp_button_opts ro = { LP_BUTTON_DEFAULT, LP_CONTROL_SM, LP_ICON_COUNT, 0, !d || !lp_mary_connected(&d->mary) };
+    lp_button_opts ro = { LP_BUTTON_DEFAULT, LP_CONTROL_SM, LP_ICON_COUNT, 0, !connected };
     lp_size rs = lp_button_measure(ctx, "Rehearse", ro);
-    float right = bar.x + bar.w - LP_SPACE_4;
+    float right = bar.x + bar.w;
     if (lp_button(ctx, lp_id_index(base, 2), LP_RECT(right - rs.w, bar.y + bar.h / 2 - rs.h / 2, rs.w, rs.h), "Rehearse", ro) && state) { rehearse(a); ctx->dirty = 1; }
-    float fw = right - rs.w - LP_SPACE_2 - (bar.x + LP_SPACE_4 + ss.w + LP_SPACE_4);
+    float fw = right - rs.w - LP_SPACE_2 - (bar.x + ss.w + LP_SPACE_4);
     if (fw > 160) {
         lp_rect field = LP_RECT(right - rs.w - LP_SPACE_2 - (fw > 320 ? 320 : fw), bar.y + bar.h / 2 - 12, fw > 320 ? 320 : fw, 24);
         lp_text_field(ctx, lp_id_index(base, 3), field, &a->rehearse, (lp_text_field_opts){ .placeholder = "Say it as you would\xE2\x80\xA6", .icon = LP_ICON_COUNT });
         if (ctx->pass == LP_PASS_EVENT && ctx->focus == lp_id_index(base, 3) && ctx->in.key_pressed && ctx->in.keysym == XKB_KEY_Return && state) { rehearse(a); ctx->dirty = 1; }
     }
     if (a->rehearsal[0]) {
-        lp_rect line = lp_rect_cut_top(&area, 22);
+        lp_rect line = lp_rect_cut_top(&area, 24);
         if (drawing(ctx)) {
             lp_text_style s = lp_text_style_default();
             s.size_px = LP_TEXT_SM;
             s.color = LP_INK_SECONDARY;
             s.ellipsize = 1;
-            lp_text_draw(ctx->cr, a->rehearsal, LP_RECT(line.x + LP_SPACE_4, line.y, line.w - 2 * LP_SPACE_4, line.h), &s, LP_ALIGN_START);
+            lp_text_draw(ctx->cr, a->rehearsal, LP_RECT(line.x + LP_PANE_INSET, line.y + 4, line.w - 2 * LP_PANE_INSET, line.h - 4), &s, LP_ALIGN_START);
         }
     }
 
     float (*paint)(lp_ctx *, struct abilities_app *, const struct package *, lp_rect, int) =
         a->pane == PANE_SURFACE ? paint_surface : a->pane == PANE_TUNE ? paint_tune : paint_skills;
-    lp_rect probe = LP_RECT(area.x, 0, area.w, 1e6f);
+    lp_rect column = lp_pane_content(area);
+    lp_rect probe = LP_RECT(column.x, 0, column.w, 1e6f);
     float extent = paint(ctx, a, p, probe, 1) + CARD_PAD;
-    lp_rect content = lp_scroll_begin(ctx, lp_id_index(base, 10 + a->pane), area, (lp_size){ area.w, extent }, &a->scroll[a->pane]);
+    lp_rect content = lp_scroll_begin(ctx, lp_id_index(base, 10 + a->pane), column, (lp_size){ column.w, extent }, &a->scroll[a->pane]);
     paint(ctx, a, p, content, 0);
     lp_scroll_end(ctx);
 }
