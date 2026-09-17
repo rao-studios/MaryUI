@@ -3,13 +3,13 @@
   <defs>
     <clipPath id="folderSmart-clip-back"><path d="M2 9a2.5 2.5 0 0 1 2.5-2.5h8.2l3 3H27.5A2.5 2.5 0 0 1 30 12v12.5a2.5 2.5 0 0 1-2.5 2.5h-23A2.5 2.5 0 0 1 2 24.5Z"/></clipPath>
     <linearGradient id="folderSmart-grad-back" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#5690df"/>
-      <stop offset="1" stop-color="#2f67ba"/>
+      <stop offset="0" stop-color="#4f8bdd"/>
+      <stop offset="1" stop-color="#2d65b6"/>
     </linearGradient>
     <clipPath id="folderSmart-clip-front"><path d="M2 13h28v11.5a2.5 2.5 0 0 1-2.5 2.5h-23A2.5 2.5 0 0 1 2 24.5Z"/></clipPath>
     <linearGradient id="folderSmart-grad-front" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#3675cc"/>
-      <stop offset="1" stop-color="#245296"/>
+      <stop offset="0" stop-color="#3572c9"/>
+      <stop offset="1" stop-color="#224e8f"/>
     </linearGradient>
     <clipPath id="folderSmart-clip-silhouette"><path d="M2 9a2.5 2.5 0 0 1 2.5-2.5h8.2l3 3H27.5A2.5 2.5 0 0 1 30 12v12.5a2.5 2.5 0 0 1-2.5 2.5h-23A2.5 2.5 0 0 1 2 24.5Z"/></clipPath>
     <linearGradient id="folderSmart-grad-key" x1="0" y1="0" x2="0.9" y2="1">

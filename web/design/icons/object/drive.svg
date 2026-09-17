@@ -3,13 +3,13 @@
   <defs>
     <clipPath id="drive-clip-body"><path d="M3 9h26a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V11a2 2 0 0 1 2-2Z"/></clipPath>
     <linearGradient id="drive-grad-body" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#e9ebee"/>
-      <stop offset="1" stop-color="#b9bdc6"/>
+      <stop offset="0" stop-color="#e8e9ed"/>
+      <stop offset="1" stop-color="#b5b9c2"/>
     </linearGradient>
     <clipPath id="drive-clip-slot"><path d="M5.5 14.6h13a1.1 1.1 0 0 1 0 2.2h-13a1.1 1.1 0 0 1 0-2.2Z"/></clipPath>
     <linearGradient id="drive-grad-slot" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#a6abb4"/>
-      <stop offset="1" stop-color="#676a70"/>
+      <stop offset="0" stop-color="#9fa4ad"/>
+      <stop offset="1" stop-color="#606369"/>
     </linearGradient>
     <clipPath id="drive-clip-led"><path d="M25.4 14.8a1.2 1.2 0 1 1 0 2.4 1.2 1.2 0 0 1 0-2.4Z"/></clipPath>
     <clipPath id="drive-clip-silhouette"><path d="M3 9h26a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V11a2 2 0 0 1 2-2Z"/></clipPath>

@@ -3,13 +3,13 @@
   <defs>
     <clipPath id="image-clip-print"><path d="M5 5h22a2 2 0 0 1 2 2v18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/></clipPath>
     <linearGradient id="image-grad-print" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#f6f7f8"/>
-      <stop offset="1" stop-color="#e0e3e7"/>
+      <stop offset="0" stop-color="#f5f5f7"/>
+      <stop offset="1" stop-color="#dee1e5"/>
     </linearGradient>
     <clipPath id="image-clip-field"><path d="M6.5 8.5h19a.5.5 0 0 1 .5.5v11a.5.5 0 0 1-.5.5h-19a.5.5 0 0 1-.5-.5V9a.5.5 0 0 1 .5-.5Z"/></clipPath>
     <linearGradient id="image-grad-field" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#d0d3d9"/>
-      <stop offset="1" stop-color="#818387"/>
+      <stop offset="0" stop-color="#c7cad0"/>
+      <stop offset="1" stop-color="#797b7e"/>
     </linearGradient>
     <clipPath id="image-clip-sun"><path d="M22 11a2 2 0 1 1 0 4 2 2 0 0 1 0-4Z"/></clipPath>
     <clipPath id="image-clip-hills"><path d="M6 20.5v-2l5.5-5 3.5 3.5 4.5-4.5 6.5 6.5v1.5Z"/></clipPath>

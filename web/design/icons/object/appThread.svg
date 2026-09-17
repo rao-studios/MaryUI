@@ -1,34 +1,56 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="128" height="128">
   <title>appThread</title>
   <defs>
-    <clipPath id="appThread-clip-tile"><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z"/></clipPath>
-    <linearGradient id="appThread-grad-tile" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#f3f4f6"/>
-      <stop offset="1" stop-color="#dbdee3"/>
+    <clipPath id="appThread-clip-spool"><path d="M25 8.8A9 3.3 0 0 1 7 8.8A9 3.3 0 0 1 25 8.8ZM9.6 8.8h12.8v14.4h-12.8ZM25 23.2A9 3.3 0 0 1 7 23.2A9 3.3 0 0 1 25 23.2Z"/></clipPath>
+    <linearGradient id="appThread-grad-spool" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#ebecef"/>
+      <stop offset="1" stop-color="#c0c4cc"/>
     </linearGradient>
-    <clipPath id="appThread-clip-nodes"><path d="M9 8.8a2.2 2.2 0 1 0 0 4.4a2.2 2.2 0 1 0 0 -4.4ZM22 6.8a2.2 2.2 0 1 0 0 4.4a2.2 2.2 0 1 0 0 -4.4ZM12 20.8a2.2 2.2 0 1 0 0 4.4a2.2 2.2 0 1 0 0 -4.4Z"/></clipPath>
-    <clipPath id="appThread-clip-hub"><path d="M20 16.8a3.2 3.2 0 1 0 0 6.4a3.2 3.2 0 1 0 0 -6.4Z"/></clipPath>
-    <clipPath id="appThread-clip-silhouette"><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z"/></clipPath>
-    <linearGradient id="appThread-grad-key" x1="0" y1="0" x2="0.9" y2="1">
-      <stop offset="0" stop-color="#ffffff" stop-opacity="0.62"/>
-      <stop offset="0.3" stop-color="#ffffff" stop-opacity="0.2"/>
-      <stop offset="0.6" stop-color="#ffffff" stop-opacity="0"/>
+    <clipPath id="appThread-clip-thread"><path d="M9.6 8.8h12.8v14.4h-12.8Z"/></clipPath>
+    <linearGradient id="appThread-grad-thread" x1="0.0000" y1="0.0000" x2="1.0000" y2="0.0000">
+      <stop offset="0" stop-color="#1e447d"/>
+      <stop offset="0.20423435986881255" stop-color="#336fc4"/>
+      <stop offset="0.40423435986881256" stop-color="#4d8add"/>
+      <stop offset="0.672328897927847" stop-color="#2f67ba"/>
+      <stop offset="1" stop-color="#1b3d6f"/>
     </linearGradient>
-    <linearGradient id="appThread-grad-gloss" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#ffffff" stop-opacity="0.45"/>
-      <stop offset="0.42" stop-color="#ffffff" stop-opacity="0.16"/>
-      <stop offset="0.421" stop-color="#ffffff" stop-opacity="0"/>
-      <stop offset="0.82" stop-color="#ffffff" stop-opacity="0"/>
-      <stop offset="1" stop-color="#ffffff" stop-opacity="0.22"/>
+    <clipPath id="appThread-clip-flangeb"><path d="M25 23.2A9 3.3 0 0 1 7 23.2A9 3.3 0 0 1 25 23.2Z"/></clipPath>
+    <linearGradient id="appThread-grad-flangeb" x1="0.0000" y1="0.0000" x2="0.0000" y2="1.0000">
+      <stop offset="0" stop-color="#7a7d84"/>
+      <stop offset="0.036886066179945665" stop-color="#c7cbd1"/>
+      <stop offset="0.23688606617994568" stop-color="#e7e9ed"/>
+      <stop offset="0.5802873363989701" stop-color="#b9bdc6"/>
+      <stop offset="1" stop-color="#6c6f76"/>
+    </linearGradient>
+    <clipPath id="appThread-clip-flanget"><path d="M25 8.8A9 3.3 0 0 1 7 8.8A9 3.3 0 0 1 25 8.8Z"/></clipPath>
+    <linearGradient id="appThread-grad-flanget" x1="0.0000" y1="0.0000" x2="0.0000" y2="1.0000">
+      <stop offset="0" stop-color="#7a7d84"/>
+      <stop offset="0.036886066179945665" stop-color="#c7cbd1"/>
+      <stop offset="0.23688606617994568" stop-color="#e7e9ed"/>
+      <stop offset="0.5802873363989701" stop-color="#b9bdc6"/>
+      <stop offset="1" stop-color="#6c6f76"/>
+    </linearGradient>
+    <clipPath id="appThread-clip-hole"><path d="M18.3 8.8A2.3 0.95 0 0 1 13.7 8.8A2.3 0.95 0 0 1 18.3 8.8Z"/></clipPath>
+    <linearGradient id="appThread-grad-hole" x1="0.3290" y1="0.0302" x2="0.6710" y2="0.9698">
+      <stop offset="0" stop-color="#696c72"/>
+      <stop offset="0.45" stop-color="#a9aeb8"/>
+      <stop offset="1" stop-color="#dcdee3"/>
+    </linearGradient>
+    <clipPath id="appThread-clip-silhouette"><path d="M25 8.8A9 3.3 0 0 1 7 8.8A9 3.3 0 0 1 25 8.8ZM9.6 8.8h12.8v14.4h-12.8ZM25 23.2A9 3.3 0 0 1 7 23.2A9 3.3 0 0 1 25 23.2Z"/></clipPath>
+    <linearGradient id="appThread-grad-key" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.3"/>
+      <stop offset="0.55" stop-color="#ffffff" stop-opacity="0.11"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
     </linearGradient>
   </defs>
   <g id="appThread">
-    <g id="tile-paper-top" clip-path="url(#appThread-clip-tile)"><title>tile · paper/top</title><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="url(#appThread-grad-tile)"/><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
-    <g id="threads-accent-blue-base"><title>threads · accent.blue.base</title><path d="M9 11Q12 18 20 20 M22 9Q24 14 20 20 M12 23Q16 19 20 20 M9 11Q15 7 22 9" fill="none" stroke="#3b7dd8" stroke-width="1.4" stroke-linecap="round"/></g>
-    <g id="nodes-accent-blue-deep" clip-path="url(#appThread-clip-nodes)"><title>nodes · accent.blue.deep</title><path d="M9 8.8a2.2 2.2 0 1 0 0 4.4a2.2 2.2 0 1 0 0 -4.4ZM22 6.8a2.2 2.2 0 1 0 0 4.4a2.2 2.2 0 1 0 0 -4.4ZM12 20.8a2.2 2.2 0 1 0 0 4.4a2.2 2.2 0 1 0 0 -4.4Z" fill="#2a5fae"/></g>
-    <g id="hub-accent-blue-base" clip-path="url(#appThread-clip-hub)"><title>hub · accent.blue.base</title><path d="M20 16.8a3.2 3.2 0 1 0 0 6.4a3.2 3.2 0 1 0 0 -6.4Z" fill="#3b7dd8"/></g>
-    <g id="key-sheen-color" clip-path="url(#appThread-clip-silhouette)" opacity="0.2" style="mix-blend-mode:screen"><title>key · sheen/color</title><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="url(#appThread-grad-key)"/></g>
-    <g id="gloss-sheen-color" clip-path="url(#appThread-clip-silhouette)" style="mix-blend-mode:screen"><title>gloss · sheen/color</title><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="url(#appThread-grad-gloss)"/></g>
-    <path id="keyline-edge-hairline" d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1"/>
+    <g id="spool-platinum-flat" clip-path="url(#appThread-clip-spool)"><title>spool · platinum/flat</title><path d="M25 8.8A9 3.3 0 0 1 7 8.8A9 3.3 0 0 1 25 8.8ZM9.6 8.8h12.8v14.4h-12.8ZM25 23.2A9 3.3 0 0 1 7 23.2A9 3.3 0 0 1 25 23.2Z" fill="url(#appThread-grad-spool)"/></g>
+    <g id="thread-accent-cylY" clip-path="url(#appThread-clip-thread)"><title>thread · accent/cylY</title><path d="M9.6 8.8h12.8v14.4h-12.8Z" fill="url(#appThread-grad-thread)"/></g>
+    <g id="winds-accent-blue-deep"><title>winds · accent.blue.deep</title><path d="M9.6 12.4h12.8M9.6 15.6h12.8M9.6 18.8h12.8" fill="none" stroke="#2a5fae" stroke-width="1.4" stroke-linecap="round"/></g>
+    <g id="flangeb-platinum-cylX" clip-path="url(#appThread-clip-flangeb)"><title>flangeb · platinum/cylX</title><path d="M25 23.2A9 3.3 0 0 1 7 23.2A9 3.3 0 0 1 25 23.2Z" fill="url(#appThread-grad-flangeb)"/><path d="M25 23.2A9 3.3 0 0 1 7 23.2A9 3.3 0 0 1 25 23.2Z" fill="none" stroke="rgba(255, 255, 255, 0.4)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M25 23.2A9 3.3 0 0 1 7 23.2A9 3.3 0 0 1 25 23.2Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
+    <g id="flanget-platinum-cylX" clip-path="url(#appThread-clip-flanget)"><title>flanget · platinum/cylX</title><path d="M25 8.8A9 3.3 0 0 1 7 8.8A9 3.3 0 0 1 25 8.8Z" fill="url(#appThread-grad-flanget)"/><path d="M25 8.8A9 3.3 0 0 1 7 8.8A9 3.3 0 0 1 25 8.8Z" fill="none" stroke="rgba(255, 255, 255, 0.4)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M25 8.8A9 3.3 0 0 1 7 8.8A9 3.3 0 0 1 25 8.8Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
+    <g id="hole-platinum-concave" clip-path="url(#appThread-clip-hole)"><title>hole · platinum/concave</title><path d="M18.3 8.8A2.3 0.95 0 0 1 13.7 8.8A2.3 0.95 0 0 1 18.3 8.8Z" fill="url(#appThread-grad-hole)"/><path d="M18.3 8.8A2.3 0.95 0 0 1 13.7 8.8A2.3 0.95 0 0 1 18.3 8.8Z" fill="#000000" opacity="0.112"/><path d="M18.3 8.8A2.3 0.95 0 0 1 13.7 8.8A2.3 0.95 0 0 1 18.3 8.8Z" fill="none" stroke="rgba(255, 255, 255, 0.4)" stroke-width="2" transform="translate(-0.8 -0.8)"/><path d="M18.3 8.8A2.3 0.95 0 0 1 13.7 8.8A2.3 0.95 0 0 1 18.3 8.8Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(0.8 0.8)"/></g>
+    <g id="key-sheen-color" clip-path="url(#appThread-clip-silhouette)" opacity="0.34" style="mix-blend-mode:screen"><title>key · sheen/color</title><path d="M25 8.8A9 3.3 0 0 1 7 8.8A9 3.3 0 0 1 25 8.8ZM9.6 8.8h12.8v14.4h-12.8ZM25 23.2A9 3.3 0 0 1 7 23.2A9 3.3 0 0 1 25 23.2Z" fill="url(#appThread-grad-key)"/></g>
+    <path id="keyline-edge-hairline" d="M25 8.8A9 3.3 0 0 1 7 8.8A9 3.3 0 0 1 25 8.8ZM9.6 8.8h12.8v14.4h-12.8ZM25 23.2A9 3.3 0 0 1 7 23.2A9 3.3 0 0 1 25 23.2Z" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1"/>
   </g>
 </svg>

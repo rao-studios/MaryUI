@@ -29,13 +29,22 @@ import {
   CONTACT_FILTER_ID,
   GLOSS_GRADIENT_ID,
   KEY_GRADIENT_ID,
+  MATTE,
+  MATTE_KEY_GRADIENT_ID,
   RECIPE,
   VIEWBOX,
   bodyGradientId,
   facetStops,
+  formGradient,
   isDynamic,
+  keylineAlpha,
+  rampAt,
+  rimFor,
+  shapeStops,
   tintColor,
+  type Finish,
   type MaterialName,
+  type Shape,
 } from './recipe'
 import styles from './ObjectIcon.module.css'
 
@@ -63,6 +72,16 @@ export function ObjectIcon({ name, size = 32, className, style, title }: ObjectI
    */
   const local = bodies.filter((p) => !p.tint && isDynamic(p.material ?? def.material))
   const localId = (partId: string) => `${uid}-g-${partId}`
+  /*
+   * A shape's gradient depends on the part's material AND on the finish (matte
+   * slides every bright stop down the ramp), so sharing one per material in
+   * SvgDefs would need shapes x materials x finishes of them. There are only
+   * ever a few shaped parts in an icon, so they are emitted here instead — the
+   * same trade the dynamic materials above already make.
+   */
+  const finish: Finish = def.finish ?? 'lit'
+  const shaped = bodies.filter((p) => !p.tint && p.shape && p.shape !== 'flat')
+  const shapeId = (partId: string) => `${uid}-s-${partId}`
 
   return (
     <svg
@@ -92,6 +111,21 @@ export function ObjectIcon({ name, size = 32, className, style, title }: ObjectI
             <path d={silhouette.d} />
           </clipPath>
         ) : null}
+        {shaped.map((part) => {
+          const g = formGradient(part.shape as Exclude<Shape, 'flat'>)
+          const stops = shapeStops(part.shape as Exclude<Shape, 'flat'>, finish).map((st) => (
+            <stop key={st.offset} offset={st.offset} stopColor={rampAt(part.material ?? def.material, st.t)} />
+          ))
+          return g.kind === 'radial' ? (
+            <radialGradient key={part.id} id={shapeId(part.id)} cx={g.cx} cy={g.cy} r={g.r}>
+              {stops}
+            </radialGradient>
+          ) : (
+            <linearGradient key={part.id} id={shapeId(part.id)} x1={g.x1} y1={g.y1} x2={g.x2} y2={g.y2}>
+              {stops}
+            </linearGradient>
+          )
+        })}
         {local.map((part) => {
           const [from, to] = facetStops(part.material ?? def.material, part.facet ?? 'flat')
           return (
@@ -111,8 +145,11 @@ export function ObjectIcon({ name, size = 32, className, style, title }: ObjectI
               part={part}
               material={part.material ?? def.material}
               clip={`${uid}-${part.id}`}
-              gradient={local.includes(part) ? localId(part.id) : undefined}
+              gradient={
+                shaped.includes(part) ? shapeId(part.id) : local.includes(part) ? localId(part.id) : undefined
+              }
               lit={lit}
+              finish={finish}
             />
           ) : (
             <Line key={part.id} part={part} />
@@ -121,8 +158,19 @@ export function ObjectIcon({ name, size = 32, className, style, title }: ObjectI
 
         {/* The broad key: one wash over the whole object, scaled by how specular the material is. */}
         {lit ? (
-          <g clipPath={`url(#${uid}-sil)`} opacity={RECIPE.gloss(def.material)}>
-            <path d={silhouette.d} fill={`url(#${KEY_GRADIENT_ID})`} style={{ mixBlendMode: 'screen' }} />
+          <g
+            clipPath={`url(#${uid}-sil)`}
+            opacity={
+              finish === 'matte'
+                ? Math.min(RECIPE.gloss(def.material), MATTE.glossMax)
+                : RECIPE.gloss(def.material)
+            }
+          >
+            <path
+              d={silhouette.d}
+              fill={`url(#${finish === 'matte' ? MATTE_KEY_GRADIENT_ID : KEY_GRADIENT_ID})`}
+              style={{ mixBlendMode: 'screen' }}
+            />
           </g>
         ) : null}
 
@@ -130,14 +178,20 @@ export function ObjectIcon({ name, size = 32, className, style, title }: ObjectI
          * The glossy finish, over everything the lit recipe did. Application
          * icons only — a glossy folder would be a category error.
          */}
-        {lit && def.finish === 'glossy' ? (
+        {lit && finish === 'glossy' ? (
           <g clipPath={`url(#${uid}-sil)`}>
             <path d={silhouette.d} fill={`url(#${GLOSS_GRADIENT_ID})`} style={{ mixBlendMode: 'screen' }} />
           </g>
         ) : null}
 
         {/* Last, always: this is what keeps an object legible when it is small. */}
-        <path d={silhouette.d} fill="none" stroke={RECIPE.keyline} strokeWidth={1} />
+        <path
+          d={silhouette.d}
+          fill="none"
+          stroke={RECIPE.keyline}
+          strokeOpacity={keylineAlpha(size) / 0.32}
+          strokeWidth={VIEWBOX / size}
+        />
       </g>
     </svg>
   )
@@ -149,13 +203,15 @@ function Body({
   clip,
   gradient,
   lit,
+  finish,
 }: {
   part: ObjectPart
   material: MaterialName
   clip: string
-  /** Set when the ramp is a CSS variable and had to be emitted on this instance. */
+  /** Set when the ramp is per instance: a CSS-variable material, or a shape. */
   gradient?: string
   lit: boolean
+  finish: Finish
 }) {
   const ramp = gradient ?? bodyGradientId(material, part.facet ?? 'flat')
   const fill = part.tint ? tintColor(part.tint) : `url(#${ramp})`
@@ -189,7 +245,7 @@ function Body({
 
       {bevel !== 'none' ? (
         <>
-          <path d={part.d} fill="none" stroke={RECIPE.rim} strokeWidth={2} transform={`translate(${d} ${d})`} />
+          <path d={part.d} fill="none" stroke={rimFor(finish)} strokeWidth={2} transform={`translate(${d} ${d})`} />
           <path d={part.d} fill="none" stroke={RECIPE.occlusion} strokeWidth={2} transform={`translate(${-d} ${-d})`} />
         </>
       ) : null}

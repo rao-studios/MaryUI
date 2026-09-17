@@ -5,7 +5,7 @@
  */
 
 import raw from './objects.json'
-import type { Facet, MaterialName } from './recipe'
+import type { Facet, Finish, MaterialName, Shape } from './recipe'
 
 export interface ObjectPart {
   id: string
@@ -20,12 +20,21 @@ export interface ObjectPart {
   /** Drop this part below this rendered size. */
   min?: number
   fillRule?: 'nonzero' | 'evenodd'
+  /** How the surface is curved. The facet picks which stretch of the ramp a
+   * face occupies; the shape decides how light travels across it. */
+  shape?: Shape
+  /** How deeply the part sits in what is behind it, as an inner shadow round
+   * its own edge. What makes a screen look recessed rather than painted on. */
+  ao?: number
+  /** How hard a shadow this part throws on whatever is beneath it. */
+  castShadow?: number
 }
 
 export interface ObjectDef {
   material: MaterialName
-  /** 'glossy' adds Aqua's sweep over the lit passes. Application icons only. */
-  finish?: 'lit' | 'glossy'
+  /** 'glossy' adds Aqua's sweep over the lit passes; 'matte' takes the specular
+   * cap and the room reflection away and caps the material's own gloss. */
+  finish?: Finish
   silhouette: string
   /** The icons.json glyph to fall back to; defaults to the object's own name. */
   glyph?: string

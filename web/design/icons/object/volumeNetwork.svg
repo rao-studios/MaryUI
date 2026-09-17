@@ -3,13 +3,13 @@
   <defs>
     <clipPath id="volumeNetwork-clip-body"><path d="M3 9h26a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-26a2 2 0 0 1 -2 -2v-10a2 2 0 0 1 2 -2Z"/></clipPath>
     <linearGradient id="volumeNetwork-grad-body" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#e9ebee"/>
-      <stop offset="1" stop-color="#b9bdc6"/>
+      <stop offset="0" stop-color="#e8e9ed"/>
+      <stop offset="1" stop-color="#b5b9c2"/>
     </linearGradient>
     <clipPath id="volumeNetwork-clip-plate"><path d="M5.2 12h9.6a1.2 1.2 0 0 1 1.2 1.2v5.6a1.2 1.2 0 0 1 -1.2 1.2h-9.6a1.2 1.2 0 0 1 -1.2 -1.2v-5.6a1.2 1.2 0 0 1 1.2 -1.2Z"/></clipPath>
     <linearGradient id="volumeNetwork-grad-plate" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#a6abb4"/>
-      <stop offset="1" stop-color="#676a70"/>
+      <stop offset="0" stop-color="#9fa4ad"/>
+      <stop offset="1" stop-color="#606369"/>
     </linearGradient>
     <clipPath id="volumeNetwork-clip-silhouette"><path d="M3 9h26a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-26a2 2 0 0 1 -2 -2v-10a2 2 0 0 1 2 -2Z"/></clipPath>
     <linearGradient id="volumeNetwork-grad-key" x1="0" y1="0" x2="0.9" y2="1">

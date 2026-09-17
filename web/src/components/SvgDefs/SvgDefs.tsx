@@ -32,6 +32,8 @@ import {
   GLOSS_GRADIENT_ID,
   GLOSS_STOPS,
   KEY_GRADIENT_ID,
+  MATTE_KEY_GRADIENT_ID,
+  MATTE_KEY_STOPS,
   KEY_STOPS,
   RECIPE,
   STATIC_MATERIALS,
@@ -148,6 +150,17 @@ function ObjectDefs() {
       {/* The broad key, along the same axis as the ramps: upper-left to lower-right. */}
       <linearGradient id={KEY_GRADIENT_ID} x1="0" y1="0" x2="0.9" y2="1">
         {KEY_STOPS.map((stop) => (
+          <stop key={stop.offset} offset={stop.offset} stopColor={tokens.sheen.color} stopOpacity={stop.opacity} />
+        ))}
+      </linearGradient>
+
+      {/*
+       * The matte key: one broad wash down from the top, close to vertical
+       * rather than the specular diagonal, because a scattering surface shows
+       * you where the light is and not where you are.
+       */}
+      <linearGradient id={MATTE_KEY_GRADIENT_ID} x1="0" y1="0" x2="0.35" y2="1">
+        {MATTE_KEY_STOPS.map((stop: { offset: number; opacity: number }) => (
           <stop key={stop.offset} offset={stop.offset} stopColor={tokens.sheen.color} stopOpacity={stop.opacity} />
         ))}
       </linearGradient>

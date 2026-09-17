@@ -3,13 +3,13 @@
   <defs>
     <clipPath id="code-clip-sheet"><path d="M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z"/></clipPath>
     <linearGradient id="code-grad-sheet" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#f6f7f8"/>
-      <stop offset="1" stop-color="#e0e3e7"/>
+      <stop offset="0" stop-color="#f5f5f7"/>
+      <stop offset="1" stop-color="#dee1e5"/>
     </linearGradient>
     <clipPath id="code-clip-fold"><path d="M19.5 2.5 26 9.5h-5a1.5 1.5 0 0 1-1.5-1.5Z"/></clipPath>
     <linearGradient id="code-grad-fold" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#d0d3d9"/>
-      <stop offset="1" stop-color="#818387"/>
+      <stop offset="0" stop-color="#c7cad0"/>
+      <stop offset="1" stop-color="#797b7e"/>
     </linearGradient>
     <clipPath id="code-clip-silhouette"><path d="M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z"/></clipPath>
     <linearGradient id="code-grad-key" x1="0" y1="0" x2="0.9" y2="1">

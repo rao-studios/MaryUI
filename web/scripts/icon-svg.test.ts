@@ -48,7 +48,7 @@ describe('the .svg exporter', () => {
     const seen = new Map<string, string>()
     for (const name of exporter.objectNames as string[]) {
       const svg: string = exporter.objectSvg(name, exporter.objects[name])
-      const defs = [...svg.matchAll(/<(?:clipPath|linearGradient)\s+id="([^"]+)"/g)].map((m) => m[1])
+      const defs = [...svg.matchAll(/<(?:clipPath|linearGradient|radialGradient)\s+id="([^"]+)"/g)].map((m) => m[1])
       for (const [, ref] of svg.matchAll(/url\(#([^)]+)\)/g)) expect(defs, `${name} → #${ref}`).toContain(ref)
       for (const id of defs) {
         expect(seen.get(id), `#${id} in ${name}`).toBeUndefined()

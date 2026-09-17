@@ -3,8 +3,8 @@
   <defs>
     <clipPath id="netBluetooth-clip-bead"><path d="M2.5 16a13.5 13.5 0 1 0 27 0a13.5 13.5 0 1 0 -27 0Z"/></clipPath>
     <linearGradient id="netBluetooth-grad-bead" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#deeaf8"/>
-      <stop offset="1" stop-color="#94b0d2"/>
+      <stop offset="0" stop-color="#dbe7f7"/>
+      <stop offset="1" stop-color="#8daace"/>
     </linearGradient>
     <clipPath id="netBluetooth-clip-silhouette"><path d="M2.5 16a13.5 13.5 0 1 0 27 0a13.5 13.5 0 1 0 -27 0Z"/></clipPath>
     <linearGradient id="netBluetooth-grad-key" x1="0" y1="0" x2="0.9" y2="1">

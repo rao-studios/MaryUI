@@ -3,23 +3,23 @@
   <defs>
     <clipPath id="volumeServer-clip-body"><path d="M8.2 2h15.6a2.2 2.2 0 0 1 2.2 2.2v23.6a2.2 2.2 0 0 1 -2.2 2.2h-15.6a2.2 2.2 0 0 1 -2.2 -2.2v-23.6a2.2 2.2 0 0 1 2.2 -2.2Z"/></clipPath>
     <linearGradient id="volumeServer-grad-body" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#7f848f"/>
-      <stop offset="1" stop-color="#3c4047"/>
+      <stop offset="0" stop-color="#7a7f8a"/>
+      <stop offset="1" stop-color="#373a41"/>
     </linearGradient>
     <clipPath id="volumeServer-clip-bay0"><path d="M9.8 7.4h12.4a0.8 0.8 0 0 1 0.8 0.8v2.4a0.8 0.8 0 0 1 -0.8 0.8h-12.4a0.8 0.8 0 0 1 -0.8 -0.8v-2.4a0.8 0.8 0 0 1 0.8 -0.8Z"/></clipPath>
     <linearGradient id="volumeServer-grad-bay0" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#292c32"/>
-      <stop offset="1" stop-color="#1a1b1f"/>
+      <stop offset="0" stop-color="#272a30"/>
+      <stop offset="1" stop-color="#181a1d"/>
     </linearGradient>
     <clipPath id="volumeServer-clip-bay1"><path d="M9.8 13.4h12.4a0.8 0.8 0 0 1 0.8 0.8v2.4a0.8 0.8 0 0 1 -0.8 0.8h-12.4a0.8 0.8 0 0 1 -0.8 -0.8v-2.4a0.8 0.8 0 0 1 0.8 -0.8Z"/></clipPath>
     <linearGradient id="volumeServer-grad-bay1" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#292c32"/>
-      <stop offset="1" stop-color="#1a1b1f"/>
+      <stop offset="0" stop-color="#272a30"/>
+      <stop offset="1" stop-color="#181a1d"/>
     </linearGradient>
     <clipPath id="volumeServer-clip-bay2"><path d="M9.8 19.4h12.4a0.8 0.8 0 0 1 0.8 0.8v2.4a0.8 0.8 0 0 1 -0.8 0.8h-12.4a0.8 0.8 0 0 1 -0.8 -0.8v-2.4a0.8 0.8 0 0 1 0.8 -0.8Z"/></clipPath>
     <linearGradient id="volumeServer-grad-bay2" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#292c32"/>
-      <stop offset="1" stop-color="#1a1b1f"/>
+      <stop offset="0" stop-color="#272a30"/>
+      <stop offset="1" stop-color="#181a1d"/>
     </linearGradient>
     <clipPath id="volumeServer-clip-leds"><path d="M9.6 26.4a1 1 0 1 0 2 0a1 1 0 1 0 -2 0ZM13 26.4a1 1 0 1 0 2 0a1 1 0 1 0 -2 0Z"/></clipPath>
     <clipPath id="volumeServer-clip-silhouette"><path d="M8.2 2h15.6a2.2 2.2 0 0 1 2.2 2.2v23.6a2.2 2.2 0 0 1 -2.2 2.2h-15.6a2.2 2.2 0 0 1 -2.2 -2.2v-23.6a2.2 2.2 0 0 1 2.2 -2.2Z"/></clipPath>

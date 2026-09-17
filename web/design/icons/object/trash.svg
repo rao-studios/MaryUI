@@ -3,13 +3,13 @@
   <defs>
     <clipPath id="trash-clip-body"><path d="M7.8 11.2h16.4l-1.5 15.3a2 2 0 0 1-2 1.8h-9.4a2 2 0 0 1-2-1.8Z"/></clipPath>
     <linearGradient id="trash-grad-body" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#d3d6db"/>
-      <stop offset="1" stop-color="#91969e"/>
+      <stop offset="0" stop-color="#ced1d7"/>
+      <stop offset="1" stop-color="#8b8f97"/>
     </linearGradient>
     <clipPath id="trash-clip-rim"><path d="M6 8h20a1.6 1.6 0 0 1 0 3.2H6A1.6 1.6 0 0 1 6 8Z"/></clipPath>
     <linearGradient id="trash-grad-rim" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#e9ebee"/>
-      <stop offset="1" stop-color="#b9bdc6"/>
+      <stop offset="0" stop-color="#e8e9ed"/>
+      <stop offset="1" stop-color="#b5b9c2"/>
     </linearGradient>
     <clipPath id="trash-clip-silhouette"><path d="M7.8 11.2h16.4l-1.5 15.3a2 2 0 0 1-2 1.8h-9.4a2 2 0 0 1-2-1.8Z"/></clipPath>
     <linearGradient id="trash-grad-key" x1="0" y1="0" x2="0.9" y2="1">

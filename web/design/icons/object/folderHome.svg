@@ -3,13 +3,13 @@
   <defs>
     <clipPath id="folderHome-clip-back"><path d="M2 9a2.5 2.5 0 0 1 2.5-2.5h8.2l3 3H27.5A2.5 2.5 0 0 1 30 12v12.5a2.5 2.5 0 0 1-2.5 2.5h-23A2.5 2.5 0 0 1 2 24.5Z"/></clipPath>
     <linearGradient id="folderHome-grad-back" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#b7c8dc"/>
-      <stop offset="1" stop-color="#8195b1"/>
+      <stop offset="0" stop-color="#b4c5da"/>
+      <stop offset="1" stop-color="#7d91ad"/>
     </linearGradient>
     <clipPath id="folderHome-clip-front"><path d="M2 13h28v11.5a2.5 2.5 0 0 1-2.5 2.5h-23A2.5 2.5 0 0 1 2 24.5Z"/></clipPath>
     <linearGradient id="folderHome-grad-front" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#9aadc6"/>
-      <stop offset="1" stop-color="#62738c"/>
+      <stop offset="0" stop-color="#95a9c2"/>
+      <stop offset="1" stop-color="#5d6e86"/>
     </linearGradient>
     <clipPath id="folderHome-clip-silhouette"><path d="M2 9a2.5 2.5 0 0 1 2.5-2.5h8.2l3 3H27.5A2.5 2.5 0 0 1 30 12v12.5a2.5 2.5 0 0 1-2.5 2.5h-23A2.5 2.5 0 0 1 2 24.5Z"/></clipPath>
     <linearGradient id="folderHome-grad-key" x1="0" y1="0" x2="0.9" y2="1">

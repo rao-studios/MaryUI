@@ -3,23 +3,23 @@
   <defs>
     <clipPath id="volumeFloppy-clip-body"><path d="M5 3h22a2 2 0 0 1 2 2v22a2 2 0 0 1 -2 2h-22a2 2 0 0 1 -2 -2v-22a2 2 0 0 1 2 -2Z"/></clipPath>
     <linearGradient id="volumeFloppy-grad-body" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#e9ebee"/>
-      <stop offset="1" stop-color="#b9bdc6"/>
+      <stop offset="0" stop-color="#e8e9ed"/>
+      <stop offset="1" stop-color="#b5b9c2"/>
     </linearGradient>
     <clipPath id="volumeFloppy-clip-shutter"><path d="M10.8 3.6h10.4a0.8 0.8 0 0 1 0.8 0.8v7.4a0.8 0.8 0 0 1 -0.8 0.8h-10.4a0.8 0.8 0 0 1 -0.8 -0.8v-7.4a0.8 0.8 0 0 1 0.8 -0.8Z"/></clipPath>
     <linearGradient id="volumeFloppy-grad-shutter" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#7f848f"/>
-      <stop offset="1" stop-color="#3c4047"/>
+      <stop offset="0" stop-color="#7a7f8a"/>
+      <stop offset="1" stop-color="#373a41"/>
     </linearGradient>
     <clipPath id="volumeFloppy-clip-notch"><path d="M17 4.4h3.2a0.6 0.6 0 0 1 0.6 0.6v6.2a0.6 0.6 0 0 1 -0.6 0.6h-3.2a0.6 0.6 0 0 1 -0.6 -0.6v-6.2a0.6 0.6 0 0 1 0.6 -0.6Z"/></clipPath>
     <linearGradient id="volumeFloppy-grad-notch" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#a6abb4"/>
-      <stop offset="1" stop-color="#676a70"/>
+      <stop offset="0" stop-color="#9fa4ad"/>
+      <stop offset="1" stop-color="#606369"/>
     </linearGradient>
     <clipPath id="volumeFloppy-clip-label"><path d="M8 16h16a1 1 0 0 1 1 1v8a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1v-8a1 1 0 0 1 1 -1Z"/></clipPath>
     <linearGradient id="volumeFloppy-grad-label" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#f6f7f8"/>
-      <stop offset="1" stop-color="#e0e3e7"/>
+      <stop offset="0" stop-color="#f5f5f7"/>
+      <stop offset="1" stop-color="#dee1e5"/>
     </linearGradient>
     <clipPath id="volumeFloppy-clip-silhouette"><path d="M5 3h22a2 2 0 0 1 2 2v22a2 2 0 0 1 -2 2h-22a2 2 0 0 1 -2 -2v-22a2 2 0 0 1 2 -2Z"/></clipPath>
     <linearGradient id="volumeFloppy-grad-key" x1="0" y1="0" x2="0.9" y2="1">

@@ -70,6 +70,14 @@ object.rim
 object.occlusion
 object.keyline
 object.contact-color
+object.cast-color
+object.ao-color
+object.env-sky-hi
+object.env-sky-lo
+object.env-horizon
+object.env-floor-hi
+object.env-floor-lo
+object.env-window-color
 object.material.platinum.hi
 object.material.platinum.mid
 object.material.platinum.lo

@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="128" height="128">
+  <title>appPreview</title>
+  <defs>
+    <clipPath id="appPreview-clip-card"><path d="M5 4.5h22a2 2 0 0 1 2 2v19a2 2 0 0 1 -2 2h-22a2 2 0 0 1 -2 -2v-19a2 2 0 0 1 2 -2Z"/></clipPath>
+    <linearGradient id="appPreview-grad-card" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#f2f3f5"/>
+      <stop offset="1" stop-color="#d9dce1"/>
+    </linearGradient>
+    <clipPath id="appPreview-clip-sky"><path d="M6 6.5h20a1 1 0 0 1 1 1v17a1 1 0 0 1 -1 1h-20a1 1 0 0 1 -1 -1v-17a1 1 0 0 1 1 -1Z"/></clipPath>
+    <clipPath id="appPreview-clip-hill"><path d="M5 25.5V19.8Q10.5 14.6 15.4 19.2Q19.8 23.4 27 17.6V25.5Z"/></clipPath>
+    <clipPath id="appPreview-clip-sun"><path d="M12.3 10.6A2.4 2.4 0 0 1 7.5 10.6A2.4 2.4 0 0 1 12.3 10.6Z"/></clipPath>
+    <clipPath id="appPreview-clip-handle"><path d="M23.3 22.3L26.1 25.1A1.55 1.55 0 0 1 28.3 22.9L25.5 20.1A1.55 1.55 0 0 1 23.3 22.3Z"/></clipPath>
+    <linearGradient id="appPreview-grad-handle" x1="0.0000" y1="0.0000" x2="1.0000" y2="0.0000">
+      <stop offset="0" stop-color="#222429"/>
+      <stop offset="0.20423435986881255" stop-color="#61656f"/>
+      <stop offset="0.40423435986881256" stop-color="#8c919c"/>
+      <stop offset="0.672328897927847" stop-color="#51555e"/>
+      <stop offset="1" stop-color="#1e2025"/>
+    </linearGradient>
+    <clipPath id="appPreview-clip-view"><path d="M26 16.4A6.4 6.4 0 0 1 13.2 16.4A6.4 6.4 0 0 1 26 16.4Z"/></clipPath>
+    <clipPath id="appPreview-clip-viewhill"><path d="M13.4 22.1Q17.4 16.2 21.4 19.6Q24.2 22 26 19.4V22.8Q22 24.4 19.6 22.8Q16.4 21 13.4 22.1Z"/></clipPath>
+    <clipPath id="appPreview-clip-viewsun"><path d="M20.3 13.6A2.9 2.9 0 0 1 14.5 13.6A2.9 2.9 0 0 1 20.3 13.6Z"/></clipPath>
+    <clipPath id="appPreview-clip-glass"><path d="M26 16.4A6.4 6.4 0 0 1 13.2 16.4A6.4 6.4 0 0 1 26 16.4Z"/></clipPath>
+    <radialGradient id="appPreview-grad-glass" cx="0.4419" cy="0.3403" r="0.8132">
+      <stop offset="0" stop-color="#e4eef9"/>
+      <stop offset="0.55" stop-color="#c5d8ef"/>
+      <stop offset="1" stop-color="#7897bc"/>
+    </radialGradient>
+    <clipPath id="appPreview-clip-ring"><path d="M27.4 16.4A7.8 7.8 0 0 1 11.8 16.4A7.8 7.8 0 0 1 27.4 16.4ZM26 16.4A6.4 6.4 0 0 0 13.2 16.4A6.4 6.4 0 0 0 26 16.4Z"/></clipPath>
+    <linearGradient id="appPreview-grad-ring" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#e8e9ed"/>
+      <stop offset="1" stop-color="#b5b9c2"/>
+    </linearGradient>
+    <clipPath id="appPreview-clip-flash"><path d="M18.56 11.75A2.6 1.5 -34 0 1 14.24 14.65A2.6 1.5 -34 0 1 18.56 11.75Z"/></clipPath>
+    <clipPath id="appPreview-clip-silhouette"><path d="M5 4.5h22a2 2 0 0 1 2 2v19a2 2 0 0 1 -2 2h-22a2 2 0 0 1 -2 -2v-19a2 2 0 0 1 2 -2Z"/></clipPath>
+    <linearGradient id="appPreview-grad-key" x1="0" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.62"/>
+      <stop offset="0.3" stop-color="#ffffff" stop-opacity="0.2"/>
+      <stop offset="0.6" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <g id="appPreview">
+    <g id="card-paper-top" clip-path="url(#appPreview-clip-card)"><title>card · paper/top</title><path d="M5 4.5h22a2 2 0 0 1 2 2v19a2 2 0 0 1 -2 2h-22a2 2 0 0 1 -2 -2v-19a2 2 0 0 1 2 -2Z" fill="url(#appPreview-grad-card)"/><path d="M5 4.5h22a2 2 0 0 1 2 2v19a2 2 0 0 1 -2 2h-22a2 2 0 0 1 -2 -2v-19a2 2 0 0 1 2 -2Z" fill="#ffffff" opacity="0.016"/><path d="M5 4.5h22a2 2 0 0 1 2 2v19a2 2 0 0 1 -2 2h-22a2 2 0 0 1 -2 -2v-19a2 2 0 0 1 2 -2Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M5 4.5h22a2 2 0 0 1 2 2v19a2 2 0 0 1 -2 2h-22a2 2 0 0 1 -2 -2v-19a2 2 0 0 1 2 -2Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
+    <g id="sky-accent-blue-light" clip-path="url(#appPreview-clip-sky)"><title>sky · accent.blue.light</title><path d="M6 6.5h20a1 1 0 0 1 1 1v17a1 1 0 0 1 -1 1h-20a1 1 0 0 1 -1 -1v-17a1 1 0 0 1 1 -1Z" fill="#8fb8ee"/></g>
+    <g id="hill-object-material-verdant-mid" clip-path="url(#appPreview-clip-hill)"><title>hill · object.material.verdant.mid</title><path d="M5 25.5V19.8Q10.5 14.6 15.4 19.2Q19.8 23.4 27 17.6V25.5Z" fill="#63c657"/></g>
+    <g id="sun-traffic-minimize-base" clip-path="url(#appPreview-clip-sun)"><title>sun · traffic.minimize.base</title><path d="M12.3 10.6A2.4 2.4 0 0 1 7.5 10.6A2.4 2.4 0 0 1 12.3 10.6Z" fill="#f2bd4f"/></g>
+    <g id="handle-graphite-cylY" clip-path="url(#appPreview-clip-handle)"><title>handle · graphite/cylY</title><path d="M23.3 22.3L26.1 25.1A1.55 1.55 0 0 1 28.3 22.9L25.5 20.1A1.55 1.55 0 0 1 23.3 22.3Z" fill="url(#appPreview-grad-handle)"/></g>
+    <g id="view-accent-blue-light" clip-path="url(#appPreview-clip-view)"><title>view · accent.blue.light</title><path d="M26 16.4A6.4 6.4 0 0 1 13.2 16.4A6.4 6.4 0 0 1 26 16.4Z" fill="#8fb8ee"/></g>
+    <g id="viewhill-object-material-verdant-mid" clip-path="url(#appPreview-clip-viewhill)"><title>viewhill · object.material.verdant.mid</title><path d="M13.4 22.1Q17.4 16.2 21.4 19.6Q24.2 22 26 19.4V22.8Q22 24.4 19.6 22.8Q16.4 21 13.4 22.1Z" fill="#63c657"/></g>
+    <g id="viewsun-traffic-minimize-base" clip-path="url(#appPreview-clip-viewsun)"><title>viewsun · traffic.minimize.base</title><path d="M20.3 13.6A2.9 2.9 0 0 1 14.5 13.6A2.9 2.9 0 0 1 20.3 13.6Z" fill="#f2bd4f"/></g>
+    <g id="glass-glass-dome" clip-path="url(#appPreview-clip-glass)"><title>glass · glass/dome</title><path d="M26 16.4A6.4 6.4 0 0 1 13.2 16.4A6.4 6.4 0 0 1 26 16.4Z" fill="url(#appPreview-grad-glass)"/><path d="M26 16.4A6.4 6.4 0 0 1 13.2 16.4A6.4 6.4 0 0 1 26 16.4Z" fill="#ffffff" opacity="0.088"/></g>
+    <g id="ring-platinum-top" clip-path="url(#appPreview-clip-ring)"><title>ring · platinum/top</title><path d="M27.4 16.4A7.8 7.8 0 0 1 11.8 16.4A7.8 7.8 0 0 1 27.4 16.4ZM26 16.4A6.4 6.4 0 0 0 13.2 16.4A6.4 6.4 0 0 0 26 16.4Z" fill="url(#appPreview-grad-ring)" fill-rule="evenodd"/><path d="M27.4 16.4A7.8 7.8 0 0 1 11.8 16.4A7.8 7.8 0 0 1 27.4 16.4ZM26 16.4A6.4 6.4 0 0 0 13.2 16.4A6.4 6.4 0 0 0 26 16.4Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M27.4 16.4A7.8 7.8 0 0 1 11.8 16.4A7.8 7.8 0 0 1 27.4 16.4ZM26 16.4A6.4 6.4 0 0 0 13.2 16.4A6.4 6.4 0 0 0 26 16.4Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
+    <g id="flash-platinum-0" clip-path="url(#appPreview-clip-flash)"><title>flash · platinum.0</title><path d="M18.56 11.75A2.6 1.5 -34 0 1 14.24 14.65A2.6 1.5 -34 0 1 18.56 11.75Z" fill="#f7f7f9"/></g>
+    <g id="key-sheen-color" clip-path="url(#appPreview-clip-silhouette)" opacity="0.55" style="mix-blend-mode:screen"><title>key · sheen/color</title><path d="M5 4.5h22a2 2 0 0 1 2 2v19a2 2 0 0 1 -2 2h-22a2 2 0 0 1 -2 -2v-19a2 2 0 0 1 2 -2Z" fill="url(#appPreview-grad-key)"/></g>
+    <path id="keyline-edge-hairline" d="M5 4.5h22a2 2 0 0 1 2 2v19a2 2 0 0 1 -2 2h-22a2 2 0 0 1 -2 -2v-19a2 2 0 0 1 2 -2Z" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1"/>
+  </g>
+</svg>

@@ -1,42 +1,38 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="128" height="128">
   <title>appWeather</title>
   <defs>
-    <clipPath id="appWeather-clip-tile"><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z"/></clipPath>
-    <linearGradient id="appWeather-grad-tile" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#5690df"/>
-      <stop offset="1" stop-color="#2f67ba"/>
+    <clipPath id="appWeather-clip-shape"><path d="M27.5 11.4A6.9 6.9 0 0 1 13.7 11.4A6.9 6.9 0 0 1 27.5 11.4ZM8.4 26.4H22.2A5.1 5.1 0 0 0 22.2 16.2A6.9 6.9 0 0 0 9.9 18.1A4.2 4.2 0 0 0 8.4 26.4Z"/></clipPath>
+    <linearGradient id="appWeather-grad-shape" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#f5f5f7"/>
+      <stop offset="1" stop-color="#dee1e5"/>
     </linearGradient>
-    <clipPath id="appWeather-clip-sun"><path d="M20 7.3a5.7 5.7 0 1 0 0 11.4a5.7 5.7 0 1 0 0-11.4Z"/></clipPath>
-    <linearGradient id="appWeather-grad-sun" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#f6ca6c"/>
-      <stop offset="1" stop-color="#bb8b29"/>
-    </linearGradient>
-    <clipPath id="appWeather-clip-cloud"><path d="M9.5 25.5H22.5A4.6 4.6 0 0 0 22.5 16.3A6.2 6.2 0 0 0 10.9 18A3.8 3.8 0 0 0 9.5 25.5Z"/></clipPath>
-    <linearGradient id="appWeather-grad-cloud" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#f3f4f6"/>
-      <stop offset="1" stop-color="#dbdee3"/>
-    </linearGradient>
-    <clipPath id="appWeather-clip-silhouette"><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z"/></clipPath>
-    <linearGradient id="appWeather-grad-key" x1="0" y1="0" x2="0.9" y2="1">
-      <stop offset="0" stop-color="#ffffff" stop-opacity="0.62"/>
-      <stop offset="0.3" stop-color="#ffffff" stop-opacity="0.2"/>
-      <stop offset="0.6" stop-color="#ffffff" stop-opacity="0"/>
-    </linearGradient>
-    <linearGradient id="appWeather-grad-gloss" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#ffffff" stop-opacity="0.45"/>
-      <stop offset="0.42" stop-color="#ffffff" stop-opacity="0.16"/>
-      <stop offset="0.421" stop-color="#ffffff" stop-opacity="0"/>
-      <stop offset="0.82" stop-color="#ffffff" stop-opacity="0"/>
-      <stop offset="1" stop-color="#ffffff" stop-opacity="0.22"/>
+    <clipPath id="appWeather-clip-sun"><path d="M27.5 11.4A6.9 6.9 0 0 1 13.7 11.4A6.9 6.9 0 0 1 27.5 11.4Z"/></clipPath>
+    <radialGradient id="appWeather-grad-sun" cx="0.4419" cy="0.3403" r="0.6930">
+      <stop offset="0" stop-color="#f5c765"/>
+      <stop offset="0.42" stop-color="#ddaa40"/>
+      <stop offset="0.74" stop-color="#a97b1c"/>
+      <stop offset="0.92" stop-color="#7d5a14"/>
+      <stop offset="1" stop-color="#5a410e"/>
+    </radialGradient>
+    <clipPath id="appWeather-clip-cloud"><path d="M8.4 26.4H22.2A5.1 5.1 0 0 0 22.2 16.2A6.9 6.9 0 0 0 9.9 18.1A4.2 4.2 0 0 0 8.4 26.4Z"/></clipPath>
+    <radialGradient id="appWeather-grad-cloud" cx="0.4419" cy="0.3403" r="0.8132">
+      <stop offset="0" stop-color="#f0f1f4"/>
+      <stop offset="0.55" stop-color="#e3e4e9"/>
+      <stop offset="1" stop-color="#bbbdc2"/>
+    </radialGradient>
+    <clipPath id="appWeather-clip-silhouette"><path d="M27.5 11.4A6.9 6.9 0 0 1 13.7 11.4A6.9 6.9 0 0 1 27.5 11.4ZM8.4 26.4H22.2A5.1 5.1 0 0 0 22.2 16.2A6.9 6.9 0 0 0 9.9 18.1A4.2 4.2 0 0 0 8.4 26.4Z"/></clipPath>
+    <linearGradient id="appWeather-grad-key" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.3"/>
+      <stop offset="0.55" stop-color="#ffffff" stop-opacity="0.11"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
     </linearGradient>
   </defs>
   <g id="appWeather">
-    <g id="tile-accent-top" clip-path="url(#appWeather-clip-tile)"><title>tile · accent/top</title><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="url(#appWeather-grad-tile)"/><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
-    <g id="rays-traffic-minimize-light"><title>rays · traffic.minimize.light</title><path d="M20 4v1.6M26.4 6.9l-1.1 1.1M28.4 13h-1.6M13.6 6.9l1.1 1.1" fill="none" stroke="#ffe6aa" stroke-width="1.4" stroke-linecap="round"/></g>
-    <g id="sun-amber-top" clip-path="url(#appWeather-clip-sun)"><title>sun · amber/top</title><path d="M20 7.3a5.7 5.7 0 1 0 0 11.4a5.7 5.7 0 1 0 0-11.4Z" fill="url(#appWeather-grad-sun)"/><path d="M20 7.3a5.7 5.7 0 1 0 0 11.4a5.7 5.7 0 1 0 0-11.4Z" fill="#ffffff" opacity="0.016"/><path d="M20 7.3a5.7 5.7 0 1 0 0 11.4a5.7 5.7 0 1 0 0-11.4Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M20 7.3a5.7 5.7 0 1 0 0 11.4a5.7 5.7 0 1 0 0-11.4Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
-    <g id="cloud-paper-top" clip-path="url(#appWeather-clip-cloud)"><title>cloud · paper/top</title><path d="M9.5 25.5H22.5A4.6 4.6 0 0 0 22.5 16.3A6.2 6.2 0 0 0 10.9 18A3.8 3.8 0 0 0 9.5 25.5Z" fill="url(#appWeather-grad-cloud)"/><path d="M9.5 25.5H22.5A4.6 4.6 0 0 0 22.5 16.3A6.2 6.2 0 0 0 10.9 18A3.8 3.8 0 0 0 9.5 25.5Z" fill="#ffffff" opacity="0.032"/><path d="M9.5 25.5H22.5A4.6 4.6 0 0 0 22.5 16.3A6.2 6.2 0 0 0 10.9 18A3.8 3.8 0 0 0 9.5 25.5Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M9.5 25.5H22.5A4.6 4.6 0 0 0 22.5 16.3A6.2 6.2 0 0 0 10.9 18A3.8 3.8 0 0 0 9.5 25.5Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
-    <g id="key-sheen-color" clip-path="url(#appWeather-clip-silhouette)" opacity="0.75" style="mix-blend-mode:screen"><title>key · sheen/color</title><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="url(#appWeather-grad-key)"/></g>
-    <g id="gloss-sheen-color" clip-path="url(#appWeather-clip-silhouette)" style="mix-blend-mode:screen"><title>gloss · sheen/color</title><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="url(#appWeather-grad-gloss)"/></g>
-    <path id="keyline-edge-hairline" d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1"/>
+    <g id="shape-paper-flat" clip-path="url(#appWeather-clip-shape)"><title>shape · paper/flat</title><path d="M27.5 11.4A6.9 6.9 0 0 1 13.7 11.4A6.9 6.9 0 0 1 27.5 11.4ZM8.4 26.4H22.2A5.1 5.1 0 0 0 22.2 16.2A6.9 6.9 0 0 0 9.9 18.1A4.2 4.2 0 0 0 8.4 26.4Z" fill="url(#appWeather-grad-shape)"/></g>
+    <g id="rays-traffic-minimize-base"><title>rays · traffic.minimize.base</title><path d="M20.6 1.4v2.2M28.4 4.6l-1.6 1.6M31 11.4h-2.2M12.8 4.6l1.6 1.6M10.2 11.4h2.2" fill="none" stroke="#f2bd4f" stroke-width="1.4" stroke-linecap="round"/></g>
+    <g id="sun-amber-sphere" clip-path="url(#appWeather-clip-sun)"><title>sun · amber/sphere</title><path d="M27.5 11.4A6.9 6.9 0 0 1 13.7 11.4A6.9 6.9 0 0 1 27.5 11.4Z" fill="url(#appWeather-grad-sun)"/></g>
+    <g id="cloud-paper-dome" clip-path="url(#appWeather-clip-cloud)"><title>cloud · paper/dome</title><path d="M8.4 26.4H22.2A5.1 5.1 0 0 0 22.2 16.2A6.9 6.9 0 0 0 9.9 18.1A4.2 4.2 0 0 0 8.4 26.4Z" fill="url(#appWeather-grad-cloud)"/><path d="M8.4 26.4H22.2A5.1 5.1 0 0 0 22.2 16.2A6.9 6.9 0 0 0 9.9 18.1A4.2 4.2 0 0 0 8.4 26.4Z" fill="#ffffff" opacity="0.016"/><path d="M8.4 26.4H22.2A5.1 5.1 0 0 0 22.2 16.2A6.9 6.9 0 0 0 9.9 18.1A4.2 4.2 0 0 0 8.4 26.4Z" fill="none" stroke="rgba(255, 255, 255, 0.4)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M8.4 26.4H22.2A5.1 5.1 0 0 0 22.2 16.2A6.9 6.9 0 0 0 9.9 18.1A4.2 4.2 0 0 0 8.4 26.4Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
+    <g id="key-sheen-color" clip-path="url(#appWeather-clip-silhouette)" opacity="0.2" style="mix-blend-mode:screen"><title>key · sheen/color</title><path d="M27.5 11.4A6.9 6.9 0 0 1 13.7 11.4A6.9 6.9 0 0 1 27.5 11.4ZM8.4 26.4H22.2A5.1 5.1 0 0 0 22.2 16.2A6.9 6.9 0 0 0 9.9 18.1A4.2 4.2 0 0 0 8.4 26.4Z" fill="url(#appWeather-grad-key)"/></g>
+    <path id="keyline-edge-hairline" d="M27.5 11.4A6.9 6.9 0 0 1 13.7 11.4A6.9 6.9 0 0 1 27.5 11.4ZM8.4 26.4H22.2A5.1 5.1 0 0 0 22.2 16.2A6.9 6.9 0 0 0 9.9 18.1A4.2 4.2 0 0 0 8.4 26.4Z" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1"/>
   </g>
 </svg>

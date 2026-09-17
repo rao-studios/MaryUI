@@ -1,39 +1,47 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="128" height="128">
   <title>deviceDisplay</title>
   <defs>
-    <clipPath id="deviceDisplay-clip-body"><path d="M3.2 4h25.6a2.2 2.2 0 0 1 2.2 2.2v14.6a2.2 2.2 0 0 1 -2.2 2.2h-25.6a2.2 2.2 0 0 1 -2.2 -2.2v-14.6a2.2 2.2 0 0 1 2.2 -2.2Z"/></clipPath>
-    <linearGradient id="deviceDisplay-grad-body" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#e9ebee"/>
-      <stop offset="1" stop-color="#b9bdc6"/>
+    <clipPath id="deviceDisplay-clip-chassis"><path d="M3.7 3.5h24.6a2.2 2.2 0 0 1 2.2 2.2v13.1a2.2 2.2 0 0 1 -2.2 2.2h-24.6a2.2 2.2 0 0 1 -2.2 -2.2v-13.1a2.2 2.2 0 0 1 2.2 -2.2ZM13.6 21h4.8v3.6h-4.8ZM9.4 24.2h13.2a1.4 1.4 0 0 1 1.4 1.4v0a1.4 1.4 0 0 1 -1.4 1.4h-13.2a1.4 1.4 0 0 1 -1.4 -1.4v0a1.4 1.4 0 0 1 1.4 -1.4Z"/></clipPath>
+    <linearGradient id="deviceDisplay-grad-chassis" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#e8e9ed"/>
+      <stop offset="1" stop-color="#b5b9c2"/>
     </linearGradient>
-    <clipPath id="deviceDisplay-clip-screen"><path d="M4.8 6.4h22.4a1.2 1.2 0 0 1 1.2 1.2v11.8a1.2 1.2 0 0 1 -1.2 1.2h-22.4a1.2 1.2 0 0 1 -1.2 -1.2v-11.8a1.2 1.2 0 0 1 1.2 -1.2Z"/></clipPath>
-    <linearGradient id="deviceDisplay-grad-screen" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#a6abb4"/>
-      <stop offset="1" stop-color="#676a70"/>
+    <clipPath id="deviceDisplay-clip-neck"><path d="M13.6 21h4.8v3.6h-4.8Z"/></clipPath>
+    <linearGradient id="deviceDisplay-grad-neck" x1="0.0000" y1="0.0000" x2="1.0000" y2="0.0000">
+      <stop offset="0" stop-color="#7a7d84"/>
+      <stop offset="0.20423435986881255" stop-color="#c7cbd1"/>
+      <stop offset="0.40423435986881256" stop-color="#e7e9ed"/>
+      <stop offset="0.672328897927847" stop-color="#b9bdc6"/>
+      <stop offset="1" stop-color="#6c6f76"/>
     </linearGradient>
-    <clipPath id="deviceDisplay-clip-neck"><path d="M14.2 23h3.6a0.8 0.8 0 0 1 0.8 0.8v2.4a0.8 0.8 0 0 1 -0.8 0.8h-3.6a0.8 0.8 0 0 1 -0.8 -0.8v-2.4a0.8 0.8 0 0 1 0.8 -0.8Z"/></clipPath>
-    <linearGradient id="deviceDisplay-grad-neck" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#d3d6db"/>
-      <stop offset="1" stop-color="#91969e"/>
+    <clipPath id="deviceDisplay-clip-foot"><path d="M9.4 24.2h13.2a1.4 1.4 0 0 1 1.4 1.4v0a1.4 1.4 0 0 1 -1.4 1.4h-13.2a1.4 1.4 0 0 1 -1.4 -1.4v0a1.4 1.4 0 0 1 1.4 -1.4Z"/></clipPath>
+    <linearGradient id="deviceDisplay-grad-foot" x1="0.0000" y1="0.0000" x2="0.0000" y2="1.0000">
+      <stop offset="0" stop-color="#7a7d84"/>
+      <stop offset="0.036886066179945665" stop-color="#c7cbd1"/>
+      <stop offset="0.23688606617994568" stop-color="#e7e9ed"/>
+      <stop offset="0.5802873363989701" stop-color="#b9bdc6"/>
+      <stop offset="1" stop-color="#6c6f76"/>
     </linearGradient>
-    <clipPath id="deviceDisplay-clip-foot"><path d="M9.4 27h13.2a1.4 1.4 0 0 1 1.4 1.4v0.2a1.4 1.4 0 0 1 -1.4 1.4h-13.2a1.4 1.4 0 0 1 -1.4 -1.4v-0.2a1.4 1.4 0 0 1 1.4 -1.4Z"/></clipPath>
-    <linearGradient id="deviceDisplay-grad-foot" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#e9ebee"/>
-      <stop offset="1" stop-color="#b9bdc6"/>
+    <clipPath id="deviceDisplay-clip-screen"><path d="M4.8 5.6h22.4a1.2 1.2 0 0 1 1.2 1.2v11a1.2 1.2 0 0 1 -1.2 1.2h-22.4a1.2 1.2 0 0 1 -1.2 -1.2v-11a1.2 1.2 0 0 1 1.2 -1.2Z"/></clipPath>
+    <linearGradient id="deviceDisplay-grad-screen" x1="0.3290" y1="0.0302" x2="0.6710" y2="0.9698">
+      <stop offset="0" stop-color="#1a1c20"/>
+      <stop offset="0.45" stop-color="#2a2d33"/>
+      <stop offset="1" stop-color="#636872"/>
     </linearGradient>
-    <clipPath id="deviceDisplay-clip-silhouette"><path d="M3.2 4h25.6a2.2 2.2 0 0 1 2.2 2.2v14.6a2.2 2.2 0 0 1 -2.2 2.2h-25.6a2.2 2.2 0 0 1 -2.2 -2.2v-14.6a2.2 2.2 0 0 1 2.2 -2.2Z"/></clipPath>
-    <linearGradient id="deviceDisplay-grad-key" x1="0" y1="0" x2="0.9" y2="1">
-      <stop offset="0" stop-color="#ffffff" stop-opacity="0.62"/>
-      <stop offset="0.3" stop-color="#ffffff" stop-opacity="0.2"/>
-      <stop offset="0.6" stop-color="#ffffff" stop-opacity="0"/>
+    <clipPath id="deviceDisplay-clip-silhouette"><path d="M3.7 3.5h24.6a2.2 2.2 0 0 1 2.2 2.2v13.1a2.2 2.2 0 0 1 -2.2 2.2h-24.6a2.2 2.2 0 0 1 -2.2 -2.2v-13.1a2.2 2.2 0 0 1 2.2 -2.2ZM13.6 21h4.8v3.6h-4.8ZM9.4 24.2h13.2a1.4 1.4 0 0 1 1.4 1.4v0a1.4 1.4 0 0 1 -1.4 1.4h-13.2a1.4 1.4 0 0 1 -1.4 -1.4v0a1.4 1.4 0 0 1 1.4 -1.4Z"/></clipPath>
+    <linearGradient id="deviceDisplay-grad-key" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.3"/>
+      <stop offset="0.55" stop-color="#ffffff" stop-opacity="0.11"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
     </linearGradient>
   </defs>
   <g id="deviceDisplay">
-    <g id="body-platinum-top" clip-path="url(#deviceDisplay-clip-body)"><title>body · platinum/top</title><path d="M3.2 4h25.6a2.2 2.2 0 0 1 2.2 2.2v14.6a2.2 2.2 0 0 1 -2.2 2.2h-25.6a2.2 2.2 0 0 1 -2.2 -2.2v-14.6a2.2 2.2 0 0 1 2.2 -2.2Z" fill="url(#deviceDisplay-grad-body)"/><path d="M3.2 4h25.6a2.2 2.2 0 0 1 2.2 2.2v14.6a2.2 2.2 0 0 1 -2.2 2.2h-25.6a2.2 2.2 0 0 1 -2.2 -2.2v-14.6a2.2 2.2 0 0 1 2.2 -2.2Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M3.2 4h25.6a2.2 2.2 0 0 1 2.2 2.2v14.6a2.2 2.2 0 0 1 -2.2 2.2h-25.6a2.2 2.2 0 0 1 -2.2 -2.2v-14.6a2.2 2.2 0 0 1 2.2 -2.2Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
-    <g id="screen-platinum-under" clip-path="url(#deviceDisplay-clip-screen)"><title>screen · platinum/under</title><path d="M4.8 6.4h22.4a1.2 1.2 0 0 1 1.2 1.2v11.8a1.2 1.2 0 0 1 -1.2 1.2h-22.4a1.2 1.2 0 0 1 -1.2 -1.2v-11.8a1.2 1.2 0 0 1 1.2 -1.2Z" fill="url(#deviceDisplay-grad-screen)"/><path d="M4.8 6.4h22.4a1.2 1.2 0 0 1 1.2 1.2v11.8a1.2 1.2 0 0 1 -1.2 1.2h-22.4a1.2 1.2 0 0 1 -1.2 -1.2v-11.8a1.2 1.2 0 0 1 1.2 -1.2Z" fill="#000000" opacity="0.128"/><path d="M4.8 6.4h22.4a1.2 1.2 0 0 1 1.2 1.2v11.8a1.2 1.2 0 0 1 -1.2 1.2h-22.4a1.2 1.2 0 0 1 -1.2 -1.2v-11.8a1.2 1.2 0 0 1 1.2 -1.2Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(-0.8 -0.8)"/><path d="M4.8 6.4h22.4a1.2 1.2 0 0 1 1.2 1.2v11.8a1.2 1.2 0 0 1 -1.2 1.2h-22.4a1.2 1.2 0 0 1 -1.2 -1.2v-11.8a1.2 1.2 0 0 1 1.2 -1.2Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(0.8 0.8)"/></g>
-    <g id="neck-platinum-front" clip-path="url(#deviceDisplay-clip-neck)"><title>neck · platinum/front</title><path d="M14.2 23h3.6a0.8 0.8 0 0 1 0.8 0.8v2.4a0.8 0.8 0 0 1 -0.8 0.8h-3.6a0.8 0.8 0 0 1 -0.8 -0.8v-2.4a0.8 0.8 0 0 1 0.8 -0.8Z" fill="url(#deviceDisplay-grad-neck)"/><path d="M14.2 23h3.6a0.8 0.8 0 0 1 0.8 0.8v2.4a0.8 0.8 0 0 1 -0.8 0.8h-3.6a0.8 0.8 0 0 1 -0.8 -0.8v-2.4a0.8 0.8 0 0 1 0.8 -0.8Z" fill="#000000" opacity="0.032"/></g>
-    <g id="foot-platinum-top" clip-path="url(#deviceDisplay-clip-foot)"><title>foot · platinum/top</title><path d="M9.4 27h13.2a1.4 1.4 0 0 1 1.4 1.4v0.2a1.4 1.4 0 0 1 -1.4 1.4h-13.2a1.4 1.4 0 0 1 -1.4 -1.4v-0.2a1.4 1.4 0 0 1 1.4 -1.4Z" fill="url(#deviceDisplay-grad-foot)"/><path d="M9.4 27h13.2a1.4 1.4 0 0 1 1.4 1.4v0.2a1.4 1.4 0 0 1 -1.4 1.4h-13.2a1.4 1.4 0 0 1 -1.4 -1.4v-0.2a1.4 1.4 0 0 1 1.4 -1.4Z" fill="#ffffff" opacity="0.032"/><path d="M9.4 27h13.2a1.4 1.4 0 0 1 1.4 1.4v0.2a1.4 1.4 0 0 1 -1.4 1.4h-13.2a1.4 1.4 0 0 1 -1.4 -1.4v-0.2a1.4 1.4 0 0 1 1.4 -1.4Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M9.4 27h13.2a1.4 1.4 0 0 1 1.4 1.4v0.2a1.4 1.4 0 0 1 -1.4 1.4h-13.2a1.4 1.4 0 0 1 -1.4 -1.4v-0.2a1.4 1.4 0 0 1 1.4 -1.4Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
-    <g id="key-sheen-color" clip-path="url(#deviceDisplay-clip-silhouette)" opacity="0.55" style="mix-blend-mode:screen"><title>key · sheen/color</title><path d="M3.2 4h25.6a2.2 2.2 0 0 1 2.2 2.2v14.6a2.2 2.2 0 0 1 -2.2 2.2h-25.6a2.2 2.2 0 0 1 -2.2 -2.2v-14.6a2.2 2.2 0 0 1 2.2 -2.2Z" fill="url(#deviceDisplay-grad-key)"/></g>
-    <path id="keyline-edge-hairline" d="M3.2 4h25.6a2.2 2.2 0 0 1 2.2 2.2v14.6a2.2 2.2 0 0 1 -2.2 2.2h-25.6a2.2 2.2 0 0 1 -2.2 -2.2v-14.6a2.2 2.2 0 0 1 2.2 -2.2Z" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1"/>
+    <g id="chassis-platinum-top" clip-path="url(#deviceDisplay-clip-chassis)"><title>chassis · platinum/top</title><path d="M3.7 3.5h24.6a2.2 2.2 0 0 1 2.2 2.2v13.1a2.2 2.2 0 0 1 -2.2 2.2h-24.6a2.2 2.2 0 0 1 -2.2 -2.2v-13.1a2.2 2.2 0 0 1 2.2 -2.2ZM13.6 21h4.8v3.6h-4.8ZM9.4 24.2h13.2a1.4 1.4 0 0 1 1.4 1.4v0a1.4 1.4 0 0 1 -1.4 1.4h-13.2a1.4 1.4 0 0 1 -1.4 -1.4v0a1.4 1.4 0 0 1 1.4 -1.4Z" fill="url(#deviceDisplay-grad-chassis)"/><path d="M3.7 3.5h24.6a2.2 2.2 0 0 1 2.2 2.2v13.1a2.2 2.2 0 0 1 -2.2 2.2h-24.6a2.2 2.2 0 0 1 -2.2 -2.2v-13.1a2.2 2.2 0 0 1 2.2 -2.2ZM13.6 21h4.8v3.6h-4.8ZM9.4 24.2h13.2a1.4 1.4 0 0 1 1.4 1.4v0a1.4 1.4 0 0 1 -1.4 1.4h-13.2a1.4 1.4 0 0 1 -1.4 -1.4v0a1.4 1.4 0 0 1 1.4 -1.4Z" fill="none" stroke="rgba(255, 255, 255, 0.4)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M3.7 3.5h24.6a2.2 2.2 0 0 1 2.2 2.2v13.1a2.2 2.2 0 0 1 -2.2 2.2h-24.6a2.2 2.2 0 0 1 -2.2 -2.2v-13.1a2.2 2.2 0 0 1 2.2 -2.2ZM13.6 21h4.8v3.6h-4.8ZM9.4 24.2h13.2a1.4 1.4 0 0 1 1.4 1.4v0a1.4 1.4 0 0 1 -1.4 1.4h-13.2a1.4 1.4 0 0 1 -1.4 -1.4v0a1.4 1.4 0 0 1 1.4 -1.4Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
+    <g id="neck-platinum-cylY" clip-path="url(#deviceDisplay-clip-neck)"><title>neck · platinum/cylY</title><path d="M13.6 21h4.8v3.6h-4.8Z" fill="url(#deviceDisplay-grad-neck)"/><path d="M13.6 21h4.8v3.6h-4.8Z" fill="#000000" opacity="0.040"/></g>
+    <g id="foot-platinum-cylX" clip-path="url(#deviceDisplay-clip-foot)"><title>foot · platinum/cylX</title><path d="M9.4 24.2h13.2a1.4 1.4 0 0 1 1.4 1.4v0a1.4 1.4 0 0 1 -1.4 1.4h-13.2a1.4 1.4 0 0 1 -1.4 -1.4v0a1.4 1.4 0 0 1 1.4 -1.4Z" fill="url(#deviceDisplay-grad-foot)"/><path d="M9.4 24.2h13.2a1.4 1.4 0 0 1 1.4 1.4v0a1.4 1.4 0 0 1 -1.4 1.4h-13.2a1.4 1.4 0 0 1 -1.4 -1.4v0a1.4 1.4 0 0 1 1.4 -1.4Z" fill="#ffffff" opacity="0.016"/><path d="M9.4 24.2h13.2a1.4 1.4 0 0 1 1.4 1.4v0a1.4 1.4 0 0 1 -1.4 1.4h-13.2a1.4 1.4 0 0 1 -1.4 -1.4v0a1.4 1.4 0 0 1 1.4 -1.4Z" fill="none" stroke="rgba(255, 255, 255, 0.4)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M9.4 24.2h13.2a1.4 1.4 0 0 1 1.4 1.4v0a1.4 1.4 0 0 1 -1.4 1.4h-13.2a1.4 1.4 0 0 1 -1.4 -1.4v0a1.4 1.4 0 0 1 1.4 -1.4Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
+    <g id="screen-graphite-concave" clip-path="url(#deviceDisplay-clip-screen)"><title>screen · graphite/concave</title><path d="M4.8 5.6h22.4a1.2 1.2 0 0 1 1.2 1.2v11a1.2 1.2 0 0 1 -1.2 1.2h-22.4a1.2 1.2 0 0 1 -1.2 -1.2v-11a1.2 1.2 0 0 1 1.2 -1.2Z" fill="url(#deviceDisplay-grad-screen)"/><path d="M4.8 5.6h22.4a1.2 1.2 0 0 1 1.2 1.2v11a1.2 1.2 0 0 1 -1.2 1.2h-22.4a1.2 1.2 0 0 1 -1.2 -1.2v-11a1.2 1.2 0 0 1 1.2 -1.2Z" fill="#000000" opacity="0.144"/><path d="M4.8 5.6h22.4a1.2 1.2 0 0 1 1.2 1.2v11a1.2 1.2 0 0 1 -1.2 1.2h-22.4a1.2 1.2 0 0 1 -1.2 -1.2v-11a1.2 1.2 0 0 1 1.2 -1.2Z" fill="none" stroke="rgba(255, 255, 255, 0.4)" stroke-width="2" transform="translate(-0.8 -0.8)"/><path d="M4.8 5.6h22.4a1.2 1.2 0 0 1 1.2 1.2v11a1.2 1.2 0 0 1 -1.2 1.2h-22.4a1.2 1.2 0 0 1 -1.2 -1.2v-11a1.2 1.2 0 0 1 1.2 -1.2Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(0.8 0.8)"/></g>
+    <g id="trace-traffic-zoom-light"><title>trace · traffic.zoom.light</title><path d="M5.6 15.6l3.4-4.2 3 5 3.2-7.4 3.4 6 3-3.2 4.8 2.6" fill="none" stroke="#bdf2b3" stroke-width="1.4" stroke-linecap="round"/></g>
+    <g id="key-sheen-color" clip-path="url(#deviceDisplay-clip-silhouette)" opacity="0.34" style="mix-blend-mode:screen"><title>key · sheen/color</title><path d="M3.7 3.5h24.6a2.2 2.2 0 0 1 2.2 2.2v13.1a2.2 2.2 0 0 1 -2.2 2.2h-24.6a2.2 2.2 0 0 1 -2.2 -2.2v-13.1a2.2 2.2 0 0 1 2.2 -2.2ZM13.6 21h4.8v3.6h-4.8ZM9.4 24.2h13.2a1.4 1.4 0 0 1 1.4 1.4v0a1.4 1.4 0 0 1 -1.4 1.4h-13.2a1.4 1.4 0 0 1 -1.4 -1.4v0a1.4 1.4 0 0 1 1.4 -1.4Z" fill="url(#deviceDisplay-grad-key)"/></g>
+    <path id="keyline-edge-hairline" d="M3.7 3.5h24.6a2.2 2.2 0 0 1 2.2 2.2v13.1a2.2 2.2 0 0 1 -2.2 2.2h-24.6a2.2 2.2 0 0 1 -2.2 -2.2v-13.1a2.2 2.2 0 0 1 2.2 -2.2ZM13.6 21h4.8v3.6h-4.8ZM9.4 24.2h13.2a1.4 1.4 0 0 1 1.4 1.4v0a1.4 1.4 0 0 1 -1.4 1.4h-13.2a1.4 1.4 0 0 1 -1.4 -1.4v0a1.4 1.4 0 0 1 1.4 -1.4Z" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1"/>
   </g>
 </svg>

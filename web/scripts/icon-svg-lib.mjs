@@ -64,6 +64,48 @@ export function facetStops(material, facet = 'flat') {
   return [rampAt(material, from + HEADROOM), rampAt(material, to + HEADROOM)]
 }
 
+/**
+ * How light travels ACROSS a face, as positions along the material ramp — the
+ * twin of SHAPE_STOPS in src/components/ObjectIcon/recipe.ts. Without it a
+ * ball, a barrel and a flat card all export with the same diagonal ramp.
+ */
+const LIGHT = (token('object.light-azimuth') * Math.PI) / 180
+const SHAPE_STOPS = {
+  sphere: [[0, 0.04], [0.42, 0.3], [0.74, 0.64], [0.92, 0.99], [1, 1.2]],
+  dome: [[0, 0.1], [0.55, 0.38], [1, 0.86]],
+  concave: [[0, 1.12], [0.45, 0.74], [1, 0.22]],
+}
+
+function cylinderStops(shape) {
+  const t = 0.5 + (shape === 'cylY' ? Math.cos(LIGHT) : Math.sin(LIGHT)) * 0.28
+  return [[0, 1.02], ...(t > 0.22 ? [[t - 0.2, 0.4]] : []), [t, 0.05], [t + (1 - t) * 0.45, 0.52], [1, 1.1]]
+}
+
+/** A matte body slides every bright stop down its ramp rather than peaking. */
+export function shapeStops(shape, finish) {
+  const lift = finish === 'matte' ? token('object.matte-form-lift') : 0
+  const base = shape === 'cylX' || shape === 'cylY' ? cylinderStops(shape) : SHAPE_STOPS[shape]
+  return base.map(([offset, t]) => [offset, t + lift * (t > 0.7 ? 0.5 : 1)])
+}
+
+/** The gradient a shape needs, in objectBoundingBox units. */
+export function formGradient(shape) {
+  const ux = Math.cos(LIGHT)
+  const uy = Math.sin(LIGHT)
+  const half = Math.SQRT2 / 2
+  if (shape === 'sphere' || shape === 'dome')
+    return { kind: 'radial', cx: 0.5 + ux * 0.17, cy: 0.5 + uy * 0.17, r: half * (shape === 'dome' ? 1.15 : 0.98) }
+  if (shape === 'cylY') return { kind: 'linear', x1: 0, y1: 0, x2: 1, y2: 0 }
+  if (shape === 'cylX') return { kind: 'linear', x1: 0, y1: 0, x2: 0, y2: 1 }
+  return { kind: 'linear', x1: 0.5 + ux * 0.5, y1: 0.5 + uy * 0.5, x2: 0.5 - ux * 0.5, y2: 0.5 - uy * 0.5 }
+}
+
+/* A rim is a specular line; on a matte edge it runs at object.matte-rim. */
+const rimFor = (finish) =>
+  finish === 'matte'
+    ? String(token('object.rim')).replace(/[\d.]+\)$/, `${token('object.matte-rim')})`)
+    : token('object.rim')
+
 export const MATERIALS = Object.keys(tokensTree.object.material).filter((k) => !k.startsWith('$'))
 export const FACETS = Object.keys(FACET_RANGE)
 export const objectNames = Object.keys(objects).filter((k) => !k.startsWith('$'))
@@ -131,16 +173,30 @@ export function objectSvg(name, def) {
       fill = token(part.tint)
       label = `${part.id} · ${part.tint}`
     } else {
-      const [from, to] = facetStops(m, facet)
       const gid = ns(`grad-${slug(part.id)}`)
-      defs.push(
-        `    <linearGradient id="${gid}" x1="0" y1="0" x2="0.85" y2="1">\n` +
-          `      <stop offset="0" stop-color="${from}"/>\n` +
-          `      <stop offset="1" stop-color="${to}"/>\n` +
-          `    </linearGradient>`,
-      )
+      const shape = part.shape && part.shape !== 'flat' ? part.shape : null
+      if (shape) {
+        const g = formGradient(shape)
+        const stops = shapeStops(shape, def.finish ?? 'lit')
+          .map(([offset, t]) => `      <stop offset="${offset}" stop-color="${rampAt(m, t + HEADROOM)}"/>`)
+          .join('\n')
+        defs.push(
+          g.kind === 'radial'
+            ? `    <radialGradient id="${gid}" cx="${g.cx.toFixed(4)}" cy="${g.cy.toFixed(4)}" r="${g.r.toFixed(4)}">\n${stops}\n    </radialGradient>`
+            : `    <linearGradient id="${gid}" x1="${g.x1.toFixed(4)}" y1="${g.y1.toFixed(4)}" x2="${g.x2.toFixed(4)}" y2="${g.y2.toFixed(4)}">\n${stops}\n    </linearGradient>`,
+        )
+        label = `${part.id} · ${m}/${shape}`
+      } else {
+        const [from, to] = facetStops(m, facet)
+        defs.push(
+          `    <linearGradient id="${gid}" x1="0" y1="0" x2="0.85" y2="1">\n` +
+            `      <stop offset="0" stop-color="${from}"/>\n` +
+            `      <stop offset="1" stop-color="${to}"/>\n` +
+            `    </linearGradient>`,
+        )
+        label = `${part.id} · ${m}/${facet}`
+      }
       fill = `url(#${gid})`
-      label = `${part.id} · ${m}/${facet}`
     }
 
     const inner = [`<path d="${part.d}" fill="${fill}"${part.fillRule ? ` fill-rule="${part.fillRule}"` : ''}/>`]
@@ -152,7 +208,7 @@ export function objectSvg(name, def) {
     if (bevel !== 'none') {
       const f = bevel === 'well' ? -1 : 1
       const d = 0.8 * f
-      inner.push(`<path d="${part.d}" fill="none" stroke="${token('object.rim')}" stroke-width="2" transform="translate(${d} ${d})"/>`)
+      inner.push(`<path d="${part.d}" fill="none" stroke="${rimFor(def.finish ?? 'lit')}" stroke-width="2" transform="translate(${d} ${d})"/>`)
       inner.push(`<path d="${part.d}" fill="none" stroke="${token('object.occlusion')}" stroke-width="2" transform="translate(${-d} ${-d})"/>`)
     }
     layers.push(
@@ -160,16 +216,30 @@ export function objectSvg(name, def) {
     )
   }
 
-  /* The broad key, over the silhouette, scaled by how specular the material is. */
-  const gloss = token(`object.material.${def.material}.gloss`) ?? 1
-  defs.push(
-    `    <clipPath id="${ns('clip-silhouette')}"><path d="${sil.d}"/></clipPath>`,
-    `    <linearGradient id="${ns('grad-key')}" x1="0" y1="0" x2="0.9" y2="1">\n` +
-      [
+  /*
+   * The broad key, over the silhouette. A matte finish takes one wide wash down
+   * from the top instead of the specular diagonal, and its material's gloss is
+   * capped rather than scaled — asking for matte is asking to override how
+   * specular ruby or amber claims to be.
+   */
+  const matte = (def.finish ?? 'lit') === 'matte'
+  const rawGloss = token(`object.material.${def.material}.gloss`) ?? 1
+  const gloss = matte ? Math.min(rawGloss, token('object.matte-gloss-max')) : rawGloss
+  const keyStops = matte
+    ? [
+        [0, token('object.matte-key-alpha')],
+        [token('object.matte-key-mid-at'), token('object.matte-key-mid')],
+        [1, 0],
+      ]
+    : [
         [0, token('object.key-alpha')],
         [token('object.key-mid-at'), token('object.key-mid')],
         [token('object.key-spread'), 0],
       ]
+  defs.push(
+    `    <clipPath id="${ns('clip-silhouette')}"><path d="${sil.d}"/></clipPath>`,
+    `    <linearGradient id="${ns('grad-key')}" x1="0" y1="0" x2="${matte ? '0.35' : '0.9'}" y2="1">\n` +
+      keyStops
         .map(([o, a]) => `      <stop offset="${o}" stop-color="${token('sheen.color')}" stop-opacity="${a}"/>`)
         .join('\n') +
       `\n    </linearGradient>`,

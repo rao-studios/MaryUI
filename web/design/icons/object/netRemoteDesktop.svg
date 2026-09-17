@@ -3,18 +3,18 @@
   <defs>
     <clipPath id="netRemoteDesktop-clip-body"><path d="M3.2 4h25.6a2.2 2.2 0 0 1 2.2 2.2v14.6a2.2 2.2 0 0 1 -2.2 2.2h-25.6a2.2 2.2 0 0 1 -2.2 -2.2v-14.6a2.2 2.2 0 0 1 2.2 -2.2Z"/></clipPath>
     <linearGradient id="netRemoteDesktop-grad-body" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#7f848f"/>
-      <stop offset="1" stop-color="#3c4047"/>
+      <stop offset="0" stop-color="#7a7f8a"/>
+      <stop offset="1" stop-color="#373a41"/>
     </linearGradient>
     <clipPath id="netRemoteDesktop-clip-screen"><path d="M4.8 6.4h22.4a1.2 1.2 0 0 1 1.2 1.2v11.8a1.2 1.2 0 0 1 -1.2 1.2h-22.4a1.2 1.2 0 0 1 -1.2 -1.2v-11.8a1.2 1.2 0 0 1 1.2 -1.2Z"/></clipPath>
     <linearGradient id="netRemoteDesktop-grad-screen" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#292c32"/>
-      <stop offset="1" stop-color="#1a1b1f"/>
+      <stop offset="0" stop-color="#272a30"/>
+      <stop offset="1" stop-color="#181a1d"/>
     </linearGradient>
     <clipPath id="netRemoteDesktop-clip-foot"><path d="M9.4 25h13.2a1.4 1.4 0 0 1 1.4 1.4v0.6a1.4 1.4 0 0 1 -1.4 1.4h-13.2a1.4 1.4 0 0 1 -1.4 -1.4v-0.6a1.4 1.4 0 0 1 1.4 -1.4Z"/></clipPath>
     <linearGradient id="netRemoteDesktop-grad-foot" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#7f848f"/>
-      <stop offset="1" stop-color="#3c4047"/>
+      <stop offset="0" stop-color="#7a7f8a"/>
+      <stop offset="1" stop-color="#373a41"/>
     </linearGradient>
     <clipPath id="netRemoteDesktop-clip-silhouette"><path d="M3.2 4h25.6a2.2 2.2 0 0 1 2.2 2.2v14.6a2.2 2.2 0 0 1 -2.2 2.2h-25.6a2.2 2.2 0 0 1 -2.2 -2.2v-14.6a2.2 2.2 0 0 1 2.2 -2.2Z"/></clipPath>
     <linearGradient id="netRemoteDesktop-grad-key" x1="0" y1="0" x2="0.9" y2="1">

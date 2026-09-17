@@ -3,13 +3,13 @@
   <defs>
     <clipPath id="docImage-clip-sheet"><path d="M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z"/></clipPath>
     <linearGradient id="docImage-grad-sheet" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#f6f7f8"/>
-      <stop offset="1" stop-color="#e0e3e7"/>
+      <stop offset="0" stop-color="#f5f5f7"/>
+      <stop offset="1" stop-color="#dee1e5"/>
     </linearGradient>
     <clipPath id="docImage-clip-fold"><path d="M19.5 2.5 26 9.5h-5a1.5 1.5 0 0 1-1.5-1.5Z"/></clipPath>
     <linearGradient id="docImage-grad-fold" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#d0d3d9"/>
-      <stop offset="1" stop-color="#818387"/>
+      <stop offset="0" stop-color="#c7cad0"/>
+      <stop offset="1" stop-color="#797b7e"/>
     </linearGradient>
     <clipPath id="docImage-clip-silhouette"><path d="M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z"/></clipPath>
     <linearGradient id="docImage-grad-key" x1="0" y1="0" x2="0.9" y2="1">
@@ -21,7 +21,7 @@
   <g id="docImage">
     <g id="sheet-paper-flat" clip-path="url(#docImage-clip-sheet)"><title>sheet · paper/flat</title><path d="M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z" fill="url(#docImage-grad-sheet)"/><path d="M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z" fill="#ffffff" opacity="0.016"/><path d="M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
     <g id="fold-paper-under" clip-path="url(#docImage-clip-fold)"><title>fold · paper/under</title><path d="M19.5 2.5 26 9.5h-5a1.5 1.5 0 0 1-1.5-1.5Z" fill="url(#docImage-grad-fold)"/><path d="M19.5 2.5 26 9.5h-5a1.5 1.5 0 0 1-1.5-1.5Z" fill="#000000" opacity="0.080"/></g>
-    <g id="mark-edge-hairline"><title>mark · edge/hairline</title><path d="M13.3 16.8h6.4v5.6H13.3zM13.3 21.2l2-2l1.6 1.6l1.2-1.2l1.6 1.6M17.9 18.6a0.4 0.4 0 1 0 0-0.004" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="1" stroke-linecap="round" transform="translate(0 0.85)"/><path d="M13.3 16.8h6.4v5.6H13.3zM13.3 21.2l2-2l1.6 1.6l1.2-1.2l1.6 1.6M17.9 18.6a0.4 0.4 0 1 0 0-0.004" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1" stroke-linecap="round"/></g>
+    <g id="mark-accent-blue-base"><title>mark · accent.blue.base</title><path d="M11.5 15.4h9v8h-9zM11.5 21.7l2.8-2.8l2.2 2.2l1.7-1.7l2.3 2.3M18 18.1a0.6 0.6 0 1 0 0-0.006" fill="none" stroke="#3b7dd8" stroke-width="1.4" stroke-linecap="round"/></g>
     <g id="key-sheen-color" clip-path="url(#docImage-clip-silhouette)" opacity="0.2" style="mix-blend-mode:screen"><title>key · sheen/color</title><path d="M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z" fill="url(#docImage-grad-key)"/></g>
     <path id="keyline-edge-hairline" d="M7 4a1.5 1.5 0 0 1 1.5-1.5h11L26 9.5V27a1.5 1.5 0 0 1-1.5 1.5h-16A1.5 1.5 0 0 1 7 27Z" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1"/>
   </g>

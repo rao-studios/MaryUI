@@ -3,8 +3,8 @@
   <defs>
     <clipPath id="volumeDiskImage-clip-body"><path d="M3 9h26a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-26a2 2 0 0 1 -2 -2v-10a2 2 0 0 1 2 -2Z"/></clipPath>
     <linearGradient id="volumeDiskImage-grad-body" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#deeaf8"/>
-      <stop offset="1" stop-color="#94b0d2"/>
+      <stop offset="0" stop-color="#dbe7f7"/>
+      <stop offset="1" stop-color="#8daace"/>
     </linearGradient>
     <clipPath id="volumeDiskImage-clip-led"><path d="M24.8 16a1.2 1.2 0 1 0 2.4 0a1.2 1.2 0 1 0 -2.4 0Z"/></clipPath>
     <clipPath id="volumeDiskImage-clip-silhouette"><path d="M3 9h26a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-26a2 2 0 0 1 -2 -2v-10a2 2 0 0 1 2 -2Z"/></clipPath>

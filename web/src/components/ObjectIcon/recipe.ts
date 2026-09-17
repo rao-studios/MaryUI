@@ -10,6 +10,8 @@ import { tokens } from '@/tokens/tokens'
 
 export type MaterialName = keyof typeof tokens.object.material
 export type Facet = 'top' | 'front' | 'under' | 'flat'
+export type Shape = 'flat' | 'sphere' | 'dome' | 'cylX' | 'cylY' | 'concave'
+export type Finish = 'lit' | 'glossy' | 'matte'
 
 const O = tokens.object
 
@@ -107,6 +109,10 @@ export const KEY_GRADIENT_ID = 'lp-obj-key'
 export const GLOSS_GRADIENT_ID = 'lp-obj-gloss'
 export const BRUSH_PATTERN_ID = 'lp-obj-brush'
 export const CONTACT_FILTER_ID = 'lp-obj-contact'
+export const shapeGradientId = (m: MaterialName, sh: Shape) => `lp-obj-shape-${m}-${sh}`
+export const MATTE_KEY_GRADIENT_ID = 'lp-obj-matte-key'
+export const CAST_FILTER_ID = 'lp-obj-cast'
+export const AO_FILTER_ID = 'lp-obj-ao'
 
 /* ---- tints --------------------------------------------------------------- */
 
@@ -144,6 +150,153 @@ export const GLOSS_STOPS = [
   { offset: 0.82, opacity: 0 },
   { offset: 1, opacity: O.glossBounce },
 ]
+
+/* ---- form ---------------------------------------------------------------- */
+
+/**
+ * Where light sits on a curved face, as positions along the material ramp.
+ * `facet` says which stretch of the ramp a face occupies; `shape` says how the
+ * light travels ACROSS it. Without this every part takes the same diagonal
+ * ramp, and a ball, a barrel, a dished screen and a flat card are all shaded
+ * identically — which is what makes a set of icons read as diagrams with a
+ * gloss on them rather than as objects.
+ *
+ * Held in two places, like FACET_RANGE: these numbers are also in
+ * form_pattern() in src/draw/lp_object_icon.c.
+ */
+export const SHAPE_STOPS: Record<Exclude<Shape, 'flat'>, { offset: number; t: number }[]> = {
+  /* A ball: hot near the lamp, falling away to a limb darker than the ramp's own low end. */
+  sphere: [
+    { offset: 0, t: 0.04 },
+    { offset: 0.42, t: 0.3 },
+    { offset: 0.74, t: 0.64 },
+    { offset: 0.92, t: 0.99 },
+    { offset: 1, t: 1.2 },
+  ],
+  /* A shallow cap — a bead, a button, a watch glass. */
+  dome: [
+    { offset: 0, t: 0.1 },
+    { offset: 0.55, t: 0.38 },
+    { offset: 1, t: 0.86 },
+  ],
+  /* A barrel keeps one bright line down its length and darkens to both edges.
+   * cylX lies across the icon and shades top to bottom; cylY stands up. */
+  cylX: [],
+  cylY: [],
+  /* A dish: the wall facing the lamp is the one in shadow. */
+  concave: [
+    { offset: 0, t: 1.12 },
+    { offset: 0.45, t: 0.74 },
+    { offset: 1, t: 0.22 },
+  ],
+}
+
+/** Where a barrel's bright line sits across its width, from object.light-azimuth. */
+export function cylinderHighlight(shape: 'cylX' | 'cylY'): number {
+  const a = (Number(O.lightAzimuth) * Math.PI) / 180
+  return 0.5 + (shape === 'cylY' ? Math.cos(a) : Math.sin(a)) * 0.28
+}
+
+export function cylinderStops(shape: 'cylX' | 'cylY'): { offset: number; t: number }[] {
+  const t = cylinderHighlight(shape)
+  return [
+    { offset: 0, t: 1.02 },
+    ...(t > 0.22 ? [{ offset: t - 0.2, t: 0.4 }] : []),
+    { offset: t, t: 0.05 },
+    { offset: t + (1 - t) * 0.45, t: 0.52 },
+    { offset: 1, t: 1.1 },
+  ]
+}
+
+/** Every stop of a shape, with the matte lift already applied where it applies. */
+export function shapeStops(shape: Exclude<Shape, 'flat'>, finish: Finish): { offset: number; t: number }[] {
+  const lift = finish === 'matte' ? O.matteFormLift : 0
+  const base = shape === 'cylX' || shape === 'cylY' ? cylinderStops(shape) : SHAPE_STOPS[shape]
+  /* The dark end of a curve is already turned away from the lamp; lifting it as
+   * far as the bright end would flatten the form instead of un-polishing it. */
+  return base.map((st) => ({ offset: st.offset, t: st.t + lift * (st.t > 0.7 ? 0.5 : 1) }))
+}
+
+/**
+ * The gradient geometry a shape needs, in objectBoundingBox units — a radial
+ * for the two caps, a linear across the axis for the barrels, and for a dish a
+ * linear along the light axis pointing back at the lamp, because the near wall
+ * is the dark one.
+ */
+export function formGradient(shape: Exclude<Shape, 'flat'>):
+  | { kind: 'radial'; cx: number; cy: number; r: number }
+  | { kind: 'linear'; x1: number; y1: number; x2: number; y2: number } {
+  const a = (Number(O.lightAzimuth) * Math.PI) / 180
+  const ux = Math.cos(a)
+  const uy = Math.sin(a)
+  const half = Math.SQRT2 / 2
+  if (shape === 'sphere' || shape === 'dome')
+    return { kind: 'radial', cx: 0.5 + ux * 0.17, cy: 0.5 + uy * 0.17, r: half * (shape === 'dome' ? 1.15 : 0.98) }
+  if (shape === 'cylY') return { kind: 'linear', x1: 0, y1: 0, x2: 1, y2: 0 }
+  if (shape === 'cylX') return { kind: 'linear', x1: 0, y1: 0, x2: 0, y2: 1 }
+  return { kind: 'linear', x1: 0.5 + ux * 0.5, y1: 0.5 + uy * 0.5, x2: 0.5 - ux * 0.5, y2: 0.5 - uy * 0.5 }
+}
+
+/** Where the lamp sits inside a sphere or a dome, in objectBoundingBox units. */
+export function formLamp(): { cx: number; cy: number } {
+  const a = (Number(O.lightAzimuth) * Math.PI) / 180
+  return { cx: 0.5 + Math.cos(a) * 0.17, cy: 0.5 + Math.sin(a) * 0.17 }
+}
+
+/* ---- matte --------------------------------------------------------------- */
+
+/**
+ * A matte surface scatters what falls on it. There is no hot corner to put a
+ * glint in, so it gets one broad wash down from the top — close to vertical
+ * rather than the specular diagonal, because a diffuse surface shows you where
+ * the light is, not where you are. It shows nothing of the room, and it
+ * overrides how specular its material claims to be rather than being scaled by
+ * it: ruby and amber are 0.9 by default, and asking for matte is asking to
+ * override that.
+ */
+export const MATTE_KEY_STOPS = [
+  { offset: 0, opacity: O.matteKeyAlpha },
+  { offset: O.matteKeyMidAt, opacity: O.matteKeyMid },
+  { offset: 1, opacity: 0 },
+]
+
+export const MATTE = {
+  glossMax: O.matteGlossMax,
+  rim: O.matteRim,
+  formLift: O.matteFormLift,
+}
+
+/** A rim is a specular line; on a matte edge it runs at matte-rim instead. */
+export const rimFor = (finish: Finish): string =>
+  finish === 'matte' ? O.rim.replace(/[\d.]+\)$/, `${O.matteRim})`) : O.rim
+
+/* ---- shadows between parts ----------------------------------------------- */
+
+export const CAST = { blur: O.castBlur, dist: O.castDist, color: O.castColor }
+export const AO = { blur: O.aoBlur, dist: O.aoDist, color: O.aoColor }
+
+/** Away from the lamp for a cast shadow, toward it for occlusion. */
+export function shadowOffset(kind: 'cast' | 'ao'): { dx: number; dy: number } {
+  const a = (Number(O.lightAzimuth) * Math.PI) / 180
+  const s = kind === 'cast' ? -CAST.dist : AO.dist
+  return { dx: Math.cos(a) * s, dy: Math.sin(a) * s }
+}
+
+/* ---- the keyline --------------------------------------------------------- */
+
+/**
+ * The keyline is what keeps an object legible when it is small, and only that.
+ * Past the plain tier the material's own dark end and the contact shadow carry
+ * the edge, so it fades out — at full strength on a large icon it reads as a
+ * die-cut outline round a sticker rather than the edge of a thing.
+ */
+export function keylineAlpha(size: number): number {
+    const plain = Number.parseFloat(O.tierPlainMax)
+  const fadeAt = Number.parseFloat(O.keylineFadeAt)
+  const t = Math.min(1, Math.max(0, (size - plain) / (fadeAt - plain)))
+  const base = Number.parseFloat(/[\d.]+\)$/.exec(O.keyline)?.[0] ?? '0.32')
+  return base * (1 - t) + O.keylineFaded * t
+}
 
 export const RECIPE = {
   toneStep: O.toneStep,

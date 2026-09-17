@@ -1,34 +1,70 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="128" height="128">
   <title>pencil</title>
   <defs>
-    <clipPath id="pencil-clip-barrel"><path d="M9 20.6 21.6 8l3.4 3.4L12.4 24Z"/></clipPath>
-    <linearGradient id="pencil-grad-barrel" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#e8d7ad"/>
-      <stop offset="1" stop-color="#c4ac73"/>
+    <clipPath id="pencil-clip-sheet"><path d="M6.5 3h19a1.5 1.5 0 0 1 1.5 1.5v23a1.5 1.5 0 0 1 -1.5 1.5h-19a1.5 1.5 0 0 1 -1.5 -1.5v-23a1.5 1.5 0 0 1 1.5 -1.5Z"/></clipPath>
+    <linearGradient id="pencil-grad-sheet" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#f2f3f5"/>
+      <stop offset="1" stop-color="#d9dce1"/>
     </linearGradient>
-    <clipPath id="pencil-clip-ferrule"><path d="M21.6 8 25 11.4l3.4-3.4a2.4 2.4 0 0 0-3.4-3.4Z"/></clipPath>
-    <linearGradient id="pencil-grad-ferrule" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#e9ebee"/>
-      <stop offset="1" stop-color="#b9bdc6"/>
+    <clipPath id="pencil-clip-pencil"><path d="M9.6 25.4L10.88 24.93L9.97 24.09L9.6 25.4ZM10.78 24.98L13.29 24L10.74 21.62L9.93 24.19ZM13.29 24L22.54 14.09L19.98 11.7L10.74 21.62ZM22.54 14.09L23.64 12.9L21.09 10.52L19.98 11.7ZM23.64 12.9L24.58 11.7L22.22 9.5L21.09 10.52Z"/></clipPath>
+    <linearGradient id="pencil-grad-pencil" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#e9d9b1"/>
+      <stop offset="1" stop-color="#c9b27a"/>
     </linearGradient>
-    <clipPath id="pencil-clip-tip"><path d="M9 20.6 12.4 24l-5.4 2Z"/></clipPath>
-    <linearGradient id="pencil-grad-tip" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#595d67"/>
-      <stop offset="1" stop-color="#24272c"/>
+    <clipPath id="pencil-clip-barrel"><path d="M13.29 24L22.54 14.09L19.98 11.7L10.74 21.62Z"/></clipPath>
+    <linearGradient id="pencil-grad-barrel" x1="0.0000" y1="0.0000" x2="1.0000" y2="0.0000">
+      <stop offset="0" stop-color="#785613"/>
+      <stop offset="0.20423435986881255" stop-color="#ce9c36"/>
+      <stop offset="0.40423435986881256" stop-color="#f5c663"/>
+      <stop offset="0.672328897927847" stop-color="#bb8b29"/>
+      <stop offset="1" stop-color="#6a4d11"/>
     </linearGradient>
-    <clipPath id="pencil-clip-silhouette"><path d="M9 20.6 21.6 8l3.4 3.4L12.4 24Z"/></clipPath>
-    <linearGradient id="pencil-grad-key" x1="0" y1="0" x2="0.9" y2="1">
-      <stop offset="0" stop-color="#ffffff" stop-opacity="0.62"/>
-      <stop offset="0.3" stop-color="#ffffff" stop-opacity="0.2"/>
-      <stop offset="0.6" stop-color="#ffffff" stop-opacity="0"/>
+    <clipPath id="pencil-clip-cone"><path d="M10.78 24.98L13.29 24L10.74 21.62L9.93 24.19Z"/></clipPath>
+    <linearGradient id="pencil-grad-cone" x1="0.0000" y1="0.0000" x2="1.0000" y2="0.0000">
+      <stop offset="0" stop-color="#857247"/>
+      <stop offset="0.20423435986881255" stop-color="#ceb882"/>
+      <stop offset="0.40423435986881256" stop-color="#e6d5a9"/>
+      <stop offset="0.672328897927847" stop-color="#c4ac73"/>
+      <stop offset="1" stop-color="#76663f"/>
+    </linearGradient>
+    <clipPath id="pencil-clip-point"><path d="M9.6 25.4L10.88 24.93L9.97 24.09L9.6 25.4Z"/></clipPath>
+    <linearGradient id="pencil-grad-point" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#848993"/>
+      <stop offset="1" stop-color="#444850"/>
+    </linearGradient>
+    <clipPath id="pencil-clip-ferrule"><path d="M22.54 14.09L23.64 12.9L21.09 10.52L19.98 11.7Z"/></clipPath>
+    <linearGradient id="pencil-grad-ferrule" x1="0.0000" y1="0.0000" x2="1.0000" y2="0.0000">
+      <stop offset="0" stop-color="#857247"/>
+      <stop offset="0.20423435986881255" stop-color="#ceb882"/>
+      <stop offset="0.40423435986881256" stop-color="#e6d5a9"/>
+      <stop offset="0.672328897927847" stop-color="#c4ac73"/>
+      <stop offset="1" stop-color="#76663f"/>
+    </linearGradient>
+    <clipPath id="pencil-clip-eraser"><path d="M23.64 12.9L24.58 11.7L22.22 9.5L21.09 10.52Z"/></clipPath>
+    <linearGradient id="pencil-grad-eraser" x1="0.0000" y1="0.0000" x2="1.0000" y2="0.0000">
+      <stop offset="0" stop-color="#792a23"/>
+      <stop offset="0.20423435986881255" stop-color="#cc5348"/>
+      <stop offset="0.40423435986881256" stop-color="#f27c70"/>
+      <stop offset="0.672328897927847" stop-color="#bc483d"/>
+      <stop offset="1" stop-color="#6c251f"/>
+    </linearGradient>
+    <clipPath id="pencil-clip-silhouette"><path d="M9.6 25.4L10.88 24.93L9.97 24.09L9.6 25.4ZM10.78 24.98L13.29 24L10.74 21.62L9.93 24.19ZM13.29 24L22.54 14.09L19.98 11.7L10.74 21.62ZM22.54 14.09L23.64 12.9L21.09 10.52L19.98 11.7ZM23.64 12.9L24.58 11.7L22.22 9.5L21.09 10.52Z"/></clipPath>
+    <linearGradient id="pencil-grad-key" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.3"/>
+      <stop offset="0.55" stop-color="#ffffff" stop-opacity="0.11"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
     </linearGradient>
   </defs>
   <g id="pencil">
-    <g id="barrel-manila-top" clip-path="url(#pencil-clip-barrel)"><title>barrel · manila/top</title><path d="M9 20.6 21.6 8l3.4 3.4L12.4 24Z" fill="url(#pencil-grad-barrel)"/><path d="M9 20.6 21.6 8l3.4 3.4L12.4 24Z" fill="#ffffff" opacity="0.016"/><path d="M9 20.6 21.6 8l3.4 3.4L12.4 24Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M9 20.6 21.6 8l3.4 3.4L12.4 24Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
-    <g id="ferrule-platinum-top" clip-path="url(#pencil-clip-ferrule)"><title>ferrule · platinum/top</title><path d="M21.6 8 25 11.4l3.4-3.4a2.4 2.4 0 0 0-3.4-3.4Z" fill="url(#pencil-grad-ferrule)"/><path d="M21.6 8 25 11.4l3.4-3.4a2.4 2.4 0 0 0-3.4-3.4Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M21.6 8 25 11.4l3.4-3.4a2.4 2.4 0 0 0-3.4-3.4Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
-    <g id="tip-graphite-front" clip-path="url(#pencil-clip-tip)"><title>tip · graphite/front</title><path d="M9 20.6 12.4 24l-5.4 2Z" fill="url(#pencil-grad-tip)"/></g>
-    <g id="facet-edge-hairline"><title>facet · edge/hairline</title><path d="M10.7 22.3 23.3 9.7" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="1" stroke-linecap="round" transform="translate(0 0.85)"/><path d="M10.7 22.3 23.3 9.7" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1" stroke-linecap="round"/></g>
-    <g id="key-sheen-color" clip-path="url(#pencil-clip-silhouette)" opacity="0.3" style="mix-blend-mode:screen"><title>key · sheen/color</title><path d="M9 20.6 21.6 8l3.4 3.4L12.4 24Z" fill="url(#pencil-grad-key)"/></g>
-    <path id="keyline-edge-hairline" d="M9 20.6 21.6 8l3.4 3.4L12.4 24Z" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1"/>
+    <g id="sheet-paper-top" clip-path="url(#pencil-clip-sheet)"><title>sheet · paper/top</title><path d="M6.5 3h19a1.5 1.5 0 0 1 1.5 1.5v23a1.5 1.5 0 0 1 -1.5 1.5h-19a1.5 1.5 0 0 1 -1.5 -1.5v-23a1.5 1.5 0 0 1 1.5 -1.5Z" fill="url(#pencil-grad-sheet)"/><path d="M6.5 3h19a1.5 1.5 0 0 1 1.5 1.5v23a1.5 1.5 0 0 1 -1.5 1.5h-19a1.5 1.5 0 0 1 -1.5 -1.5v-23a1.5 1.5 0 0 1 1.5 -1.5Z" fill="#ffffff" opacity="0.016"/><path d="M6.5 3h19a1.5 1.5 0 0 1 1.5 1.5v23a1.5 1.5 0 0 1 -1.5 1.5h-19a1.5 1.5 0 0 1 -1.5 -1.5v-23a1.5 1.5 0 0 1 1.5 -1.5Z" fill="none" stroke="rgba(255, 255, 255, 0.4)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M6.5 3h19a1.5 1.5 0 0 1 1.5 1.5v23a1.5 1.5 0 0 1 -1.5 1.5h-19a1.5 1.5 0 0 1 -1.5 -1.5v-23a1.5 1.5 0 0 1 1.5 -1.5Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
+    <g id="rules-platinum-5"><title>rules · platinum.5</title><path d="M8.6 9.4h14.8M8.6 13.4h14.8M8.6 17.4h9.6" fill="none" stroke="#a9aeb8" stroke-width="1.4" stroke-linecap="round"/></g>
+    <g id="pencil-manila-flat" clip-path="url(#pencil-clip-pencil)"><title>pencil · manila/flat</title><path d="M9.6 25.4L10.88 24.93L9.97 24.09L9.6 25.4ZM10.78 24.98L13.29 24L10.74 21.62L9.93 24.19ZM13.29 24L22.54 14.09L19.98 11.7L10.74 21.62ZM22.54 14.09L23.64 12.9L21.09 10.52L19.98 11.7ZM23.64 12.9L24.58 11.7L22.22 9.5L21.09 10.52Z" fill="url(#pencil-grad-pencil)"/><path d="M9.6 25.4L10.88 24.93L9.97 24.09L9.6 25.4ZM10.78 24.98L13.29 24L10.74 21.62L9.93 24.19ZM13.29 24L22.54 14.09L19.98 11.7L10.74 21.62ZM22.54 14.09L23.64 12.9L21.09 10.52L19.98 11.7ZM23.64 12.9L24.58 11.7L22.22 9.5L21.09 10.52Z" fill="none" stroke="rgba(255, 255, 255, 0.4)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M9.6 25.4L10.88 24.93L9.97 24.09L9.6 25.4ZM10.78 24.98L13.29 24L10.74 21.62L9.93 24.19ZM13.29 24L22.54 14.09L19.98 11.7L10.74 21.62ZM22.54 14.09L23.64 12.9L21.09 10.52L19.98 11.7ZM23.64 12.9L24.58 11.7L22.22 9.5L21.09 10.52Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
+    <g id="barrel-amber-cylY" clip-path="url(#pencil-clip-barrel)"><title>barrel · amber/cylY</title><path d="M13.29 24L22.54 14.09L19.98 11.7L10.74 21.62Z" fill="url(#pencil-grad-barrel)"/></g>
+    <g id="cone-manila-cylY" clip-path="url(#pencil-clip-cone)"><title>cone · manila/cylY</title><path d="M10.78 24.98L13.29 24L10.74 21.62L9.93 24.19Z" fill="url(#pencil-grad-cone)"/></g>
+    <g id="point-graphite-flat" clip-path="url(#pencil-clip-point)"><title>point · graphite/flat</title><path d="M9.6 25.4L10.88 24.93L9.97 24.09L9.6 25.4Z" fill="url(#pencil-grad-point)"/></g>
+    <g id="ferrule-manila-cylY" clip-path="url(#pencil-clip-ferrule)"><title>ferrule · manila/cylY</title><path d="M22.54 14.09L23.64 12.9L21.09 10.52L19.98 11.7Z" fill="url(#pencil-grad-ferrule)"/></g>
+    <g id="eraser-ruby-cylY" clip-path="url(#pencil-clip-eraser)"><title>eraser · ruby/cylY</title><path d="M23.64 12.9L24.58 11.7L22.22 9.5L21.09 10.52Z" fill="url(#pencil-grad-eraser)"/></g>
+    <g id="key-sheen-color" clip-path="url(#pencil-clip-silhouette)" opacity="0.3" style="mix-blend-mode:screen"><title>key · sheen/color</title><path d="M9.6 25.4L10.88 24.93L9.97 24.09L9.6 25.4ZM10.78 24.98L13.29 24L10.74 21.62L9.93 24.19ZM13.29 24L22.54 14.09L19.98 11.7L10.74 21.62ZM22.54 14.09L23.64 12.9L21.09 10.52L19.98 11.7ZM23.64 12.9L24.58 11.7L22.22 9.5L21.09 10.52Z" fill="url(#pencil-grad-key)"/></g>
+    <path id="keyline-edge-hairline" d="M9.6 25.4L10.88 24.93L9.97 24.09L9.6 25.4ZM10.78 24.98L13.29 24L10.74 21.62L9.93 24.19ZM13.29 24L22.54 14.09L19.98 11.7L10.74 21.62ZM22.54 14.09L23.64 12.9L21.09 10.52L19.98 11.7ZM23.64 12.9L24.58 11.7L22.22 9.5L21.09 10.52Z" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1"/>
   </g>
 </svg>

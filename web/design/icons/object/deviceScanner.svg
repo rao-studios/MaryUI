@@ -3,18 +3,18 @@
   <defs>
     <clipPath id="deviceScanner-clip-lid"><path d="M3.8 3h24.4a1.8 1.8 0 0 1 1.8 1.8v3.4a1.8 1.8 0 0 1 -1.8 1.8h-24.4a1.8 1.8 0 0 1 -1.8 -1.8v-3.4a1.8 1.8 0 0 1 1.8 -1.8Z"/></clipPath>
     <linearGradient id="deviceScanner-grad-lid" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#e9ebee"/>
-      <stop offset="1" stop-color="#b9bdc6"/>
+      <stop offset="0" stop-color="#e8e9ed"/>
+      <stop offset="1" stop-color="#b5b9c2"/>
     </linearGradient>
     <clipPath id="deviceScanner-clip-body"><path d="M4.2 10h23.6a2.2 2.2 0 0 1 2.2 2.2v13.6a2.2 2.2 0 0 1 -2.2 2.2h-23.6a2.2 2.2 0 0 1 -2.2 -2.2v-13.6a2.2 2.2 0 0 1 2.2 -2.2Z"/></clipPath>
     <linearGradient id="deviceScanner-grad-body" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#d3d6db"/>
-      <stop offset="1" stop-color="#91969e"/>
+      <stop offset="0" stop-color="#ced1d7"/>
+      <stop offset="1" stop-color="#8b8f97"/>
     </linearGradient>
     <clipPath id="deviceScanner-clip-bed"><path d="M6.7 13h18.6a1.2 1.2 0 0 1 1.2 1.2v9.1a1.2 1.2 0 0 1 -1.2 1.2h-18.6a1.2 1.2 0 0 1 -1.2 -1.2v-9.1a1.2 1.2 0 0 1 1.2 -1.2Z"/></clipPath>
     <linearGradient id="deviceScanner-grad-bed" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#a6abb4"/>
-      <stop offset="1" stop-color="#676a70"/>
+      <stop offset="0" stop-color="#9fa4ad"/>
+      <stop offset="1" stop-color="#606369"/>
     </linearGradient>
     <clipPath id="deviceScanner-clip-light"><path d="M7.6 17.6h16.8a1.1 1.1 0 0 1 1.1 1.1v0a1.1 1.1 0 0 1 -1.1 1.1h-16.8a1.1 1.1 0 0 1 -1.1 -1.1v0a1.1 1.1 0 0 1 1.1 -1.1Z"/></clipPath>
     <clipPath id="deviceScanner-clip-silhouette"><path d="M4.2 10h23.6a2.2 2.2 0 0 1 2.2 2.2v13.6a2.2 2.2 0 0 1 -2.2 2.2h-23.6a2.2 2.2 0 0 1 -2.2 -2.2v-13.6a2.2 2.2 0 0 1 2.2 -2.2Z"/></clipPath>

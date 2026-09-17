@@ -1,29 +1,38 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="128" height="128">
   <title>volumeInternal</title>
   <defs>
-    <clipPath id="volumeInternal-clip-body"><path d="M3 9h26a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-26a2 2 0 0 1 -2 -2v-10a2 2 0 0 1 2 -2Z"/></clipPath>
-    <linearGradient id="volumeInternal-grad-body" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#e9ebee"/>
-      <stop offset="1" stop-color="#b9bdc6"/>
+    <clipPath id="volumeInternal-clip-shell"><path d="M4 7h24a2.5 2.5 0 0 1 2.5 2.5v13a2.5 2.5 0 0 1 -2.5 2.5h-24a2.5 2.5 0 0 1 -2.5 -2.5v-13a2.5 2.5 0 0 1 2.5 -2.5Z"/></clipPath>
+    <linearGradient id="volumeInternal-grad-shell" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#e8e9ed"/>
+      <stop offset="1" stop-color="#b5b9c2"/>
     </linearGradient>
-    <clipPath id="volumeInternal-clip-plate"><path d="M5.2 12h13.6a1.2 1.2 0 0 1 1.2 1.2v5.6a1.2 1.2 0 0 1 -1.2 1.2h-13.6a1.2 1.2 0 0 1 -1.2 -1.2v-5.6a1.2 1.2 0 0 1 1.2 -1.2Z"/></clipPath>
-    <linearGradient id="volumeInternal-grad-plate" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#a6abb4"/>
-      <stop offset="1" stop-color="#676a70"/>
+    <clipPath id="volumeInternal-clip-face"><path d="M5.4 10h12.2a1.4 1.4 0 0 1 1.4 1.4v9.2a1.4 1.4 0 0 1 -1.4 1.4h-12.2a1.4 1.4 0 0 1 -1.4 -1.4v-9.2a1.4 1.4 0 0 1 1.4 -1.4Z"/></clipPath>
+    <linearGradient id="volumeInternal-grad-face" x1="0.3290" y1="0.0302" x2="0.6710" y2="0.9698">
+      <stop offset="0" stop-color="#696c72"/>
+      <stop offset="0.45" stop-color="#a9aeb8"/>
+      <stop offset="1" stop-color="#dcdee3"/>
     </linearGradient>
-    <clipPath id="volumeInternal-clip-led"><path d="M24.8 16a1.2 1.2 0 1 0 2.4 0a1.2 1.2 0 1 0 -2.4 0Z"/></clipPath>
-    <clipPath id="volumeInternal-clip-silhouette"><path d="M3 9h26a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-26a2 2 0 0 1 -2 -2v-10a2 2 0 0 1 2 -2Z"/></clipPath>
-    <linearGradient id="volumeInternal-grad-key" x1="0" y1="0" x2="0.9" y2="1">
-      <stop offset="0" stop-color="#ffffff" stop-opacity="0.62"/>
-      <stop offset="0.3" stop-color="#ffffff" stop-opacity="0.2"/>
-      <stop offset="0.6" stop-color="#ffffff" stop-opacity="0"/>
+    <clipPath id="volumeInternal-clip-badge"><path d="M29 16A5.6 5.6 0 0 1 17.8 16A5.6 5.6 0 0 1 29 16Z"/></clipPath>
+    <radialGradient id="volumeInternal-grad-badge" cx="0.4419" cy="0.3403" r="0.8132">
+      <stop offset="0" stop-color="#f07468"/>
+      <stop offset="0.55" stop-color="#cf554a"/>
+      <stop offset="1" stop-color="#94332a"/>
+    </radialGradient>
+    <clipPath id="volumeInternal-clip-cross"><path d="M22.2 12.7h2.4v2.1h2.1v2.4h-2.1v2.1h-2.4v-2.1h-2.1v-2.4h2.1Z"/></clipPath>
+    <clipPath id="volumeInternal-clip-silhouette"><path d="M4 7h24a2.5 2.5 0 0 1 2.5 2.5v13a2.5 2.5 0 0 1 -2.5 2.5h-24a2.5 2.5 0 0 1 -2.5 -2.5v-13a2.5 2.5 0 0 1 2.5 -2.5Z"/></clipPath>
+    <linearGradient id="volumeInternal-grad-key" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.3"/>
+      <stop offset="0.55" stop-color="#ffffff" stop-opacity="0.11"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
     </linearGradient>
   </defs>
   <g id="volumeInternal">
-    <g id="body-platinum-top" clip-path="url(#volumeInternal-clip-body)"><title>body · platinum/top</title><path d="M3 9h26a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-26a2 2 0 0 1 -2 -2v-10a2 2 0 0 1 2 -2Z" fill="url(#volumeInternal-grad-body)"/><path d="M3 9h26a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-26a2 2 0 0 1 -2 -2v-10a2 2 0 0 1 2 -2Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M3 9h26a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-26a2 2 0 0 1 -2 -2v-10a2 2 0 0 1 2 -2Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
-    <g id="plate-platinum-under" clip-path="url(#volumeInternal-clip-plate)"><title>plate · platinum/under</title><path d="M5.2 12h13.6a1.2 1.2 0 0 1 1.2 1.2v5.6a1.2 1.2 0 0 1 -1.2 1.2h-13.6a1.2 1.2 0 0 1 -1.2 -1.2v-5.6a1.2 1.2 0 0 1 1.2 -1.2Z" fill="url(#volumeInternal-grad-plate)"/><path d="M5.2 12h13.6a1.2 1.2 0 0 1 1.2 1.2v5.6a1.2 1.2 0 0 1 -1.2 1.2h-13.6a1.2 1.2 0 0 1 -1.2 -1.2v-5.6a1.2 1.2 0 0 1 1.2 -1.2Z" fill="#000000" opacity="0.128"/><path d="M5.2 12h13.6a1.2 1.2 0 0 1 1.2 1.2v5.6a1.2 1.2 0 0 1 -1.2 1.2h-13.6a1.2 1.2 0 0 1 -1.2 -1.2v-5.6a1.2 1.2 0 0 1 1.2 -1.2Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(-0.8 -0.8)"/><path d="M5.2 12h13.6a1.2 1.2 0 0 1 1.2 1.2v5.6a1.2 1.2 0 0 1 -1.2 1.2h-13.6a1.2 1.2 0 0 1 -1.2 -1.2v-5.6a1.2 1.2 0 0 1 1.2 -1.2Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(0.8 0.8)"/></g>
-    <g id="led-accent-blue-base" clip-path="url(#volumeInternal-clip-led)"><title>led · accent.blue.base</title><path d="M24.8 16a1.2 1.2 0 1 0 2.4 0a1.2 1.2 0 1 0 -2.4 0Z" fill="#3b7dd8"/></g>
-    <g id="key-sheen-color" clip-path="url(#volumeInternal-clip-silhouette)" opacity="0.55" style="mix-blend-mode:screen"><title>key · sheen/color</title><path d="M3 9h26a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-26a2 2 0 0 1 -2 -2v-10a2 2 0 0 1 2 -2Z" fill="url(#volumeInternal-grad-key)"/></g>
-    <path id="keyline-edge-hairline" d="M3 9h26a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-26a2 2 0 0 1 -2 -2v-10a2 2 0 0 1 2 -2Z" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1"/>
+    <g id="shell-platinum-top" clip-path="url(#volumeInternal-clip-shell)"><title>shell · platinum/top</title><path d="M4 7h24a2.5 2.5 0 0 1 2.5 2.5v13a2.5 2.5 0 0 1 -2.5 2.5h-24a2.5 2.5 0 0 1 -2.5 -2.5v-13a2.5 2.5 0 0 1 2.5 -2.5Z" fill="url(#volumeInternal-grad-shell)"/><path d="M4 7h24a2.5 2.5 0 0 1 2.5 2.5v13a2.5 2.5 0 0 1 -2.5 2.5h-24a2.5 2.5 0 0 1 -2.5 -2.5v-13a2.5 2.5 0 0 1 2.5 -2.5Z" fill="none" stroke="rgba(255, 255, 255, 0.4)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M4 7h24a2.5 2.5 0 0 1 2.5 2.5v13a2.5 2.5 0 0 1 -2.5 2.5h-24a2.5 2.5 0 0 1 -2.5 -2.5v-13a2.5 2.5 0 0 1 2.5 -2.5Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
+    <g id="face-platinum-concave" clip-path="url(#volumeInternal-clip-face)"><title>face · platinum/concave</title><path d="M5.4 10h12.2a1.4 1.4 0 0 1 1.4 1.4v9.2a1.4 1.4 0 0 1 -1.4 1.4h-12.2a1.4 1.4 0 0 1 -1.4 -1.4v-9.2a1.4 1.4 0 0 1 1.4 -1.4Z" fill="url(#volumeInternal-grad-face)"/><path d="M5.4 10h12.2a1.4 1.4 0 0 1 1.4 1.4v9.2a1.4 1.4 0 0 1 -1.4 1.4h-12.2a1.4 1.4 0 0 1 -1.4 -1.4v-9.2a1.4 1.4 0 0 1 1.4 -1.4Z" fill="#000000" opacity="0.096"/><path d="M5.4 10h12.2a1.4 1.4 0 0 1 1.4 1.4v9.2a1.4 1.4 0 0 1 -1.4 1.4h-12.2a1.4 1.4 0 0 1 -1.4 -1.4v-9.2a1.4 1.4 0 0 1 1.4 -1.4Z" fill="none" stroke="rgba(255, 255, 255, 0.4)" stroke-width="2" transform="translate(-0.8 -0.8)"/><path d="M5.4 10h12.2a1.4 1.4 0 0 1 1.4 1.4v9.2a1.4 1.4 0 0 1 -1.4 1.4h-12.2a1.4 1.4 0 0 1 -1.4 -1.4v-9.2a1.4 1.4 0 0 1 1.4 -1.4Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(0.8 0.8)"/></g>
+    <g id="slot-platinum-5"><title>slot · platinum.5</title><path d="M6.4 20h10" fill="none" stroke="#a9aeb8" stroke-width="1.4" stroke-linecap="round"/></g>
+    <g id="badge-ruby-dome" clip-path="url(#volumeInternal-clip-badge)"><title>badge · ruby/dome</title><path d="M29 16A5.6 5.6 0 0 1 17.8 16A5.6 5.6 0 0 1 29 16Z" fill="url(#volumeInternal-grad-badge)"/></g>
+    <g id="cross-ink-on-accent" clip-path="url(#volumeInternal-clip-cross)"><title>cross · ink.on-accent</title><path d="M22.2 12.7h2.4v2.1h2.1v2.4h-2.1v2.1h-2.4v-2.1h-2.1v-2.4h2.1Z" fill="#ffffff"/></g>
+    <g id="key-sheen-color" clip-path="url(#volumeInternal-clip-silhouette)" opacity="0.34" style="mix-blend-mode:screen"><title>key · sheen/color</title><path d="M4 7h24a2.5 2.5 0 0 1 2.5 2.5v13a2.5 2.5 0 0 1 -2.5 2.5h-24a2.5 2.5 0 0 1 -2.5 -2.5v-13a2.5 2.5 0 0 1 2.5 -2.5Z" fill="url(#volumeInternal-grad-key)"/></g>
+    <path id="keyline-edge-hairline" d="M4 7h24a2.5 2.5 0 0 1 2.5 2.5v13a2.5 2.5 0 0 1 -2.5 2.5h-24a2.5 2.5 0 0 1 -2.5 -2.5v-13a2.5 2.5 0 0 1 2.5 -2.5Z" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1"/>
   </g>
 </svg>

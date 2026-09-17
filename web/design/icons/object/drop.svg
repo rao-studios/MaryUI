@@ -1,22 +1,26 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="128" height="128">
   <title>drop</title>
   <defs>
-    <clipPath id="drop-clip-bead"><path d="M16 2.5s8.5 9.2 8.5 15.1a8.5 8.5 0 0 1-17 0C7.5 11.7 16 2.5 16 2.5Z"/></clipPath>
-    <linearGradient id="drop-grad-bead" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#deeaf8"/>
-      <stop offset="1" stop-color="#94b0d2"/>
-    </linearGradient>
-    <clipPath id="drop-clip-silhouette"><path d="M16 2.5s8.5 9.2 8.5 15.1a8.5 8.5 0 0 1-17 0C7.5 11.7 16 2.5 16 2.5Z"/></clipPath>
-    <linearGradient id="drop-grad-key" x1="0" y1="0" x2="0.9" y2="1">
-      <stop offset="0" stop-color="#ffffff" stop-opacity="0.62"/>
-      <stop offset="0.3" stop-color="#ffffff" stop-opacity="0.2"/>
-      <stop offset="0.6" stop-color="#ffffff" stop-opacity="0"/>
+    <clipPath id="drop-clip-cards"><path d="M4.87 10.16L24.63 7.03L27.13 22.84L7.37 25.97ZM6.74 7.16L26.66 8.9L25.26 24.84L5.34 23.1ZM6.9 7.6h18.2a0.9 0.9 0 0 1 0.9 0.9v14.2a0.9 0.9 0 0 1 -0.9 0.9h-18.2a0.9 0.9 0 0 1 -0.9 -0.9v-14.2a0.9 0.9 0 0 1 0.9 -0.9Z"/></clipPath>
+    <clipPath id="drop-clip-back"><path d="M4.87 10.16L24.63 7.03L27.13 22.84L7.37 25.97Z"/></clipPath>
+    <clipPath id="drop-clip-mid"><path d="M6.74 7.16L26.66 8.9L25.26 24.84L5.34 23.1Z"/></clipPath>
+    <clipPath id="drop-clip-front"><path d="M6.9 7.6h18.2a0.9 0.9 0 0 1 0.9 0.9v14.2a0.9 0.9 0 0 1 -0.9 0.9h-18.2a0.9 0.9 0 0 1 -0.9 -0.9v-14.2a0.9 0.9 0 0 1 0.9 -0.9Z"/></clipPath>
+    <clipPath id="drop-clip-pill"><path d="M10.8 10.4h6.2a1.6 1.6 0 0 1 1.6 1.6v0a1.6 1.6 0 0 1 -1.6 1.6h-6.2a1.6 1.6 0 0 1 -1.6 -1.6v0a1.6 1.6 0 0 1 1.6 -1.6Z"/></clipPath>
+    <clipPath id="drop-clip-silhouette"><path d="M4.87 10.16L24.63 7.03L27.13 22.84L7.37 25.97ZM6.74 7.16L26.66 8.9L25.26 24.84L5.34 23.1ZM6.9 7.6h18.2a0.9 0.9 0 0 1 0.9 0.9v14.2a0.9 0.9 0 0 1 -0.9 0.9h-18.2a0.9 0.9 0 0 1 -0.9 -0.9v-14.2a0.9 0.9 0 0 1 0.9 -0.9Z"/></clipPath>
+    <linearGradient id="drop-grad-key" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.3"/>
+      <stop offset="0.55" stop-color="#ffffff" stop-opacity="0.11"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
     </linearGradient>
   </defs>
   <g id="drop">
-    <g id="bead-glass-top" clip-path="url(#drop-clip-bead)"><title>bead · glass/top</title><path d="M16 2.5s8.5 9.2 8.5 15.1a8.5 8.5 0 0 1-17 0C7.5 11.7 16 2.5 16 2.5Z" fill="url(#drop-grad-bead)"/><path d="M16 2.5s8.5 9.2 8.5 15.1a8.5 8.5 0 0 1-17 0C7.5 11.7 16 2.5 16 2.5Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M16 2.5s8.5 9.2 8.5 15.1a8.5 8.5 0 0 1-17 0C7.5 11.7 16 2.5 16 2.5Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
-    <g id="meniscus-edge-hairline"><title>meniscus · edge/hairline</title><path d="M9 20.5a7.6 7.6 0 0 0 14 0" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="1" stroke-linecap="round" transform="translate(0 0.85)"/><path d="M9 20.5a7.6 7.6 0 0 0 14 0" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1" stroke-linecap="round"/></g>
-    <g id="key-sheen-color" clip-path="url(#drop-clip-silhouette)" opacity="1" style="mix-blend-mode:screen"><title>key · sheen/color</title><path d="M16 2.5s8.5 9.2 8.5 15.1a8.5 8.5 0 0 1-17 0C7.5 11.7 16 2.5 16 2.5Z" fill="url(#drop-grad-key)"/></g>
-    <path id="keyline-edge-hairline" d="M16 2.5s8.5 9.2 8.5 15.1a8.5 8.5 0 0 1-17 0C7.5 11.7 16 2.5 16 2.5Z" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1"/>
+    <g id="cards-platinum-4" clip-path="url(#drop-clip-cards)"><title>cards · platinum.4</title><path d="M4.87 10.16L24.63 7.03L27.13 22.84L7.37 25.97ZM6.74 7.16L26.66 8.9L25.26 24.84L5.34 23.1ZM6.9 7.6h18.2a0.9 0.9 0 0 1 0.9 0.9v14.2a0.9 0.9 0 0 1 -0.9 0.9h-18.2a0.9 0.9 0 0 1 -0.9 -0.9v-14.2a0.9 0.9 0 0 1 0.9 -0.9Z" fill="#c1c5cd"/></g>
+    <g id="back-platinum-4" clip-path="url(#drop-clip-back)"><title>back · platinum.4</title><path d="M4.87 10.16L24.63 7.03L27.13 22.84L7.37 25.97Z" fill="#c1c5cd"/><path d="M4.87 10.16L24.63 7.03L27.13 22.84L7.37 25.97Z" fill="none" stroke="rgba(255, 255, 255, 0.4)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M4.87 10.16L24.63 7.03L27.13 22.84L7.37 25.97Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
+    <g id="mid-accent-blue-light" clip-path="url(#drop-clip-mid)"><title>mid · accent.blue.light</title><path d="M6.74 7.16L26.66 8.9L25.26 24.84L5.34 23.1Z" fill="#8fb8ee"/><path d="M6.74 7.16L26.66 8.9L25.26 24.84L5.34 23.1Z" fill="none" stroke="rgba(255, 255, 255, 0.4)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M6.74 7.16L26.66 8.9L25.26 24.84L5.34 23.1Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
+    <g id="front-platinum-0" clip-path="url(#drop-clip-front)"><title>front · platinum.0</title><path d="M6.9 7.6h18.2a0.9 0.9 0 0 1 0.9 0.9v14.2a0.9 0.9 0 0 1 -0.9 0.9h-18.2a0.9 0.9 0 0 1 -0.9 -0.9v-14.2a0.9 0.9 0 0 1 0.9 -0.9Z" fill="#f7f7f9"/><path d="M6.9 7.6h18.2a0.9 0.9 0 0 1 0.9 0.9v14.2a0.9 0.9 0 0 1 -0.9 0.9h-18.2a0.9 0.9 0 0 1 -0.9 -0.9v-14.2a0.9 0.9 0 0 1 0.9 -0.9Z" fill="none" stroke="rgba(255, 255, 255, 0.4)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M6.9 7.6h18.2a0.9 0.9 0 0 1 0.9 0.9v14.2a0.9 0.9 0 0 1 -0.9 0.9h-18.2a0.9 0.9 0 0 1 -0.9 -0.9v-14.2a0.9 0.9 0 0 1 0.9 -0.9Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
+    <g id="pill-accent-blue-base" clip-path="url(#drop-clip-pill)"><title>pill · accent.blue.base</title><path d="M10.8 10.4h6.2a1.6 1.6 0 0 1 1.6 1.6v0a1.6 1.6 0 0 1 -1.6 1.6h-6.2a1.6 1.6 0 0 1 -1.6 -1.6v0a1.6 1.6 0 0 1 1.6 -1.6Z" fill="#3b7dd8"/></g>
+    <g id="rows-platinum-5"><title>rows · platinum.5</title><path d="M9.2 16.6h13.6M9.2 19.8h9.2" fill="none" stroke="#a9aeb8" stroke-width="1.4" stroke-linecap="round"/></g>
+    <g id="key-sheen-color" clip-path="url(#drop-clip-silhouette)" opacity="0.2" style="mix-blend-mode:screen"><title>key · sheen/color</title><path d="M4.87 10.16L24.63 7.03L27.13 22.84L7.37 25.97ZM6.74 7.16L26.66 8.9L25.26 24.84L5.34 23.1ZM6.9 7.6h18.2a0.9 0.9 0 0 1 0.9 0.9v14.2a0.9 0.9 0 0 1 -0.9 0.9h-18.2a0.9 0.9 0 0 1 -0.9 -0.9v-14.2a0.9 0.9 0 0 1 0.9 -0.9Z" fill="url(#drop-grad-key)"/></g>
+    <path id="keyline-edge-hairline" d="M4.87 10.16L24.63 7.03L27.13 22.84L7.37 25.97ZM6.74 7.16L26.66 8.9L25.26 24.84L5.34 23.1ZM6.9 7.6h18.2a0.9 0.9 0 0 1 0.9 0.9v14.2a0.9 0.9 0 0 1 -0.9 0.9h-18.2a0.9 0.9 0 0 1 -0.9 -0.9v-14.2a0.9 0.9 0 0 1 0.9 -0.9Z" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1"/>
   </g>
 </svg>

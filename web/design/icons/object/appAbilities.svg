@@ -1,33 +1,45 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="128" height="128">
   <title>appAbilities</title>
   <defs>
-    <clipPath id="appAbilities-clip-tile"><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z"/></clipPath>
-    <linearGradient id="appAbilities-grad-tile" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#5690df"/>
-      <stop offset="1" stop-color="#2f67ba"/>
+    <clipPath id="appAbilities-clip-star"><path d="M16 2Q17.2 14.8 30 16Q17.2 17.2 16 30Q14.8 17.2 2 16Q14.8 14.8 16 2Z"/></clipPath>
+    <linearGradient id="appAbilities-grad-star" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#4f8bdd"/>
+      <stop offset="1" stop-color="#2d65b6"/>
     </linearGradient>
-    <clipPath id="appAbilities-clip-spark"><path d="M15 6.5Q16.1 15.9 25.5 17Q16.1 18.1 15 27.5Q13.9 18.1 4.5 17Q13.9 15.9 15 6.5Z"/></clipPath>
-    <clipPath id="appAbilities-clip-glint"><path d="M24 4.6Q24.35 7.25 27 7.6Q24.35 7.95 24 10.6Q23.65 7.95 21 7.6Q23.65 7.25 24 4.6Z"/></clipPath>
-    <clipPath id="appAbilities-clip-silhouette"><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z"/></clipPath>
-    <linearGradient id="appAbilities-grad-key" x1="0" y1="0" x2="0.9" y2="1">
-      <stop offset="0" stop-color="#ffffff" stop-opacity="0.62"/>
-      <stop offset="0.3" stop-color="#ffffff" stop-opacity="0.2"/>
-      <stop offset="0.6" stop-color="#ffffff" stop-opacity="0"/>
+    <clipPath id="appAbilities-clip-ftl"><path d="M16 16L16 2Q14.8 14.8 2 16Z"/></clipPath>
+    <linearGradient id="appAbilities-grad-ftl" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#5d95e1"/>
+      <stop offset="1" stop-color="#316bbf"/>
     </linearGradient>
-    <linearGradient id="appAbilities-grad-gloss" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#ffffff" stop-opacity="0.45"/>
-      <stop offset="0.42" stop-color="#ffffff" stop-opacity="0.16"/>
-      <stop offset="0.421" stop-color="#ffffff" stop-opacity="0"/>
-      <stop offset="0.82" stop-color="#ffffff" stop-opacity="0"/>
-      <stop offset="1" stop-color="#ffffff" stop-opacity="0.22"/>
+    <clipPath id="appAbilities-clip-ftr"><path d="M16 16L16 2Q17.2 14.8 30 16Z"/></clipPath>
+    <linearGradient id="appAbilities-grad-ftr" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#5d95e1"/>
+      <stop offset="1" stop-color="#316bbf"/>
+    </linearGradient>
+    <clipPath id="appAbilities-clip-fbl"><path d="M16 16L16 30Q14.8 17.2 2 16Z"/></clipPath>
+    <linearGradient id="appAbilities-grad-fbl" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#5d95e1"/>
+      <stop offset="1" stop-color="#316bbf"/>
+    </linearGradient>
+    <clipPath id="appAbilities-clip-fbr"><path d="M16 16L30 16Q17.2 17.2 16 30Z"/></clipPath>
+    <linearGradient id="appAbilities-grad-fbr" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#5d95e1"/>
+      <stop offset="1" stop-color="#316bbf"/>
+    </linearGradient>
+    <clipPath id="appAbilities-clip-silhouette"><path d="M16 2Q17.2 14.8 30 16Q17.2 17.2 16 30Q14.8 17.2 2 16Q14.8 14.8 16 2Z"/></clipPath>
+    <linearGradient id="appAbilities-grad-key" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.3"/>
+      <stop offset="0.55" stop-color="#ffffff" stop-opacity="0.11"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
     </linearGradient>
   </defs>
   <g id="appAbilities">
-    <g id="tile-accent-top" clip-path="url(#appAbilities-clip-tile)"><title>tile · accent/top</title><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="url(#appAbilities-grad-tile)"/><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
-    <g id="spark-ink-on-accent" clip-path="url(#appAbilities-clip-spark)"><title>spark · ink.on-accent</title><path d="M15 6.5Q16.1 15.9 25.5 17Q16.1 18.1 15 27.5Q13.9 18.1 4.5 17Q13.9 15.9 15 6.5Z" fill="#ffffff"/></g>
-    <g id="glint-ink-on-accent" clip-path="url(#appAbilities-clip-glint)"><title>glint · ink.on-accent</title><path d="M24 4.6Q24.35 7.25 27 7.6Q24.35 7.95 24 10.6Q23.65 7.95 21 7.6Q23.65 7.25 24 4.6Z" fill="#ffffff"/></g>
-    <g id="key-sheen-color" clip-path="url(#appAbilities-clip-silhouette)" opacity="0.75" style="mix-blend-mode:screen"><title>key · sheen/color</title><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="url(#appAbilities-grad-key)"/></g>
-    <g id="gloss-sheen-color" clip-path="url(#appAbilities-clip-silhouette)" style="mix-blend-mode:screen"><title>gloss · sheen/color</title><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="url(#appAbilities-grad-gloss)"/></g>
-    <path id="keyline-edge-hairline" d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1"/>
+    <g id="star-accent-top" clip-path="url(#appAbilities-clip-star)"><title>star · accent/top</title><path d="M16 2Q17.2 14.8 30 16Q17.2 17.2 16 30Q14.8 17.2 2 16Q14.8 14.8 16 2Z" fill="url(#appAbilities-grad-star)"/><path d="M16 2Q17.2 14.8 30 16Q17.2 17.2 16 30Q14.8 17.2 2 16Q14.8 14.8 16 2Z" fill="none" stroke="rgba(255, 255, 255, 0.4)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M16 2Q17.2 14.8 30 16Q17.2 17.2 16 30Q14.8 17.2 2 16Q14.8 14.8 16 2Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
+    <g id="ftl-accent-flat" clip-path="url(#appAbilities-clip-ftl)"><title>ftl · accent/flat</title><path d="M16 16L16 2Q14.8 14.8 2 16Z" fill="url(#appAbilities-grad-ftl)"/><path d="M16 16L16 2Q14.8 14.8 2 16Z" fill="#ffffff" opacity="0.067"/></g>
+    <g id="ftr-accent-flat" clip-path="url(#appAbilities-clip-ftr)"><title>ftr · accent/flat</title><path d="M16 16L16 2Q17.2 14.8 30 16Z" fill="url(#appAbilities-grad-ftr)"/><path d="M16 16L16 2Q17.2 14.8 30 16Z" fill="#ffffff" opacity="0.022"/></g>
+    <g id="fbl-accent-flat" clip-path="url(#appAbilities-clip-fbl)"><title>fbl · accent/flat</title><path d="M16 16L16 30Q14.8 17.2 2 16Z" fill="url(#appAbilities-grad-fbl)"/><path d="M16 16L16 30Q14.8 17.2 2 16Z" fill="#000000" opacity="0.026"/></g>
+    <g id="fbr-accent-flat" clip-path="url(#appAbilities-clip-fbr)"><title>fbr · accent/flat</title><path d="M16 16L30 16Q17.2 17.2 16 30Z" fill="url(#appAbilities-grad-fbr)"/><path d="M16 16L30 16Q17.2 17.2 16 30Z" fill="#000000" opacity="0.072"/></g>
+    <g id="key-sheen-color" clip-path="url(#appAbilities-clip-silhouette)" opacity="0.34" style="mix-blend-mode:screen"><title>key · sheen/color</title><path d="M16 2Q17.2 14.8 30 16Q17.2 17.2 16 30Q14.8 17.2 2 16Q14.8 14.8 16 2Z" fill="url(#appAbilities-grad-key)"/></g>
+    <path id="keyline-edge-hairline" d="M16 2Q17.2 14.8 30 16Q17.2 17.2 16 30Q14.8 17.2 2 16Q14.8 14.8 16 2Z" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1"/>
   </g>
 </svg>

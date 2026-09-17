@@ -3,18 +3,18 @@
   <defs>
     <clipPath id="deviceMediaPlayer-clip-body"><path d="M10.6 1.5h10.8a2.6 2.6 0 0 1 2.6 2.6v23.8a2.6 2.6 0 0 1 -2.6 2.6h-10.8a2.6 2.6 0 0 1 -2.6 -2.6v-23.8a2.6 2.6 0 0 1 2.6 -2.6Z"/></clipPath>
     <linearGradient id="deviceMediaPlayer-grad-body" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#e9ebee"/>
-      <stop offset="1" stop-color="#b9bdc6"/>
+      <stop offset="0" stop-color="#e8e9ed"/>
+      <stop offset="1" stop-color="#b5b9c2"/>
     </linearGradient>
     <clipPath id="deviceMediaPlayer-clip-screen"><path d="M11 4h10a1 1 0 0 1 1 1v7a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1v-7a1 1 0 0 1 1 -1Z"/></clipPath>
     <linearGradient id="deviceMediaPlayer-grad-screen" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#a6abb4"/>
-      <stop offset="1" stop-color="#676a70"/>
+      <stop offset="0" stop-color="#9fa4ad"/>
+      <stop offset="1" stop-color="#606369"/>
     </linearGradient>
     <clipPath id="deviceMediaPlayer-clip-wheel"><path d="M9.6 21.5a6.4 6.4 0 1 0 12.8 0a6.4 6.4 0 1 0 -12.8 0Z"/></clipPath>
     <linearGradient id="deviceMediaPlayer-grad-wheel" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#a6abb4"/>
-      <stop offset="1" stop-color="#676a70"/>
+      <stop offset="0" stop-color="#9fa4ad"/>
+      <stop offset="1" stop-color="#606369"/>
     </linearGradient>
     <clipPath id="deviceMediaPlayer-clip-hub"><path d="M13.6 21.5a2.4 2.4 0 1 0 4.8 0a2.4 2.4 0 1 0 -4.8 0Z"/></clipPath>
     <clipPath id="deviceMediaPlayer-clip-silhouette"><path d="M10.6 1.5h10.8a2.6 2.6 0 0 1 2.6 2.6v23.8a2.6 2.6 0 0 1 -2.6 2.6h-10.8a2.6 2.6 0 0 1 -2.6 -2.6v-23.8a2.6 2.6 0 0 1 2.6 -2.6Z"/></clipPath>

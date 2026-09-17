@@ -96,11 +96,28 @@ describe('objects.json', () => {
      * Path data packs numbers without separators — "l-4.2.93" is -4.2 then .93 —
      * so this has to match SVG's number grammar, including the leading-dot form.
      * A naive /-?\d+(\.\d+)?/ reads that .93 as 93 and reports a false breach.
+     *
+     * Not every number in a path is a length, either. An elliptical arc is
+     * `rx ry x-axis-rotation large-arc sweep x y`: the rotation is in DEGREES
+     * and the two flags are booleans, so none of the three is on the grid and a
+     * rotation of -35° is not a part hanging three units off the side of it.
      */
     const NUMBER = /-?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?/g
+    const lengths = (d: string): string[] => {
+      const out: string[] = []
+      for (const [, cmd, body] of d.matchAll(/([A-Za-z])([^A-Za-z]*)/g)) {
+        const nums = body.match(NUMBER) ?? []
+        if (cmd !== 'A' && cmd !== 'a') {
+          out.push(...nums)
+          continue
+        }
+        for (let i = 0; i < nums.length; i += 7) out.push(nums[i], nums[i + 1], nums[i + 5], nums[i + 6])
+      }
+      return out.filter(Boolean)
+    }
     for (const [name, icon] of entries)
       for (const part of icon.parts)
-        for (const n of part.d.match(NUMBER) ?? [])
+        for (const n of lengths(part.d))
           expect(Math.abs(Number(n)), `${name}.${part.id} — "${n}"`).toBeLessThanOrEqual(32)
   })
 

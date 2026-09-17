@@ -3,18 +3,18 @@
   <defs>
     <clipPath id="volumeExternal-clip-body"><path d="M3 10h22a2 2 0 0 1 2 2v9a2 2 0 0 1 -2 2h-22a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2Z"/></clipPath>
     <linearGradient id="volumeExternal-grad-body" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#e9ebee"/>
-      <stop offset="1" stop-color="#b9bdc6"/>
+      <stop offset="0" stop-color="#e8e9ed"/>
+      <stop offset="1" stop-color="#b5b9c2"/>
     </linearGradient>
     <clipPath id="volumeExternal-clip-seam"><path d="M5.1 13.5h11.8a1.1 1.1 0 0 1 1.1 1.1v0a1.1 1.1 0 0 1 -1.1 1.1h-11.8a1.1 1.1 0 0 1 -1.1 -1.1v0a1.1 1.1 0 0 1 1.1 -1.1Z"/></clipPath>
     <linearGradient id="volumeExternal-grad-seam" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#a6abb4"/>
-      <stop offset="1" stop-color="#676a70"/>
+      <stop offset="0" stop-color="#9fa4ad"/>
+      <stop offset="1" stop-color="#606369"/>
     </linearGradient>
     <clipPath id="volumeExternal-clip-cable"><path d="M27 15h3a1.2 1.2 0 0 1 0 2.4h-3Z"/></clipPath>
     <linearGradient id="volumeExternal-grad-cable" x1="0" y1="0" x2="0.85" y2="1">
-      <stop offset="0" stop-color="#595d67"/>
-      <stop offset="1" stop-color="#24272c"/>
+      <stop offset="0" stop-color="#545861"/>
+      <stop offset="1" stop-color="#22252a"/>
     </linearGradient>
     <clipPath id="volumeExternal-clip-led"><path d="M22.3 16.2a1.1 1.1 0 1 0 2.2 0a1.1 1.1 0 1 0 -2.2 0Z"/></clipPath>
     <clipPath id="volumeExternal-clip-silhouette"><path d="M3 10h22a2 2 0 0 1 2 2v9a2 2 0 0 1 -2 2h-22a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2Z"/></clipPath>
