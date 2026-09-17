@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="128" height="128">
+  <title>appAmbient</title>
+  <defs>
+    <clipPath id="appAmbient-clip-tile"><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z"/></clipPath>
+    <linearGradient id="appAmbient-grad-tile" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#b7c8dc"/>
+      <stop offset="1" stop-color="#8195b1"/>
+    </linearGradient>
+    <clipPath id="appAmbient-clip-scope"><path d="M16 5a11 11 0 1 0 0 22a11 11 0 1 0 0-22Z"/></clipPath>
+    <linearGradient id="appAmbient-grad-scope" x1="0" y1="0" x2="0.85" y2="1">
+      <stop offset="0" stop-color="#292c32"/>
+      <stop offset="1" stop-color="#1a1b1f"/>
+    </linearGradient>
+    <clipPath id="appAmbient-clip-blip"><path d="M16 14.3a1.7 1.7 0 1 0 0 3.4a1.7 1.7 0 1 0 0-3.4Z"/></clipPath>
+    <clipPath id="appAmbient-clip-silhouette"><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z"/></clipPath>
+    <linearGradient id="appAmbient-grad-key" x1="0" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.62"/>
+      <stop offset="0.3" stop-color="#ffffff" stop-opacity="0.2"/>
+      <stop offset="0.6" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="appAmbient-grad-gloss" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.45"/>
+      <stop offset="0.42" stop-color="#ffffff" stop-opacity="0.16"/>
+      <stop offset="0.421" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="0.82" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.22"/>
+    </linearGradient>
+  </defs>
+  <g id="appAmbient">
+    <g id="tile-slate-top" clip-path="url(#appAmbient-clip-tile)"><title>tile · slate/top</title><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="url(#appAmbient-grad-tile)"/><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(0.8 0.8)"/><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(-0.8 -0.8)"/></g>
+    <g id="scope-graphite-under" clip-path="url(#appAmbient-clip-scope)"><title>scope · graphite/under</title><path d="M16 5a11 11 0 1 0 0 22a11 11 0 1 0 0-22Z" fill="url(#appAmbient-grad-scope)"/><path d="M16 5a11 11 0 1 0 0 22a11 11 0 1 0 0-22Z" fill="#000000" opacity="0.096"/><path d="M16 5a11 11 0 1 0 0 22a11 11 0 1 0 0-22Z" fill="none" stroke="rgba(255, 255, 255, 0.78)" stroke-width="2" transform="translate(-0.8 -0.8)"/><path d="M16 5a11 11 0 1 0 0 22a11 11 0 1 0 0-22Z" fill="none" stroke="rgba(0, 0, 0, 0.2)" stroke-width="2" transform="translate(0.8 0.8)"/></g>
+    <g id="rings-traffic-zoom-light"><title>rings · traffic.zoom.light</title><path d="M19.86 14.96A4 4 0 1 1 17.04 12.14M23.24 14.06A7.5 7.5 0 1 1 17.94 8.76" fill="none" stroke="#bdf2b3" stroke-width="1.4" stroke-linecap="round"/></g>
+    <g id="sweep-traffic-zoom-light"><title>sweep · traffic.zoom.light</title><path d="M16 16L22.4 9.6" fill="none" stroke="#bdf2b3" stroke-width="1.4" stroke-linecap="round"/></g>
+    <g id="blip-traffic-zoom-light" clip-path="url(#appAmbient-clip-blip)"><title>blip · traffic.zoom.light</title><path d="M16 14.3a1.7 1.7 0 1 0 0 3.4a1.7 1.7 0 1 0 0-3.4Z" fill="#bdf2b3"/></g>
+    <g id="key-sheen-color" clip-path="url(#appAmbient-clip-silhouette)" opacity="0.4" style="mix-blend-mode:screen"><title>key · sheen/color</title><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="url(#appAmbient-grad-key)"/></g>
+    <g id="gloss-sheen-color" clip-path="url(#appAmbient-clip-silhouette)" style="mix-blend-mode:screen"><title>gloss · sheen/color</title><path d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="url(#appAmbient-grad-gloss)"/></g>
+    <path id="keyline-edge-hairline" d="M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z" fill="none" stroke="rgba(0, 0, 0, 0.32)" stroke-width="1"/>
+  </g>
+</svg>

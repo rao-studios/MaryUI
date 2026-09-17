@@ -444,6 +444,74 @@
       }
     ]
   },
+  "appAmbient": {
+    "material": "slate",
+    "finish": "glossy",
+    "glyph": "radar",
+    "silhouette": "tile",
+    "parts": [
+      {
+        "id": "tile",
+        "facet": "top",
+        "tone": 0,
+        "bevel": "raised",
+        "d": "M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z"
+      },
+      {
+        "id": "scope",
+        "material": "graphite",
+        "facet": "under",
+        "tone": -0.6,
+        "bevel": "well",
+        "d": "M16 5a11 11 0 1 0 0 22a11 11 0 1 0 0-22Z"
+      },
+      {
+        "id": "rings",
+        "role": "crease",
+        "tint": "traffic.zoom.light",
+        "min": 24,
+        "d": "M19.86 14.96A4 4 0 1 1 17.04 12.14M23.24 14.06A7.5 7.5 0 1 1 17.94 8.76"
+      },
+      {
+        "id": "sweep",
+        "role": "crease",
+        "tint": "traffic.zoom.light",
+        "min": 26,
+        "d": "M16 16L22.4 9.6"
+      },
+      {
+        "id": "blip",
+        "tint": "traffic.zoom.light",
+        "d": "M16 14.3a1.7 1.7 0 1 0 0 3.4a1.7 1.7 0 1 0 0-3.4Z"
+      }
+    ]
+  },
+  "appAbilities": {
+    "material": "accent",
+    "finish": "glossy",
+    "glyph": "star",
+    "silhouette": "tile",
+    "parts": [
+      {
+        "id": "tile",
+        "facet": "top",
+        "tone": 0,
+        "bevel": "raised",
+        "d": "M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z"
+      },
+      {
+        "id": "spark",
+        "tint": "ink.on-accent",
+        "d": "M15 6.5Q16.1 15.9 25.5 17Q16.1 18.1 15 27.5Q13.9 18.1 4.5 17Q13.9 15.9 15 6.5Z"
+      },
+      {
+        "id": "glint",
+        "tint": "ink.on-accent",
+        "min": 28,
+        "d": "M24 4.6Q24.35 7.25 27 7.6Q24.35 7.95 24 10.6Q23.65 7.95 21 7.6Q23.65 7.25 24 4.6Z"
+      }
+    ]
+  },
   "folderHome": {
     "material": "folder",
     "glyph": "folder",
