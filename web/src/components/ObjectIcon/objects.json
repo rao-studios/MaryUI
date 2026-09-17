@@ -445,9 +445,9 @@
     ]
   },
   "appAmbient": {
-    "material": "slate",
+    "material": "graphite",
     "finish": "glossy",
-    "glyph": "radar",
+    "glyph": "aura",
     "silhouette": "tile",
     "parts": [
       {
@@ -458,31 +458,26 @@
         "d": "M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z"
       },
       {
-        "id": "scope",
-        "material": "graphite",
+        "id": "halo",
+        "material": "glass",
         "facet": "under",
-        "tone": -0.6,
-        "bevel": "well",
-        "d": "M16 5a11 11 0 1 0 0 22a11 11 0 1 0 0-22Z"
+        "tone": -0.35,
+        "bevel": "none",
+        "d": "M16 5a11 11 0 1 0 0 22a11 11 0 1 0 0 -22Z"
       },
       {
-        "id": "rings",
-        "role": "crease",
-        "tint": "traffic.zoom.light",
+        "id": "orb",
+        "material": "glass",
+        "facet": "top",
+        "tone": 0,
+        "bevel": "raised",
+        "d": "M16 9.5a6.5 6.5 0 1 0 0 13a6.5 6.5 0 1 0 0 -13Z"
+      },
+      {
+        "id": "glint",
+        "tint": "ink.on-accent",
         "min": 24,
-        "d": "M19.86 14.96A4 4 0 1 1 17.04 12.14M23.24 14.06A7.5 7.5 0 1 1 17.94 8.76"
-      },
-      {
-        "id": "sweep",
-        "role": "crease",
-        "tint": "traffic.zoom.light",
-        "min": 26,
-        "d": "M16 16L22.4 9.6"
-      },
-      {
-        "id": "blip",
-        "tint": "traffic.zoom.light",
-        "d": "M16 14.3a1.7 1.7 0 1 0 0 3.4a1.7 1.7 0 1 0 0-3.4Z"
+        "d": "M11.7 13.2a1.9 1.2 0 1 0 3.8 0a1.9 1.2 0 1 0 -3.8 0Z"
       }
     ]
   },
@@ -509,6 +504,38 @@
         "tint": "ink.on-accent",
         "min": 28,
         "d": "M24 4.6Q24.35 7.25 27 7.6Q24.35 7.95 24 10.6Q23.65 7.95 21 7.6Q23.65 7.25 24 4.6Z"
+      }
+    ]
+  },
+  "appThread": {
+    "material": "paper",
+    "finish": "glossy",
+    "glyph": "graph",
+    "silhouette": "tile",
+    "parts": [
+      {
+        "id": "tile",
+        "facet": "top",
+        "tone": 0,
+        "bevel": "raised",
+        "d": "M9 2h14a7 7 0 0 1 7 7v14a7 7 0 0 1-7 7H9a7 7 0 0 1-7-7V9a7 7 0 0 1 7-7Z"
+      },
+      {
+        "id": "threads",
+        "role": "crease",
+        "tint": "accent.blue.base",
+        "min": 26,
+        "d": "M9 11Q12 18 20 20 M22 9Q24 14 20 20 M12 23Q16 19 20 20 M9 11Q15 7 22 9"
+      },
+      {
+        "id": "nodes",
+        "tint": "accent.blue.deep",
+        "d": "M9 8.8a2.2 2.2 0 1 0 0 4.4a2.2 2.2 0 1 0 0 -4.4ZM22 6.8a2.2 2.2 0 1 0 0 4.4a2.2 2.2 0 1 0 0 -4.4ZM12 20.8a2.2 2.2 0 1 0 0 4.4a2.2 2.2 0 1 0 0 -4.4Z"
+      },
+      {
+        "id": "hub",
+        "tint": "accent.blue.base",
+        "d": "M20 16.8a3.2 3.2 0 1 0 0 6.4a3.2 3.2 0 1 0 0 -6.4Z"
       }
     ]
   },
