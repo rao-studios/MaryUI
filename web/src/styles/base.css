@@ -1,11 +1,35 @@
 /*
  * Global base for the Liquid Platinum desktop: token import, reset, typography,
- * the accent mapping (Blue / Graphite), the folder mapping (Manila / Slate),
+ * the accent mapping (Blue / Graphite / Verdigris), the folder mapping (Manila / Slate),
  * and the data-attribute feature flags
  * that let the View menu switch goo, wallpaper, and motion at runtime.
  */
 
 @import './tokens.css';
+
+/* MARK: - Web-only tokens
+ *
+ * Values the web needs that stay out of tokens.json, so the generated C header
+ * (linux/include/maryui/lp_tokens.h) doesn't change for them. Named like
+ * generated tokens so they read the same at the point of use.
+ *
+ * Verdigris is a third accent, MaryOS's patina green. The liquid values are the
+ * orb response that the Linux build hard-codes (PARITY D17), for web embedders
+ * that port it (maryos.ai): the level a hovered orb pours to, how far a held
+ * one darkens each stop toward the next, and the share of the traffic level a
+ * shaded window's yellow light keeps.
+ */
+
+:root {
+  --lp-accent-verdigris-base: #3f6f63;
+  --lp-accent-verdigris-deep: #2c5249;
+  --lp-accent-verdigris-light: #93c2b4;
+  --lp-accent-verdigris-soft: rgba(63, 111, 99, 0.18);
+  --lp-accent-verdigris-focus-ring: rgba(63, 111, 99, 0.5);
+  --lp-liquid-brim: 1.12;
+  --lp-liquid-press-darken: 0.35;
+  --lp-liquid-shaded-keep: 0.45;
+}
 
 /* MARK: - Accent appearance */
 
@@ -24,6 +48,14 @@
   --lp-accent-light: var(--lp-accent-graphite-light);
   --lp-accent-soft: var(--lp-accent-graphite-soft);
   --lp-accent-focus-ring: var(--lp-accent-graphite-focus-ring);
+}
+
+:root[data-accent='verdigris'] {
+  --lp-accent-base: var(--lp-accent-verdigris-base);
+  --lp-accent-deep: var(--lp-accent-verdigris-deep);
+  --lp-accent-light: var(--lp-accent-verdigris-light);
+  --lp-accent-soft: var(--lp-accent-verdigris-soft);
+  --lp-accent-focus-ring: var(--lp-accent-verdigris-focus-ring);
 }
 
 /* MARK: - Folder appearance */

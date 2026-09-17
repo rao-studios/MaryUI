@@ -116,7 +116,7 @@ export const CONTACT_FILTER_ID = 'lp-obj-contact'
  * appearance preference rather than pinning itself to blue.
  */
 export function tintColor(path: string): string {
-  const accent = /^accent\.(?:blue|graphite)\.(.+)$/.exec(path)
+  const accent = /^accent\.(?:blue|graphite|verdigris)\.(.+)$/.exec(path)
   if (accent) return `var(--lp-accent-${accent[1]})`
   return `var(--lp-${path.replace(/\./g, '-')})`
 }
